@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx playwright:*)",
+      "Bash(BASE_URL=https://staging-13a0b.web.app npx playwright:*)",
+      "Bash(ls:*)",
+      "Bash(npm run:*)",
+      "WebFetch(domain:unpkg.com)",
+      "Bash(TEST_EMAIL=\"$TEST_EMAIL\" TEST_SENHA=\"$TEST_SENHA\" npx playwright:*)",
+      "Bash(TEST_EMAIL=\"teste@gmail.com\" TEST_SENHA=\"123456\" npx playwright:*)",
+      "Bash(curl:*)",
+      "Bash(node:*)"
+    ]
+  }
+}

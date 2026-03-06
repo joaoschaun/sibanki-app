@@ -1,0 +1,20 @@
+{
+  "name": "virtus-financeiro",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test smoke",
+    "test:fluxo": "playwright test fluxo-completo",
+    "test:erros": "playwright test check-erros",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "deploy:staging": "firebase deploy --only hosting:staging",
+    "deploy:app": "firebase deploy --only hosting:app",
+    "deploy:doc-investidor": "firebase deploy --only hosting:doc-investidor"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}

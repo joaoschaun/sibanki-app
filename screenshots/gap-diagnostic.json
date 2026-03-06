@@ -1,0 +1,739 @@
+{
+  "casal": {
+    "tabId": "casal",
+    "gapTabVsHeader": 0,
+    "headerBottom": 169,
+    "tab": {
+      "label": "TAB#casal",
+      "tag": "SECTION",
+      "id": "casal",
+      "class": "tab tab-familia on",
+      "rect": {
+        "top": 169,
+        "bottom": 844,
+        "left": 0,
+        "height": 675
+      },
+      "styles": {
+        "display": "block",
+        "position": "fixed",
+        "marginTop": "0px",
+        "marginBottom": "0px",
+        "paddingTop": "0px",
+        "paddingBottom": "0px",
+        "minHeight": "0px",
+        "height": "675px",
+        "overflow": "auto",
+        "overflowY": "auto",
+        "transform": "",
+        "animation": "tabFadeDown",
+        "visibility": "visible",
+        "opacity": "1",
+        "boxSizing": "border-box"
+      }
+    },
+    "children": [
+      {
+        "label": "children[0]",
+        "tag": "DIV",
+        "id": "",
+        "class": "cg",
+        "rect": {
+          "top": 169,
+          "bottom": 611,
+          "left": 0,
+          "height": 442
+        },
+        "styles": {
+          "display": "grid",
+          "position": "static",
+          "marginTop": "0px",
+          "marginBottom": "12px",
+          "paddingTop": "0px",
+          "paddingBottom": "0px",
+          "minHeight": "0px",
+          "height": "442px",
+          "overflow": "visible",
+          "overflowY": "visible",
+          "transform": "",
+          "animation": "none",
+          "visibility": "visible",
+          "opacity": "1",
+          "boxSizing": "border-box"
+        },
+        "grandchildren": [
+          {
+            "label": "  grandchild[0]",
+            "tag": "DIV",
+            "id": "coupleNotLinked",
+            "class": "",
+            "rect": {
+              "top": 169,
+              "bottom": 611,
+              "left": 0,
+              "height": 442
+            },
+            "styles": {
+              "display": "block",
+              "position": "static",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "paddingTop": "0px",
+              "paddingBottom": "0px",
+              "minHeight": "auto",
+              "height": "442px",
+              "overflow": "visible",
+              "overflowY": "visible",
+              "transform": "",
+              "animation": "none",
+              "visibility": "visible",
+              "opacity": "1",
+              "boxSizing": "border-box"
+            }
+          },
+          {
+            "label": "  grandchild[1]",
+            "tag": "DIV",
+            "id": "coupleLinked",
+            "class": "",
+            "rect": {
+              "top": 0,
+              "bottom": 0,
+              "left": 0,
+              "height": 0
+            },
+            "styles": {
+              "display": "none",
+              "position": "static",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "paddingTop": "0px",
+              "paddingBottom": "0px",
+              "minHeight": "0px",
+              "height": "auto",
+              "overflow": "visible",
+              "overflowY": "visible",
+              "transform": "",
+              "animation": "none",
+              "visibility": "visible",
+              "opacity": "1",
+              "boxSizing": "border-box"
+            }
+          }
+        ]
+      }
+    ],
+    "scrollInfo": {
+      "windowScrollY": 0,
+      "docScrollTop": 0,
+      "bodyScrollTop": 0,
+      "wrapScrollTop": 0,
+      "wrapScrollHeight": 237,
+      "wrapClientHeight": 237
+    },
+    "fixedEls": [
+      {
+        "tag": "DIV",
+        "id": "drawerOverlay",
+        "class": "drawer-overlay",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "9998"
+      },
+      {
+        "tag": "ASIDE",
+        "id": "drawer",
+        "class": "drawer",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "9999"
+      },
+      {
+        "tag": "DIV",
+        "id": "nOv",
+        "class": "notif-ov",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "9998"
+      },
+      {
+        "tag": "DIV",
+        "id": "nPanel",
+        "class": "notif-panel",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "9999"
+      },
+      {
+        "tag": "DIV",
+        "id": "kpiModalOverlay",
+        "class": "kpi-modal-overlay",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "9999"
+      },
+      {
+        "tag": "DIV",
+        "id": "kmOv",
+        "class": "km-ov",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "9999"
+      },
+      {
+        "tag": "DIV",
+        "id": "cdmOv",
+        "class": "cdm-ov",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "10000"
+      },
+      {
+        "tag": "SECTION",
+        "id": "casal",
+        "class": "tab tab-familia on",
+        "position": "fixed",
+        "top": 169,
+        "height": 675,
+        "zIndex": "50"
+      }
+    ]
+  },
+  "calendario": {
+    "tabId": "calendario",
+    "gapTabVsHeader": 0,
+    "headerBottom": 169,
+    "tab": {
+      "label": "TAB#calendario",
+      "tag": "DIV",
+      "id": "calendario",
+      "class": "tab tab-calendario on",
+      "rect": {
+        "top": 169,
+        "bottom": 844,
+        "left": 0,
+        "height": 675
+      },
+      "styles": {
+        "display": "block",
+        "position": "fixed",
+        "marginTop": "0px",
+        "marginBottom": "0px",
+        "paddingTop": "0px",
+        "paddingBottom": "0px",
+        "minHeight": "0px",
+        "height": "675px",
+        "overflow": "auto",
+        "overflowY": "auto",
+        "transform": "",
+        "animation": "tabFadeDown",
+        "visibility": "visible",
+        "opacity": "1",
+        "boxSizing": "border-box"
+      }
+    },
+    "children": [
+      {
+        "label": "children[0]",
+        "tag": "DIV",
+        "id": "calSum",
+        "class": "cal-sum",
+        "rect": {
+          "top": 169,
+          "bottom": 305,
+          "left": 0,
+          "height": 136
+        },
+        "styles": {
+          "display": "grid",
+          "position": "static",
+          "marginTop": "0px",
+          "marginBottom": "10px",
+          "paddingTop": "0px",
+          "paddingBottom": "0px",
+          "minHeight": "0px",
+          "height": "136px",
+          "overflow": "visible",
+          "overflowY": "visible",
+          "transform": "",
+          "animation": "none",
+          "visibility": "visible",
+          "opacity": "1",
+          "boxSizing": "border-box"
+        },
+        "grandchildren": [
+          {
+            "label": "  grandchild[0]",
+            "tag": "DIV",
+            "id": "",
+            "class": "cal-sc",
+            "rect": {
+              "top": 169,
+              "bottom": 232,
+              "left": 0,
+              "height": 63
+            },
+            "styles": {
+              "display": "block",
+              "position": "static",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "paddingTop": "12px",
+              "paddingBottom": "12px",
+              "minHeight": "auto",
+              "height": "63px",
+              "overflow": "visible",
+              "overflowY": "visible",
+              "transform": "",
+              "animation": "none",
+              "visibility": "visible",
+              "opacity": "1",
+              "boxSizing": "border-box"
+            }
+          },
+          {
+            "label": "  grandchild[1]",
+            "tag": "DIV",
+            "id": "",
+            "class": "cal-sc",
+            "rect": {
+              "top": 169,
+              "bottom": 232,
+              "left": 200,
+              "height": 63
+            },
+            "styles": {
+              "display": "block",
+              "position": "static",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "paddingTop": "12px",
+              "paddingBottom": "12px",
+              "minHeight": "auto",
+              "height": "63px",
+              "overflow": "visible",
+              "overflowY": "visible",
+              "transform": "",
+              "animation": "none",
+              "visibility": "visible",
+              "opacity": "1",
+              "boxSizing": "border-box"
+            }
+          },
+          {
+            "label": "  grandchild[2]",
+            "tag": "DIV",
+            "id": "",
+            "class": "cal-sc",
+            "rect": {
+              "top": 242,
+              "bottom": 305,
+              "left": 0,
+              "height": 63
+            },
+            "styles": {
+              "display": "block",
+              "position": "static",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "paddingTop": "12px",
+              "paddingBottom": "12px",
+              "minHeight": "auto",
+              "height": "63px",
+              "overflow": "visible",
+              "overflowY": "visible",
+              "transform": "",
+              "animation": "none",
+              "visibility": "visible",
+              "opacity": "1",
+              "boxSizing": "border-box"
+            }
+          },
+          {
+            "label": "  grandchild[3]",
+            "tag": "DIV",
+            "id": "",
+            "class": "cal-sc",
+            "rect": {
+              "top": 242,
+              "bottom": 305,
+              "left": 200,
+              "height": 63
+            },
+            "styles": {
+              "display": "block",
+              "position": "static",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "paddingTop": "12px",
+              "paddingBottom": "12px",
+              "minHeight": "auto",
+              "height": "63px",
+              "overflow": "visible",
+              "overflowY": "visible",
+              "transform": "",
+              "animation": "none",
+              "visibility": "visible",
+              "opacity": "1",
+              "boxSizing": "border-box"
+            }
+          }
+        ]
+      },
+      {
+        "label": "children[1]",
+        "tag": "DIV",
+        "id": "",
+        "class": "cal-hd",
+        "rect": {
+          "top": 315,
+          "bottom": 372,
+          "left": 0,
+          "height": 57
+        },
+        "styles": {
+          "display": "flex",
+          "position": "static",
+          "marginTop": "0px",
+          "marginBottom": "12px",
+          "paddingTop": "0px",
+          "paddingBottom": "0px",
+          "minHeight": "0px",
+          "height": "57px",
+          "overflow": "visible",
+          "overflowY": "visible",
+          "transform": "",
+          "animation": "none",
+          "visibility": "visible",
+          "opacity": "1",
+          "boxSizing": "border-box"
+        },
+        "grandchildren": [
+          {
+            "label": "  grandchild[0]",
+            "tag": "H3",
+            "id": "",
+            "class": "",
+            "rect": {
+              "top": 315,
+              "bottom": 333,
+              "left": 0,
+              "height": 18
+            },
+            "styles": {
+              "display": "block",
+              "position": "static",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "paddingTop": "0px",
+              "paddingBottom": "0px",
+              "minHeight": "auto",
+              "height": "18px",
+              "overflow": "visible",
+              "overflowY": "visible",
+              "transform": "",
+              "animation": "none",
+              "visibility": "visible",
+              "opacity": "1",
+              "boxSizing": "border-box"
+            }
+          },
+          {
+            "label": "  grandchild[1]",
+            "tag": "DIV",
+            "id": "",
+            "class": "cal-nv",
+            "rect": {
+              "top": 341,
+              "bottom": 372,
+              "left": 0,
+              "height": 31
+            },
+            "styles": {
+              "display": "flex",
+              "position": "static",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "paddingTop": "0px",
+              "paddingBottom": "0px",
+              "minHeight": "auto",
+              "height": "31px",
+              "overflow": "visible",
+              "overflowY": "visible",
+              "transform": "",
+              "animation": "none",
+              "visibility": "visible",
+              "opacity": "1",
+              "boxSizing": "border-box"
+            }
+          }
+        ]
+      },
+      {
+        "label": "children[2]",
+        "tag": "DIV",
+        "id": "calG",
+        "class": "cal-g",
+        "rect": {
+          "top": 384,
+          "bottom": 658,
+          "left": 0,
+          "height": 274
+        },
+        "styles": {
+          "display": "grid",
+          "position": "static",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "paddingTop": "0px",
+          "paddingBottom": "0px",
+          "minHeight": "0px",
+          "height": "274px",
+          "overflow": "visible",
+          "overflowY": "visible",
+          "transform": "",
+          "animation": "none",
+          "visibility": "visible",
+          "opacity": "1",
+          "boxSizing": "border-box"
+        },
+        "grandchildren": [
+          {
+            "label": "  grandchild[0]",
+            "tag": "DIV",
+            "id": "",
+            "class": "cal-dh",
+            "rect": {
+              "top": 384,
+              "bottom": 408,
+              "left": 0,
+              "height": 24
+            },
+            "styles": {
+              "display": "block",
+              "position": "static",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "paddingTop": "6px",
+              "paddingBottom": "6px",
+              "minHeight": "auto",
+              "height": "24px",
+              "overflow": "visible",
+              "overflowY": "visible",
+              "transform": "",
+              "animation": "none",
+              "visibility": "visible",
+              "opacity": "1",
+              "boxSizing": "border-box"
+            }
+          },
+          {
+            "label": "  grandchild[1]",
+            "tag": "DIV",
+            "id": "",
+            "class": "cal-dh",
+            "rect": {
+              "top": 384,
+              "bottom": 408,
+              "left": 56,
+              "height": 24
+            },
+            "styles": {
+              "display": "block",
+              "position": "static",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "paddingTop": "6px",
+              "paddingBottom": "6px",
+              "minHeight": "auto",
+              "height": "24px",
+              "overflow": "visible",
+              "overflowY": "visible",
+              "transform": "",
+              "animation": "none",
+              "visibility": "visible",
+              "opacity": "1",
+              "boxSizing": "border-box"
+            }
+          },
+          {
+            "label": "  grandchild[2]",
+            "tag": "DIV",
+            "id": "",
+            "class": "cal-dh",
+            "rect": {
+              "top": 384,
+              "bottom": 408,
+              "left": 112,
+              "height": 24
+            },
+            "styles": {
+              "display": "block",
+              "position": "static",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "paddingTop": "6px",
+              "paddingBottom": "6px",
+              "minHeight": "auto",
+              "height": "24px",
+              "overflow": "visible",
+              "overflowY": "visible",
+              "transform": "",
+              "animation": "none",
+              "visibility": "visible",
+              "opacity": "1",
+              "boxSizing": "border-box"
+            }
+          },
+          {
+            "label": "  grandchild[3]",
+            "tag": "DIV",
+            "id": "",
+            "class": "cal-dh",
+            "rect": {
+              "top": 384,
+              "bottom": 408,
+              "left": 168,
+              "height": 24
+            },
+            "styles": {
+              "display": "block",
+              "position": "static",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "paddingTop": "6px",
+              "paddingBottom": "6px",
+              "minHeight": "auto",
+              "height": "24px",
+              "overflow": "visible",
+              "overflowY": "visible",
+              "transform": "",
+              "animation": "none",
+              "visibility": "visible",
+              "opacity": "1",
+              "boxSizing": "border-box"
+            }
+          },
+          {
+            "label": "  grandchild[4]",
+            "tag": "DIV",
+            "id": "",
+            "class": "cal-dh",
+            "rect": {
+              "top": 384,
+              "bottom": 408,
+              "left": 224,
+              "height": 24
+            },
+            "styles": {
+              "display": "block",
+              "position": "static",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "paddingTop": "6px",
+              "paddingBottom": "6px",
+              "minHeight": "auto",
+              "height": "24px",
+              "overflow": "visible",
+              "overflowY": "visible",
+              "transform": "",
+              "animation": "none",
+              "visibility": "visible",
+              "opacity": "1",
+              "boxSizing": "border-box"
+            }
+          }
+        ]
+      }
+    ],
+    "scrollInfo": {
+      "windowScrollY": 0,
+      "docScrollTop": 0,
+      "bodyScrollTop": 0,
+      "wrapScrollTop": 0,
+      "wrapScrollHeight": 237,
+      "wrapClientHeight": 237
+    },
+    "fixedEls": [
+      {
+        "tag": "DIV",
+        "id": "drawerOverlay",
+        "class": "drawer-overlay",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "9998"
+      },
+      {
+        "tag": "ASIDE",
+        "id": "drawer",
+        "class": "drawer",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "9999"
+      },
+      {
+        "tag": "DIV",
+        "id": "nOv",
+        "class": "notif-ov",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "9998"
+      },
+      {
+        "tag": "DIV",
+        "id": "nPanel",
+        "class": "notif-panel",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "9999"
+      },
+      {
+        "tag": "DIV",
+        "id": "kpiModalOverlay",
+        "class": "kpi-modal-overlay",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "9999"
+      },
+      {
+        "tag": "DIV",
+        "id": "calendario",
+        "class": "tab tab-calendario on",
+        "position": "fixed",
+        "top": 169,
+        "height": 675,
+        "zIndex": "50"
+      },
+      {
+        "tag": "DIV",
+        "id": "kmOv",
+        "class": "km-ov",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "9999"
+      },
+      {
+        "tag": "DIV",
+        "id": "cdmOv",
+        "class": "cdm-ov",
+        "position": "fixed",
+        "top": 0,
+        "height": 844,
+        "zIndex": "10000"
+      }
+    ]
+  }
+}

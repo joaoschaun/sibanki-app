@@ -1,0 +1,63 @@
+{
+  "hosting": [
+    {
+      "target": "app",
+      "public": "public",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {"source": "/app/**", "destination": "/app/index.html"},
+        {"source": "/app", "destination": "/app/index.html"},
+        {"source": "**", "destination": "/index.html"}
+      ],
+      "headers": [
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Content-Security-Policy",
+              "value": "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://accounts.google.com https://apis.google.com https://js.stripe.com blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src * data: blob:; connect-src https: wss:; frame-src https://accounts.google.com https://virtus-fin-pro.firebaseapp.com https://virtus-financeiro-cd7bd.firebaseapp.com https://staging-13a0b.web.app https://js.stripe.com https://hooks.stripe.com"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "staging",
+      "public": "public",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {"source": "/app/**", "destination": "/app/index.html"},
+        {"source": "/app", "destination": "/app/index.html"},
+        {"source": "**", "destination": "/index.html"}
+      ],
+      "headers": [
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Content-Security-Policy",
+              "value": "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://accounts.google.com https://apis.google.com https://js.stripe.com blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src * data: blob:; connect-src https: wss:; frame-src https://accounts.google.com https://virtus-fin-pro.firebaseapp.com https://virtus-financeiro-cd7bd.firebaseapp.com https://staging-13a0b.web.app https://js.stripe.com https://hooks.stripe.com"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "docs",
+      "public": "public/docs",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+    },
+    {
+      "target": "doc-investidor",
+      "public": "public/doc-investidor",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+    }
+  ],
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs22"
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}

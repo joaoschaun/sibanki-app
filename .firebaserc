@@ -1,0 +1,24 @@
+{
+  "projects": {
+    "default": "virtus-financeiro-cd7bd"
+  },
+  "targets": {
+    "virtus-financeiro-cd7bd": {
+      "hosting": {
+        "app": [
+          "virtus-financeiro-cd7bd"
+        ],
+        "staging": [
+          "staging-13a0b"
+        ],
+        "docs": [
+          "sibanki-docs"
+        ],
+        "doc-investidor": [
+          "doc-investidor"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

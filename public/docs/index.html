@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sibanki - Documento para Investidor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0a1a;--bg2:#111128;--bg3:#161640;
+--card:#111128;--card2:#1a1a3e;
+--brd:rgba(255,255,255,.08);--brd2:rgba(79,140,255,.25);
+--t1:#f1f5f9;--t2:#94a3b8;--t3:#64748b;
+--pri:#4F8CFF;--pri2:#7C5CFC;
+--green:#22C55E;--red:#EF4444;--orange:#F59E0B;--pink:#EC4899;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);line-height:1.8;-webkit-font-smoothing:antialiased}
+a{color:var(--pri);text-decoration:none}
+
+/* PRINT */
+@media print{
+body{background:#fff;color:#111;font-size:11pt}
+.no-print{display:none!important}
+.page-break{page-break-before:always}
+section{padding:40px 20px}
+.cover{min-height:auto;padding:60px 20px}
+h1,h2,h3{color:#111}
+.card{border:1px solid #ddd;background:#f9f9f9}
+.badge{background:#eee;color:#333}
+}
+
+/* COVER */
+.cover{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px;position:relative;overflow:hidden}
+.cover::before{content:'';position:absolute;width:800px;height:800px;background:radial-gradient(circle,rgba(79,140,255,.12) 0%,transparent 70%);top:-200px;right:-200px;border-radius:50%}
+.cover::after{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(124,92,252,.08) 0%,transparent 70%);bottom:-200px;left:-200px;border-radius:50%}
+.cover-content{position:relative;z-index:2;max-width:700px}
+.cover-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(79,140,255,.1);border:1px solid var(--brd2);border-radius:30px;padding:8px 20px;font-size:.85em;color:var(--pri);margin-bottom:32px;font-weight:600}
+.cover h1{font-size:3.5em;font-weight:900;line-height:1.1;margin-bottom:16px;background:linear-gradient(135deg,#fff 30%,var(--pri) 70%,var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.cover .subtitle{font-size:1.3em;color:var(--t2);margin-bottom:40px;line-height:1.6}
+.cover-meta{display:flex;gap:32px;justify-content:center;flex-wrap:wrap;margin-top:40px}
+.cover-meta-item{text-align:center}
+.cover-meta-item .val{font-size:1.5em;font-weight:800;color:var(--pri)}
+.cover-meta-item .label{font-size:.8em;color:var(--t3);margin-top:4px}
+.cover-logo{width:80px;height:80px;border-radius:20px;margin-bottom:24px}
+.cover-stamp{margin-top:48px;font-size:.8em;color:var(--t3);border-top:1px solid var(--brd);padding-top:24px;width:100%}
+
+/* NAV */
+.doc-nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(10,10,26,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--brd);padding:12px 0}
+.doc-nav-inner{max-width:1100px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between}
+.doc-nav-logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.1em}
+.doc-nav-logo img{width:28px;height:28px;border-radius:8px}
+.doc-nav-links{display:flex;gap:20px}
+.doc-nav-links a{color:var(--t3);font-size:.8em;font-weight:500;transition:color .3s}
+.doc-nav-links a:hover{color:var(--t1)}
+
+/* SECTIONS */
+section{max-width:1100px;margin:0 auto;padding:80px 24px}
+.section-num{font-size:.75em;font-weight:700;color:var(--pri);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+h2{font-size:2.2em;font-weight:800;margin-bottom:12px;line-height:1.2}
+h2 span{background:linear-gradient(135deg,var(--pri),var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h3{font-size:1.3em;font-weight:700;margin-bottom:8px;margin-top:32px}
+.section-desc{font-size:1.05em;color:var(--t2);max-width:700px;margin-bottom:40px;line-height:1.8}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--brd);border-radius:16px;padding:28px;transition:all .3s}
+.card:hover{border-color:var(--brd2)}
+.card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.card-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card .icon{font-size:2em;margin-bottom:12px}
+.card h4{font-size:1em;font-weight:700;margin-bottom:6px}
+.card p{font-size:.88em;color:var(--t2);line-height:1.7}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:.75em;font-weight:600}
+.badge-blue{background:rgba(79,140,255,.1);color:var(--pri);border:1px solid rgba(79,140,255,.2)}
+.badge-green{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.badge-orange{background:rgba(245,158,11,.1);color:var(--orange);border:1px solid rgba(245,158,11,.2)}
+.badge-red{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.badge-purple{background:rgba(124,92,252,.1);color:var(--pri2);border:1px solid rgba(124,92,252,.2)}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;margin:20px 0}
+th{text-align:left;padding:12px 16px;font-size:.78em;text-transform:uppercase;letter-spacing:1px;color:var(--t3);border-bottom:2px solid var(--brd);background:rgba(79,140,255,.03)}
+td{padding:12px 16px;font-size:.9em;color:var(--t2);border-bottom:1px solid var(--brd)}
+tr:hover td{background:rgba(79,140,255,.02)}
+.table-wrap{background:var(--card);border:1px solid var(--brd);border-radius:16px;overflow:hidden}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}
+.stat{background:var(--card);border:1px solid var(--brd);border-radius:14px;padding:20px;text-align:center}
+.stat .num{font-size:2em;font-weight:900;background:linear-gradient(135deg,var(--pri),var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat .lbl{font-size:.8em;color:var(--t3);margin-top:4px}
+
+/* HIGHLIGHT BOX */
+.highlight{background:linear-gradient(135deg,rgba(79,140,255,.06),rgba(124,92,252,.06));border:1px solid var(--brd2);border-radius:16px;padding:28px;margin:24px 0}
+.highlight h4{color:var(--pri);margin-bottom:8px}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:32px;margin:24px 0}
+.timeline::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--pri),var(--pri2),transparent)}
+.timeline-item{position:relative;margin-bottom:28px;padding-left:16px}
+.timeline-item::before{content:'';position:absolute;left:-26px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--pri);border:2px solid var(--bg)}
+.timeline-item h4{font-size:1em;font-weight:700}
+.timeline-item .date{font-size:.78em;color:var(--pri);font-weight:600;margin-bottom:4px}
+.timeline-item p{font-size:.88em;color:var(--t2)}
+
+/* COMPARISON CHECK */
+.check{color:var(--green);font-weight:700}
+.cross{color:var(--t3)}
+.soon{color:var(--orange);font-weight:600;font-size:.8em}
+
+/* DIVIDER */
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--brd2),transparent);margin:60px 0}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+.card-grid,.card-grid-2{grid-template-columns:1fr}
+.card-grid-4{grid-template-columns:repeat(2,1fr)}
+.stat-grid{grid-template-columns:repeat(2,1fr)}
+.cover h1{font-size:2.2em}
+h2{font-size:1.6em}
+.doc-nav-links{display:none}
+section{padding:40px 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="doc-nav no-print">
+<div class="doc-nav-inner">
+<div class="doc-nav-logo">
+<img src="https://storage.googleapis.com/app-tess-ai-platform-assets-prod/assets/uploads/313663a4-caf3-472e-813b-9d2995f8297f.png" alt="Sibanki">
+Sibanki
+</div>
+<div class="doc-nav-links">
+<a href="#produto">Produto</a>
+<a href="#modulos">Modulos</a>
+<a href="#diferenciais">Diferenciais</a>
+<a href="#comparativo">Comparativo</a>
+<a href="#financeiro">Financeiro</a>
+<a href="#roadmap">Roadmap</a>
+<a href="#investimento">Investimento</a>
+</div>
+</div>
+</nav>
+
+<!-- ============================================ -->
+<!-- CAPA -->
+<!-- ============================================ -->
+<section class="cover">
+<div class="cover-content">
+<img src="https://storage.googleapis.com/app-tess-ai-platform-assets-prod/assets/uploads/313663a4-caf3-472e-813b-9d2995f8297f.png" alt="Sibanki" class="cover-logo">
+<div class="cover-badge">&#128202; Documento Confidencial para Investidor</div>
+<h1>Sibanki</h1>
+<p class="subtitle">O sistema financeiro mais inteligente do Brasil.<br>Financas pessoais + Investimentos + IA + Comunidade — tudo em um so lugar.</p>
+
+<div class="stat-grid" style="max-width:600px;margin:32px auto 0">
+<div class="stat">
+<div class="num">15</div>
+<div class="lbl">Modulos integrados</div>
+</div>
+<div class="stat">
+<div class="num">IA</div>
+<div class="lbl">Consultor Gemini</div>
+</div>
+<div class="stat">
+<div class="num">4</div>
+<div class="lbl">Metodos de analise</div>
+</div>
+<div class="stat">
+<div class="num">PWA</div>
+<div class="lbl">Multiplataforma</div>
+</div>
+</div>
+
+<div class="cover-stamp">
+<strong>Versao:</strong> Piloto (MVP) &nbsp;|&nbsp; <strong>Data:</strong> Fevereiro 2026 &nbsp;|&nbsp; <strong>Status:</strong> Em operacao<br>
+<strong>Site:</strong> sibanki.com.br &nbsp;|&nbsp; <strong>App:</strong> sibanki.com.br/app
+</div>
+</div>
+</section>
+
+<!-- ============================================ -->
+<!-- 01. VISAO GERAL -->
+<!-- ============================================ -->
+<section id="produto">
+<div class="section-num">01 — Visao Geral</div>
+<h2>O que e o <span>Sibanki</span>?</h2>
+<p class="section-desc">O Sibanki e uma plataforma financeira completa que unifica controle de financas pessoais, investimentos com analise fundamentalista, inteligencia artificial como consultor pessoal e uma comunidade social — tudo em um unico aplicativo web (PWA) acessivel de qualquer dispositivo.</p>
+
+<div class="highlight">
+<h4>&#127919; Problema que Resolvemos</h4>
+<p style="color:var(--t2);font-size:.95em;line-height:1.8">Hoje, o brasileiro precisa de <strong style="color:var(--t1)">3 a 5 aplicativos diferentes</strong> para gerenciar suas financas: um para controle de gastos (Mobills), outro para investimentos (Kinvo), outro para cotacoes (Status Invest), outro para comunidade (Reddit/Twitter) e ainda planilhas para simulacoes. O Sibanki <strong style="color:var(--t1)">unifica tudo em uma unica plataforma</strong>, potencializada por IA que analisa seus dados e da recomendacoes personalizadas.</p>
+</div>
+
+<h3>&#128161; Proposta de Valor</h3>
+<div class="card-grid" style="margin-top:16px">
+<div class="card">
+<div class="icon">&#127919;</div>
+<h4>Tudo em Um</h4>
+<p>Financas + investimentos + IA + comunidade + gamificacao. O usuario nao precisa de mais nenhum app.</p>
+</div>
+<div class="card">
+<div class="icon">&#129302;</div>
+<h4>IA como Consultor</h4>
+<p>Google Gemini analisa os dados reais do usuario e da recomendacoes personalizadas 24h. Nenhum concorrente oferece isso.</p>
+</div>
+<div class="card">
+<div class="icon">&#128176;</div>
+<h4>Custo Ultra-Baixo</h4>
+<p>Stack 100% serverless (Firebase). Custo operacional de ~R$ 55-155/mes. Margem de lucro altissima desde o dia 1.</p>
+</div>
+</div>
+
+<h3>&#128100; Publico-Alvo</h3>
+<div class="card-grid" style="margin-top:16px">
+<div class="card">
+<div class="icon">&#128102;</div>
+<h4>Jovens (18-30)</h4>
+<p>Primeira experiencia com financas. Atraidos pela gamificacao, comunidade e IA. Plano gratuito como porta de entrada.</p>
+</div>
+<div class="card">
+<div class="icon">&#128116;</div>
+<h4>Adultos (30-50)</h4>
+<p>Ja investem, querem analise fundamentalista e controle completo. Convertem para Pro. Maior ticket medio.</p>
+</div>
+<div class="card">
+<div class="icon">&#128106;</div>
+<h4>Familias</h4>
+<p>Casais e familias que querem gerenciar financas juntos. Plano Familia com ate 5 membros. Menor churn.</p>
+</div>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<!-- 02. MODULOS -->
+<!-- ============================================ -->
+<section id="modulos" class="page-break">
+<div class="section-num">02 — O Produto</div>
+<h2>15 Modulos <span>Integrados</span></h2>
+<p class="section-desc">Cada modulo foi projetado para funcionar de forma independente, mas a integracao entre eles e o que torna o Sibanki unico. A IA cruza dados de todos os modulos para gerar insights que nenhum concorrente consegue.</p>
+
+<div class="card-grid" style="margin-top:24px">
+<div class="card">
+<div class="icon">&#128202;</div>
+<h4>1. Dashboard Inteligente</h4>
+<p>Visao 360 das financas. KPIs, graficos, score de saude financeira, evolucao patrimonial em tempo real. A IA gera alertas proativos.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span></div>
+</div>
+<div class="card">
+<div class="icon">&#128178;</div>
+<h4>2. Lancamentos</h4>
+<p>Registro de receitas e despesas com categorias personalizaveis, filtros avancados, importacao CSV e recorrencias automaticas.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span></div>
+</div>
+<div class="card">
+<div class="icon">&#128200;</div>
+<h4>3. Investimentos</h4>
+<p>Carteira com cotacoes B3 em tempo real. Analise fundamentalista com 4 metodos (Graham, Lynch, Bazin + Buffett). Proventos e simuladores.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span> <span class="badge badge-blue">&#128640; Em evolucao</span></div>
+</div>
+<div class="card">
+<div class="icon">&#128179;</div>
+<h4>4. Cartoes de Credito</h4>
+<p>Controle de limites, faturas, parcelas e vencimentos. Alertas de fatura proxima e gastos excessivos.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span></div>
+</div>
+<div class="card">
+<div class="icon">&#127919;</div>
+<h4>5. Metas Financeiras</h4>
+<p>Objetivos com prazo e valor. Barra de progresso visual, projecoes da IA e sugestoes de aporte.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span></div>
+</div>
+<div class="card">
+<div class="icon">&#128176;</div>
+<h4>6. Orcamento Mensal</h4>
+<p>Planejamento por categoria com limites e alertas. Comparativo mes a mes. Score de disciplina orcamentaria.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span></div>
+</div>
+<div class="card">
+<div class="icon">&#128188;</div>
+<h4>7. Carteira Digital</h4>
+<p>Multiplas contas bancarias com saldos, transferencias entre contas e visao consolidada do patrimonio.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span></div>
+</div>
+<div class="card">
+<div class="icon">&#128106;</div>
+<h4>8. Modulo Familia</h4>
+<p>Ate 5 membros gerenciando financas juntos. Dados compartilhados, orcamento familiar e metas em conjunto.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span></div>
+</div>
+<div class="card">
+<div class="icon">&#129302;</div>
+<h4>9. Consultor IA (Gemini)</h4>
+<p>Consultor financeiro pessoal powered by Google Gemini. Analisa dados reais do usuario e gera recomendacoes personalizadas.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span></div>
+</div>
+<div class="card">
+<div class="icon">&#127942;</div>
+<h4>10. Conquistas e XP</h4>
+<p>Gamificacao completa: badges, niveis, XP. Conquistas desbloqueiam descontos reais na assinatura (ate 50% OFF).</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span></div>
+</div>
+<div class="card">
+<div class="icon">&#128196;</div>
+<h4>11. Relatorios PDF</h4>
+<p>Relatorios profissionais detalhados com comparativos mensais, graficos e analise completa exportavel.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span></div>
+</div>
+<div class="card">
+<div class="icon">&#128197;</div>
+<h4>12. Calendario Financeiro</h4>
+<p>Visualizacao de receitas e despesas no formato calendario. Fluxo diario, semanal e mensal.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span></div>
+</div>
+<div class="card">
+<div class="icon">&#127760;</div>
+<h4>13. Comunidade Social</h4>
+<p>Rede social financeira. Posts, comentarios, curtidas, ranking, noticias. Todos os usuarios interagem em tempo real via Firestore.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span> <span class="badge badge-blue">&#128640; Em evolucao</span></div>
+</div>
+<div class="card">
+<div class="icon">&#128233;</div>
+<h4>14. Bot Telegram</h4>
+<p>Acesso instantaneo via Telegram. Consulta saldo, cotacoes, alertas e conversa com a IA sem abrir o app.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span></div>
+</div>
+<div class="card">
+<div class="icon">&#9881;</div>
+<h4>15. Configuracoes</h4>
+<p>Perfil, integracoes (brapi.dev, Telegram), tema, categorias personalizaveis, contas e preferencias.</p>
+<div style="margin-top:8px"><span class="badge badge-green">&#9989; Operacional</span></div>
+</div>
+</div>
+
+<div class="highlight" style="margin-top:32px">
+<h4>&#128270; Integracao entre Modulos — O Diferencial Invisivel</h4>
+<p style="color:var(--t2);font-size:.92em;line-height:1.8">
+Quando o usuario registra um gasto no modulo de Lancamentos, automaticamente:<br>
+&#8226; O <strong style="color:var(--t1)">Dashboard</strong> atualiza os KPIs e graficos<br>
+&#8226; O <strong style="color:var(--t1)">Orcamento</strong> recalcula os limites por categoria<br>
+&#8226; As <strong style="color:var(--t1)">Metas</strong> ajustam as projecoes<br>
+&#8226; A <strong style="color:var(--t1)">IA</strong> identifica padroes e sugere economias<br>
+&#8226; As <strong style="color:var(--t1)">Conquistas</strong> verificam se novos badges foram desbloqueados<br>
+&#8226; O <strong style="color:var(--t1)">Bot Telegram</strong> pode enviar alerta se o gasto exceder um limite<br>
+<br>
+Essa integracao cria um <strong style="color:var(--pri)">efeito composto de valor</strong> que torna extremamente dificil para o usuario migrar para outro app — ele perderia toda essa inteligencia conectada.
+</p>
+</div>
+</section>
+
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<!-- 03. DIFERENCIAIS COMPETITIVOS -->
+<!-- ============================================ -->
+<section id="diferenciais" class="page-break">
+<div class="section-num">03 — Diferenciais Competitivos</div>
+<h2>O Moat do <span>Sibanki</span></h2>
+<p class="section-desc">Vantagens competitivas que tornam o Sibanki extremamente dificil de replicar e criam barreiras de saida para o usuario.</p>
+
+<div class="card-grid-2" style="margin-top:24px">
+<div class="card" style="border-color:var(--brd2)">
+<div class="icon">&#129302;</div>
+<h4>1. IA como Consultor Financeiro Pessoal</h4>
+<p>Nenhum concorrente brasileiro oferece um consultor de IA que analisa os dados REAIS do usuario (gastos, investimentos, metas, orcamento) e gera recomendacoes personalizadas. O Google Gemini processa todo o contexto financeiro e responde como um planejador financeiro certificado — 24 horas por dia, sem custo adicional.</p>
+<div style="margin-top:12px"><span class="badge badge-purple">&#128312; Exclusivo Sibanki</span></div>
+</div>
+<div class="card" style="border-color:var(--brd2)">
+<div class="icon">&#128200;</div>
+<h4>2. Financas + Investimentos Unificados</h4>
+<p>O Mobills controla gastos mas nao tem investimentos. O Kinvo acompanha carteira mas nao controla financas. O Sibanki faz AMBOS. Isso permite que a IA sugira: "Voce economizou R$ 500 este mes. Baseado no seu perfil, recomendo aportar em FIIs para renda passiva." Nenhum concorrente faz essa ponte.</p>
+<div style="margin-top:12px"><span class="badge badge-purple">&#128312; Exclusivo Sibanki</span></div>
+</div>
+<div class="card" style="border-color:var(--brd2)">
+<div class="icon">&#128202;</div>
+<h4>3. Analise Fundamentalista com 4 Metodos</h4>
+<p>Graham, Lynch, Bazin e Buffett — cada um com checklist completo e score visual. O usuario consulta uma acao e ve se ela passa nos criterios dos maiores investidores da historia. Nenhum app de financas pessoais oferece isso.</p>
+<div style="margin-top:12px"><span class="badge badge-purple">&#128312; Exclusivo Sibanki</span></div>
+</div>
+<div class="card" style="border-color:var(--brd2)">
+<div class="icon">&#127942;</div>
+<h4>4. Gamificacao que Gera Retencao</h4>
+<p>Sistema de XP, niveis, badges e conquistas que recompensam o uso consistente. Conquistas desbloqueiam descontos REAIS na assinatura (ate 50% OFF). Loop de engajamento: quanto mais usa, mais barato fica, mais continua usando.</p>
+<div style="margin-top:12px"><span class="badge badge-purple">&#128312; Exclusivo Sibanki</span></div>
+</div>
+<div class="card" style="border-color:var(--brd2)">
+<div class="icon">&#127760;</div>
+<h4>5. Comunidade Social Financeira</h4>
+<p>Rede social dentro do app onde usuarios compartilham dicas, analises, conquistas. Ranking, competicoes, educacao financeira. Efeito de rede: quanto mais gente, mais valioso o Sibanki se torna.</p>
+<div style="margin-top:12px"><span class="badge badge-blue">&#128640; Em evolucao</span></div>
+</div>
+<div class="card" style="border-color:var(--brd2)">
+<div class="icon">&#128176;</div>
+<h4>6. Custo Operacional Quase Zero</h4>
+<p>Stack 100% serverless: Firebase + Gemini API + brapi.dev + Telegram Bot API. Custo mensal: ~R$ 55-155. Com apenas 3 assinantes Pro ja cobrimos os custos. Margem bruta projetada: >90%.</p>
+<div style="margin-top:12px"><span class="badge badge-green">&#9989; Vantagem estrutural</span></div>
+</div>
+</div>
+
+<div class="highlight" style="margin-top:32px">
+<h4>&#128274; Barreiras de Saida (Lock-in)</h4>
+<p style="color:var(--t2);font-size:.92em;line-height:1.8">
+&#8226; <strong style="color:var(--t1)">Dados historicos</strong> — Meses/anos de lancamentos, categorias personalizadas, historico de investimentos<br>
+&#8226; <strong style="color:var(--t1)">Conquistas e nivel</strong> — XP acumulado, badges conquistados, descontos desbloqueados<br>
+&#8226; <strong style="color:var(--t1)">Comunidade</strong> — Reputacao, posts, seguidores, ranking<br>
+&#8226; <strong style="color:var(--t1)">IA treinada</strong> — A IA conhece o perfil, habitos e objetivos do usuario<br>
+&#8226; <strong style="color:var(--t1)">Familia</strong> — Ate 5 membros conectados. Se um sai, todos perdem<br>
+&#8226; <strong style="color:var(--t1)">Integracao Telegram</strong> — Alertas e consultas configurados no dia-a-dia
+</p>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<!-- 04. COMPARATIVO VS CONCORRENTES -->
+<!-- ============================================ -->
+<section id="comparativo" class="page-break">
+<div class="section-num">04 — Analise Competitiva</div>
+<h2>Sibanki vs <span>Concorrentes</span></h2>
+<p class="section-desc">Comparativo detalhado com os principais players do mercado brasileiro de financas pessoais e investimentos.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th style="min-width:200px">Funcionalidade</th>
+<th style="text-align:center;min-width:90px;background:rgba(79,140,255,.08)">Sibanki</th>
+<th style="text-align:center;min-width:80px">Mobills</th>
+<th style="text-align:center;min-width:80px">Organizze</th>
+<th style="text-align:center;min-width:80px">GuiaBolso</th>
+<th style="text-align:center;min-width:80px">Kinvo</th>
+<th style="text-align:center;min-width:80px">Fortuno</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><strong>Controle receitas/despesas</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td></tr>
+<tr><td><strong>Cartoes de credito</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td></tr>
+<tr><td><strong>Metas financeiras</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td></tr>
+<tr><td><strong>Orcamento mensal</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td></tr>
+<tr><td><strong>Investimentos + cotacao B3</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td></tr>
+<tr><td><strong>Analise fundamentalista (4 metodos)</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td></tr>
+<tr><td><strong>Simuladores financeiros</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td></tr>
+<tr><td><strong>IA como consultor pessoal</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td></tr>
+<tr><td><strong>Bot Telegram</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td></tr>
+<tr><td><strong>Comunidade social</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td></tr>
+<tr><td><strong>Gamificacao (XP, badges, descontos)</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td></tr>
+<tr><td><strong>Modulo familia (ate 5 membros)</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td></tr>
+<tr><td><strong>Relatorios PDF</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td></tr>
+<tr><td><strong>PWA (sem loja de apps)</strong></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td></tr>
+<tr><td><strong>Open Banking</strong></td><td style="text-align:center"><span class="soon">&#128312; Roadmap</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="check">&#10004;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td><td style="text-align:center"><span class="cross">&#10006;</span></td></tr>
+<tr style="background:rgba(79,140,255,.05)"><td><strong style="color:var(--t1)">TOTAL funcionalidades</strong></td><td style="text-align:center"><strong style="color:var(--pri);font-size:1.2em">14/15</strong></td><td style="text-align:center"><strong>7/15</strong></td><td style="text-align:center"><strong>6/15</strong></td><td style="text-align:center"><strong>5/15</strong></td><td style="text-align:center"><strong>3/15</strong></td><td style="text-align:center"><strong>3/15</strong></td></tr>
+<tr style="background:rgba(79,140,255,.05)"><td><strong style="color:var(--t1)">Preco mensal</strong></td><td style="text-align:center"><strong style="color:var(--green)">R$ 19,90</strong></td><td style="text-align:center">R$ 24,90</td><td style="text-align:center">R$ 12,90</td><td style="text-align:center">Gratis*</td><td style="text-align:center">R$ 19,90</td><td style="text-align:center">R$ 14,90</td></tr>
+</tbody>
+</table>
+</div>
+<p style="font-size:.78em;color:var(--t3);margin-top:8px">* GuiaBolso monetiza via ofertas de credito e marketplace financeiro.</p>
+
+<div class="highlight" style="margin-top:32px">
+<h4>&#127942; Conclusao Competitiva</h4>
+<p style="color:var(--t2);font-size:.92em;line-height:1.8">
+O Sibanki oferece <strong style="color:var(--pri)">quase o dobro de funcionalidades</strong> do concorrente mais proximo (Mobills) por um preco <strong style="color:var(--green)">20% menor</strong>. 7 funcionalidades sao <strong style="color:var(--t1)">exclusivas do Sibanki</strong>: IA, analise fundamentalista, simuladores, Bot Telegram, comunidade, gamificacao e modulo familia.
+</p>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<!-- 05. MODULO INVESTIMENTOS DETALHADO -->
+<!-- ============================================ -->
+<section id="investimentos-detail" class="page-break">
+<div class="section-num">05 — Modulo de Investimentos</div>
+<h2>Analise Fundamentalista <span>Completa</span></h2>
+<p class="section-desc">4 metodos de analise fundamentalista integrados, cada um com checklist visual e score automatico baseado em dados reais da B3.</p>
+
+<div class="card-grid-2" style="margin-top:24px">
+<div class="card">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+<div style="width:48px;height:48px;border-radius:12px;background:rgba(79,140,255,.1);display:flex;align-items:center;justify-content:center;font-size:1.5em">&#128218;</div>
+<div><h4 style="margin:0">Metodo Benjamin Graham</h4><span class="badge badge-green">&#9989; Implementado</span></div>
+</div>
+<p>O "pai do value investing". Criterios rigorosos para acoes subvalorizadas com margem de seguranca.</p>
+<div style="margin-top:12px;font-size:.85em;color:var(--t2);line-height:2">
+&#8226; P/L &lt; 15 | P/VP &lt; 1,5 | P/L x P/VP &lt; 22,5<br>
+&#8226; Dividend Yield &gt; 0% | Divida/PL &lt; 0,5<br>
+&#8226; Liquidez corrente &gt; 1,5 | Crescimento de lucros
+</div>
+<div style="margin-top:12px"><strong style="font-size:.85em;color:var(--pri)">Evolucao:</strong> <span style="font-size:.82em;color:var(--t3)">Historico 10 anos de lucros, 20 anos dividendos, crescimento LPA 33%/10 anos</span></div>
+</div>
+
+<div class="card">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+<div style="width:48px;height:48px;border-radius:12px;background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;font-size:1.5em">&#128200;</div>
+<div><h4 style="margin:0">Metodo Peter Lynch</h4><span class="badge badge-green">&#9989; Implementado</span></div>
+</div>
+<p>"Invista no que voce conhece." Foco no PEG Ratio e classificacao do tipo de empresa.</p>
+<div style="margin-top:12px;font-size:.85em;color:var(--t2);line-height:2">
+&#8226; PEG Ratio &lt; 1 | Crescimento receita<br>
+&#8226; Margens saudaveis | Divida controlada<br>
+&#8226; Fluxo de caixa positivo
+</div>
+<div style="margin-top:12px"><strong style="font-size:.85em;color:var(--pri)">Evolucao:</strong> <span style="font-size:.82em;color:var(--t3)">Classificacao automatica: Slow Grower, Stalwart, Fast Grower, Cyclical, Turnaround, Asset Play</span></div>
+</div>
+
+<div class="card">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+<div style="width:48px;height:48px;border-radius:12px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;font-size:1.5em">&#128176;</div>
+<div><h4 style="margin:0">Metodo Decio Bazin</h4><span class="badge badge-green">&#9989; Implementado</span></div>
+</div>
+<p>Foco em dividendos. Criterios para viver de renda passiva.</p>
+<div style="margin-top:12px;font-size:.85em;color:var(--t2);line-height:2">
+&#8226; DY &gt; 6% ao ano | Sem prejuizo 5 anos<br>
+&#8226; Dividendos consistentes | Divida controlada<br>
+&#8226; Liquidez diaria adequada
+</div>
+<div style="margin-top:12px"><strong style="font-size:.85em;color:var(--pri)">Evolucao:</strong> <span style="font-size:.82em;color:var(--t3)">Liquidez minima &gt; R$500k/dia, historico dividendos 5 anos, preco maximo Bazin</span></div>
+</div>
+
+<div class="card">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+<div style="width:48px;height:48px;border-radius:12px;background:rgba(124,92,252,.1);display:flex;align-items:center;justify-content:center;font-size:1.5em">&#128081;</div>
+<div><h4 style="margin:0">Metodo Warren Buffett</h4><span class="badge badge-orange">&#128312; Em desenvolvimento</span></div>
+</div>
+<p>O maior investidor da historia. Foco em empresas com vantagem competitiva duravel (moat economico).</p>
+<div style="margin-top:12px;font-size:.85em;color:var(--t2);line-height:2">
+&#8226; ROE consistente &gt; 15% (5 anos)<br>
+&#8226; Margem liquida crescente | Divida/EBITDA &lt; 3x<br>
+&#8226; Lucro liquido crescente (5 anos)<br>
+&#8226; Vantagem competitiva duravel (moat)<br>
+&#8226; Preco abaixo do valor intrinseco<br>
+&#8226; FCL positivo e crescente<br>
+&#8226; Gestao competente e honesta
+</div>
+<div style="margin-top:12px"><strong style="font-size:.85em;color:var(--pri)">Implementacao:</strong> <span style="font-size:.82em;color:var(--t3)">Score 0-100, checklist semaforo, calculo valor intrinseco por Owner Earnings</span></div>
+</div>
+</div>
+
+<h3 style="margin-top:40px">&#128295; Sub-modulos de Investimentos</h3>
+<div class="card-grid" style="margin-top:16px">
+<div class="card"><div class="icon">&#128202;</div><h4>Overview</h4><p>Dashboard: patrimonio total, rentabilidade, alocacao por tipo, evolucao historica e DY medio.</p></div>
+<div class="card"><div class="icon">&#128188;</div><h4>Carteira</h4><p>Todos os ativos: quantidade, preco medio, cotacao atual, variacao, tipo, conta.</p></div>
+<div class="card"><div class="icon">&#128200;</div><h4>Analise</h4><p>Consulta de ativos com dados fundamentalistas. 4 metodos com score visual.</p></div>
+<div class="card"><div class="icon">&#128176;</div><h4>Proventos</h4><p>Historico de dividendos, JCP, FIIs. Calendario e projecao de renda passiva.</p></div>
+<div class="card"><div class="icon">&#129518;</div><h4>Simuladores</h4><p>Juros compostos, FIRE, comparativo RF vs RV, projecao grafica de aportes.</p></div>
+<div class="card"><div class="icon">&#128100;</div><h4>Perfil Investidor</h4><p>Questionario suitability + sugestao de alocacao ideal baseada no perfil.</p></div>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<!-- 06. MODELO FINANCEIRO -->
+<!-- ============================================ -->
+<section id="financeiro" class="page-break">
+<div class="section-num">06 — Modelo Financeiro</div>
+<h2>Custos e <span>Receita</span></h2>
+<p class="section-desc">Custos operacionais atuais, modelo de receita e projecoes de crescimento.</p>
+
+<h3>&#128178; Custos Operacionais Atuais (MVP)</h3>
+<div class="table-wrap" style="margin-top:16px">
+<table>
+<thead><tr><th>Item</th><th>Fornecedor</th><th>Custo Mensal</th><th>Observacao</th></tr></thead>
+<tbody>
+<tr><td><strong>Hospedagem + Auth + DB</strong></td><td>Firebase (Google Cloud)</td><td style="color:var(--green)">R$ 0 - 50</td><td>Spark plan gratuito ate ~50k leituras/dia</td></tr>
+<tr><td><strong>Dominio</strong></td><td>sibanki.com.br</td><td>~R$ 5</td><td>R$ 60/ano</td></tr>
+<tr><td><strong>IA (Consultor)</strong></td><td>Google Gemini API</td><td style="color:var(--green)">R$ 0 - 100</td><td>Free tier: 60 req/min</td></tr>
+<tr><td><strong>Cotacoes B3</strong></td><td>brapi.dev</td><td style="color:var(--green)">R$ 0</td><td>Free: 200 req/mes. Pago: R$ 29,90</td></tr>
+<tr><td><strong>Noticias</strong></td><td>RSS / NewsAPI</td><td style="color:var(--green)">R$ 0</td><td>Free tier</td></tr>
+<tr><td><strong>Bot Telegram</strong></td><td>Telegram Bot API</td><td style="color:var(--green)">R$ 0</td><td>100% gratuita</td></tr>
+<tr style="background:rgba(79,140,255,.05)"><td colspan="2"><strong style="color:var(--t1)">TOTAL MENSAL</strong></td><td><strong style="color:var(--pri);font-size:1.2em">R$ 55 - 155</strong></td><td></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>&#128179; Modelo de Receita</h3>
+<div class="card-grid" style="margin-top:16px">
+<div class="card"><h4>&#127775; Gratuito</h4><p style="font-size:1.5em;font-weight:900;color:var(--t1);margin:8px 0">R$ 0</p><p>50 lanc/mes, 5 consultas IA, 1 cartao, 2 contas, 2 metas.</p></div>
+<div class="card" style="border-color:var(--pri)"><h4>&#11088; Pro</h4><p style="font-size:1.5em;font-weight:900;color:var(--pri);margin:8px 0">R$ 19,90/mes</p><p>Tudo ilimitado. Anual: R$ 14,90/mes (-25%).</p></div>
+<div class="card"><h4>&#128106; Familia</h4><p style="font-size:1.5em;font-weight:900;color:var(--t1);margin:8px 0">R$ 29,90/mes</p><p>Pro + 5 membros. Anual: R$ 22,90/mes (-23%).</p></div>
+</div>
+
+<h3>&#128184; Projecao de Receita (12 meses)</h3>
+<div class="table-wrap" style="margin-top:16px">
+<table>
+<thead><tr><th>Mes</th><th>Gratuitos</th><th>Pro</th><th>Familia</th><th>MRR</th><th>Custo</th><th>Lucro</th></tr></thead>
+<tbody>
+<tr><td>Mes 1</td><td>100</td><td>10</td><td>2</td><td>R$ 259</td><td>R$ 80</td><td style="color:var(--green)">R$ 179</td></tr>
+<tr><td>Mes 3</td><td>500</td><td>50</td><td>10</td><td>R$ 1.294</td><td>R$ 120</td><td style="color:var(--green)">R$ 1.174</td></tr>
+<tr><td>Mes 6</td><td>2.000</td><td>200</td><td>40</td><td>R$ 5.176</td><td>R$ 200</td><td style="color:var(--green)">R$ 4.976</td></tr>
+<tr><td>Mes 9</td><td>5.000</td><td>500</td><td>100</td><td>R$ 12.940</td><td>R$ 350</td><td style="color:var(--green)">R$ 12.590</td></tr>
+<tr style="background:rgba(79,140,255,.05)"><td><strong>Mes 12</strong></td><td><strong>10.000</strong></td><td><strong>1.000</strong></td><td><strong>200</strong></td><td><strong style="color:var(--pri)">R$ 25.880</strong></td><td><strong>R$ 500</strong></td><td><strong style="color:var(--green)">R$ 25.380</strong></td></tr>
+</tbody>
+</table>
+</div>
+<p style="font-size:.78em;color:var(--t3);margin-top:8px">* Projecao conservadora. Conversao gratuito-Pro: 10%. Churn mensal: 5%.</p>
+
+<div class="stat-grid" style="margin-top:24px">
+<div class="stat"><div class="num">&gt;90%</div><div class="lbl">Margem Bruta</div></div>
+<div class="stat"><div class="num">3</div><div class="lbl">Assinantes p/ break-even</div></div>
+<div class="stat"><div class="num">R$ 25k</div><div class="lbl">MRR (12 meses)</div></div>
+<div class="stat"><div class="num">R$ 310k</div><div class="lbl">ARR (12 meses)</div></div>
+</div>
+
+<h3>&#128179; Monetizacao Adicional (Futuro)</h3>
+<div class="card-grid-2" style="margin-top:16px">
+<div class="card"><h4>&#129309; Programa de Afiliados</h4><p>30% recorrente da assinatura do indicado por 12 meses. Dashboard proprio. Ideal para influenciadores financeiros.</p></div>
+<div class="card"><h4>&#127970; Marketplace Financeiro</h4><p>CPA por usuario que abre conta em corretoras/bancos parceiros. Modelo GuiaBolso sem comprometer a experiencia.</p></div>
+<div class="card"><h4>&#127891; Educacao Premium</h4><p>Cursos e mentorias dentro da comunidade. Revenue share com educadores financeiros.</p></div>
+<div class="card"><h4>&#128202; API B2B</h4><p>Empresas oferecem Sibanki como beneficio. White-label para cooperativas e fintechs.</p></div>
+</div>
+</section>
+
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<!-- 07. ROADMAP -->
+<!-- ============================================ -->
+<section id="roadmap" class="page-break">
+<div class="section-num">07 — Roadmap de Desenvolvimento</div>
+<h2>Próximos <span>24 Meses</span></h2>
+<p class="section-desc">Plano de execução em 8 fases para transformar o MVP atual em uma plataforma financeira completa e escalavel.</p>
+
+<div class="highlight" style="margin-bottom:32px">
+<h4>&#9888;&#65039; Status Atual: APP PILOTO (MVP)</h4>
+<p style="color:var(--t2);font-size:.92em;line-height:1.8">
+O Sibanki atual e um <strong style="color:var(--t1)">Minimum Viable Product</strong> completamente funcional com 15 modulos operacionais. Foi desenvolvido como prova de conceito para validar a proposta de valor e a aceitacao do mercado. O roadmap abaixo detalha a evolucao para um produto de nivel profissional, pronto para escalar.
+</p>
+</div>
+
+<div class="timeline">
+
+<div class="timeline-item">
+<div class="date">FASE 1 — Meses 1 e 2</div>
+<h4>&#127912; Redesign UX/UI + Metodo Buffett</h4>
+<p>Redesign completo da interface com design system profissional. Tokens de design (cores, tipografia, espacamento), componentes reutilizaveis, animacoes fluidas, dark/light mode polido, mobile-first responsivo. Implementacao do metodo Warren Buffett na analise fundamentalista com score visual 0-100 e calculo de valor intrinseco por Owner Earnings.</p>
+<div style="margin-top:8px">
+<span class="badge badge-blue">UI/UX Design</span>
+<span class="badge badge-blue">Frontend</span>
+<span class="badge badge-purple">Investimentos</span>
+</div>
+<div style="margin-top:8px;font-size:.85em"><strong style="color:var(--orange)">Investimento estimado: R$ 15.000 - 30.000</strong></div>
+<div style="font-size:.82em;color:var(--t3);margin-top:4px">
+Inclui: UI/UX designer (R$ 8-15k) + implementacao frontend (R$ 7-15k)
+</div>
+</div>
+
+<div class="timeline-item">
+<div class="date">FASE 2 — Meses 3 e 4</div>
+<h4>&#127760; Comunidade 2.0 + Programa de Afiliados</h4>
+<p>Evolucao completa da comunidade: ranking de carteiras (% rentabilidade, sem valores reais), chat em tempo real por salas tematicas (acoes, FIIs, cripto, economia), carteiras modelo compartilhadas, educacao financeira (artigos, quizzes, desafios semanais), competicoes mensais, sistema de seguir usuarios + feed personalizado. Implementacao do programa de afiliados com dashboard proprio, links personalizados e comissao de 30% recorrente por 12 meses.</p>
+<div style="margin-top:8px">
+<span class="badge badge-blue">Social</span>
+<span class="badge badge-green">Monetizacao</span>
+<span class="badge badge-purple">Marketing</span>
+</div>
+<div style="margin-top:8px;font-size:.85em"><strong style="color:var(--orange)">Investimento estimado: R$ 25.000 - 50.000</strong></div>
+<div style="font-size:.82em;color:var(--t3);margin-top:4px">
+Inclui: Backend real-time (R$ 12-25k) + frontend (R$ 8-15k) + afiliados (R$ 5-10k)
+</div>
+</div>
+
+<div class="timeline-item">
+<div class="date">FASE 3 — Meses 5 e 6</div>
+<h4>&#128179; Pagamentos + App Nativo</h4>
+<p>Integracao Stripe para cobranca recorrente (cartao + PIX + boleto). Painel administrativo para gestao de assinaturas, cupons e metricas. Desenvolvimento de app nativo com React Native para iOS e Android, mantendo paridade de funcionalidades com o PWA. Publicacao na App Store e Google Play.</p>
+<div style="margin-top:8px">
+<span class="badge badge-green">Pagamentos</span>
+<span class="badge badge-blue">Mobile</span>
+<span class="badge badge-purple">Infra</span>
+</div>
+<div style="margin-top:8px;font-size:.85em"><strong style="color:var(--orange)">Investimento estimado: R$ 20.000 - 40.000</strong></div>
+<div style="font-size:.82em;color:var(--t3);margin-top:4px">
+Inclui: Stripe integration (R$ 5-8k) + React Native app (R$ 15-32k)
+</div>
+</div>
+
+<div class="timeline-item">
+<div class="date">FASE 4 — Meses 7 a 10</div>
+<h4>&#127974; Open Banking / Open Finance</h4>
+<p>Integracao com o ecossistema Open Finance Brasil para importacao automatica de extratos bancarios, saldos, investimentos e cartoes. Categorizacao automatica de transacoes com IA (machine learning). Requer certificacao como Instituicao Participante ou parceria com Iniciador de Transacao de Pagamento (ITP). Compliance com LGPD e regulacao do Banco Central.</p>
+<div style="margin-top:8px">
+<span class="badge badge-red">Regulatorio</span>
+<span class="badge badge-blue">Backend</span>
+<span class="badge badge-purple">IA/ML</span>
+</div>
+<div style="margin-top:8px;font-size:.85em"><strong style="color:var(--orange)">Investimento estimado: R$ 80.000 - 150.000</strong></div>
+<div style="font-size:.82em;color:var(--t3);margin-top:4px">
+Inclui: Certificacao (R$ 20-40k) + desenvolvimento (R$ 40-70k) + compliance/juridico (R$ 20-40k)
+</div>
+</div>
+
+<div class="timeline-item">
+<div class="date">FASE 5 — Meses 11 e 12</div>
+<h4>&#129302; IA 2.0 + Escala de Marketing</h4>
+<p>Evolucao da IA para modo proativo: alertas automaticos de gastos excessivos, previsoes de fluxo de caixa, recomendacoes de investimento baseadas em perfil + momento de mercado, deteccao de anomalias em transacoes. Escala de marketing: SEO + blog de financas, parcerias com influenciadores (Me Poupe, Primo Rico, Nathalia Arcuri), campanhas pagas segmentadas, PR em veiculos especializados.</p>
+<div style="margin-top:8px">
+<span class="badge badge-purple">IA Avancada</span>
+<span class="badge badge-green">Marketing</span>
+<span class="badge badge-blue">Growth</span>
+</div>
+<div style="margin-top:8px;font-size:.85em"><strong style="color:var(--orange)">Investimento estimado: R$ 30.000 - 50.000</strong></div>
+<div style="font-size:.82em;color:var(--t3);margin-top:4px">
+Inclui: IA avancada (R$ 15-25k) + marketing (R$ 15-25k)
+</div>
+</div>
+
+<div class="timeline-item">
+<div class="date">FASE 6 — Meses 13 a 15</div>
+<h4>🔍 Módulo Contador & Fiscal</h4>
+<p>Contador digital completo que fiscaliza o CPF do cliente, evitando atrasos, dívidas, fraudes e irregularidades. Monitoramento contínuo da situação fiscal na Receita Federal. Alertas de pendências, dívidas ativas e restrições. Pré-preenchimento automático do IRPF com dados do Sibanki (receitas, despesas dedutíveis, investimentos). Para MEIs: cálculo e emissão automática do DAS, controle de faturamento e limite anual. Detecção de cobranças indevidas, assinaturas esquecidas, taxas abusivas e movimentações suspeitas. Contabilidade completa automatizada via Open Banking — balanço patrimonial pessoal, DRE simplificado, evolução patrimonial e relatórios contábeis.</p>
+<div style="margin-top:8px">
+<span class="badge badge-red">Regulatório</span>
+<span class="badge badge-blue">Backend</span>
+<span class="badge badge-purple">IA/ML</span>
+<span class="badge badge-green">Monetização</span>
+</div>
+<div style="margin-top:8px;font-size:.85em"><strong style="color:var(--orange)">Investimento estimado: R$ 30.000 - 60.000</strong></div>
+<div style="font-size:.82em;color:var(--t3);margin-top:4px">
+Inclui: APIs da Receita Federal + Serasa (R$ 10-20k) + certificação digital (R$ 5-10k) + desenvolvimento (R$ 15-30k)
+</div>
+</div>
+
+<div class="timeline-item">
+<div class="date">FASE 7 — Meses 16 a 19</div>
+<h4>🏦 Análise de Crédito & Correspondente Bancário</h4>
+<p>O Sibanki como correspondente bancário credenciado pelo Banco Central, buscando as melhores opções de crédito personalizadas para cada usuário com base no perfil financeiro completo. Marketplace de crédito com comparação automática de taxas de 50+ instituições (empréstimo pessoal, consignado, financiamento, cartão de crédito). Score Sibanki interno baseado nos dados reais do usuário — mais preciso que o Score tradicional. IA recomendadora que analisa o perfil e sugere: "Você pode economizar R$ 847/ano refinanciando seu empréstimo no banco X". Simulador avançado de parcelas com CET (Custo Efetivo Total) e análise de impacto no orçamento. Receita por comissão de 1-3% sobre crédito aprovado — win-win para usuário e Sibanki.</p>
+<div style="margin-top:8px">
+<span class="badge badge-red">Regulatório</span>
+<span class="badge badge-green">Monetização</span>
+<span class="badge badge-blue">Integrações</span>
+<span class="badge badge-purple">IA</span>
+</div>
+<div style="margin-top:8px;font-size:.85em"><strong style="color:var(--orange)">Investimento estimado: R$ 40.000 - 80.000</strong></div>
+<div style="font-size:.82em;color:var(--t3);margin-top:4px">
+Inclui: Credenciamento BACEN (R$ 10-20k) + integrações bancárias (R$ 15-30k) + compliance/jurídico (R$ 10-20k) + desenvolvimento (R$ 5-10k)
+</div>
+<div style="font-size:.82em;color:var(--green);margin-top:4px">
+<strong>💰 Receita potencial: R$ 50 — R$ 500 por crédito aprovado (comissão de correspondente bancário)</strong>
+</div>
+</div>
+
+<div class="timeline-item">
+<div class="date">FASE 8 — Meses 20 a 24</div>
+<h4>🛡️ Módulo de Seguros</h4>
+<p>Marketplace de seguros integrado ao perfil financeiro do usuário. A IA analisa patrimônio, renda e dependentes para recomendar as melhores coberturas em 50+ seguradoras. Seguro de Vida (IA calcula valor ideal de cobertura baseado em renda, dívidas, dependentes e patrimônio), Seguro Auto (comparativo inteligente baseado no perfil e histórico), Seguro Residencial (proteção do patrimônio com análise automática do valor de cobertura ideal baseado nos bens cadastrados), Seguro Saúde (comparativo de planos com análise custo-benefício baseada no perfil familiar). IA Protetora que recomenda: "Você tem R$ 200k em patrimônio e 2 dependentes — recomendo seguro de vida de R$ 500k/ano por apenas R$ 89/mês". Comissão recorrente de 10-30% sobre prêmio anual enquanto o seguro estiver ativo.</p>
+<div style="margin-top:8px">
+<span class="badge badge-red">Regulatório</span>
+<span class="badge badge-green">Monetização</span>
+<span class="badge badge-blue">Integrações</span>
+<span class="badge badge-purple">IA</span>
+</div>
+<div style="margin-top:8px;font-size:.85em"><strong style="color:var(--orange)">Investimento estimado: R$ 20.000 - 40.000</strong></div>
+<div style="font-size:.82em;color:var(--t3);margin-top:4px">
+Inclui: Credenciamento SUSEP (R$ 5-10k) + integrações com seguradoras (R$ 10-20k) + compliance (R$ 5-10k)
+</div>
+<div style="font-size:.82em;color:var(--green);margin-top:4px">
+<strong>💰 Receita potencial: R$ 50 — R$ 300/ano por apólice ativa (comissão recorrente)</strong>
+</div>
+</div>
+
+
+</div>
+
+<h3 style="margin-top:40px">&#128176; Resumo do Investimento por Fase</h3>
+<div class="table-wrap" style="margin-top:16px">
+<table>
+<thead><tr><th>Fase</th><th>Período</th><th>Entregas Principais</th><th>Investimento Min</th><th>Investimento Max</th></tr></thead>
+<tbody>
+<tr><td><strong>Fase 1</strong></td><td>Meses 1-2</td><td>Redesign UX + Método Buffett</td><td>R$ 15.000</td><td>R$ 30.000</td></tr>
+<tr><td><strong>Fase 2</strong></td><td>Meses 3-4</td><td>Comunidade 2.0 + Afiliados</td><td>R$ 25.000</td><td>R$ 50.000</td></tr>
+<tr><td><strong>Fase 3</strong></td><td>Meses 5-6</td><td>Stripe + App Nativo</td><td>R$ 20.000</td><td>R$ 40.000</td></tr>
+<tr><td><strong>Fase 4</strong></td><td>Meses 7-10</td><td>Open Banking + IA/ML</td><td>R$ 80.000</td><td>R$ 150.000</td></tr>
+<tr><td><strong>Fase 5</strong></td><td>Meses 11-12</td><td>IA 2.0 + Marketing</td><td>R$ 30.000</td><td>R$ 50.000</td></tr>
+<tr style="border-top:2px solid rgba(79,140,255,.2)"><td><strong>Fase 6</strong></td><td>Meses 13-15</td><td>Módulo Contador & Fiscal (CPF)</td><td>R$ 30.000</td><td>R$ 60.000</td></tr>
+<tr><td><strong>Fase 7</strong></td><td>Meses 16-19</td><td>Análise de Crédito + Correspondente Bancário</td><td>R$ 40.000</td><td>R$ 80.000</td></tr>
+<tr><td><strong>Fase 8</strong></td><td>Meses 20-24</td><td>Módulo de Seguros (Vida, Auto, Residencial, Saúde)</td><td>R$ 20.000</td><td>R$ 40.000</td></tr>
+<tr style="background:rgba(79,140,255,.05)"><td colspan="3"><strong style="color:var(--t1)">TOTAL — Primeiros 12 meses</strong></td><td><strong style="color:var(--pri)">R$ 170.000</strong></td><td><strong style="color:var(--pri)">R$ 320.000</strong></td></tr>
+<tr style="background:rgba(34,197,94,.05)"><td colspan="3"><strong style="color:var(--green)">TOTAL COMPLETO — 24 meses</strong></td><td><strong style="color:var(--green)">R$ 260.000</strong></td><td><strong style="color:var(--green)">R$ 500.000</strong></td></tr>
+</tbody>
+</table>
+
+<div style="margin-top:24px;background:linear-gradient(135deg,rgba(34,197,94,.06),rgba(34,197,94,.03));border:1px solid rgba(34,197,94,.2);border-radius:16px;padding:24px">
+<h4 style="color:var(--green);margin-bottom:12px">💰 Receitas Adicionais (Fases 6-8)</h4>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+<div style="background:rgba(0,0,0,.2);border-radius:10px;padding:14px;text-align:center">
+<div style="font-size:1.5em;margin-bottom:6px">🔍</div>
+<div style="font-weight:700;font-size:.9em">Contador & Fiscal</div>
+<div style="font-size:.8em;color:var(--t2);margin-top:4px">Retenção massiva: usuário que depende do IR automático nunca cancela</div>
+</div>
+<div style="background:rgba(0,0,0,.2);border-radius:10px;padding:14px;text-align:center">
+<div style="font-size:1.5em;margin-bottom:6px">🏦</div>
+<div style="font-weight:700;font-size:.9em">Comissão de Crédito</div>
+<div style="font-size:.8em;color:var(--t2);margin-top:4px">R$ 50 — R$ 500 por crédito aprovado</div>
+<div style="font-size:.85em;font-weight:700;color:var(--green);margin-top:6px">Receita por transação</div>
+</div>
+<div style="background:rgba(0,0,0,.2);border-radius:10px;padding:14px;text-align:center">
+<div style="font-size:1.5em;margin-bottom:6px">🛡️</div>
+<div style="font-weight:700;font-size:.9em">Comissão de Seguros</div>
+<div style="font-size:.8em;color:var(--t2);margin-top:4px">10-30% do prêmio anual por apólice</div>
+<div style="font-size:.85em;font-weight:700;color:var(--green);margin-top:6px">Receita recorrente</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<!-- 08. OPEN BANKING -->
+<!-- ============================================ -->
+<section id="openbanking" class="page-break">
+<div class="section-num">08 — Open Banking / Open Finance</div>
+<h2>A Maior <span>Oportunidade</span></h2>
+<p class="section-desc">O Brasil lidera o Open Finance global com mais de 128 milhoes de consentimentos ativos. Integrar o Sibanki a esse ecossistema e o maior diferencial possivel.</p>
+
+<div class="card-grid-2" style="margin-top:24px">
+<div class="card">
+<div class="icon">&#128270;</div>
+<h4>O que muda para o usuario</h4>
+<p style="line-height:1.8">
+&#8226; <strong>Importacao automatica</strong> de extratos bancarios<br>
+&#8226; <strong>Saldos em tempo real</strong> de todas as contas<br>
+&#8226; <strong>Investimentos sincronizados</strong> automaticamente<br>
+&#8226; <strong>Faturas de cartao</strong> importadas sem digitar<br>
+&#8226; <strong>Categorizacao automatica</strong> por IA<br>
+&#8226; Zero trabalho manual — tudo atualiza sozinho
+</p>
+</div>
+<div class="card">
+<div class="icon">&#128188;</div>
+<h4>O que muda para o negocio</h4>
+<p style="line-height:1.8">
+&#8226; <strong>Retencao massiva</strong> — dados automaticos = usuario nao abandona<br>
+&#8226; <strong>Dados ricos</strong> — IA mais precisa com dados reais<br>
+&#8226; <strong>Conversao</strong> — Open Banking so no plano Pro<br>
+&#8226; <strong>Marketplace</strong> — recomendar produtos financeiros<br>
+&#8226; <strong>Credibilidade</strong> — regulado pelo Banco Central<br>
+&#8226; <strong>Barreira</strong> — poucos concorrentes tem
+</p>
+</div>
+</div>
+
+<h3>&#128295; Como Implementar</h3>
+<div class="card-grid" style="margin-top:16px">
+<div class="card">
+<h4>Opcao A: Parceria com ITP</h4>
+<p>Usar um Iniciador de Transacao de Pagamento ja certificado como intermediario. Mais rapido e barato. Exemplos: Belvo, Pluggy, Quanto.</p>
+<div style="margin-top:8px"><span class="badge badge-green">Recomendado para inicio</span></div>
+<p style="font-size:.85em;color:var(--t3);margin-top:8px">Custo: R$ 0,10-0,50 por transacao ou R$ 2-5k/mes fixo</p>
+</div>
+<div class="card">
+<h4>Opcao B: Certificacao Propria</h4>
+<p>Tornar-se Instituicao Participante junto ao Banco Central. Total autonomia, sem custo por transacao. Processo longo (6-12 meses).</p>
+<div style="margin-top:8px"><span class="badge badge-orange">Futuro (escala)</span></div>
+<p style="font-size:.85em;color:var(--t3);margin-top:8px">Custo: R$ 80-150k (juridico + tecnico + compliance)</p>
+</div>
+<div class="card">
+<h4>Opcao C: Hibrido</h4>
+<p>Comecar com parceria (Opcao A) para validar e gerar receita. Migrar para certificacao propria quando atingir escala. Melhor relacao custo-beneficio.</p>
+<div style="margin-top:8px"><span class="badge badge-blue">Estrategia ideal</span></div>
+<p style="font-size:.85em;color:var(--t3);margin-top:8px">Custo inicial: R$ 15-30k | Escala: R$ 80-150k</p>
+</div>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<!-- 09. STACK TECNOLOGICA -->
+<!-- ============================================ -->
+<section id="stack" class="page-break">
+<div class="section-num">09 — Stack Tecnologica</div>
+<h2>Arquitetura <span>100% Serverless</span></h2>
+<p class="section-desc">Stack moderna, escalavel e com custo quase zero. Sem servidores para gerenciar, sem DevOps complexo.</p>
+
+<div class="card-grid-2" style="margin-top:24px">
+<div class="card">
+<h4>&#127968; Frontend</h4>
+<div style="font-size:.9em;color:var(--t2);line-height:2;margin-top:8px">
+&#8226; <strong style="color:var(--t1)">HTML5 + CSS3 + JavaScript</strong> — Vanilla, sem framework<br>
+&#8226; <strong style="color:var(--t1)">PWA</strong> — Progressive Web App, instala no celular<br>
+&#8226; <strong style="color:var(--t1)">Service Worker</strong> — Cache offline + push notifications<br>
+&#8226; <strong style="color:var(--t1)">Responsivo</strong> — Mobile-first, funciona em qualquer tela<br>
+&#8226; <strong style="color:var(--t1)">Chart.js</strong> — Graficos interativos<br>
+&#8226; <strong style="color:var(--t1)">jsPDF</strong> — Geracao de relatorios PDF no client-side
+</div>
+</div>
+<div class="card">
+<h4>&#9729;&#65039; Backend / Infraestrutura</h4>
+<div style="font-size:.9em;color:var(--t2);line-height:2;margin-top:8px">
+&#8226; <strong style="color:var(--t1)">Firebase Authentication</strong> — Login email + Google<br>
+&#8226; <strong style="color:var(--t1)">Cloud Firestore</strong> — Banco NoSQL real-time<br>
+&#8226; <strong style="color:var(--t1)">Firebase Hosting</strong> — CDN global + SSL automatico<br>
+&#8226; <strong style="color:var(--t1)">Firebase Security Rules</strong> — Isolamento de dados server-side<br>
+&#8226; <strong style="color:var(--t1)">Cloud Functions</strong> — Backend serverless (futuro)
+</div>
+</div>
+<div class="card">
+<h4>&#129302; Inteligencia Artificial</h4>
+<div style="font-size:.9em;color:var(--t2);line-height:2;margin-top:8px">
+&#8226; <strong style="color:var(--t1)">Google Gemini API</strong> — Modelo de linguagem principal<br>
+&#8226; <strong style="color:var(--t1)">Contexto financeiro</strong> — Envia dados reais do usuario<br>
+&#8226; <strong style="color:var(--t1)">System prompt</strong> — Personalidade de consultor financeiro<br>
+&#8226; <strong style="color:var(--t1)">Rate limiting</strong> — Controle de uso por plano<br>
+&#8226; <strong style="color:var(--t1)">Futuro: ML</strong> — Categorizacao automatica, previsoes
+</div>
+</div>
+<div class="card">
+<h4>&#128279; APIs e Integracoes</h4>
+<div style="font-size:.9em;color:var(--t2);line-height:2;margin-top:8px">
+&#8226; <strong style="color:var(--t1)">brapi.dev</strong> — Cotacoes B3 em tempo real<br>
+&#8226; <strong style="color:var(--t1)">Telegram Bot API</strong> — Bot para consultas e alertas<br>
+&#8226; <strong style="color:var(--t1)">RSS/News API</strong> — Feed de noticias financeiras<br>
+&#8226; <strong style="color:var(--t1)">Stripe</strong> — Pagamentos recorrentes (futuro)<br>
+&#8226; <strong style="color:var(--t1)">Open Finance APIs</strong> — Dados bancarios (futuro)
+</div>
+</div>
+</div>
+
+<div class="highlight" style="margin-top:24px">
+<h4>&#128640; Por que Serverless?</h4>
+<p style="color:var(--t2);font-size:.92em;line-height:1.8">
+<strong style="color:var(--t1)">Escala automatica</strong>: de 10 para 100.000 usuarios sem mudar uma linha de codigo.<br>
+<strong style="color:var(--t1)">Custo proporcional</strong>: paga so pelo que usa. Zero usuario = zero custo.<br>
+<strong style="color:var(--t1)">Zero DevOps</strong>: sem servidores, sem updates de SO, sem patches de seguranca.<br>
+<strong style="color:var(--t1)">Uptime 99.95%</strong>: garantido pelo Google Cloud SLA.<br>
+<strong style="color:var(--t1)">Seguranca</strong>: criptografia em transito e repouso, isolamento por usuario, regras server-side.
+</p>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<!-- 10. ESTRATEGIA DE MARKETING -->
+<!-- ============================================ -->
+<section id="marketing" class="page-break">
+<div class="section-num">10 — Estrategia de Crescimento</div>
+<h2>Go-to-Market <span>Strategy</span></h2>
+<p class="section-desc">Estrategia multicanal para aquisicao, conversao e retencao de usuarios com foco em custo de aquisicao baixo e alto LTV.</p>
+
+<div class="card-grid-2" style="margin-top:24px">
+<div class="card">
+<h4>&#128227; Marketing Organico</h4>
+<div style="font-size:.9em;color:var(--t2);line-height:2;margin-top:8px">
+&#8226; <strong style="color:var(--t1)">SEO + Blog</strong> — Artigos sobre financas pessoais, investimentos, dicas de economia. Posicionar no Google para termos como "controle financeiro", "como investir", etc.<br>
+&#8226; <strong style="color:var(--t1)">YouTube</strong> — Tutoriais do app, educacao financeira, cases de sucesso<br>
+&#8226; <strong style="color:var(--t1)">Instagram/TikTok</strong> — Conteudo visual, reels educativos, memes financeiros<br>
+&#8226; <strong style="color:var(--t1)">Comunidade</strong> — Conteudo gerado pelos proprios usuarios atrai novos
+</div>
+</div>
+<div class="card">
+<h4>&#128184; Marketing Pago</h4>
+<div style="font-size:.9em;color:var(--t2);line-height:2;margin-top:8px">
+&#8226; <strong style="color:var(--t1)">Google Ads</strong> — Busca por termos financeiros (CPC medio: R$ 1-3)<br>
+&#8226; <strong style="color:var(--t1)">Meta Ads</strong> — Segmentacao por interesse em investimentos e financas<br>
+&#8226; <strong style="color:var(--t1)">YouTube Ads</strong> — Pre-roll em canais de financas<br>
+&#8226; <strong style="color:var(--t1)">CAC alvo</strong> — R$ 15-30 por usuario gratuito, R$ 50-100 por assinante
+</div>
+</div>
+<div class="card">
+<h4>&#129309; Programa de Afiliados</h4>
+<div style="font-size:.9em;color:var(--t2);line-height:2;margin-top:8px">
+&#8226; <strong style="color:var(--t1)">Comissao</strong> — 30% recorrente por 12 meses<br>
+&#8226; <strong style="color:var(--t1)">Dashboard</strong> — Painel proprio com metricas em tempo real<br>
+&#8226; <strong style="color:var(--t1)">Materiais</strong> — Banners, links, cupons personalizados<br>
+&#8226; <strong style="color:var(--t1)">Pagamento</strong> — Automatico via PIX mensal<br>
+&#8226; <strong style="color:var(--t1)">Publico</strong> — Influenciadores financeiros, blogueiros, educadores
+</div>
+</div>
+<div class="card">
+<h4>&#127919; Retencao e Conversao</h4>
+<div style="font-size:.9em;color:var(--t2);line-height:2;margin-top:8px">
+&#8226; <strong style="color:var(--t1)">Trial 30 dias</strong> — Pro gratuito no primeiro mes<br>
+&#8226; <strong style="color:var(--t1)">Gamificacao</strong> — Conquistas que motivam uso diario<br>
+&#8226; <strong style="color:var(--t1)">Descontos por uso</strong> — Ate 50% OFF por badges<br>
+&#8226; <strong style="color:var(--t1)">Email marketing</strong> — Drip campaigns de onboarding<br>
+&#8226; <strong style="color:var(--t1)">Push/Telegram</strong> — Alertas e lembretes inteligentes<br>
+&#8226; <strong style="color:var(--t1)">Early Adopter</strong> — 40% OFF permanente (primeiros 100)
+</div>
+</div>
+</div>
+
+<div class="highlight" style="margin-top:24px">
+<h4>&#128200; Metricas-Alvo (12 meses)</h4>
+<div class="stat-grid" style="margin:16px 0 0">
+<div class="stat"><div class="num">10k</div><div class="lbl">Usuarios totais</div></div>
+<div class="stat"><div class="num">10%</div><div class="lbl">Taxa conversao</div></div>
+<div class="stat"><div class="num">&lt;5%</div><div class="lbl">Churn mensal</div></div>
+<div class="stat"><div class="num">R$ 30</div><div class="lbl">CAC medio</div></div>
+</div>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<!-- 11. PROPOSTA AO INVESTIDOR -->
+<!-- ============================================ -->
+<section id="investimento" class="page-break">
+<div class="section-num">11 — Proposta ao Investidor</div>
+<h2>Oportunidade de <span>Investimento</span></h2>
+<p class="section-desc">Estamos buscando um investidor anjo para acelerar o desenvolvimento e capturar o mercado de financas pessoais inteligentes no Brasil.</p>
+
+<div class="card" style="border-color:var(--pri);padding:40px;margin:32px 0">
+<div style="text-align:center;margin-bottom:32px">
+<div style="font-size:3em;margin-bottom:8px">&#128176;</div>
+<h3 style="font-size:1.8em;margin:0">Investimento Solicitado</h3>
+<p style="font-size:3em;font-weight:900;background:linear-gradient(135deg,var(--pri),var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:16px 0">R$ 170.000 - 320.000</p>
+<p style="color:var(--t2);font-size:1em">Para executar as primeiras 5 fases do roadmap (12 meses). Roadmap completo de 24 meses: R$ 260k — R$ 500k</p>
+</div>
+
+<div class="card-grid" style="gap:16px">
+<div style="background:var(--bg);border-radius:14px;padding:20px;border:1px solid var(--brd)">
+<h4 style="color:var(--pri);font-size:.9em;margin-bottom:8px">&#127912; Fase 1-2 (R$ 40-80k)</h4>
+<p style="font-size:.85em;color:var(--t2)">Redesign + Buffett + Comunidade 2.0 + Afiliados</p>
+</div>
+<div style="background:var(--bg);border-radius:14px;padding:20px;border:1px solid var(--brd)">
+<h4 style="color:var(--pri);font-size:.9em;margin-bottom:8px">&#128179; Fase 3 (R$ 20-40k)</h4>
+<p style="font-size:.85em;color:var(--t2)">Pagamentos Stripe + App nativo iOS/Android</p>
+</div>
+<div style="background:var(--bg);border-radius:14px;padding:20px;border:1px solid var(--brd)">
+<h4 style="color:var(--pri);font-size:.9em;margin-bottom:8px">&#127974; Fase 4-5 (R$ 110-200k)</h4>
+<p style="font-size:.85em;color:var(--t2)">Open Banking + IA 2.0 + Escala marketing</p>
+</div>
+</div>
+</div>
+
+<h3>&#127919; Por que Investir no Sibanki</h3>
+<div class="card-grid-2" style="margin-top:16px">
+<div class="card">
+<h4>&#128202; Mercado Gigante</h4>
+<p>O mercado de apps financeiros no Brasil movimenta mais de <strong>R$ 2 bilhoes/ano</strong> e cresce 25% ao ano. Sao mais de <strong>150 milhoes</strong> de smartphones ativos. 70% dos brasileiros nao controlam suas financas — oportunidade massiva de educacao + ferramenta.</p>
+</div>
+<div class="card">
+<h4>&#128640; Produto Validado</h4>
+<p>O MVP esta <strong>100% funcional</strong> com 15 modulos operacionais. Nao e uma ideia em PowerPoint — e um produto real, online, que funciona. O investimento acelera a evolucao, nao cria do zero.</p>
+</div>
+<div class="card">
+<h4>&#128176; Margem >90%</h4>
+<p>Custo operacional de R$ 55-155/mes. Com 3 assinantes ja tem break-even. Stack serverless garante que o custo escala <strong>muito mais devagar</strong> que a receita. Modelo SaaS com receita recorrente.</p>
+</div>
+<div class="card">
+<h4>&#128274; Moat Forte</h4>
+<p>7 funcionalidades exclusivas que nenhum concorrente tem. Barreiras de saida multiplas (dados, conquistas, comunidade, familia, IA). Efeito de rede da comunidade. Custo de replicacao altissimo.</p>
+</div>
+</div>
+
+<h3 style="margin-top:32px">&#128200; Retorno Projetado</h3>
+<div class="table-wrap" style="margin-top:16px">
+<table>
+<thead><tr><th>Cenario</th><th>Usuarios (24 meses)</th><th>Assinantes</th><th>ARR</th><th>Valuation Estimado</th></tr></thead>
+<tbody>
+<tr><td><span class="badge badge-green">Conservador</span></td><td>20.000</td><td>2.000</td><td>R$ 620k</td><td>R$ 3-5M (5-8x ARR)</td></tr>
+<tr><td><span class="badge badge-blue">Moderado</span></td><td>50.000</td><td>5.000</td><td>R$ 1.5M</td><td>R$ 8-12M</td></tr>
+<tr><td><span class="badge badge-purple">Otimista</span></td><td>100.000</td><td>10.000</td><td>R$ 3.1M</td><td>R$ 15-25M</td></tr>
+</tbody>
+</table>
+</div>
+<p style="font-size:.78em;color:var(--t3);margin-top:8px">* Valuation baseado em multiplos SaaS de 5-8x ARR para empresas em estagio inicial com alto crescimento.</p>
+
+<div class="highlight" style="margin-top:32px;border-color:var(--pri);background:linear-gradient(135deg,rgba(79,140,255,.08),rgba(124,92,252,.08))">
+<h4 style="font-size:1.3em">&#127775; Resumo Executivo</h4>
+<p style="color:var(--t2);font-size:1em;line-height:2;margin-top:12px">
+O Sibanki e a <strong style="color:var(--t1)">unica plataforma no Brasil</strong> que unifica financas pessoais, investimentos com analise fundamentalista, inteligencia artificial como consultor pessoal e uma comunidade social financeira — tudo em um unico aplicativo.<br><br>
+
+Com <strong style="color:var(--t1)">15 modulos operacionais</strong>, custo de manutencao quase zero e um roadmap claro de 12 meses, o Sibanki esta posicionado para capturar uma fatia significativa do mercado de R$ 2 bilhoes de apps financeiros no Brasil.<br><br>
+
+Buscamos <strong style="color:var(--pri)">R$ 170.000 - 320.000</strong> em investimento anjo para executar o roadmap completo: redesign profissional, Open Banking, app nativo e escala de marketing. Com projecao conservadora de <strong style="color:var(--green)">R$ 620k ARR em 24 meses</strong> e margem bruta acima de 90%, o retorno potencial e de <strong style="color:var(--pri)">10-15x em 3-5 anos</strong>.
+</p>
+</div>
+</section>
+
+<!-- FOOTER -->
+<footer style="text-align:center;padding:48px 24px;border-top:1px solid var(--brd);margin-top:60px">
+<img src="https://storage.googleapis.com/app-tess-ai-platform-assets-prod/assets/uploads/313663a4-caf3-472e-813b-9d2995f8297f.png" alt="Sibanki" style="width:48px;height:48px;border-radius:12px;margin-bottom:12px">
+<p style="font-size:1.2em;font-weight:800;background:linear-gradient(135deg,var(--pri),var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Sibanki</p>
+<p style="color:var(--t3);font-size:.85em;margin-top:8px">Suas financas no controle. Com IA.</p>
+<div style="margin-top:16px;font-size:.8em;color:var(--t3)">
+<a href="https://sibanki.com.br" style="color:var(--pri)">sibanki.com.br</a> &nbsp;|&nbsp;
+<a href="https://sibanki.com.br/app" style="color:var(--pri)">sibanki.com.br/app</a> &nbsp;|&nbsp;
+contato@sibanki.com.br
+</div>
+<p style="color:var(--t3);font-size:.75em;margin-top:24px">&copy; 2026 Sibanki. Documento confidencial para investidor. Todos os direitos reservados.</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="Sibanki - Sistema Financeiro Inteligente com IA. Controle suas finanças pessoais e familiares com inteligência artificial.">
+<meta name="keywords" content="Sibanki, controle financeiro, finanças pessoais, IA, inteligência artificial, investimentos, orçamento, metas financeiras">
+<meta name="author" content="Sibanki">
+<meta property="og:title" content="Sibanki - Suas finanças no controle com IA">
+<meta property="og:description" content="O sistema financeiro mais inteligente do Brasil. IA integrada, 16 módulos, controle total.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sibanki.com.br">
+<meta property="og:image" content="https://storage.googleapis.com/app-tess-ai-platform-assets-prod/assets/uploads/313663a4-caf3-472e-813b-9d2995f8297f.png">
+<meta name="twitter:card" content="summary_large_image">
+<title>Sibanki - Suas finanças no controle com IA</title>
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#050510">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#050510;--bg2:#0a0a1a;--bg3:#0f0f24;--card:#111128;--card2:#161640;
+--brd:rgba(255,255,255,.08);--brd2:rgba(79,140,255,.2);
+--t1:#f1f5f9;--t2:#94a3b8;--t3:#64748b;
+--pri:#4F8CFF;--pri2:#7C5CFC;--pri3:#a78bfa;
+--green:#22C55E;--red:#EF4444;--orange:#F59E0B;--pink:#EC4899;
+--r:20px;--rs:12px;
+--glow:0 0 60px rgba(79,140,255,.15);
+}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Inter',sans-serif;background:var(--bg);color:var(--t1);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--pri);text-decoration:none;transition:all .3s}
+a:hover{color:var(--pri3)}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:16px 0;transition:all .3s}
+.nav.scrolled{background:rgba(5,5,16,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--brd);padding:12px 0}
+.nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo img{width:36px;height:36px;border-radius:10px}
+.nav-logo span{font-size:1.3em;font-weight:800;background:linear-gradient(135deg,var(--pri),var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{color:var(--t2);font-size:.9em;font-weight:500}
+.nav-links a:hover{color:var(--t1)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:12px;font-weight:700;font-size:.95em;transition:all .3s;border:none;cursor:pointer;text-decoration:none}
+.btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;box-shadow:0 4px 24px rgba(79,140,255,.3)}
+.btn-pri:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(79,140,255,.4);color:#fff}
+.btn-out{border:1.5px solid var(--brd2);color:var(--pri);background:transparent}
+.btn-out:hover{background:rgba(79,140,255,.08);color:#fff}
+.btn-sm{padding:8px 20px;font-size:.85em}
+.btn-lg{padding:16px 36px;font-size:1.05em}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:120px 24px 80px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(79,140,255,.12) 0%,transparent 70%);top:-100px;right:-100px;border-radius:50%}
+.hero::after{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(124,92,252,.1) 0%,transparent 70%);bottom:-100px;left:-100px;border-radius:50%}
+.hero-content{position:relative;z-index:2;max-width:800px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(79,140,255,.1);border:1px solid var(--brd2);border-radius:30px;padding:6px 18px;font-size:.85em;color:var(--pri);margin-bottom:24px;font-weight:600}
+.hero-badge .pulse{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-size:3.8em;font-weight:900;line-height:1.1;margin-bottom:20px;background:linear-gradient(135deg,#fff 30%,var(--pri) 70%,var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:1.2em;color:var(--t2);max-width:580px;margin:0 auto;line-height:1.8}
+.hero-oneliner{margin-bottom:12px;font-size:1.15em}
+.hero-desc{max-width:580px;margin:0 auto 32px;font-size:.95em;color:var(--t3)}
+.hero-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.hero-stats{display:flex;gap:48px;justify-content:center;margin-top:60px}
+.hero-stat{text-align:center}
+.hero-stat-num{font-size:2em;font-weight:800;background:linear-gradient(135deg,var(--pri),var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-stat-label{font-size:.8em;color:var(--t3);margin-top:4px}
+
+/* SECTIONS */
+.section{padding:100px 24px;max-width:1200px;margin:0 auto}
+.section-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(79,140,255,.08);border:1px solid var(--brd2);border-radius:20px;padding:4px 14px;font-size:.78em;color:var(--pri);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px}
+.section-title{font-size:2.4em;font-weight:800;margin-bottom:12px;line-height:1.2}
+.section-title span{background:linear-gradient(135deg,var(--pri),var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.section-desc{font-size:1.05em;color:var(--t2);max-width:600px;margin-bottom:48px;line-height:1.8}
+.section-center{text-align:center}
+.section-center .section-desc{margin-left:auto;margin-right:auto}
+
+/* FEATURES */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.feat-card{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:32px;transition:all .4s;position:relative;overflow:hidden}
+.feat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--pri),var(--pri2));opacity:0;transition:opacity .3s}
+.feat-card:hover{border-color:var(--brd2);transform:translateY(-4px);box-shadow:var(--glow)}
+.feat-card:hover::before{opacity:1}
+.feat-icon{font-size:2.2em;margin-bottom:16px}
+.feat-card h3{font-size:1.1em;font-weight:700;margin-bottom:8px;color:var(--t1)}
+.feat-card p{font-size:.88em;color:var(--t2);line-height:1.7}
+
+/* HOW IT WORKS */
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;position:relative}
+.how-grid::before{content:'';position:absolute;top:60px;left:15%;right:15%;height:2px;background:linear-gradient(90deg,transparent,var(--pri),var(--pri2),transparent);opacity:.3}
+.how-card{text-align:center;position:relative;z-index:2}
+.how-num{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--pri),var(--pri2));display:flex;align-items:center;justify-content:center;font-size:1.5em;font-weight:900;margin:0 auto 20px;color:#fff;box-shadow:0 4px 24px rgba(79,140,255,.3)}
+.how-card h3{font-size:1.15em;font-weight:700;margin-bottom:8px}
+.how-card p{font-size:.9em;color:var(--t2);max-width:280px;margin:0 auto}
+
+/* PRICING */
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:start}
+.price-card{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:36px 28px;position:relative;transition:all .4s}
+.price-card:hover{transform:translateY(-4px)}
+.price-pop{border-color:var(--pri);box-shadow:0 0 60px rgba(79,140,255,.15)}
+.price-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;padding:4px 16px;border-radius:20px;font-size:.75em;font-weight:700;white-space:nowrap}
+.price-name{font-size:1em;font-weight:600;color:var(--t2);margin-bottom:4px}
+.price-icon{font-size:2em;margin-bottom:12px}
+.price-val{font-size:2.8em;font-weight:900;margin:12px 0 4px;line-height:1}
+.price-val small{font-size:.35em;color:var(--t3);font-weight:500}
+.price-val sup{font-size:.4em;vertical-align:super}
+.price-period{font-size:.85em;color:var(--t3);margin-bottom:20px}
+.price-annual{font-size:.8em;color:var(--pri);background:rgba(79,140,255,.08);padding:6px 12px;border-radius:8px;margin-bottom:20px;display:inline-block}
+.price-list{list-style:none;margin:20px 0 28px}
+.price-list li{padding:8px 0;font-size:.9em;color:var(--t2);display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--brd)}
+.price-list li:last-child{border-bottom:none}
+.price-list .check{color:var(--green);font-weight:700}
+.price-list .cross{color:var(--t3);font-weight:700}
+
+/* DISCOUNTS */
+.disc-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.disc-card{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:36px;transition:all .3s}
+.disc-card:hover{border-color:var(--brd2);box-shadow:var(--glow)}
+.disc-card h3{font-size:1.3em;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.disc-table{width:100%;border-collapse:collapse}
+.disc-table th{text-align:left;padding:10px 12px;font-size:.78em;text-transform:uppercase;letter-spacing:1px;color:var(--t3);border-bottom:2px solid var(--brd)}
+.disc-table td{padding:10px 12px;font-size:.88em;color:var(--t2);border-bottom:1px solid var(--brd)}
+.disc-table tr:hover td{background:rgba(79,140,255,.03)}
+.disc-pct{background:linear-gradient(135deg,var(--pri),var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800}
+.disc-rule{background:linear-gradient(135deg,rgba(79,140,255,.05),rgba(124,92,252,.05));border:1px solid var(--brd2);border-radius:var(--r);padding:24px 32px;text-align:center;margin-top:32px}
+.disc-rule h4{font-size:1.2em;margin-bottom:8px;color:var(--pri)}
+.disc-rule p{color:var(--t2);font-size:.95em}
+
+/* PROMOS */
+.promo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:32px}
+.promo-card{background:var(--card);border:1px solid var(--brd);border-radius:var(--rs);padding:20px;text-align:center;transition:all .3s}
+.promo-card:hover{border-color:var(--brd2);transform:translateY(-2px)}
+.promo-icon{font-size:2em;margin-bottom:8px}
+.promo-card h4{font-size:.9em;font-weight:700;margin-bottom:4px}
+.promo-card p{font-size:.78em;color:var(--t2)}
+.promo-pct{font-size:1.4em;font-weight:800;background:linear-gradient(135deg,var(--orange),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-top:4px}
+
+/* SECURITY */
+.sec-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.sec-card{background:var(--card);border:1px solid var(--brd);border-radius:var(--rs);padding:24px;text-align:center;transition:all .3s}
+.sec-card:hover{border-color:var(--brd2)}
+.sec-card .icon{font-size:2em;margin-bottom:12px}
+.sec-card h4{font-size:.95em;font-weight:700;margin-bottom:6px}
+.sec-card p{font-size:.82em;color:var(--t2)}
+
+/* AI SECTION */
+.ai-section{background:linear-gradient(135deg,rgba(79,140,255,.05),rgba(124,92,252,.05));border:1px solid var(--brd);border-radius:24px;padding:60px 48px;display:flex;align-items:center;gap:48px}
+.ai-text{flex:1}
+.ai-visual{flex:1;display:flex;justify-content:center}
+.ai-chat{background:var(--bg);border:1px solid var(--brd);border-radius:var(--r);padding:24px;width:100%;max-width:380px}
+.ai-msg{padding:12px 16px;border-radius:14px;margin-bottom:12px;font-size:.88em;line-height:1.6;max-width:90%}
+.ai-msg-user{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;margin-left:auto;border-bottom-right-radius:4px}
+.ai-msg-bot{background:var(--card);color:var(--t2);border-bottom-left-radius:4px}
+.ai-msg-bot strong{color:var(--t1)}
+
+/* FAQ */
+.faq-list{max-width:720px;margin:0 auto}
+.faq-item{border:1px solid var(--brd);border-radius:var(--rs);margin-bottom:12px;overflow:hidden;transition:all .3s}
+.faq-item:hover{border-color:var(--brd2)}
+.faq-q{padding:18px 20px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.95em;transition:all .3s}
+.faq-q:hover{color:var(--pri)}
+.faq-q .arrow{transition:transform .3s;color:var(--t3)}
+.faq-a{max-height:0;overflow:hidden;transition:all .4s;color:var(--t2);font-size:.9em;line-height:1.8}
+.faq-item.open .faq-a{max-height:300px;padding:0 20px 18px}
+.faq-item.open .arrow{transform:rotate(180deg)}
+
+/* CTA */
+.cta-section{text-align:center;padding:100px 24px;position:relative}
+.cta-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(79,140,255,.08) 0%,transparent 70%)}
+.cta-content{position:relative;z-index:2}
+.cta-content h2{font-size:2.5em;font-weight:900;margin-bottom:16px}
+.cta-content h2 span{background:linear-gradient(135deg,var(--pri),var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.cta-content p{font-size:1.1em;color:var(--t2);margin-bottom:32px;max-width:500px;margin-left:auto;margin-right:auto}
+
+/* FOOTER */
+.footer{background:var(--bg2);border-top:1px solid var(--brd);padding:48px 24px}
+.footer-inner{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px}
+.footer-logo{display:flex;align-items:center;gap:10px}
+.footer-logo img{width:28px;height:28px;border-radius:8px}
+.footer-logo span{font-weight:700;font-size:1.1em}
+.footer-links{display:flex;gap:24px}
+.footer-links a{color:var(--t3);font-size:.85em}
+.footer-links a:hover{color:var(--t1)}
+.footer-copy{color:var(--t3);font-size:.8em}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{opacity:0;transform:translateY(30px);transition:all .6s}
+.fade-up.show{opacity:1;transform:translateY(0)}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+.hero h1{font-size:2.4em}
+.hero-stats{gap:24px}
+.feat-grid,.how-grid,.price-grid{grid-template-columns:1fr}
+.disc-wrapper{grid-template-columns:1fr}
+.sec-grid{grid-template-columns:repeat(2,1fr)}
+.promo-grid{grid-template-columns:repeat(2,1fr)}
+.ai-section{flex-direction:column;padding:40px 24px}
+.nav-links{display:none}
+.section-title{font-size:1.8em}
+}
+@media(max-width:600px){
+.hero h1{font-size:1.8em}
+.hero-oneliner{font-size:1em}
+.hero-stats{flex-direction:column;gap:16px}
+.plan-compare div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr !important;text-align:center !important}
+.plan-compare .btn{margin:4px 0}
+.sec-grid{grid-template-columns:1fr}
+.promo-grid{grid-template-columns:1fr}
+.price-val{font-size:2.2em}
+.footer-inner{flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+<div class="nav-inner">
+<div class="nav-logo">
+<img src="https://storage.googleapis.com/app-tess-ai-platform-assets-prod/assets/uploads/313663a4-caf3-472e-813b-9d2995f8297f.png" alt="Sibanki">
+<span>Sibanki</span>
+</div>
+<div class="nav-links">
+<a href="#funcionalidades">Funcionalidades</a>
+<a href="#como-funciona">Como funciona</a>
+<a href="#planos">Planos</a>
+<a href="#descontos">Descontos</a>
+<a href="#telegram">Telegram</a>
+<a href="#raiox">Raio-X B3</a>
+<a href="#seguranca">Segurança</a>
+<a href="#faq">FAQ</a>
+<a href="/app" class="btn btn-pri btn-sm">Começar Grátis →</a>
+</div>
+</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+<div class="hero-content">
+<div class="hero-badge"><span class="pulse"></span> IA + Telegram + Modo Família — grátis para começar</div>
+<h1>Suas finanças no controle. Com IA.</h1>
+<p class="hero-oneliner">Controle total: receitas, despesas, metas e investimentos com IA, Bot Telegram e Modo Família. Comece em 30 segundos — <strong>plano grátis para sempre</strong>.</p>
+<p class="hero-desc">O sistema financeiro mais inteligente do Brasil. Consultor de IA que analisa seus dados e te guia; importe extratos Nubank/Inter; relatórios PDF e Raio-X B3.</p>
+<div class="hero-btns">
+<a href="/app" class="btn btn-pri btn-lg">Começar Grátis →</a>
+<a href="#funcionalidades" class="btn btn-out btn-lg">Ver funcionalidades</a>
+</div>
+<div class="hero-stats">
+<div class="hero-stat">
+<div class="hero-stat-num">16</div>
+<div class="hero-stat-label">Módulos completos</div>
+</div>
+<div class="hero-stat">
+<div class="hero-stat-num">IA</div>
+<div class="hero-stat-label">Consultor Gemini</div>
+</div>
+<div class="hero-stat">
+<div class="hero-stat-num">PWA</div>
+<div class="hero-stat-label">Instala no celular</div>
+</div>
+<div class="hero-stat">
+<div class="hero-stat-num">24h</div>
+<div class="hero-stat-label">Bot Telegram</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- FUNCIONALIDADES -->
+<section class="section section-center" id="funcionalidades">
+<div class="section-tag">✨ Funcionalidades</div>
+<h2 class="section-title">Tudo que você precisa.<br><span>Em um só lugar.</span></h2>
+<p class="section-desc">16 módulos integrados para cobrir todas as áreas da sua vida financeira — do básico ao avançado.</p>
+
+<div class="feat-grid">
+<div class="feat-card fade-up">
+<div class="feat-icon">📊</div>
+<h3>Dashboard Inteligente</h3>
+<p>Visão 360° das suas finanças. KPIs, gráficos, score de saúde financeira e evolução patrimonial em tempo real.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">📝</div>
+<h3>Lançamentos</h3>
+<p>Registre receitas e despesas com categorias personalizáveis, filtros avançados e importação CSV.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">📈</div>
+<h3>Investimentos</h3>
+<p>Acompanhe sua carteira com cotações da B3 em tempo real. Rentabilidade, diversificação e alertas.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">💳</div>
+<h3>Cartões de Crédito</h3>
+<p>Controle limites, faturas, parcelas e vencimentos. Nunca mais perca o controle do cartão.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">🎯</div>
+<h3>Metas Financeiras</h3>
+<p>Defina objetivos com prazo e valor. Acompanhe com barra de progresso visual e projeções.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">💰</div>
+<h3>Orçamento Mensal</h3>
+<p>Planeje por categoria com limites e alertas. Saiba exatamente quanto pode gastar.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">💼</div>
+<h3>Carteira Digital</h3>
+<p>Gerencie múltiplas contas bancárias com saldos, transferências e visão consolidada.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">👨‍👩‍👧‍👦</div>
+<h3>Módulo Família</h3>
+<p>Convide membros da família para gerenciar finanças juntos. Compartilhe dados e planejamento.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">🤖</div>
+<h3>Consultor IA</h3>
+<p>Seu consultor financeiro pessoal powered by Google Gemini. Análise personalizada e recomendações.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">🏆</div>
+<h3>Conquistas & XP</h3>
+<p>Gamificação que motiva! Ganhe badges, suba de nível e desbloqueie benefícios reais.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">📄</div>
+<h3>Relatórios PDF</h3>
+<p>Gere relatórios profissionais detalhados. Comparativos mensais e análise completa.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">📅</div>
+<h3>Calendário Financeiro</h3>
+<p>Visualize receitas e despesas no formato calendário. Veja o fluxo de cada dia do mês.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">📡</div>
+<h3>Bot Telegram</h3>
+<p>Consulte saldos, registre gastos e receba alertas direto no Telegram. Disponível 24h, sem abrir o app.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">🔍</div>
+<h3>Raio-X B3</h3>
+<p>Análise fundamentalista completa de qualquer ação da B3. Score Buffett, indicadores e recomendação da IA.</p>
+</div>
+<div class="feat-card fade-up">
+<div class="feat-icon">💬</div>
+<h3>Comunidade</h3>
+<p>Compartilhe dicas, conquistas e estratégias com outros usuários. Curtidas, ranking e interação social.</p>
+</div>
+</div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section class="section section-center" id="como-funciona">
+<div class="section-tag">🚀 Simples assim</div>
+<h2 class="section-title">Comece em <span>3 passos</span></h2>
+<p class="section-desc">Sem burocracia, sem configuração complexa. Crie sua conta e comece a usar imediatamente.</p>
+
+<div class="how-grid">
+<div class="how-card fade-up">
+<div class="how-num">1</div>
+<h3>Crie sua conta</h3>
+<p>Em menos de 30 segundos. Use email ou entre com Google — é instantâneo.</p>
+</div>
+<div class="how-card fade-up">
+<div class="how-num">2</div>
+<h3>Configure seu perfil</h3>
+<p>Adicione contas, cartões e categorias. O tour guiado te ajuda em tudo.</p>
+</div>
+<div class="how-card fade-up">
+<div class="how-num">3</div>
+<h3>Deixe a IA trabalhar</h3>
+<p>A IA analisa seus dados e te dá recomendações personalizadas para economizar e investir.</p>
+</div>
+</div>
+</section>
+
+<!-- IA -->
+<section class="section">
+<div class="ai-section fade-up">
+<div class="ai-text">
+<div class="section-tag">🤖 Inteligência Artificial</div>
+<h2 class="section-title">Seu consultor financeiro<br><span>24 horas por dia</span></h2>
+<p class="section-desc">O Sibanki usa o Google Gemini para analisar seus dados financeiros e te dar insights personalizados. É como ter um consultor particular — sem pagar R$ 500/hora.</p>
+<ul style="list-style:none;margin-top:24px">
+<li style="padding:8px 0;color:var(--t2);font-size:.95em">✅ Análise personalizada dos seus gastos</li>
+<li style="padding:8px 0;color:var(--t2);font-size:.95em">✅ Sugestões de economia baseadas no seu perfil</li>
+<li style="padding:8px 0;color:var(--t2);font-size:.95em">✅ Recomendações de investimento</li>
+<li style="padding:8px 0;color:var(--t2);font-size:.95em">✅ Alertas inteligentes de gastos excessivos</li>
+<li style="padding:8px 0;color:var(--t2);font-size:.95em">✅ Projeções financeiras futuras</li>
+</ul>
+</div>
+<div class="ai-visual">
+<div class="ai-chat">
+<div class="ai-msg ai-msg-user">Como posso economizar mais esse mês?</div>
+<div class="ai-msg ai-msg-bot">Analisei seus gastos dos últimos 3 meses. Identifiquei que você gasta <strong>R$ 847</strong> em delivery — <strong>32% acima</strong> da média. Se reduzir para R$ 500, você economiza <strong>R$ 347/mês</strong>. Em 1 ano, são <strong>R$ 4.164</strong> que podem ir para seus investimentos. 📈</div>
+<div class="ai-msg ai-msg-user">E sobre meus investimentos?</div>
+<div class="ai-msg ai-msg-bot">Sua carteira está <strong>70% em renda fixa</strong>. Considerando seu perfil e idade, recomendo diversificar com <strong>20% em FIIs</strong> para gerar renda passiva. Quer que eu simule? 🎯</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- PLANOS -->
+<section class="section section-center" id="planos">
+<div class="section-tag">💎 Planos</div>
+<h2 class="section-title">Escolha seu <span>plano ideal</span></h2>
+<p class="section-desc">Comece grátis e evolua quando quiser. Primeiro mês Pro é por nossa conta.</p>
+
+<!-- Grátis vs Pro em 10 segundos -->
+<div class="plan-compare fade-up" style="max-width:700px;margin:0 auto 48px;background:var(--card);border:1px solid var(--brd2);border-radius:var(--r);padding:24px 28px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center;text-align:left">
+<div>
+<div style="font-size:.8em;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:4px">Grátis</div>
+<div style="font-size:1.5em;font-weight:800">R$ 0/mês</div>
+<div style="font-size:.9em;color:var(--t2);margin-top:4px">50 lançamentos, 1 cartão, 2 contas, 5 consultas IA/mês. Dashboard, conquistas básicas.</div>
+</div>
+<div>
+<div style="font-size:.8em;text-transform:uppercase;letter-spacing:1px;color:var(--pri);margin-bottom:4px">Pro</div>
+<div style="font-size:1.5em;font-weight:800;background:linear-gradient(135deg,var(--pri),var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">R$ 19,90/mês</div>
+<div style="font-size:.9em;color:var(--t2);margin-top:4px">Tudo ilimitado + Investimentos B3, PDF, suporte prioritário. 30 dias grátis.</div>
+</div>
+</div>
+<div style="text-align:center;margin-top:20px">
+<a href="/app" class="btn btn-pri btn-sm">Começar grátis →</a>
+<span style="color:var(--t3);margin:0 12px;font-size:.9em">ou</span>
+<a href="/app" class="btn btn-out btn-sm">Testar Pro 30 dias grátis</a>
+</div>
+</div>
+
+<div class="price-grid">
+<!-- GRÁTIS -->
+<div class="price-card fade-up">
+<div class="price-icon">🆓</div>
+<div class="price-name">Grátis</div>
+<div class="price-val">R$ 0<small>/mês</small></div>
+<div class="price-period">Para sempre</div>
+<ul class="price-list">
+<li><span class="check">✓</span> 50 lançamentos/mês</li>
+<li><span class="check">✓</span> 1 cartão de crédito</li>
+<li><span class="check">✓</span> 2 contas bancárias</li>
+<li><span class="check">✓</span> 2 metas financeiras</li>
+<li><span class="check">✓</span> 5 consultas à IA/mês</li>
+<li><span class="check">✓</span> Dashboard completo</li>
+<li><span class="check">✓</span> Conquistas básicas</li>
+<li><span class="cross">✗</span> <span style="color:var(--t3)">Investimentos</span></li>
+<li><span class="cross">✗</span> <span style="color:var(--t3)">Relatórios PDF</span></li>
+<li><span class="cross">✗</span> <span style="color:var(--t3)">Módulo Família</span></li>
+</ul>
+<a href="/app" class="btn btn-out" style="width:100%;justify-content:center">Começar Grátis</a>
+</div>
+
+<!-- PRO -->
+<div class="price-card price-pop fade-up">
+<div class="price-badge">⭐ MAIS POPULAR</div>
+<div class="price-icon">⭐</div>
+<div class="price-name">Pro</div>
+<div class="price-val">R$ 19<sup>,90</sup><small>/mês</small></div>
+<div class="price-period">Tudo ilimitado para você</div>
+<div class="price-annual">💡 No anual: R$ 14,90/mês (economia de 25%)</div>
+<ul class="price-list">
+<li><span class="check">✓</span> <strong>Lançamentos ilimitados</strong></li>
+<li><span class="check">✓</span> <strong>Cartões ilimitados</strong></li>
+<li><span class="check">✓</span> <strong>Contas ilimitadas</strong></li>
+<li><span class="check">✓</span> <strong>Metas ilimitadas</strong></li>
+<li><span class="check">✓</span> <strong>IA ilimitada</strong></li>
+<li><span class="check">✓</span> Investimentos com cotação B3</li>
+<li><span class="check">✓</span> Relatórios PDF profissionais</li>
+<li><span class="check">✓</span> Conquistas completas</li>
+<li><span class="check">✓</span> Suporte prioritário</li>
+<li><span class="cross">✗</span> <span style="color:var(--t3)">Módulo Família</span></li>
+</ul>
+<a href="/app" class="btn btn-pri" style="width:100%;justify-content:center">Testar 30 dias grátis →</a>
+</div>
+
+<!-- FAMÍLIA -->
+<div class="price-card fade-up">
+<div class="price-icon">👨‍👩‍👧‍👦</div>
+<div class="price-name">Família</div>
+<div class="price-val">R$ 29<sup>,90</sup><small>/mês</small></div>
+<div class="price-period">Para até 5 membros</div>
+<div class="price-annual">💡 No anual: R$ 22,90/mês (economia de 23%)</div>
+<ul class="price-list">
+<li><span class="check">✓</span> <strong>Tudo do plano Pro</strong></li>
+<li><span class="check">✓</span> <strong>Até 5 membros</strong></li>
+<li><span class="check">✓</span> Finanças compartilhadas</li>
+<li><span class="check">✓</span> Orçamento familiar</li>
+<li><span class="check">✓</span> Metas em conjunto</li>
+<li><span class="check">✓</span> Relatório consolidado</li>
+<li><span class="check">✓</span> Conquistas familiares</li>
+<li><span class="check">✓</span> Suporte prioritário</li>
+</ul>
+<a href="/app" class="btn btn-out" style="width:100%;justify-content:center">Começar com a família →</a>
+</div>
+</div>
+</section>
+
+<!-- DESCONTOS -->
+<section class="section section-center" id="descontos">
+<div class="section-tag">🎁 Descontos</div>
+<h2 class="section-title">Quanto mais usa, <span>menos paga</span></h2>
+<p class="section-desc">Indique amigos e conquiste badges para ganhar descontos reais na assinatura. Acumule até 50% OFF!</p>
+
+<div class="disc-wrapper">
+<!-- INDICAÇÃO -->
+<div class="disc-card fade-up">
+<h3>🤝 Indique e Ganhe</h3>
+<table class="disc-table">
+<thead><tr><th>Indicações</th><th>Desconto</th><th>Duração</th></tr></thead>
+<tbody>
+<tr><td>1 amigo assina</td><td><span class="disc-pct">5%</span></td><td>1 mês</td></tr>
+<tr><td>3 amigos assinam</td><td><span class="disc-pct">10%</span></td><td>3 meses</td></tr>
+<tr><td>5 amigos assinam</td><td><span class="disc-pct">15%</span></td><td>6 meses</td></tr>
+<tr><td>10 amigos assinam</td><td><span class="disc-pct">20%</span></td><td>Permanente</td></tr>
+<tr><td>20+ amigos assinam</td><td><span class="disc-pct">25%</span></td><td>Permanente + Badge</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- CONQUISTAS -->
+<div class="disc-card fade-up">
+<h3>🏆 Conquistas que dão desconto</h3>
+<table class="disc-table">
+<thead><tr><th>Conquista</th><th>Desconto</th><th>Duração</th></tr></thead>
+<tbody>
+<tr><td>🔥 Constância 30 dias</td><td><span class="disc-pct">5%</span></td><td>1 mês</td></tr>
+<tr><td>🔥 Constância 90 dias</td><td><span class="disc-pct">5%</span></td><td>3 meses</td></tr>
+<tr><td>🔥 Constância 365 dias</td><td><span class="disc-pct">10%</span></td><td>Permanente</td></tr>
+<tr><td>🎯 5 metas completas</td><td><span class="disc-pct">5%</span></td><td>3 meses</td></tr>
+<tr><td>💰 Orçamento perfeito 3x</td><td><span class="disc-pct">5%</span></td><td>2 meses</td></tr>
+<tr><td>🏅 Nível 25</td><td><span class="disc-pct">10%</span></td><td>Permanente</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="disc-rule fade-up">
+<h4>⚡ Regra de Ouro</h4>
+<p>Descontos de indicação + conquistas <strong>acumulam</strong> entre si. Teto máximo: <strong>50% de desconto</strong>. Exemplo: Pro de R$ 19,90 por apenas <strong>R$ 9,95/mês</strong>.</p>
+</div>
+
+<!-- PROMOS -->
+<h3 style="font-size:1.4em;font-weight:800;margin-top:64px;margin-bottom:8px">🚀 Oferta de Lançamento</h3>
+<p style="color:var(--t2);margin-bottom:32px;font-size:.95em">Vagas limitadas para os primeiros apoiadores do Sibanki!</p>
+
+<div style="margin-top:0">
+<div class="disc-card fade-up" style="max-width:600px;margin:0 auto;border-color:var(--brd2);background:linear-gradient(135deg,rgba(79,140,255,.04),rgba(124,92,252,.04))">
+<div style="text-align:center;margin-bottom:20px">
+<div style="font-size:3em;margin-bottom:8px">🚀</div>
+<h3 style="font-size:1.4em;margin-bottom:4px;justify-content:center">Early Adopter</h3>
+<div style="font-size:2.2em;font-weight:900;background:linear-gradient(135deg,var(--orange),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:8px 0">40% OFF PERMANENTE</div>
+<p style="color:var(--t2);font-size:.95em">Para os <strong style="color:var(--t1)">primeiros 100 assinantes</strong> do Sibanki</p>
+</div>
+<table class="disc-table">
+<tbody>
+<tr><td style="font-weight:600;color:var(--t1);width:40%">Quem ganha</td><td>Primeiros 100 usuários que assinarem Pro ou Família</td></tr>
+<tr><td style="font-weight:600;color:var(--t1)">Validade</td><td><strong style="color:var(--green)">Permanente</strong> enquanto a assinatura estiver ativa</td></tr>
+<tr><td style="font-weight:600;color:var(--t1)">Aplica em</td><td>Pro e Família (mensal ou anual)</td></tr>
+<tr><td style="font-weight:600;color:var(--t1)">Se cancelar</td><td>Perde o benefício. Ao reativar, volta ao preço normal</td></tr>
+<tr><td style="font-weight:600;color:var(--t1)">Pro com desconto</td><td><span style="text-decoration:line-through;color:var(--t3)">R$ 19,90</span> → <strong style="color:var(--green)">R$ 11,94/mês</strong></td></tr>
+<tr><td style="font-weight:600;color:var(--t1)">Família com desconto</td><td><span style="text-decoration:line-through;color:var(--t3)">R$ 29,90</span> → <strong style="color:var(--green)">R$ 17,94/mês</strong></td></tr>
+<tr><td style="font-weight:600;color:var(--t1)">Badge exclusiva</td><td>🚀 "Fundador" — permanente no perfil</td></tr>
+</tbody>
+</table>
+<div style="text-align:center;margin-top:24px">
+<a href="/app" class="btn btn-pri">Garantir minha vaga →</a>
+</div>
+</div>
+</div>
+
+<!-- REGRA DE HIERARQUIA -->
+<div class="disc-rule fade-up" style="margin-top:48px">
+<h4 style="font-size:1.1em;margin-bottom:12px">⚡ Como os descontos funcionam</h4>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center;margin:20px 0">
+<div style="background:var(--bg);border-radius:12px;padding:16px;border:1px solid var(--brd)">
+<div style="font-size:1.5em;margin-bottom:4px">1️⃣</div>
+<div style="font-size:.85em;color:var(--t2)">Verificamos se você é <strong style="color:var(--t1)">Early Adopter</strong><br>(primeiros 100 assinantes)</div>
+</div>
+<div style="background:var(--bg);border-radius:12px;padding:16px;border:1px solid var(--brd)">
+<div style="font-size:1.5em;margin-bottom:4px">2️⃣</div>
+<div style="font-size:.85em;color:var(--t2)">Calculamos seus descontos de <strong style="color:var(--t1)">indicação + conquistas</strong></div>
+</div>
+<div style="background:var(--bg);border-radius:12px;padding:16px;border:1px solid var(--brd)">
+<div style="font-size:1.5em;margin-bottom:4px">3️⃣</div>
+<div style="font-size:.85em;color:var(--t2)">Aplicamos o <strong style="color:var(--green)">MAIOR desconto</strong> disponível<br>(nunca soma Early Adopter + indicação)</div>
+</div>
+</div>
+<p style="color:var(--t2);font-size:.9em">Descontos de <strong>indicação e conquistas acumulam entre si</strong>. Early Adopter <strong>não acumula</strong> com os demais — vale o maior. Teto máximo: <strong style="color:var(--pri)">50% OFF</strong>.</p>
+</div>
+</section>
+
+
+<!-- BOT TELEGRAM -->
+<section class="section" id="telegram">
+<div class="ai-section fade-up">
+<div class="ai-text">
+<div class="section-tag">📡 Bot Telegram</div>
+<h2 class="section-title">Suas finanças no<br><span>Telegram</span></h2>
+<p class="section-desc">Consulte saldos, registre gastos e receba alertas sem abrir o app. Disponível 24 horas, 7 dias por semana.</p>
+<ul style="list-style:none;margin-top:24px">
+<li style="padding:8px 0;color:var(--t2);font-size:.95em">✅ Consultar saldo e resumo financeiro</li>
+<li style="padding:8px 0;color:var(--t2);font-size:.95em">✅ Registrar receitas e despesas por texto</li>
+<li style="padding:8px 0;color:var(--t2);font-size:.95em">✅ Cotações em tempo real da B3</li>
+<li style="padding:8px 0;color:var(--t2);font-size:.95em">✅ Alertas de metas e vencimentos</li>
+<li style="padding:8px 0;color:var(--t2);font-size:.95em">✅ Raio-X de ações direto no chat</li>
+</ul>
+</div>
+<div class="ai-visual">
+<div class="ai-chat">
+<div class="ai-msg ai-msg-user">/saldo</div>
+<div class="ai-msg ai-msg-bot">💼 <strong>Seu saldo atual:</strong><br>🏦 Nubank: <strong>R$ 3.240,50</strong><br>🏦 Inter: <strong>R$ 1.890,00</strong><br>💰 Total: <strong>R$ 5.130,50</strong></div>
+<div class="ai-msg ai-msg-user">/cotacao PETR4</div>
+<div class="ai-msg ai-msg-bot">📈 <strong>PETR4</strong> — R$ 38,72<br>📊 Variação: <strong style="color:#22C55E">+1,24%</strong><br>📉 Mín/Máx: R$ 37,90 / R$ 39,10</div>
+<div class="ai-msg ai-msg-user">/gasto 45.90 Almoço</div>
+<div class="ai-msg ai-msg-bot">✅ Despesa registrada!<br>💸 <strong>R$ 45,90</strong> — Almoço<br>📁 Categoria: Alimentação</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- RAIO-X B3 -->
+<section class="section section-center" id="raiox">
+<div class="section-tag">🔍 Análise Fundamentalista</div>
+<h2 class="section-title">Raio-X B3: Score <span>Buffett</span></h2>
+<p class="section-desc">Análise completa de qualquer ação da B3 baseada nos princípios de Warren Buffett. Nota de 0 a 10 com recomendação da IA.</p>
+
+<div class="ai-section fade-up" style="margin-top:48px">
+<div class="ai-text">
+<div style="background:var(--bg);border:1px solid var(--brd);border-radius:var(--r);padding:24px;margin-bottom:16px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+<div>
+<div style="font-size:1.4em;font-weight:800">WEGE3</div>
+<div style="font-size:.85em;color:var(--t2)">WEG S.A.</div>
+</div>
+<div style="text-align:right">
+<div style="font-size:2em;font-weight:900;background:linear-gradient(135deg,var(--green),#22C55E);-webkit-background-clip:text;-webkit-text-fill-color:transparent">8.7</div>
+<div style="font-size:.75em;color:var(--green);font-weight:600">SCORE BUFFETT</div>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+<div style="background:var(--card);padding:12px;border-radius:8px;border:1px solid var(--brd)">
+<div style="font-size:.75em;color:var(--t3);text-transform:uppercase">P/L</div>
+<div style="font-weight:700">28,5x</div>
+</div>
+<div style="background:var(--card);padding:12px;border-radius:8px;border:1px solid var(--brd)">
+<div style="font-size:.75em;color:var(--t3);text-transform:uppercase">ROE</div>
+<div style="font-weight:700;color:var(--green)">31,2%</div>
+</div>
+<div style="background:var(--card);padding:12px;border-radius:8px;border:1px solid var(--brd)">
+<div style="font-size:.75em;color:var(--t3);text-transform:uppercase">Div. Yield</div>
+<div style="font-weight:700">1,8%</div>
+</div>
+<div style="background:var(--card);padding:12px;border-radius:8px;border:1px solid var(--brd)">
+<div style="font-size:.75em;color:var(--t3);text-transform:uppercase">Margem Líq.</div>
+<div style="font-weight:700;color:var(--green)">16,4%</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ai-visual">
+<div style="max-width:380px;width:100%">
+<div style="background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:24px">
+<h3 style="font-size:1.1em;margin-bottom:16px">🤖 Análise da IA</h3>
+<p style="font-size:.9em;color:var(--t2);line-height:1.8;margin-bottom:16px">A WEG apresenta <strong style="color:var(--t1)">fundamentos excepcionais</strong>: ROE acima de 30%, margens crescentes e dívida controlada. Atende a maioria dos critérios de Buffett.</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<span style="background:rgba(34,197,94,.1);color:var(--green);padding:4px 10px;border-radius:6px;font-size:.78em;font-weight:600">✅ Vantagem competitiva</span>
+<span style="background:rgba(34,197,94,.1);color:var(--green);padding:4px 10px;border-radius:6px;font-size:.78em;font-weight:600">✅ Gestão eficiente</span>
+<span style="background:rgba(34,197,94,.1);color:var(--green);padding:4px 10px;border-radius:6px;font-size:.78em;font-weight:600">✅ Lucro consistente</span>
+<span style="background:rgba(245,158,11,.1);color:var(--orange);padding:4px 10px;border-radius:6px;font-size:.78em;font-weight:600">⚠️ P/L elevado</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- COMUNIDADE -->
+<section class="section section-center" id="comunidade">
+<div class="section-tag">👥 Comunidade</div>
+<h2 class="section-title">Aprenda com quem <span>já faz</span></h2>
+<p class="section-desc">Compartilhe conquistas, dicas e estratégias financeiras com outros usuários do Sibanki.</p>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:32px">
+<div class="feat-card fade-up" style="text-align:left">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--pri),var(--pri2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85em;color:#fff">MS</div>
+<div>
+<div style="font-weight:700;font-size:.9em">Marina Silva</div>
+<div style="font-size:.75em;color:var(--t3)">Nível 12 • há 2h</div>
+</div>
+</div>
+<p style="font-size:.9em;color:var(--t2);line-height:1.7;margin-bottom:12px">Consegui economizar R$ 1.200 esse mês seguindo as dicas da IA! O segredo foi cortar os gastos com delivery 🎯</p>
+<div style="display:flex;gap:16px;font-size:.82em;color:var(--t3)">
+<span>❤️ 47 curtidas</span>
+<span>💬 12 comentários</span>
+</div>
+</div>
+
+<div class="feat-card fade-up" style="text-align:left">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--green),#16a34a);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85em;color:#fff">RC</div>
+<div>
+<div style="font-weight:700;font-size:.9em">Rafael Costa</div>
+<div style="font-size:.75em;color:var(--t3)">Nível 25 • há 5h</div>
+</div>
+</div>
+<p style="font-size:.9em;color:var(--t2);line-height:1.7;margin-bottom:12px">O Raio-X B3 me ajudou a montar uma carteira diversificada. Score Buffett acima de 7 em todas as ações! 📈</p>
+<div style="display:flex;gap:16px;font-size:.82em;color:var(--t3)">
+<span>❤️ 83 curtidas</span>
+<span>💬 24 comentários</span>
+</div>
+</div>
+
+<div class="feat-card fade-up" style="text-align:left">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--pink));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85em;color:#fff">AL</div>
+<div>
+<div style="font-weight:700;font-size:.9em">Ana Luíza</div>
+<div style="font-size:.75em;color:var(--t3)">Nível 18 • há 8h</div>
+</div>
+</div>
+<p style="font-size:.9em;color:var(--t2);line-height:1.7;margin-bottom:12px">O bot do Telegram é incrível! Registro meus gastos na hora pelo celular, sem precisar abrir o app. Muito prático! 🤖</p>
+<div style="display:flex;gap:16px;font-size:.82em;color:var(--t3)">
+<span>❤️ 65 curtidas</span>
+<span>💬 18 comentários</span>
+</div>
+</div>
+</div>
+
+<div style="display:flex;justify-content:center;gap:32px;margin-top:48px">
+<div style="text-align:center">
+<div style="font-size:2em;font-weight:900;background:linear-gradient(135deg,var(--pri),var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">1.200+</div>
+<div style="font-size:.85em;color:var(--t3)">Membros ativos</div>
+</div>
+<div style="text-align:center">
+<div style="font-size:2em;font-weight:900;background:linear-gradient(135deg,var(--green),#16a34a);-webkit-background-clip:text;-webkit-text-fill-color:transparent">5.400+</div>
+<div style="font-size:.85em;color:var(--t3)">Posts compartilhados</div>
+</div>
+<div style="text-align:center">
+<div style="font-size:2em;font-weight:900;background:linear-gradient(135deg,var(--orange),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent">98%</div>
+<div style="font-size:.85em;color:var(--t3)">Satisfação</div>
+</div>
+</div>
+</section>
+
+<!-- SEGURANÇA -->
+<section class="section section-center" id="seguranca">
+<div class="section-tag">🔒 Segurança</div>
+<h2 class="section-title">Seus dados estão <span>protegidos</span></h2>
+<p class="section-desc">Usamos a mesma infraestrutura do Google para garantir a segurança dos seus dados financeiros.</p>
+
+<div class="sec-grid">
+<div class="sec-card fade-up">
+<div class="icon">🔐</div>
+<h4>Criptografia</h4>
+<p>Todos os dados são criptografados em trânsito e em repouso usando padrão bancário.</p>
+</div>
+<div class="sec-card fade-up">
+<div class="icon">☁️</div>
+<h4>Google Cloud</h4>
+<p>Infraestrutura Firebase (Google). A mesma base que roda Gmail, YouTube e Google Pay.</p>
+</div>
+<div class="sec-card fade-up">
+<div class="icon">🛡️</div>
+<h4>Dados Isolados</h4>
+<p>Cada usuário só acessa seus próprios dados. Validação server-side em todas as operações.</p>
+</div>
+<div class="sec-card fade-up">
+<div class="icon">🔑</div>
+<h4>IA Segura</h4>
+<p>Chaves de API armazenadas exclusivamente no backend. Zero exposição no navegador.</p>
+</div>
+</div>
+</section>
+
+<!-- FAQ -->
+<section class="section section-center" id="faq">
+<div class="section-tag">❓ Dúvidas</div>
+<h2 class="section-title">Perguntas <span>Frequentes</span></h2>
+<p class="section-desc">Tudo que você precisa saber antes de começar.</p>
+
+<div class="faq-list">
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">O plano grátis é realmente grátis para sempre? <span class="arrow">▾</span></div>
+<div class="faq-a">Sim! O plano grátis não tem prazo de validade. Você pode usar o Sibanki gratuitamente pelo tempo que quiser, sem surpresas. Os planos pagos existem para quem quer funcionalidades avançadas e limites maiores.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Meus dados financeiros estão seguros? <span class="arrow">▾</span></div>
+<div class="faq-a">Totalmente. Usamos Firebase (Google Cloud) com criptografia em trânsito e em repouso. Cada usuário só acessa seus próprios dados, validado por regras de segurança server-side. A IA processa dados exclusivamente no backend seguro.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Preciso baixar algum aplicativo? <span class="arrow">▾</span></div>
+<div class="faq-a">Não! O Sibanki é um PWA (Progressive Web App). Acesse pelo navegador e instale na tela inicial do celular — funciona como um app nativo, sem ocupar espaço e sem precisar de loja de apps.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">A IA tem acesso à minha conta bancária? <span class="arrow">▾</span></div>
+<div class="faq-a">Não. O Sibanki não se conecta ao seu banco. A IA analisa apenas os dados que você registra no sistema. Você tem controle total sobre o que a IA pode ver.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Como funciona o sistema de indicação? <span class="arrow">▾</span></div>
+<div class="faq-a">Cada conta tem um link de indicação único. Quando alguém se cadastra pelo seu link e assina um plano pago, você ganha desconto automaticamente. Os descontos acumulam conforme você indica mais pessoas, até o máximo de 50% OFF.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Posso cancelar a qualquer momento? <span class="arrow">▾</span></div>
+<div class="faq-a">Sim! Sem multa, sem burocracia. Cancele quando quiser e sua conta volta automaticamente para o plano grátis — sem perder nenhum dado.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Posso usar em vários dispositivos? <span class="arrow">▾</span></div>
+<div class="faq-a">Sim! Como seus dados ficam na nuvem, você pode acessar de qualquer dispositivo com navegador — celular, tablet, computador. Basta fazer login com a mesma conta.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Os descontos de conquistas são reais? <span class="arrow">▾</span></div>
+<div class="faq-a">Sim! Ao desbloquear conquistas específicas no sistema, você ganha descontos reais na assinatura. É a nossa forma de recompensar quem realmente usa o Sibanki para melhorar suas finanças.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Como funciona o bot do Telegram? <span class="arrow">▾</span></div>
+<div class="faq-a">Basta conectar seu Telegram nas configurações do Sibanki. Você recebe um link para iniciar a conversa com o bot. A partir daí, pode consultar saldos, registrar gastos, ver cotações e receber alertas — tudo pelo Telegram.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">O que é o Raio-X B3? <span class="arrow">▾</span></div>
+<div class="faq-a">É nossa ferramenta de análise fundamentalista. Ela avalia qualquer ação da B3 usando os critérios de Warren Buffett e gera um Score de 0 a 10. Inclui indicadores como P/L, ROE, margem líquida, dividend yield e mais.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">A comunidade é moderada? <span class="arrow">▾</span></div>
+<div class="faq-a">Sim! Temos moderação ativa para garantir que o conteúdo seja relevante e respeitoso. Posts sobre finanças, investimentos, dicas de economia e conquistas são bem-vindos. Spam e conteúdo ofensivo são removidos.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">As cotações da B3 são em tempo real? <span class="arrow">▾</span></div>
+<div class="faq-a">As cotações têm delay de 15 minutos da B3, que é o padrão para plataformas não-corretoras. Para a maioria dos investidores de longo prazo, isso é mais que suficiente para acompanhar sua carteira.</div>
+</div>
+</div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section">
+<div class="cta-content fade-up">
+<h2>Pronto para transformar<br>suas <span>finanças</span>?</h2>
+<p>Junte-se a milhares de pessoas que já estão no controle da sua vida financeira com o poder da IA.</p>
+<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+<a href="/app" class="btn btn-pri btn-lg">Criar conta grátis →</a>
+<a href="#planos" class="btn btn-out btn-lg">Ver planos</a>
+</div>
+</div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+<div class="footer-inner">
+<div class="footer-logo">
+<img src="https://storage.googleapis.com/app-tess-ai-platform-assets-prod/assets/uploads/313663a4-caf3-472e-813b-9d2995f8297f.png" alt="Sibanki">
+<span>Sibanki</span>
+</div>
+<div class="footer-links">
+<a href="#funcionalidades">Funcionalidades</a>
+<a href="#planos">Planos</a>
+<a href="#telegram">Telegram</a>
+<a href="#raiox">Raio-X B3</a>
+<a href="#comunidade">Comunidade</a>
+<a href="#seguranca">Segurança</a>
+<a href="#faq">FAQ</a>
+<a href="mailto:contato@sibanki.com.br">Contato</a>
+</div>
+<div class="footer-copy">© 2026 Sibanki. Todos os direitos reservados.</div>
+</div>
+</footer>
+
+<script>
+// Nav scroll effect
+window.addEventListener('scroll',function(){
+document.getElementById('nav').classList.toggle('scrolled',window.scrollY>50);
+});
+
+// Fade up animation
+var obs=new IntersectionObserver(function(entries){
+entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('show')}});
+},{threshold:.1});
+document.querySelectorAll('.fade-up').forEach(function(el){obs.observe(el)});
+
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(function(a){
+a.addEventListener('click',function(e){
+var t=document.querySelector(this.getAttribute('href'));
+if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth'})}
+});
+});
+</script>
+</body>
+</html>

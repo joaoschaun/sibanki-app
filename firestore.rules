@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Dados do usuario - so o proprio pode ler/escrever
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Casais - membros autenticados podem ler/escrever
+    match /couples/{coupleId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Convites - usuarios autenticados podem ler/escrever
+    match /invites/{inviteId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Comunidade - todos autenticados leem, criam e comentam. So o autor deleta.
+    match /community/{postId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // Rate limits - so leitura pelo proprio usuario
+    match /rateLimits/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    // Codigos de vinculacao Telegram
+    match /telegramCodes/{codeId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+
+    // Interacoes nas noticias (curtir, comentar, reagir, visualizacoes)
+    match /newsInteractions/{articleId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Denuncias da comunidade
+    match /community_reports/{reportId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if false;
+    }
+
+    // Ranking da comunidade (leitura publica para autenticados)
+    match /community_ranking/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Bloqueia tudo mais
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
