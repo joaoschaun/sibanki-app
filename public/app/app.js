@@ -15051,6 +15051,43 @@ function showBriefingModal() {
   modal.style.display = 'flex';
   try { sessionStorage.setItem('sib_briefing_shown', '1'); } catch(z) {}
   if (typeof lucide !== 'undefined') lucide.createIcons();
+
+  // ── Insight IA: chama briefingIa Cloud Function ──
+  (function() {
+    var iaWrap = document.getElementById('sibBriefIaWrap');
+    var iaText = document.getElementById('sibBriefIaText');
+    if (!iaWrap || !iaText) return;
+    iaWrap.style.display = 'block';
+    // Coleta meta próxima e cat estourada
+    var metaNome = null;
+    if (goals && goals.length) {
+      var gm = goals.find(function(g){return g.alvo&&g.atual/g.alvo>=0.9&&g.atual/g.alvo<1;});
+      if (gm) metaNome = gm.nome || null;
+    }
+    var catEst = null;
+    if (typeof budgets==='object') {
+      Object.keys(budgets).forEach(function(cat){
+        if(catEst)return;var lim=budgets[cat];if(!lim)return;
+        var g=entradasMes.filter(function(e){return e.type==='despesa'&&e.category===cat;}).reduce(function(s,e){return s+e.value;},0);
+        if(g>=lim)catEst=cat;
+      });
+    }
+    if (typeof firebase !== 'undefined' && firebase.functions) {
+      var fn = firebase.functions().httpsCallable('briefingIa');
+      fn({ rec: rec, desp: desp, saldo: saldo, pctGasto: pctGasto, patrimonio: patrimonio,
+           metaNome: metaNome, catEstourada: catEst, qtdEntradas: entradasMes.length })
+        .then(function(res) {
+          if (res && res.data && res.data.insight) {
+            iaText.textContent = res.data.insight;
+          }
+        })
+        .catch(function() {
+          iaWrap.style.display = 'none';
+        });
+    } else {
+      iaWrap.style.display = 'none';
+    }
+  })();
 }
 
 function closeBriefing() {
@@ -15090,8 +15127,8 @@ var SIBANKI_FEATURES = {
 
   /* ── ANÁLISE & IA ─────────────────────────────────────────── */
   briefing_ia: {
-    enabled:     false,                    // ← INATIVO até estar pronto
-    plan:        ['pro','familia'],        // só Pro e Família
+    enabled:     true,                     // ← ATIVO para todos
+    plan:        ['free','pro','familia'],  // todos os planos
     label:       'Briefing Inteligente com IA',
     desc:        'Resumo financeiro gerado por IA ao fazer login',
     upsell:      'Tenha um briefing financeiro personalizado toda vez que abrir o Sibanki.',

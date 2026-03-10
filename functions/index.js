@@ -529,6 +529,47 @@ exports.whatsappWebhook = functions.https.onRequest(async (req, res) => {
   }
 });
 
+// =============================================
+// BRIEFING IA — insight personalizado pós-login
+// =============================================
+exports.briefingIa = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Faça login.");
+  }
+  const { rec, desp, saldo, pctGasto, patrimonio, metaNome, catEstourada, qtdEntradas } = data || {};
+  const prompt = `Você é um consultor financeiro pessoal direto e empático. Analise os dados financeiros deste mês e escreva UM único insight personalizado de no máximo 2 frases curtas. Seja específico com os números. Use linguagem natural, sem markdown, sem títulos.
+
+Dados do mês atual:
+- Receitas: R$ ${(rec||0).toFixed(2)}
+- Despesas: R$ ${(desp||0).toFixed(2)}
+- Saldo: R$ ${(saldo||0).toFixed(2)} (${saldo<0?'NEGATIVO':'positivo'})
+- % da receita gasta: ${pctGasto||0}%
+- Patrimônio total: R$ ${(patrimonio||0).toFixed(2)}
+- Lançamentos registrados: ${qtdEntradas||0}
+${metaNome ? `- Meta quase concluída: "${metaNome}"` : ''}
+${catEstourada ? `- Orçamento estourado: ${catEstourada}` : ''}
+
+Escreva o insight agora (máx 2 frases, português brasileiro, tom amigável e direto):`;
+
+  try {
+    const result = await generateAnalysis("", prompt);
+    if (!result || !result.text) throw new Error("sem resposta");
+    return { insight: result.text.trim() };
+  } catch(e) {
+    let fallback = "";
+    if (saldo < 0) {
+      fallback = `Suas despesas superaram as receitas em R$ ${Math.abs(saldo||0).toLocaleString('pt-BR',{minimumFractionDigits:2})} este mês. Vale revisar os lançamentos e cortar o que for possível.`;
+    } else if (pctGasto > 85) {
+      fallback = `Você já usou ${pctGasto}% da receita do mês — atenção para não estourar o orçamento nos próximos dias.`;
+    } else if (pctGasto > 0) {
+      fallback = `Bom controle! Você usou ${pctGasto}% da receita e ainda tem fôlego até o fim do mês.`;
+    } else {
+      fallback = `Registre suas receitas e despesas para receber um briefing personalizado.`;
+    }
+    return { insight: fallback };
+  }
+});
+
 exports.generateWhatsAppCode = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Faça login para vincular o WhatsApp.");
