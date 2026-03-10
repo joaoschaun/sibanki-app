@@ -58,6 +58,12 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .badge.green{background:rgba(16,185,129,.15);color:#10b981}.badge.yellow{background:rgba(234,179,8,.15);color:#eab308}
 .badge.red{background:rgba(239,68,68,.15);color:#ef4444}.badge.blue{background:rgba(76,123,244,.15);color:#4C7BF4}
 .badge.purple{background:rgba(139,92,246,.15);color:#8b5cf6}.badge.gray{background:rgba(255,255,255,.08);color:var(--t2)}
+/* Changelog */
+.cl-item{padding:9px 0;border-bottom:1px solid var(--brd);font-size:.8rem;color:var(--t2);line-height:1.5}
+.cl-item:last-child{border-bottom:none}
+.cl-item b{color:var(--t1)}
+.cl-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.68rem;font-weight:700;background:rgba(255,255,255,.07);color:var(--t3);margin-right:6px;margin-bottom:4px}
+.cl-badge.new{background:rgba(76,123,244,.2);color:var(--blue)}
 .toggle{position:relative;width:42px;height:22px;flex-shrink:0}
 .toggle input{opacity:0;width:0;height:0}
 .tsl{position:absolute;cursor:pointer;inset:0;background:var(--bg);border:1px solid var(--brd);border-radius:22px;transition:.2s}
@@ -195,6 +201,34 @@ select.form-inp{cursor:pointer}
         <div class="card">
           <div class="card-title">⚡ Atividade Recente</div>
           <div id="dashAtividade"><div class="loading-row"><div class="spin"></div></div></div>
+        </div>
+      </div>
+
+      <!-- STATUS DE FEATURES — sincronizado com app.js SIBANKI_FEATURES -->
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">🚦 Status das Features</div>
+          <div style="font-size:.72rem;color:var(--t3);margin-bottom:12px">Sync manual: atualizar ao alterar SIBANKI_FEATURES no app.js</div>
+          <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+            <thead><tr style="color:var(--t3);border-bottom:1px solid var(--brd)">
+              <th style="text-align:left;padding:5px 0">Feature</th>
+              <th style="text-align:center;padding:5px">Status</th>
+              <th style="text-align:left;padding:5px">Planos</th>
+            </tr></thead>
+            <tbody id="featuresStatusTable">
+              <tr><td colspan="3" style="color:var(--t3);padding:8px 0;text-align:center">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-title">📋 Changelog do Produto</div>
+          <div style="font-size:.72rem;color:var(--t3);margin-bottom:12px">Sessões de desenvolvimento recentes</div>
+          <div id="adminChangelog">
+            <div class="cl-item"><span class="cl-badge new">2026-03-10</span><b>Sessão 4</b> — Sidebar fixa desktop, score fix, briefing IA (CF), insights produto (4 cenários), separadores visíveis, 1 promo por vez</div>
+            <div class="cl-item"><span class="cl-badge">2026-03-10</span><b>Sessão 3</b> — Admin panel subdomínio, i18n 314 strings (Claude Code), KPI redesign AUVP style</div>
+            <div class="cl-item"><span class="cl-badge">2026-03-10</span><b>Sessão 2</b> — Flash banners, briefing modal, feature flags sistema, pipeline LLM multi-provider</div>
+            <div class="cl-item"><span class="cl-badge">Antes</span><b>Sessão 1</b> — Split index→app.css/app.js, WhatsApp service, 10 bug fixes, i18n 620 chaves</div>
+          </div>
         </div>
       </div>
     </div>
@@ -466,6 +500,36 @@ function doAdminLogout() {
 }
 
 // ═══════════════════════════════════════════════
+// STATUS DE FEATURES — tabela no dashboard
+// ═══════════════════════════════════════════════
+function renderFeaturesStatus() {
+  const tb = document.getElementById('featuresStatusTable');
+  if (!tb) return;
+  const planLabel = { free:'Gratuito', pro:'Pro', familia:'Família' };
+  const planColor = { free:'gray', pro:'blue', familia:'purple' };
+  const statusColor = (s) => {
+    if (!s) return 'gray';
+    if (s.startsWith('✅')) return 'green';
+    if (s.startsWith('⏳')) return 'yellow';
+    if (s.startsWith('🔧')) return 'red';
+    return 'gray';
+  };
+  tb.innerHTML = Object.entries(FLAGS_DEF).map(([key, f]) => {
+    const active = (key in remoteFlags) ? remoteFlags[key] : f.default;
+    const plans = f.plan.map(p => `<span class="badge ${planColor[p]||'gray'}" style="margin-right:3px;font-size:.64rem">${planLabel[p]||p}</span>`).join('');
+    const sc = statusColor(f.status);
+    return `<tr>
+      <td style="padding:6px 0"><b style="font-size:.82rem;color:var(--t1)">${f.label}</b><br><span style="font-size:.7rem;color:var(--t3)">${key}</span></td>
+      <td style="text-align:center">
+        <span class="badge ${active?'green':'red'}" style="font-size:.68rem">${active?'ON':'OFF'}</span>
+        ${f.status ? `<br><span style="font-size:.65rem;color:var(--t3);margin-top:2px;display:block">${f.status}</span>` : ''}
+      </td>
+      <td>${plans}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════════
 function goPage(id) {
@@ -557,11 +621,17 @@ function renderAlertas(users, pro, free, mrr) {
   if (free > pro * 5) alerts.push({ type:'yellow', msg: `${free} usuários gratuitos — oportunidade de conversão` });
   if (users.length < 50) alerts.push({ type:'blue', msg: 'Base ainda em crescimento — foque em aquisição' });
   if (mrr < 100) alerts.push({ type:'yellow', msg: 'MRR abaixo de R$100 — priorize upgrades' });
-  alerts.push({ type:'green', msg: 'Sistema operacional — Gemini + Groq ativos' });
-
+  alerts.push({ type:'green', msg: 'Sistema operacional — Gemini + Groq + briefingIa CF ativos' });
+  // Alerta se features críticas estiverem OFF no Firestore
+  const criticas = ['briefing_ia','ia_insights_produto','flash_banners'];
+  criticas.forEach(k => {
+    if (k in remoteFlags && !remoteFlags[k]) alerts.push({ type:'red', msg: `Feature "${k}" está OFF no Firestore (default é ON)` });
+  });
   document.getElementById('dashAlertas').innerHTML = alerts.length
     ? alerts.map(a => `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--brd)"><span class="dot ${a.type}"></span><span style="font-size:.83rem;color:var(--t2)">${a.msg}</span></div>`).join('')
     : '<div class="empty-state">Nenhum alerta ativo</div>';
+  // Renderiza tabela de status de features no dashboard
+  setTimeout(renderFeaturesStatus, 50);
 }
 
 function renderAtividade(users) {
@@ -607,16 +677,47 @@ function renderDAUChart() {
 }
 
 function renderModulosChart() {
-  const labels = ['Dashboard','Lançamentos','IA','Metas','Investimentos','Cartões','Orçamento'];
+  // ⚠️ Atualizar sempre que adicionar módulo no app
+  // Módulos do Sibanki v4 — sessão 4 (2026-03-10)
+  const labels = [
+    'Dashboard','Lançamentos','Cartões','Contas',
+    'Orçamento','Metas','Calendário',
+    'Investimentos','Consultor IA','Educação',
+    'Família','Comunidade',
+    'Relatórios','Conquistas','Configurações'
+  ];
+  const colors = [
+    '#4C7BF4','#10b981','#f59e0b','#06b6d4',
+    '#ec4899','#eab308','#3b82f6',
+    '#8b5cf6','#a855f7','#22c55e',
+    '#f97316','#14b8a6',
+    '#6366f1','#fbbf24','#94a3b8'
+  ];
   const data = allUsers.reduce((acc, u) => {
-    acc[0] += 10; acc[1] += (u.entries||[]).length; acc[2] += 3; acc[3] += (u.goals||[]).length*2;
-    acc[4] += (u.investments||[]).length*2; acc[5] += (u.cards||[]).length; acc[6] += Object.keys(u.budgets||{}).length;
+    acc[0]  += 10;
+    acc[1]  += Math.min((u.entries||[]).length, 20);
+    acc[2]  += (u.cards||[]).length * 2;
+    acc[3]  += (u.accounts||[]).length * 2;
+    acc[4]  += Object.keys(u.budgets||{}).length;
+    acc[5]  += (u.goals||[]).length * 2;
+    acc[6]  += (u.calendarEvents||[]).length;
+    acc[7]  += (u.investments||[]).length * 2;
+    acc[8]  += u.iaChats ? 4 : 0;
+    acc[9]  += 0;
+    acc[10] += u.coupleId ? 5 : 0;
+    acc[11] += 0;
+    acc[12] += u.relatorios ? 3 : 0;
+    acc[13] += (u.conquistas||[]).length;
+    acc[14] += u.configUpdated ? 2 : 0;
     return acc;
-  }, [0,0,0,0,0,0,0]);
+  }, new Array(15).fill(0));
   if (window._modChart) window._modChart.destroy();
   window._modChart = new Chart(document.getElementById('chartModulos'), {
-    type:'bar', data:{ labels, datasets:[{ label:'Uso', data, backgroundColor:['#4C7BF4','#10b981','#8b5cf6','#eab308','#06b6d4','#f59e0b','#ec4899'], borderColor:'transparent' }] },
-    options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#5a5a7a',font:{size:10}}}, y:{ticks:{color:'#9090b0',font:{size:10}}} } }
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Uso estimado', data, backgroundColor: colors, borderColor:'transparent' }] },
+    options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{legend:{display:false}},
+      scales:{ x:{ticks:{color:'#5a5a7a',font:{size:10}}}, y:{ticks:{color:'#9090b0',font:{size:10}}} } }
   });
 }
 
@@ -667,16 +768,22 @@ function viewUser(uid) {
 // ═══════════════════════════════════════════════
 // FEATURE FLAGS
 // ═══════════════════════════════════════════════
+// ⚠️ Sincronizar sempre que alterar SIBANKI_FEATURES no app.js
+// Última sync: 2026-03-10 — sessão 4
 const FLAGS_DEF = {
-  briefing_ia:       { label:'Briefing Inteligente IA', desc:'Resumo financeiro por IA no login', plan:['pro','familia'], default:false },
-  flash_banners:     { label:'Alertas Contextuais', desc:'Banners temporários de orçamento/cartões', plan:['free','pro','familia'], default:true },
-  ia_consultor:      { label:'Consultor IA', desc:'Chat com Siba para análise financeira', plan:['free','pro','familia'], default:true },
-  ia_insights_produto:{ label:'Insights de Produtos', desc:'IA sugere empréstimos, seguros, investimentos', plan:['pro','familia'], default:false },
-  relatorio_pdf:     { label:'Relatório Mensal PDF', desc:'Exportar relatório financeiro em PDF', plan:['pro','familia'], default:false },
-  open_finance:      { label:'Open Finance', desc:'Sincronização automática com bancos', plan:['pro','familia'], default:false },
-  whatsapp_bot:      { label:'Bot WhatsApp', desc:'Lançar gastos e receber alertas pelo WhatsApp', plan:['pro','familia'], default:true },
-  dashboard_customizavel:{ label:'Dashboard Personalizável', desc:'Reorganizar widgets do dashboard', plan:['free','pro','familia'], default:true },
-  familia_compartilhado:{ label:'Finanças em Família', desc:'Dashboard compartilhado entre membros', plan:['familia'], default:true },
+  // ── ANÁLISE & IA ──────────────────────────────────────────
+  briefing_ia:          { label:'Briefing Inteligente IA',    desc:'Resumo financeiro gerado por IA no login — CF briefingIa ativa',         plan:['free','pro','familia'], default:true,  status:'✅ ativo' },
+  ia_consultor:         { label:'Consultor IA (chat)',        desc:'Chat com Siba para análise financeira (chatApi)',                         plan:['free','pro','familia'], default:true,  status:'✅ ativo' },
+  ia_insights_produto:  { label:'Insights de Produtos IA',   desc:'4 cenários: Tesouro, CDB, FII, Seguro — anti-spam 7d',                   plan:['free','pro','familia'], default:true,  status:'✅ ativo' },
+  // ── ALERTAS & UX ──────────────────────────────────────────
+  flash_banners:        { label:'Alertas Contextuais',       desc:'Flash banners de orçamento/cartão — coloridos por severidade',            plan:['free','pro','familia'], default:true,  status:'✅ ativo' },
+  dashboard_customizavel:{ label:'Dashboard Personalizável', desc:'Arrastar e reorganizar widgets do dashboard',                             plan:['free','pro','familia'], default:true,  status:'✅ ativo' },
+  // ── SOCIAL & FAMÍLIA ──────────────────────────────────────
+  familia_compartilhado:{ label:'Finanças em Família',       desc:'Dashboard e lançamentos compartilhados entre membros',                   plan:['familia'],             default:true,  status:'✅ ativo' },
+  whatsapp_bot:         { label:'Bot WhatsApp',              desc:'Lançar gastos e receber alertas pelo WhatsApp',                           plan:['pro','familia'],        default:true,  status:'⏳ config pendente' },
+  // ── EXPORTAÇÃO & INTEGRAÇÕES ──────────────────────────────
+  relatorio_pdf:        { label:'Relatório Mensal PDF',      desc:'Exportar resumo financeiro mensal em PDF',                               plan:['pro','familia'],        default:false, status:'🔧 pendente' },
+  open_finance:         { label:'Open Finance',              desc:'Sincronização automática com bancos via API',                            plan:['pro','familia'],        default:false, status:'🔧 pendente' },
 };
 
 async function loadFlags() {
