@@ -156,8 +156,14 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
   .drawer-sidebar-mode .drawer-nav-item:hover .dni-desc{color:var(--t2)}
 }
 .drawer-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.05);flex-shrink:0}
+/* X fecha no mobile, vira ícone de colapsar no desktop sidebar */
 .drawer-close-btn{position:absolute;top:16px;right:16px;padding:8px;background:none;border:none;color:var(--t3);cursor:pointer;font-size:1.2em;border-radius:8px;transition:.3s;z-index:10}
 .drawer-close-btn:hover{color:var(--t1);background:rgba(255,255,255,.06)}
+@media(min-width:1024px){
+  .drawer-sidebar-mode .drawer-close-btn{font-size:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+  .drawer-sidebar-mode .drawer-close-btn::after{content:'';display:block;width:16px;height:2px;background:currentColor;border-radius:2px;box-shadow:0 -5px 0 currentColor,0 5px 0 currentColor;color:var(--t3);font-size:1rem}
+  .drawer-sidebar-mode .drawer-close-btn:hover::after{color:var(--t1)}
+}
 .drawer-upgrade-btn{width:100%;padding:12px 20px;background:linear-gradient(135deg,#4C7BF4,#22C55E);border:none;border-radius:var(--rs);color:#fff;font-weight:700;font-size:.9rem;cursor:pointer;margin-bottom:12px;transition:.3s;font-family:"Inter",sans-serif}
 .drawer-upgrade-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(76,123,244,.4)}
 .drawer-logout-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;background:transparent;border:1px solid var(--brd);border-radius:var(--rs);color:var(--t2);font-size:.85rem;cursor:pointer;transition:.3s;font-family:"Inter",sans-serif}
@@ -320,7 +326,7 @@ body.light .lang-dropdown button:hover{background:rgba(79,140,255,.08)}
 .top-header-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--vr),var(--purple));display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;overflow:hidden;cursor:pointer}
 .top-header-avatar img{width:100%;height:100%;object-fit:cover}
 /* DASHBOARD WIDGETS */
-.dash-widget-header{display:flex;align-items:flex-start;justify-content:space-between;margin-top:0;margin-bottom:16px;gap:12px}
+.dash-widget-header{display:flex;align-items:flex-start;justify-content:space-between;margin-top:0;margin-bottom:20px;gap:12px}
 .dash-widget-header h3{font-size:.95rem;font-weight:700;margin:0}
 .dash-greet{font-size:.78rem;font-weight:500;color:var(--t3);line-height:1.4;font-family:var(--font-body);text-transform:uppercase;letter-spacing:1px}
 .dash-greet-name{display:block;font-size:2rem;font-weight:800;color:var(--t1);letter-spacing:-.8px;margin-top:4px;font-family:var(--font-display);line-height:1.1}
