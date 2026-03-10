@@ -40,6 +40,12 @@ if (!GEMINI_KEY) {
   } catch (e) {}
 }
 
+// OpenAI (fallback para Gemini)
+const OPENAI_KEY = process.env.OPENAI_KEY || "";
+
+// Anthropic Claude (segundo fallback)
+const CLAUDE_KEY = process.env.CLAUDE_KEY || "";
+
 // Stripe
 const STRIPE_SECRET = process.env.STRIPE_SECRET || "";
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
@@ -87,6 +93,8 @@ module.exports = {
   getStripe,
   RESEND_API_KEY,
   RESEND_FROM,
+  OPENAI_KEY,
+  CLAUDE_KEY,
   WHATSAPP_TOKEN,
   WHATSAPP_PHONE_NUMBER_ID,
   WHATSAPP_VERIFY_TOKEN

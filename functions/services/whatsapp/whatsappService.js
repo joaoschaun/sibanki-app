@@ -5,6 +5,7 @@
 const fetch = require("node-fetch");
 const { GEMINI_KEY, WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID } = require("../../config");
 const { logError } = require("../../logger");
+const { extractEntry } = require("../llm/llmService");
 
 const META_API = "https://graph.facebook.com/v18.0";
 
@@ -132,7 +133,9 @@ Texto: "${text.replace(/"/g, '\\"')}"`;
 async function parseMessageToEntry(text) {
   const trimmed = (text || "").trim();
   if (!trimmed) return null;
-  let entry = await parseLancamentoGemini(trimmed);
+  // Usa llmService com fallback automático entre provedores
+  let entry = await extractEntry(trimmed, DEFAULT_CATS);
+  if (!entry) entry = await parseLancamentoGemini(trimmed); // fallback direto
   if (!entry) entry = parseLancamentoRegex(trimmed);
   if (!entry) return null;
   if (!entry.date) {
