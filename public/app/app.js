@@ -271,7 +271,7 @@ clrErr();
 }else{
 var m=window.location.hash.match(/#invite=([a-zA-Z0-9_-]+)/);
 if(m){var ab=document.getElementById('authBg');if(ab)ab.classList.remove('hidden');showReg();setTimeout(function(){if(typeof checkAuthInviteHash==='function')checkAuthInviteHash();},100);}
-else{showLanding();}
+else{showAuth();}
 }
 }
 });
