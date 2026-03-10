@@ -183,7 +183,6 @@ document.getElementById('app').classList.remove('on');
 var _fab2=document.getElementById('virtFab');if(_fab2)_fab2.style.display='none';
 var _fabM2=document.getElementById('virtFabMenu');if(_fabM2)_fabM2.style.display='none';
 document.getElementById('loadBg').classList.add('hidden');
-document.getElementById('landingPage').style.display='none';
 document.getElementById('authBg').classList.remove('hidden');
 authResolved=true;
 document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on')});
@@ -224,7 +223,6 @@ U={uid:user.uid,email:user.email,name:user.displayName||namePart};
 entries=[];investments=[];goals=[];budgets={};userAccs=[];accountBalances={};accountCesta={};accountMeta={};recurrents=[];cards=[];
 achievements={};commProfile=null;commPosts=[];commBookmarks=[];
 onboardingDone=false;
-var lp=document.getElementById('landingPage');if(lp)lp.style.display='none';
 var ab=document.getElementById('authBg');if(ab)ab.classList.add('hidden');
 var app=document.getElementById('app');if(app)app.classList.add('on');
 var lb=document.getElementById('loadBg');if(lb)lb.classList.remove('hidden');
@@ -243,7 +241,6 @@ authResolved=true;
 if(user){
 var isEmailPassword=user.providerData&&user.providerData.length&&user.providerData[0].providerId==='password';
 if(isEmailPassword&&!user.emailVerified){
-var lp=document.getElementById('landingPage');if(lp)lp.style.display='none';
 var ab=document.getElementById('authBg');if(ab)ab.classList.remove('hidden');
 var lb=document.getElementById('loadBg');if(lb)lb.classList.add('hidden');
 db.collection('users').doc(user.uid).get().then(function(doc){
@@ -267,14 +264,13 @@ var _fab2=document.getElementById('virtFab');if(_fab2)_fab2.style.display='none'
 var _fabM2=document.getElementById('virtFabMenu');if(_fabM2)_fabM2.style.display='none';
 if(window._justLoggedOut){
 window._justLoggedOut=false;
-var lp2=document.getElementById('landingPage');if(lp2)lp2.style.display='none';
 var ab2=document.getElementById('authBg');if(ab2)ab2.classList.remove('hidden');
 showLog();
 var lBtn=document.getElementById('lBtn');if(lBtn){lBtn.disabled=false;lBtn.textContent='Entrar';}
 clrErr();
 }else{
 var m=window.location.hash.match(/#invite=([a-zA-Z0-9_-]+)/);
-if(m){document.getElementById('landingPage').style.display='none';var ab=document.getElementById('authBg');if(ab)ab.classList.remove('hidden');showReg();setTimeout(function(){if(typeof checkAuthInviteHash==='function')checkAuthInviteHash();},100);}
+if(m){var ab=document.getElementById('authBg');if(ab)ab.classList.remove('hidden');showReg();setTimeout(function(){if(typeof checkAuthInviteHash==='function')checkAuthInviteHash();},100);}
 else{showLanding();}
 }
 }
@@ -1883,15 +1879,10 @@ return '<div style="padding:10px 14px;background:'+bg+';border:1px solid '+brd+'
 
 
 function showLanding(){
-document.getElementById('landingPage').style.display='block';
-document.getElementById('authBg').classList.add('hidden');
-document.getElementById('app').classList.remove('on');
-var _fab2=document.getElementById('virtFab');if(_fab2)_fab2.style.display='none';
-var _fabM2=document.getElementById('virtFabMenu');if(_fabM2)_fabM2.style.display='none';
-var lb=document.getElementById('loadBg');if(lb)lb.classList.add('hidden');
+// Landing unificada em /index.html - redireciona para a home
+window.location.href='/';
 }
 function showAuth(){
-document.getElementById('landingPage').style.display='none';
 document.getElementById('authBg').classList.remove('hidden');
 showLog();
 }
