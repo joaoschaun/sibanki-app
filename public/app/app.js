@@ -1680,7 +1680,13 @@ if(d)d.classList.remove('open');
 }
 function updateLangBtnFlag(){
 var b=document.getElementById('langBtn');
-if(b){var t=window.currentLang==='en'?'Language':'Idioma';b.setAttribute('title',t);b.setAttribute('aria-label',t);if(typeof lucide!=='undefined')lucide.createIcons();}
+if(b){
+  var isEn=window.currentLang==='en';
+  var lbl=isEn?'Language':'Idioma';
+  var flag=isEn?'🇺🇸':'🇧🇷';
+  b.setAttribute('title',lbl);b.setAttribute('aria-label',lbl);
+  b.innerHTML='<span style="font-size:1.2rem;line-height:1;display:flex;align-items:center">'+flag+'</span>';
+}
 }
 document.addEventListener('click',function(e){
 if(!e.target.closest('.lang-wrap'))closeLangDropdown();
