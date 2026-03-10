@@ -515,6 +515,7 @@ setTimeout(function(){var lb2=document.getElementById('loadBg');if(lb2){lb2.clas
 
 function loadData(){
 if(!U||!U.uid){console.error('No user to load data for');return}
+if(typeof loadRemoteFeatureFlags==='function')loadRemoteFeatureFlags();
 console.log('Loading data for user:',U.uid);
 var loadDone=false;
 var loadDoc=function(src){return (src?db.collection('users').doc(U.uid).get({source:src}):db.collection('users').doc(U.uid).get())};
@@ -947,8 +948,8 @@ var _imp=document.getElementById('dashImportPromoCard');if(_imp)_imp.style.displ
 var _tel=document.getElementById('dashTelegramPromoCard');if(_tel)_tel.style.display='none';
 // Flash banners contextuais
 setTimeout(function(){if(typeof renderAlertBar==='function')renderAlertBar();},1200);
-// Briefing pós-login (1x por sessão)
-setTimeout(function(){if(typeof showBriefingModal==='function')showBriefingModal();},1800);
+// Briefing pós-login — controlado por feature flag
+setTimeout(function(){if(typeof requireFeature==='function')requireFeature('briefing_ia',function(){if(typeof showBriefingModal==='function')showBriefingModal();});},1800);
 setTimeout(function(){if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();},600);
 setTimeout(function(){if(!window.matchMedia("(display-mode:standalone)").matches){}},3000);
 if(typeof initCouple==="function")initCouple();
@@ -15036,4 +15037,193 @@ function closeBriefing() {
   modal.style.opacity = '0';
   modal.style.transition = 'opacity .2s';
   setTimeout(function() { modal.style.display = 'none'; modal.style.opacity = ''; modal.style.transition = ''; }, 200);
+}
+
+
+/* ════════════════════════════════════════════════════════════════
+   SIBANKI — SISTEMA DE FEATURE FLAGS
+   Controla o que está ativo, para qual plano, e permite ligar/
+   desligar funcionalidades remotamente via Firestore.
+   ════════════════════════════════════════════════════════════════
+
+   COMO USAR:
+     hasFeature('briefing_ia')         → true/false (verifica flag + plano)
+     requireFeature('briefing_ia', fn) → executa fn() se tiver acesso,
+                                         mostra upsell se não tiver
+
+   COMO ADICIONAR UMA NOVA FEATURE:
+     1. Adicionar entrada em SIBANKI_FEATURES abaixo
+     2. Fazer deploy
+     3. Para liberar para todos: alterar enabled para true
+     4. Para restringir ao Pro: colocar plan: ['pro','familia']
+
+   CONTROLE REMOTO (Firestore):
+     Documento: /config/featureFlags
+     Campo:     { briefing_ia: true, flash_banners: false, ... }
+     Sobrescreve os defaults sem precisar de deploy.
+   ════════════════════════════════════════════════════════════════ */
+
+var SIBANKI_FEATURES = {
+
+  /* ── ANÁLISE & IA ─────────────────────────────────────────── */
+  briefing_ia: {
+    enabled:     false,                    // ← INATIVO até estar pronto
+    plan:        ['pro','familia'],        // só Pro e Família
+    label:       'Briefing Inteligente com IA',
+    desc:        'Resumo financeiro gerado por IA ao fazer login',
+    upsell:      'Tenha um briefing financeiro personalizado toda vez que abrir o Sibanki.',
+    badge:       'PRO',
+    tab:         null
+  },
+
+  flash_banners: {
+    enabled:     true,                     // ativo para todos
+    plan:        ['free','pro','familia'],
+    label:       'Alertas Contextuais',
+    desc:        'Banners temporários com alertas de orçamento e cartões',
+    upsell:      null,
+    badge:       null,
+    tab:         null
+  },
+
+  ia_consultor: {
+    enabled:     true,
+    plan:        ['free','pro','familia'],  // free tem limite, pro ilimitado
+    label:       'Consultor IA',
+    desc:        'Chat com a Siba para análise financeira',
+    upsell:      'Upgrade para Pro e tenha consultas ilimitadas com a Siba.',
+    badge:       null,
+    tab:         'ia'
+  },
+
+  ia_insights_produto: {
+    enabled:     false,                    // ← INATIVO — futuro: vendas de produtos
+    plan:        ['pro','familia'],
+    label:       'Insights de Produtos Financeiros',
+    desc:        'IA identifica momentos ideais para oferecer empréstimos, seguros, investimentos',
+    upsell:      'Com o plano Pro, a Siba analisa seu perfil e sugere produtos financeiros no momento certo.',
+    badge:       'PRO',
+    tab:         'ia'
+  },
+
+  relatorio_pdf: {
+    enabled:     false,                    // ← INATIVO — a implementar
+    plan:        ['pro','familia'],
+    label:       'Relatório Mensal em PDF',
+    desc:        'Exportar resumo financeiro mensal em PDF',
+    upsell:      'Exporte seus relatórios financeiros em PDF com o plano Pro.',
+    badge:       'PRO',
+    tab:         'rel'
+  },
+
+  open_finance: {
+    enabled:     false,                    // ← INATIVO — a implementar
+    plan:        ['pro','familia'],
+    label:       'Open Finance',
+    desc:        'Sincronização automática com bancos via Open Finance',
+    upsell:      'Conecte seus bancos automaticamente com Open Finance no plano Pro.',
+    badge:       'PRO',
+    tab:         'contas'
+  },
+
+  whatsapp_bot: {
+    enabled:     true,
+    plan:        ['pro','familia'],
+    label:       'Bot WhatsApp',
+    desc:        'Lançar despesas e receber insights pelo WhatsApp',
+    upsell:      'Lance gastos pelo WhatsApp e receba alertas no plano Pro.',
+    badge:       'PRO',
+    tab:         'config'
+  },
+
+  dashboard_customizavel: {
+    enabled:     true,
+    plan:        ['free','pro','familia'],
+    label:       'Dashboard Personalizável',
+    desc:        'Reorganizar widgets do dashboard',
+    upsell:      null,
+    badge:       null,
+    tab:         'dash'
+  },
+
+  familia_compartilhado: {
+    enabled:     true,
+    plan:        ['familia'],
+    label:       'Finanças em Família',
+    desc:        'Dashboard compartilhado com cônjuge/filhos',
+    upsell:      'Gerencie as finanças da família junto com o plano Família.',
+    badge:       'FAMÍLIA',
+    tab:         'casal'
+  }
+};
+
+/* Flags remotas carregadas do Firestore — sobrescrevem os defaults */
+var _sibRemoteFlags = {};
+
+/* Carrega flags remotas uma vez por sessão */
+function loadRemoteFeatureFlags() {
+  if (!db) return;
+  db.collection('config').doc('featureFlags').get().then(function(doc) {
+    if (doc && doc.exists) {
+      _sibRemoteFlags = doc.data() || {};
+      console.log('[FeatureFlags] Flags remotas carregadas:', Object.keys(_sibRemoteFlags));
+    }
+  }).catch(function() {
+    // silencioso — usa defaults locais
+  });
+}
+
+/* Verifica se o usuário tem acesso a uma feature */
+function hasFeature(key) {
+  var feat = SIBANKI_FEATURES[key];
+  if (!feat) return false;
+
+  // Flag remota do Firestore sobrescreve o default local
+  var enabled = (key in _sibRemoteFlags) ? _sibRemoteFlags[key] : feat.enabled;
+  if (!enabled) return false;
+
+  // Verificar plano
+  var plan = (typeof userPlan !== 'undefined' ? userPlan : 'free') || 'free';
+  return feat.plan.indexOf(plan) >= 0;
+}
+
+/* Executa fn se tiver acesso, mostra upsell se não */
+function requireFeature(key, fn) {
+  var feat = SIBANKI_FEATURES[key];
+  if (!feat) return;
+
+  var enabled = (key in _sibRemoteFlags) ? _sibRemoteFlags[key] : feat.enabled;
+
+  // Feature desativada globalmente — sem upsell, silencioso
+  if (!enabled) {
+    console.log('[Feature] ' + key + ' está desativada globalmente.');
+    return;
+  }
+
+  // Tem acesso — executa
+  if (hasFeature(key)) { fn(); return; }
+
+  // Não tem acesso — mostra upsell
+  showFeatureUpsell(key);
+}
+
+/* Modal de upsell para features PRO */
+function showFeatureUpsell(key) {
+  var feat = SIBANKI_FEATURES[key];
+  if (!feat || !feat.upsell) return;
+
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,5,16,.75);backdrop-filter:blur(8px)';
+  modal.innerHTML =
+    '<div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--brd);border-radius:20px;padding:28px 24px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.6)">' +
+      '<div style="font-size:2.5rem;margin-bottom:12px">' + (feat.badge === 'FAMÍLIA' ? '👨‍👩‍👧‍👦' : '⭐') + '</div>' +
+      '<div style="font-size:1.1rem;font-weight:800;color:var(--t1);margin-bottom:8px">' + feat.label + '</div>' +
+      '<div style="font-size:.88rem;color:var(--t2);line-height:1.6;margin-bottom:20px">' + feat.upsell + '</div>' +
+      '<div style="display:flex;gap:10px;justify-content:center">' +
+        '<button onclick="this.closest(\'div[style]\').remove()" style="padding:10px 20px;border-radius:10px;border:1px solid var(--brd);background:none;color:var(--t2);font-size:.88rem;cursor:pointer">Agora não</button>' +
+        '<button onclick="this.closest(\'div[style]\').remove();go(\'config\',null)" style="padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,#4F8CFF,#6366f1);color:#fff;font-weight:700;font-size:.88rem;cursor:pointer">Ver planos</button>' +
+      '</div>' +
+    '</div>';
+  modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
 }
