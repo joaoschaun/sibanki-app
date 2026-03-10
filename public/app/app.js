@@ -1213,21 +1213,23 @@ renderDashboardWidgets();
 salvarLayoutDashboard();
 toast(typeof t==='function'?t('toast_layout_resetado'):'Layout resetado','ok');
 }
-function renderDashImportPromo(){
-var card=document.getElementById('dashImportPromoCard');
-if(!card)return;
-if(!onboardingDone){card.style.display='none';return;}
-if(entries.length>15){card.style.display='none';return;}
-var fechada=localStorage.getItem('dicaImportarFechada');
-if(fechada){var t=parseInt(fechada,10);if(Date.now()-t<7*24*60*60*1000){card.style.display='none';return}}
-card.style.display='block';
-}
-function renderDashTelegramPromo(){
-var card=document.getElementById('dashTelegramPromoCard');
-if(!card)return;
-if(!onboardingDone){card.style.display='none';return;}
-if(localStorage.getItem('vrt_telegram_promo')){card.style.display='none';return;}
-card.style.display='flex';
+/* Unificado: máx 1 card de promo visível por vez */
+function renderDashImportPromo(){renderDashPromos();}
+function renderDashTelegramPromo(){renderDashPromos();}
+function renderDashPromos(){
+var impCard=document.getElementById('dashImportPromoCard');
+var telCard=document.getElementById('dashTelegramPromoCard');
+if(!impCard||!telCard)return;
+impCard.style.display='none';telCard.style.display='none';
+if(!onboardingDone)return;
+// Avalia import: só mostra se poucos lançamentos e não fechou recentemente
+var showImport=entries.length<=15;
+if(showImport){var fi=localStorage.getItem('dicaImportarFechada');if(fi&&(Date.now()-parseInt(fi,10))<7*24*60*60*1000)showImport=false;}
+// Avalia telegram
+var showTelegram=!localStorage.getItem('vrt_telegram_promo');
+// Mostra apenas 1 — import tem prioridade sobre telegram
+if(showImport){impCard.style.display='block';}
+else if(showTelegram){telCard.style.display='flex';}
 }
 function setLancFirstGuide(){
 var box=document.getElementById('lancFormBox');
@@ -2407,8 +2409,12 @@ var salM=recM-despM;
 var h=now.getHours();
 var saud=h<6?'Boa madrugada':h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
 var nota=10;
-var pctGasto=recM>0?Math.round(despM/recM*100):0;
-if(pctGasto>100)nota-=4;else if(pctGasto>80)nota-=2;else if(pctGasto>60)nota-=1;
+var pctGasto=recM>0?Math.round(despM/recM*100):(despM>0?999:0);
+// Sem receita + com despesa = situação crítica (trata como 999% de gasto)
+if(recM===0&&despM>0)nota-=5;
+else if(pctGasto>100)nota-=4;else if(pctGasto>80)nota-=2;else if(pctGasto>60)nota-=1;
+// Penalidade extra: despesa muito maior que receita
+if(recM>0&&pctGasto>150)nota-=2;
 if(investments.length===0)nota-=1;if(goals.length===0)nota-=1;if(Object.keys(budgets).length===0)nota-=1;
 nota=Math.max(1,Math.min(10,nota));
 window._lastFinScore=nota*10;

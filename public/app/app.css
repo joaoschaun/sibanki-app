@@ -182,7 +182,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
   .drawer-sidebar-mode .drawer-overlay{display:none}
   /* Conteúdo desloca para direita */
   .drawer-sidebar-mode #appContent{margin-left:280px;transition:margin-left .3s ease}
-  .drawer-sidebar-mode .app-content .wrap{padding-left:clamp(12px,2vw,20px)}
+  .drawer-sidebar-mode .app-content .wrap{padding-left:28px;padding-right:28px}
   /* Top header no modo sidebar: mais slim, sem hamburger redundante */
   .drawer-sidebar-mode .top-header-btn-menu{opacity:.45;pointer-events:auto}
   .drawer-sidebar-mode .top-header-btn-menu:hover{opacity:1}
@@ -201,7 +201,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 [data-lucide]{width:20px;height:20px;stroke-width:1.75;vertical-align:middle;flex-shrink:0}
 .drawer-nav [data-lucide]{width:22px;height:22px;stroke-width:1.5;color:#90A4AE}
 .drawer-nav .active .module-icon [data-lucide]{color:#4C7BF4;stroke-width:2}
-.drawer-nav-sep{padding:16px 16px 6px;font-size:0.6rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.2)}
+.drawer-nav-sep{padding:16px 16px 6px;font-size:0.6rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.45)}
 .icon-lg [data-lucide]{width:32px;height:32px;stroke-width:1.5}
 .categoria-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(76,123,244,.15)}
 .categoria-icon [data-lucide]{width:18px;height:18px;color:#4C7BF4}
@@ -1289,7 +1289,7 @@ body.light .drawer-plan-badge.gratuito{background:rgba(15,23,42,.08);color:#4755
 body.light .drawer-nav-item{color:#475569}
 body.light .drawer-nav-item:hover{color:#0F172A;background:rgba(59,130,246,.06)}
 body.light .drawer-nav-item.active{background:rgba(59,130,246,.12);color:var(--vr)!important;border-left-color:var(--vr)}
-body.light .drawer-nav-sep{color:#94A3B8}
+body.light .drawer-nav-sep{color:#475569;font-weight:700}
 body.light .drawer-close-btn{color:#64748B}
 body.light .drawer-close-btn:hover{color:#0F172A;background:rgba(15,23,42,.06)}
 body.light .drawer-footer{border-color:rgba(15,23,42,.06)}
