@@ -314,7 +314,6 @@
 </div>
 <div class="top-header-c">
 <div class="top-header-logo sibanki-logo">
-<img loading="lazy" src="https://storage.googleapis.com/app-tess-ai-platform-assets-prod/assets/uploads/313663a4-caf3-472e-813b-9d2995f8297f.png" alt="Sibanki" class="sibanki-logo-icon">
 <span class="sibanki-logo-text">Sibanki</span>
 </div>
 </div>
@@ -342,7 +341,9 @@
 
 <!-- TAB: DASHBOARD -->
 <div id="dash" class="tab on">
-<div id="alertBar" style="display:none;margin-bottom:12px"></div>
+
+<!-- FLASH BANNER (contextual, temporário, colorido) -->
+<div id="sibFlashBar" style="margin-bottom:0"></div>
 <div id="tipBanner" style="margin-bottom:12px"></div>
 <div id="dashImportPromoCard" class="cb" style="display:none;margin-bottom:16px;background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(6,182,212,.06));border:1px solid rgba(34,197,94,.3);padding:16px 18px">
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
@@ -3023,6 +3024,24 @@
 
 
 <script src="app.js"></script>
+<!-- BRIEFING MODAL (pós-login) -->
+<div id="sibBriefingModal" class="sib-bf-ov" onclick="if(event.target===this)closeBriefing()" role="dialog" aria-modal="true" aria-labelledby="sibBriefTitle" style="display:none">
+  <div class="sib-bf-box">
+    <div class="sib-bf-hd">
+      <div>
+        <div class="sib-bf-saudacao" id="sibBriefTitle"></div>
+        <div class="sib-bf-data" id="sibBriefData"></div>
+      </div>
+      <button class="sib-bf-close" onclick="closeBriefing()" aria-label="Fechar">&#x2715;</button>
+    </div>
+    <div class="sib-bf-kpis" id="sibBriefKpis"></div>
+    <div class="sib-bf-items" id="sibBriefItems"></div>
+    <div class="sib-bf-ft">
+      <button class="sib-bf-saiba" id="sibBriefSaiba" onclick="closeBriefing()">Ver detalhes</button>
+      <button class="sib-bf-ok" onclick="closeBriefing()">Entendido</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
 

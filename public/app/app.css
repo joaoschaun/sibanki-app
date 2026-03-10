@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;600;700&family=Outfit:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
 /* Responsivo global */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;transition:color .15s ease,background .15s ease,opacity .15s ease}
 html,body{overflow-x:hidden;max-width:100vw}
@@ -246,12 +246,10 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 .top-header-logo{width:44px;height:44px;border-radius:10px;overflow:hidden;flex-shrink:0}
 .top-header-logo img{width:100%;height:100%;object-fit:contain}
 .top-header-c .top-header-logo{width:auto;height:auto}
-.top-header-c .top-header-logo img{width:48px;height:48px}
 .top-header-c{flex:1;display:flex;justify-content:center}
-/* Logo mista Sibanki (ícone + texto) - Copilot style */
-.sibanki-logo{display:flex;align-items:center;justify-content:center;gap:12px;flex-shrink:0}
-.sibanki-logo-icon{width:36px!important;height:36px!important;border-radius:10px;object-fit:contain;flex-shrink:0;background:transparent;padding:0;box-sizing:border-box}
-.sibanki-logo-text{font-family:var(--font-display);font-weight:800;font-size:1.35rem;letter-spacing:-0.3px;color:#fff;white-space:nowrap}
+/* Logo Sibanki - só texto, fonte Outfit */
+.sibanki-logo{display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sibanki-logo-text{font-family:'Outfit',var(--font-display);font-weight:700;font-size:4rem;letter-spacing:-0.03em;color:var(--t1);white-space:nowrap}
 .top-header-r{display:flex;align-items:center;gap:8px}
 .lang-wrap{position:relative}
 .lang-btn{display:inline-flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(79,140,255,.12);border:1px solid rgba(79,140,255,.35);cursor:pointer;color:var(--t1);transition:.3s;padding:6px 12px}
@@ -1207,8 +1205,7 @@ body.light .info{color:#2563EB}
 /* ===== MODO CLARO: HEADER, DRAWER, LISTAS, FORMULÁRIOS ===== */
 body.light .top-header{background:rgba(255,255,255,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(15,23,42,.08);box-shadow:0 1px 0 rgba(255,255,255,.8)}
 body.light .top-header-btn-menu{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.25);color:#0F172A}
-body.light .sibanki-logo-icon{background:linear-gradient(135deg,#fff,#f8fafc);border:1px solid rgba(59,130,246,.25);box-shadow:0 4px 16px rgba(59,130,246,.25)}
-body.light .sibanki-logo-text{color:#0F172A;text-shadow:none}
+body.light .sibanki-logo-text{color:#0F172A}
 body.light .top-header-btn-menu:hover{background:rgba(59,130,246,.18);border-color:rgba(59,130,246,.4);color:var(--vr)}
 body.light .top-header-avatar{box-shadow:0 2px 8px rgba(59,130,246,.2)}
 body.light .notif-btn{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.25);color:#0F172A}
@@ -2647,3 +2644,108 @@ html,body{overflow-x:hidden;width:100%;max-width:100vw}
 .news-bookmark-btn:hover{color:#F59E0B;background:rgba(245,158,11,.08)}
 .news-bookmark-btn.saved{color:#F59E0B}
 .news-views-count{font-size:.7em;color:var(--t3);display:flex;align-items:center;gap:4px}
+
+
+/* ═══════════════════════════════════════════════════════
+   FLASH BANNER — banners contextuais temporários
+   ═══════════════════════════════════════════════════════ */
+.sib-flash{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-radius:12px;margin-bottom:8px;
+  font-size:.88rem;font-weight:500;color:#fff;
+  cursor:pointer;position:relative;overflow:hidden;
+  animation:sibFlashIn .35s cubic-bezier(.16,1,.3,1);
+  transition:opacity .3s,transform .3s;
+  border:1px solid transparent;
+}
+.sib-flash.out{opacity:0;transform:translateY(-8px);pointer-events:none}
+.sib-flash.ok  {background:rgba(16,185,129,.18);border-color:rgba(16,185,129,.4);color:#6ee7b7}
+.sib-flash.warn{background:rgba(234,179,8,.15); border-color:rgba(234,179,8,.35); color:#fde68a}
+.sib-flash.bad {background:rgba(239,68,68,.15); border-color:rgba(239,68,68,.35); color:#fca5a5}
+.sib-flash-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1rem}
+.sib-flash.ok   .sib-flash-icon{background:rgba(16,185,129,.2)}
+.sib-flash.warn .sib-flash-icon{background:rgba(234,179,8,.2)}
+.sib-flash.bad  .sib-flash-icon{background:rgba(239,68,68,.2)}
+.sib-flash-body{flex:1;min-width:0}
+.sib-flash-msg{font-weight:600;line-height:1.3}
+.sib-flash-hint{font-size:.78rem;opacity:.7;margin-top:2px}
+.sib-flash-arrow{font-size:.9rem;opacity:.5;flex-shrink:0}
+.sib-flash-close{background:none;border:none;cursor:pointer;opacity:.45;font-size:1.1rem;padding:0 0 0 8px;color:inherit;line-height:1}
+.sib-flash-close:hover{opacity:.9}
+.sib-flash-progress{
+  position:absolute;bottom:0;left:0;height:2px;
+  background:currentColor;opacity:.3;
+  animation:sibFlashProgress linear forwards;
+}
+@keyframes sibFlashIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sibFlashProgress{from{width:100%}to{width:0%}}
+
+/* ═══════════════════════════════════════════════════════
+   BRIEFING MODAL — popup inteligente pós-login
+   ═══════════════════════════════════════════════════════ */
+.sib-bf-ov{
+  position:fixed;inset:0;z-index:9000;
+  background:rgba(5,5,16,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;padding:16px;
+  animation:fadeIn .25s ease;
+}
+.sib-bf-box{
+  width:100%;max-width:440px;
+  background:var(--card);border:1px solid var(--brd);border-radius:20px;
+  box-shadow:0 24px 64px rgba(0,0,0,.6);
+  overflow:hidden;animation:sibBfIn .35s cubic-bezier(.16,1,.3,1);
+}
+@keyframes sibBfIn{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
+.sib-bf-hd{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  padding:20px 20px 0;
+}
+.sib-bf-saudacao{font-size:1.25rem;font-weight:800;color:var(--t1);line-height:1.2}
+.sib-bf-data{font-size:.78rem;color:var(--t3);margin-top:3px}
+.sib-bf-close{background:none;border:1px solid var(--brd);border-radius:8px;cursor:pointer;color:var(--t3);font-size:1rem;padding:4px 8px;line-height:1;transition:.2s}
+.sib-bf-close:hover{background:var(--bg2);color:var(--t1)}
+.sib-bf-kpis{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  padding:16px 20px 0;
+}
+.sib-bf-kpi{
+  background:var(--bg2);border:1px solid var(--brd);border-radius:12px;
+  padding:12px;text-align:center;
+}
+.sib-bf-kpi-label{font-size:.65rem;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.sib-bf-kpi-val{font-size:.95rem;font-weight:800;color:var(--t1)}
+.sib-bf-kpi-val.ok  {color:#10b981}
+.sib-bf-kpi-val.warn{color:#eab308}
+.sib-bf-kpi-val.bad {color:#ef4444}
+.sib-bf-items{padding:12px 20px;display:flex;flex-direction:column;gap:8px}
+.sib-bf-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:10px;cursor:pointer;
+  transition:background .2s;font-size:.85rem;
+  border:1px solid transparent;
+}
+.sib-bf-item:hover{background:var(--bg2)}
+.sib-bf-item.ok  {background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.2)}
+.sib-bf-item.warn{background:rgba(234,179,8,.08);border-color:rgba(234,179,8,.2)}
+.sib-bf-item.bad {background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.2)}
+.sib-bf-item-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sib-bf-item.ok   .sib-bf-item-dot{background:#10b981}
+.sib-bf-item.warn .sib-bf-item-dot{background:#eab308}
+.sib-bf-item.bad  .sib-bf-item-dot{background:#ef4444}
+.sib-bf-item-text{flex:1;color:var(--t1);font-weight:500;line-height:1.3}
+.sib-bf-item-arrow{color:var(--t3);font-size:.8rem}
+.sib-bf-ft{
+  display:flex;gap:10px;padding:16px 20px;
+  border-top:1px solid var(--brd);background:var(--bg2);
+}
+.sib-bf-saiba{
+  flex:1;padding:11px;border-radius:10px;font-size:.88rem;font-weight:700;
+  background:linear-gradient(135deg,var(--vr),#6366f1);color:#fff;
+  border:none;cursor:pointer;transition:.2s;
+}
+.sib-bf-saiba:hover{opacity:.88}
+.sib-bf-ok{
+  padding:11px 20px;border-radius:10px;font-size:.88rem;font-weight:600;
+  background:var(--card);color:var(--t2);border:1px solid var(--brd);cursor:pointer;transition:.2s;
+}
+.sib-bf-ok:hover{background:var(--bg);color:var(--t1)}
