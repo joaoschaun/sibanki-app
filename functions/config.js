@@ -29,8 +29,16 @@ const TELEGRAM_API = TELEGRAM_TOKEN
   ? `https://api.telegram.org/bot${TELEGRAM_TOKEN}`
   : "";
 
-// Gemini
-const GEMINI_KEY = process.env.GEMINI_KEY || "";
+// Gemini (.env local / Firebase config em produção)
+let GEMINI_KEY = process.env.GEMINI_KEY || "";
+if (!GEMINI_KEY) {
+  try {
+    const fn = require("firebase-functions");
+    if (fn.config && fn.config().gemini && fn.config().gemini.key) {
+      GEMINI_KEY = fn.config().gemini.key;
+    }
+  } catch (e) {}
+}
 
 // Stripe
 const STRIPE_SECRET = process.env.STRIPE_SECRET || "";
@@ -39,6 +47,20 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 // E-mail (Resend) - convite família (domínio sibanki.com.br)
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const RESEND_FROM = process.env.RESEND_FROM || "Sibanki Familia <familia@sibanki.com.br>";
+
+// WhatsApp Business (Meta Cloud API) - .env ou firebase functions:config:set whatsapp.token=...
+let WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || "";
+let WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || "";
+let WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "sibanki_wa_verify";
+if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
+  try {
+    const fn = require("firebase-functions");
+    const c = fn.config().whatsapp || {};
+    if (c.token) WHATSAPP_TOKEN = c.token;
+    if (c.phone_number_id) WHATSAPP_PHONE_NUMBER_ID = c.phone_number_id;
+    if (c.verify_token) WHATSAPP_VERIFY_TOKEN = c.verify_token;
+  } catch (e) {}
+}
 
 let stripeInstance = null;
 function getStripe() {
@@ -64,6 +86,9 @@ module.exports = {
   STRIPE_WEBHOOK_SECRET,
   getStripe,
   RESEND_API_KEY,
-  RESEND_FROM
+  RESEND_FROM,
+  WHATSAPP_TOKEN,
+  WHATSAPP_PHONE_NUMBER_ID,
+  WHATSAPP_VERIFY_TOKEN
 };
 

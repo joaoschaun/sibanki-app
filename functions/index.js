@@ -12,11 +12,16 @@ const {
   STRIPE_WEBHOOK_SECRET,
   getStripe,
   RESEND_API_KEY,
-  RESEND_FROM
+  RESEND_FROM,
+  GEMINI_KEY,
+  WHATSAPP_TOKEN,
+  WHATSAPP_PHONE_NUMBER_ID,
+  WHATSAPP_VERIFY_TOKEN
 } = require("./config");
 const brapiService = require("./services/market/brapiService");
 const newsService = require("./services/news/newsService");
 const stripeService = require("./services/billing/stripeService");
+const whatsappService = require("./services/whatsapp/whatsappService");
 
 // Load .env for local development (mantido por compatibilidade)
 try { require("dotenv").config(); } catch(e) {}
@@ -145,6 +150,8 @@ exports.getDailyBriefing = functions.https.onRequest(async (req, res) => {
 // =============================================
 const APP_URL = process.env.APP_URL || "https://virtus-financeiro-cd7bd.web.app/app";
 const { getFamilyInviteEmailHtml } = require("./templates/familyInviteEmail");
+const { getVerifyEmailHtml } = require("./templates/verifyEmail");
+const { getWeeklySummaryEmailHtml } = require("./templates/weeklySummaryEmail");
 
 function getResendApiKey() {
   return process.env.RESEND_API_KEY ||
@@ -210,6 +217,366 @@ exports.sendFamilyInviteEmail = functions.https.onCall(async (data, context) => 
     logError("sendFamilyInviteEmail", e);
     throw new functions.https.HttpsError("internal", "Erro ao enviar e-mail. Tente novamente.");
   }
+});
+
+// =============================================
+// VERIFICAÇÃO DE E-MAIL (Resend) - mesmo fluxo do módulo família
+// =============================================
+exports.sendVerificationEmail = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Faça login para reenviar o e-mail.");
+  }
+  let email = context.auth.token.email;
+  if (!email) {
+    const userRecord = await admin.auth().getUser(context.auth.uid);
+    email = userRecord.email;
+  }
+  if (!email) {
+    throw new functions.https.HttpsError("invalid-argument", "E-mail não encontrado.");
+  }
+  const apiKey = getResendApiKey();
+  if (!apiKey) {
+    throw new functions.https.HttpsError("failed-precondition", "Envio por e-mail não configurado.");
+  }
+  try {
+    const continueUrl = (data && data.continueUrl) || APP_URL;
+    const link = await admin.auth().generateEmailVerificationLink(email, { url: continueUrl });
+    const html = getVerifyEmailHtml(link);
+    const { Resend } = require("resend");
+    const resend = new Resend(apiKey);
+    const { data: sendData, error } = await resend.emails.send({
+      from: RESEND_FROM,
+      to: [email],
+      subject: "Confirme seu e-mail - Sibanki",
+      html
+    });
+    if (error) {
+      logError("Resend verification error", { error });
+      throw new functions.https.HttpsError("internal", error.message || "Falha ao enviar e-mail.");
+    }
+    return { ok: true, messageId: sendData?.id };
+  } catch (e) {
+    if (e instanceof functions.https.HttpsError) throw e;
+    logError("sendVerificationEmail", e);
+    throw new functions.https.HttpsError("internal", "Erro ao enviar e-mail. Tente novamente.");
+  }
+});
+
+// =============================================
+// RESUMO SEMANAL POR E-MAIL (agendado: segunda 8h BRT)
+// =============================================
+function computeWeeklySummary(entries, startDateStr, endDateStr) {
+  const valid = (e) =>
+    e &&
+    e.date &&
+    !e.isTransfer &&
+    e.category !== "Transferencia" &&
+    e.status !== "pendente" &&
+    e.status !== "agendado" &&
+    e.date >= startDateStr &&
+    e.date <= endDateStr;
+  const list = Array.isArray(entries) ? entries.filter(valid) : [];
+  const receitaTotal = list.filter((e) => e.type === "receita").reduce((s, e) => s + (Number(e.value) || 0), 0);
+  const despesaTotal = list.filter((e) => e.type === "despesa").reduce((s, e) => s + (Number(e.value) || 0), 0);
+  const byCat = {};
+  list.filter((e) => e.type === "despesa" && e.category).forEach((e) => {
+    byCat[e.category] = (byCat[e.category] || 0) + (Number(e.value) || 0);
+  });
+  const topCategorias = Object.entries(byCat)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
+  return { receitaTotal, despesaTotal, topCategorias };
+}
+
+function formatDateBR(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+exports.weeklySummary = functions.pubsub
+  .schedule("every monday 08:00")
+  .timeZone("America/Sao_Paulo")
+  .onRun(async () => {
+    const apiKey = getResendApiKey();
+    if (!apiKey) {
+      logError("weeklySummary", new Error("RESEND_API_KEY not configured"));
+      return null;
+    }
+    const now = new Date();
+    const end = new Date(now);
+    end.setDate(end.getDate() - 1);
+    const start = new Date(end);
+    start.setDate(start.getDate() - 6);
+    const toStr = (d) => d.toISOString().slice(0, 10);
+    const startDateStr = toStr(start);
+    const endDateStr = toStr(end);
+
+    const snap = await db.collection("users").where("resumoSemanalEmail", "==", true).get();
+    const { Resend } = require("resend");
+    const resend = new Resend(apiKey);
+
+    for (const doc of snap.docs) {
+      const d = doc.data();
+      let email = d.email;
+      if (!email) {
+        try {
+          const userRecord = await admin.auth().getUser(doc.id);
+          email = userRecord.email;
+        } catch (e) {
+          logError("weeklySummary getUser", { uid: doc.id, error: e.message });
+          continue;
+        }
+      }
+      if (!email) continue;
+
+      const entries = d.entries || [];
+      const { receitaTotal, despesaTotal, topCategorias } = computeWeeklySummary(entries, startDateStr, endDateStr);
+      const nome = d.name || "Usuário";
+      const html = getWeeklySummaryEmailHtml(
+        nome,
+        receitaTotal,
+        despesaTotal,
+        topCategorias,
+        formatDateBR(startDateStr),
+        formatDateBR(endDateStr),
+        APP_URL
+      );
+      try {
+        const { error } = await resend.emails.send({
+          from: RESEND_FROM,
+          to: [email],
+          subject: "Seu resumo da semana — Sibanki",
+          html
+        });
+        if (error) logError("weeklySummary Resend", { uid: doc.id, error });
+      } catch (e) {
+        logError("weeklySummary send", { uid: doc.id, error: e.message });
+      }
+    }
+    return null;
+  });
+
+// =============================================
+// CHAT IA (Gemini) - usado pelo FAB e módulo IA do app
+// =============================================
+const RAG_KNOWLEDGE = {
+  reserva: `Reserva de emergência: dinheiro guardado para imprevistos (desemprego, saúde, conserto). Primeira prioridade financeira. Mínimo 3 meses de gastos essenciais; ideal 6 meses de gastos totais; autônomo/instável até 12 meses. Deve ficar em aplicação de liquidez imediata (Tesouro Selic, CDB liquidez diária). Nunca usar para viagem, impulso ou investimento arriscado.`,
+  imprevisto: `Imprevistos: gastos não planejados (conserto, saúde, multa). Estratégias: 1) Usar reserva de emergência se existir. 2) Cortar gastos não essenciais do mês. 3) Renegociar ou adiar contas não urgentes. 4) Evitar empréstimo com juros altos; se inevitável, comparar taxas e prazos. Sempre priorize o essencial (moradia, alimentação, saúde).`,
+  divida: `Dívidas: priorize quitar as de juros mais altos primeiro (cartão, cheque especial). Negocie com o credor: parcelamento, desconto à vista, refinanciamento. Evite contrair novas dívidas para pagar antigas, exceto se a nova taxa for bem menor. Liste todas as dívidas (valor, taxa, parcela) para ter visão clara.`,
+  seguro: `Seguros: protegem patrimônio e renda. Seguro de vida e residencial são os mais relevantes para famílias. Avalie custo-benefício; evite seguros desnecessários. Para veículo, compare coberturas e franquias.`,
+  consorcio: `Consórcio: alternativa ao financiamento para compra de bem (carro, imóvel). Não tem juros explícitos, mas tem taxa de administração e depende de sorteio ou lance. Compare com financiamento; pode ser vantajoso para quem consegue dar lances e antecipar.`,
+  emprestimo: `Empréstimos: compare sempre Custo Efetivo Total (CET) e prazo. Evite para consumo; prefira para investimento ou emergência real. Renegocie dívidas existentes antes de assumir novas.`,
+  sistema: `Sibanki: app de controle financeiro pessoal. Funcionalidades principais: Lançamentos (receitas e despesas por data, categoria e conta); Contas bancárias (várias contas com saldo); Cartões de crédito (limite, fechamento, vencimento, compras); Metas financeiras (valor alvo e acompanhamento); Orçamento por categoria (limite mensal por categoria); Relatórios e dashboard. O usuário pode usar o botão de chat (FAB) para falar com o consultor e fazer lançamentos ou pedir ações por texto.`,
+  comportamento: `Comportamento financeiro (psicologia econômica): Viés do presente — tendemos a valorizar mais o agora que o futuro; por isso poupar exige regras (automático, antes de gastar). Viés do custo afundado — não mantenha um gasto ou investimento ruim só porque já gastou; avalie daqui pra frente. Efeito manada — evite decisões por modismo (cripto, ações da vez); tenha critérios próprios. Compensação moral — gastar mais depois de "ter se controlado" anula o ganho; evite recompensas em consumo. Conta mental — dinheiro "separado" (mesada, bônus) é gasto com mais facilidade; trate toda renda como uma só. Recomendações: automatize poupança, defina limites por categoria, revise gastos com calma (não no calor do momento), celebre pequenas vitórias sem gastar.`,
+  vieses: `Mais vieses comportamentais em dinheiro: Aversão à perda — perdemos mais satisfação ao perder R$ 100 do que ganhamos ao ganhar R$ 100; por isso muita gente evita vender investimento no prejuízo (mesmo quando faz sentido) ou assume riscos demais para "recuperar". Âncora — o primeiro número que vemos (preço à vista, parcela) influencia o que achamos "justo"; compare sempre com alternativas. Otimismo excessivo — subestimamos gastos e prazos; use margem de segurança no orçamento. Falácia do custo afundado — "já gastei tanto que tenho que continuar"; a decisão certa é pela frente, não pelo que já passou. Para decidir melhor: espere 24h em compras grandes, escreva prós e contras, consulte alguém de confiança.`,
+  livros: `Princípios de educação financeira (inspirados em clássicos): (1) Pague a si primeiro — reserve parte da renda para reserva e metas antes de pagar contas. (2) Diferencie ativo e passivo — ativo gera receita ou valor; passivo gera despesa; priorize acumular ativos. (3) Conheça seus números — receita, despesa, patrimônio; só quem mede melhora. (4) Orçamento é liberdade — não é restrição, é saber onde o dinheiro vai para escolher com consciência. (5) Juros compostos a seu favor — poupar cedo e de forma consistente vale mais que valores altos tarde. (6) Emergência primeiro — reserva de 3–6 meses de gastos antes de investir em risco. (7) Evite dívida para consumo — use crédito com plano de pagamento; evite parcelar o que não é essencial. (8) Educação financeira contínua — leia, aprenda, ajuste; o contexto de cada um é único.`,
+  investimentos: `Investimentos básicos (conceitos): CDI — taxa que reflete o custo do dinheiro entre bancos; renda fixa costuma ser referenciada a ele (ex.: 100% do CDI). Inflação — IPCA mede o aumento de preços; investimentos devem superar a inflação para não perder poder de compra. Diversificação — não coloque tudo em um ativo; distribua entre renda fixa, ações, fundos, para reduzir risco. Liquidez — facilidade de resgatar; reserva de emergência precisa de liquidez diária (Tesouro Selic, CDB diário). Risco e retorno — maior retorno esperado costuma vir com maior risco; alinhe investimentos ao seu prazo e perfil. Ordem prática: 1) Reserva de emergência (liquidez). 2) Quitar dívidas caras. 3) Metas de curto/médio prazo (renda fixa). 4) Longo prazo (diversificar conforme perfil).`
+};
+function getRagChunksForMessage(message) {
+  const m = (message || "").toLowerCase();
+  const out = [];
+  if (/reserva|emergência|emergencia|guardar|poupança/.test(m)) out.push(RAG_KNOWLEDGE.reserva);
+  if (/imprevisto|imprevistos|emergência|emergencia|conserto|inesperado/.test(m)) out.push(RAG_KNOWLEDGE.imprevisto);
+  if (/dívida|divida|dívidas|dividas|emprestimo|empréstimo|cartão|cartao|juros/.test(m)) out.push(RAG_KNOWLEDGE.divida);
+  if (/seguro|seguros/.test(m)) out.push(RAG_KNOWLEDGE.seguro);
+  if (/consórcio|consorcio/.test(m)) out.push(RAG_KNOWLEDGE.consorcio);
+  if (/emprestimo|empréstimo|financiamento|renegociar/.test(m)) out.push(RAG_KNOWLEDGE.emprestimo);
+  if (/como (usar|funciona|adicionar|vejo|defino)|onde (fica|cadastr|vejo)|ajuda sobre o sistema|funcionalidade do app|sibanki/.test(m)) out.push(RAG_KNOWLEDGE.sistema);
+  if (/comportamento|psicologia|viés|vies|habito|hábito|impulso|gastar|compra por|livro|educação financeira|pagar a si primeiro|ativo e passivo|juros compostos|princípio/.test(m)) out.push(RAG_KNOWLEDGE.comportamento);
+  if (/aversão à perda|ancora|âncora|viés|vies|decisão|decisão errada|custo afundado|otimismo|perda|ganho/.test(m)) out.push(RAG_KNOWLEDGE.vieses);
+  if (/comportamento|psicologia|livro|educação financeira|pagar a si primeiro|ativo e passivo|juros compostos|princípio|babilônia|rico|pobre|poupar|investir/.test(m)) out.push(RAG_KNOWLEDGE.livros);
+  if (/investir|investimento|cdi|ipca|inflação|inflacao|diversificar|renda fixa|tesouro|reserva|aplicação|aplicar/.test(m)) out.push(RAG_KNOWLEDGE.investimentos);
+  return out.length ? out.join("\n\n") : "";
+}
+const CONSULTOR_SYSTEM_INSTRUCTION = `Você é o Sibanki IA, consultor financeiro pessoal do app. Regras obrigatórias:
+
+PAPEL: Especialista em finanças pessoais, investimentos, empréstimos, consórcios, seguros e comportamento financeiro. Seja empático, sem julgamento, e proativo.
+
+AJUDA SOBRE O SISTEMA (Sibanki):
+- Se o usuário perguntar como usar o app, onde fica algo ou como funciona uma função, explique de forma clara e objetiva.
+- O app tem: lançamentos (receitas/despesas), contas bancárias, cartões de crédito, metas financeiras, orçamento por categoria, relatórios e dashboard. Pode sugerir usar o botão flutuante (FAB) para falar com você e fazer lançamentos ou alterações por voz/texto.
+- Exemplos: "como adicionar uma conta?", "onde vejo minhas metas?", "como definir orçamento?" — responda indicando as abas/funcionalidades de forma amigável.
+
+DÚVIDAS FINANCEIRAS E EDUCAÇÃO:
+- Responda dúvidas sobre conceitos (juros, CDI, reserva de emergência, investimentos, dívidas, consórcio, seguro etc.) de forma didática e em português brasileiro.
+- Use os dados do usuário (receita, despesa, metas, contas) quando fornecidos no contexto para personalizar a resposta.
+
+EMPATIA E CENÁRIOS:
+- Considere sempre o contexto da pessoa: quem está juntando reserva, quem está endividado, quem teve imprevisto.
+- Se os dados indicam saldo negativo ou alto % de gasto, seja acolhedor e sugira passos concretos (não só "tenha reserva").
+- Para imprevistos: sugira como encaixar no mês, priorizar gastos, usar reserva se houver, ou alternativas (linha de crédito só se fizer sentido).
+- Para dívidas: priorize quitar juros altos, sugerir renegociação ou parcelamento quando relevante.
+- Mencione reserva de emergência (ideal 3–6 meses de gastos) quando fizer sentido, mas adapte ao momento da pessoa.
+
+COMUNICAÇÃO:
+- Respostas em português brasileiro, práticas e acionáveis.
+- Use emojis com moderação para tornar a leitura agradável.
+- Seja específico com valores em R$ quando os dados do usuário permitirem.
+- Não invente dados que não foram fornecidos no contexto.`;
+
+const enforceAppCheck = process.env.ENFORCE_APP_CHECK === "true";
+const chatApiOptions = enforceAppCheck ? { enforceAppCheck: true } : {};
+
+exports.chatApi = functions.runWith(chatApiOptions).https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Faça login para usar a IA.");
+  }
+  const message = (data && data.message) ? String(data.message).trim() : "";
+  if (!message) {
+    throw new functions.https.HttpsError("invalid-argument", "Mensagem vazia.");
+  }
+  if (!GEMINI_KEY) {
+    throw new functions.https.HttpsError("failed-precondition", "IA não configurada. Configure GEMINI_KEY no servidor.");
+  }
+  const contextStr = (data && data.context) ? String(data.context).trim() : "";
+  const isLegacyFullPrompt = /DADOS (DO USUARIO|DA FAMÍLIA|DO USUÁRIO)/i.test(message);
+  let userContent = (contextStr && !isLegacyFullPrompt)
+    ? `DADOS DO USUÁRIO (use para personalizar a resposta):\n${contextStr}\n\nPERGUNTA DO USUÁRIO:\n${message}`
+    : message;
+  const ragChunks = getRagChunksForMessage(message);
+  if (ragChunks) {
+    userContent = `REFERÊNCIA (use para fundamentar sua resposta, em português):\n${ragChunks}\n\n---\n\n${userContent}`;
+  }
+  const body = {
+    systemInstruction: { parts: [{ text: CONSULTOR_SYSTEM_INSTRUCTION }] },
+    contents: [{ role: "user", parts: [{ text: userContent }] }],
+    generationConfig: { maxOutputTokens: 1024, temperature: 0.3 }
+  };
+  const callGemini = async (model) => {
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + GEMINI_KEY;
+    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    return res.json();
+  };
+  const isQuotaError = (json) => {
+    if (!json.error) return false;
+    const msg = (json.error.message || "").toLowerCase();
+    return (json.error.code === 429) || msg.includes("quota") || msg.includes("resource has been exhausted") || msg.includes("rate limit");
+  };
+  const isModelNotFound = (json) => {
+    if (!json.error || !json.error.message) return false;
+    const msg = (json.error.message || "").toLowerCase();
+    return msg.includes("is not found") || msg.includes("not found for api");
+  };
+  try {
+    const models = ["gemini-2.0-flash", "gemini-2.0-flash-lite"];
+    let lastJson = null;
+    for (const model of models) {
+      lastJson = await callGemini(model);
+      if (lastJson.candidates && lastJson.candidates[0] && lastJson.candidates[0].content && lastJson.candidates[0].content.parts && lastJson.candidates[0].content.parts[0]) {
+        const reply = (lastJson.candidates[0].content.parts[0].text || "").trim();
+        return { reply };
+      }
+      if (lastJson.error && !isQuotaError(lastJson) && !isModelNotFound(lastJson)) {
+        logError("chatApi Gemini error", lastJson.error);
+        throw new functions.https.HttpsError("internal", lastJson.error.message || "Erro na IA.");
+      }
+    }
+    if (lastJson && lastJson.error) {
+      logError("chatApi Gemini error", lastJson.error);
+      if (isQuotaError(lastJson)) {
+        throw new functions.https.HttpsError("resource-exhausted", "Limite de uso do consultor por hoje atingido. Tente em alguns minutos ou amanhã.");
+      }
+      throw new functions.https.HttpsError("internal", lastJson.error.message || "Erro na IA. Tente novamente.");
+    }
+    return { reply: "" };
+  } catch (e) {
+    if (e instanceof functions.https.HttpsError) throw e;
+    logError("chatApi", e);
+    throw new functions.https.HttpsError("internal", e.message || "Erro ao processar. Tente novamente.");
+  }
+});
+
+// =============================================
+// WHATSAPP BUSINESS (Cloud API) - MVP lançamento por mensagem
+// =============================================
+exports.whatsappWebhook = functions.https.onRequest(async (req, res) => {
+  if (req.method === "GET") {
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+    if (mode === "subscribe" && token === WHATSAPP_VERIFY_TOKEN) {
+      res.status(200).send(challenge);
+      return;
+    }
+    res.status(403).send("Forbidden");
+    return;
+  }
+  if (req.method !== "POST") {
+    res.status(405).send("Method Not Allowed");
+    return;
+  }
+  res.status(200).send("OK");
+  const body = req.body;
+  const entry = body.entry && body.entry[0];
+  const changes = entry && entry.changes && entry.changes[0];
+  const value = changes && changes.value;
+  const messages = value && value.messages;
+  if (!messages || !messages[0]) return;
+  const msg = messages[0];
+  const from = msg.from;
+  const phone = String(from);
+  const text = (msg.text && msg.text.body) ? String(msg.text.body).trim() : "";
+  if (!text) return;
+  const phoneNumberId = value.metadata && value.metadata.phone_number_id ? value.metadata.phone_number_id : WHATSAPP_PHONE_NUMBER_ID;
+  const reply = (txt) => whatsappService.sendWhatsAppText(phoneNumberId, phone, txt);
+
+  try {
+    const codeMatch = text.match(/^\d{6}$/);
+    if (codeMatch) {
+      const code = codeMatch[0];
+      const codeDoc = await db.collection("whatsappCodes").doc(code).get();
+      if (codeDoc.exists) {
+        const { uid, expiresAt } = codeDoc.data();
+        if (expiresAt && new Date(expiresAt).getTime() > Date.now()) {
+          await db.collection("users").doc(uid).update({
+            whatsappPhone: phone,
+            updated: new Date().toISOString()
+          });
+          await db.collection("whatsappCodes").doc(code).delete();
+          await reply("✅ WhatsApp vinculado ao Sibanki! Agora você pode enviar lançamentos aqui. Ex: \"Gastei 120 no mercado\" ou \"Recebi 500 freela\".");
+          return;
+        }
+      }
+    }
+
+    const userSnap = await db.collection("users").where("whatsappPhone", "==", phone).limit(1).get();
+    let uid = null;
+    if (!userSnap.empty) uid = userSnap.docs[0].id;
+    if (!uid) {
+      await reply("📱 Vincule seu WhatsApp no app Sibanki: Configurações > WhatsApp > Gerar código e envie o código de 6 dígitos aqui.");
+      return;
+    }
+
+    const parsed = await whatsappService.parseMessageToEntry(text);
+    if (!parsed) {
+      await reply("Não consegui entender. Envie algo como: \"Gastei 120 no mercado\" ou \"Recebi 500 de freela\".");
+      return;
+    }
+    await whatsappService.addEntryToUser(db, uid, parsed);
+    const tipo = parsed.type === "receita" ? "+" : "-";
+    const valor = "R$ " + parsed.value.toFixed(2).replace(".", ",");
+    await reply(`✅ Lancei: ${tipo} ${valor} em ${parsed.desc} (${parsed.category}).`);
+  } catch (e) {
+    logError("whatsappWebhook", e);
+    try { await reply("Ocorreu um erro. Tente de novo em instantes."); } catch (_) {}
+  }
+});
+
+exports.generateWhatsAppCode = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Faça login para vincular o WhatsApp.");
+  }
+  const uid = context.auth.uid;
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+  await db.collection("whatsappCodes").doc(code).set({
+    uid,
+    expiresAt: expiresAt.toISOString(),
+    createdAt: new Date().toISOString()
+  });
+  return { code, expiresIn: 600 };
 });
 
 // =============================================
