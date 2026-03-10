@@ -8,10 +8,11 @@ const { GEMINI_KEY } = require("../../config");
 
 const OPENAI_KEY = process.env.OPENAI_KEY || "";
 const CLAUDE_KEY = process.env.CLAUDE_KEY || "";
+const GROQ_KEY   = process.env.GROQ_KEY   || ""; // Gratuito: 14.400 req/dia
 
-const errorCount = { gemini: 0, openai: 0, claude: 0 };
+const errorCount = { gemini: 0, openai: 0, claude: 0, groq: 0 };
 const MAX_ERR = 3;
-setInterval(() => { errorCount.gemini = 0; errorCount.openai = 0; errorCount.claude = 0; }, 3600000);
+setInterval(() => { errorCount.gemini = 0; errorCount.openai = 0; errorCount.claude = 0; errorCount.groq = 0; }, 3600000);
 
 const _cache = new Map();
 const CACHE_TTL = 3600000;
@@ -123,6 +124,39 @@ async function _callClaude(prompt, maxTokens) {
   }
 }
 
+
+// ─── Provedor GROQ (Llama 3.3 70B — GRATUITO: 14.400 req/dia) ───────────────
+// Melhor free tier de LLM do mercado atualmente (março 2026)
+async function _callGroq(prompt, maxTokens) {
+  if (!GROQ_KEY || errorCount.groq >= MAX_ERR) return null;
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${GROQ_KEY}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: maxTokens || 512,
+        temperature: 0.3
+      }),
+      signal: AbortSignal.timeout(15000)
+    });
+    if (res.status === 429) { errorCount.groq++; return null; }
+    const json = await res.json();
+    const text = json.choices?.[0]?.message?.content;
+    if (!text) { errorCount.groq++; return null; }
+    errorCount.groq = 0;
+    return text.trim();
+  } catch (e) {
+    errorCount.groq++;
+    logError("llm:groq", e);
+    return null;
+  }
+}
+
 // ─── Roteador principal ───────────────────────────────────────────────────────
 
 /**
@@ -149,12 +183,12 @@ async function callLLM(prompt, options = {}) {
   // Ordem de provedores por tipo de task
   // "fast" → Gemini primeiro (mais barato), depois OpenAI mini, depois Claude Haiku
   // "smart" → OpenAI primeiro (melhor qualidade), depois Gemini, depois Claude
-  const fastOrder  = [_callGemini, _callOpenAI, _callClaude];
-  const smartOrder = [_callOpenAI, _callGemini, _callClaude];
+  const fastOrder  = [_callGemini, _callGroq, _callOpenAI, _callClaude]; // Gemini+Groq = gratuitos
+  const smartOrder = [_callGroq, _callOpenAI, _callGemini, _callClaude]; // Groq 70B = qualidade alta
   const providers  = task === "smart" ? smartOrder : fastOrder;
   const names      = task === "smart"
-    ? ["openai", "gemini", "claude"]
-    : ["gemini", "openai", "claude"];
+    ? ["groq", "openai", "gemini", "claude"]
+    : ["gemini", "groq", "openai", "claude"];
 
   for (let i = 0; i < providers.length; i++) {
     const text = await providers[i](prompt, maxTokens);
@@ -239,6 +273,7 @@ function getProviderStatus() {
     gemini: { available: !!GEMINI_KEY, errors: errorCount.gemini, healthy: errorCount.gemini < MAX_ERR },
     openai: { available: !!OPENAI_KEY, errors: errorCount.openai, healthy: errorCount.openai < MAX_ERR },
     claude: { available: !!CLAUDE_KEY, errors: errorCount.claude, healthy: errorCount.claude < MAX_ERR },
+    groq:   { available: !!GROQ_KEY,   errors: errorCount.groq,   healthy: errorCount.groq < MAX_ERR },
     cacheSize: _cache.size,
   };
 }
