@@ -964,6 +964,8 @@ var _imp=document.getElementById('dashImportPromoCard');if(_imp)_imp.style.displ
 var _tel=document.getElementById('dashTelegramPromoCard');if(_tel)_tel.style.display='none';
 // Flash banners contextuais
 setTimeout(function(){if(typeof renderAlertBar==='function')renderAlertBar();},1200);
+// Produto insight contextual (IA de vendas)
+setTimeout(function(){if(typeof requireFeature==='function')requireFeature('ia_insights_produto',function(){if(typeof checkProdutoInsight==='function')checkProdutoInsight();});},2000);
 // Briefing pós-login — controlado por feature flag
 setTimeout(function(){if(typeof requireFeature==='function')requireFeature('briefing_ia',function(){if(typeof showBriefingModal==='function')showBriefingModal();});},1800);
 setTimeout(function(){if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();},600);
@@ -14959,6 +14961,106 @@ function renderAlertBar() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   SISTEMA 5: IA INSIGHTS DE PRODUTO
+   - Detecta momento financeiro ideal e sugere produto relevante
+   - Card discreto no dashboard, 1x por semana, fácil de fechar
+   ═══════════════════════════════════════════════════════════ */
+
+function checkProdutoInsight() {
+  if (typeof entries === 'undefined' || !U) return;
+
+  // 1 por semana por produto — anti-spam
+  var lastShown = {};
+  try { lastShown = JSON.parse(localStorage.getItem('sib_prod_insight') || '{}'); } catch(z) {}
+  var agora = Date.now();
+  var SEMANA = 7 * 24 * 3600 * 1000;
+
+  var now = new Date();
+  var cm = now.getMonth(); var cy = now.getFullYear();
+  var mesK = cy + '-' + String(cm + 1).padStart(2, '0');
+  var mesE = entries.filter(function(e) {
+    return e.date && e.date.startsWith(mesK) && !e.isTransfer && e.category !== 'Transferencia';
+  });
+  var rec = mesE.filter(function(e){return e.type==='receita';}).reduce(function(s,e){return s+e.value;},0);
+  var desp = mesE.filter(function(e){return e.type==='despesa';}).reduce(function(s,e){return s+e.value;},0);
+  var saldo = rec - desp;
+  var patrimonio = (userAccs||[]).reduce(function(s,a){return s+(typeof getAccBal==='function'?getAccBal(a).atual:0);},0);
+  var totalInvest = (investments||[]).reduce(function(s,i){return s+(i.currentValue||i.amount||0);},0);
+  var pctGasto = rec > 0 ? Math.round(desp / rec * 100) : 0;
+
+  // Cenários de produto
+  var produto = null;
+
+  // Cenário A: Saldo positivo + pouco investido → Tesouro Selic
+  if (!produto && saldo > 500 && totalInvest < rec * 0.1 && !(lastShown.tesouro && agora - lastShown.tesouro < SEMANA)) {
+    produto = {
+      id: 'tesouro',
+      titulo: '💡 Oportunidade: Tesouro Selic',
+      corpo: 'Você fechou o mês com R$ ' + saldo.toLocaleString('pt-BR',{minimumFractionDigits:2}) + ' de saldo positivo e tem pouco investido. O Tesouro Selic rende mais que a poupança com liquidez diária.',
+      cta: 'Ver como investir',
+      url: 'https://www.tesourodireto.com.br',
+      cor: '#22C55E'
+    };
+  }
+
+  // Cenário B: Muitas despesas de cartão → oferta CDB liquidez diária
+  var gastosCartao = mesE.filter(function(e){return e.type==='despesa'&&e.paymentMethod==='cartao';}).reduce(function(s,e){return s+e.value;},0);
+  if (!produto && gastosCartao > 2000 && !(lastShown.cdb && agora - lastShown.cdb < SEMANA)) {
+    produto = {
+      id: 'cdb',
+      titulo: '💡 Dica: CDB com liquidez diária',
+      corpo: 'Seus gastos no cartão este mês foram de R$ ' + gastosCartao.toLocaleString('pt-BR',{minimumFractionDigits:2}) + '. Manter uma reserva em CDB rende mais que conta corrente e fica acessível a qualquer hora.',
+      cta: 'Entender CDB',
+      url: '#',
+      cor: '#3B82F6'
+    };
+  }
+
+  // Cenário C: Patrimônio alto sem diversificação → Fundos Imobiliários
+  if (!produto && totalInvest > 30000 && !(lastShown.fii && agora - lastShown.fii < SEMANA)) {
+    produto = {
+      id: 'fii',
+      titulo: '💡 Diversificação: FIIs',
+      corpo: 'Seu patrimônio está em R$ ' + totalInvest.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + '. Considerar Fundos Imobiliários pode gerar renda passiva mensal via dividendos.',
+      cta: 'Conhecer FIIs',
+      url: '#',
+      cor: '#8B5CF6'
+    };
+  }
+
+  // Cenário D: Gasto alto sem orçamento → Seguro de vida
+  if (!produto && pctGasto > 90 && patrimonio < 5000 && !(lastShown.seguro && agora - lastShown.seguro < SEMANA)) {
+    produto = {
+      id: 'seguro',
+      titulo: '🛡️ Proteção: Seguro de vida acessível',
+      corpo: 'Com ' + pctGasto + '% da receita comprometida, um seguro de vida pode proteger sua família por menos de R$ 50/mês em caso de imprevistos.',
+      cta: 'Ver opções',
+      url: '#',
+      cor: '#F59E0B'
+    };
+  }
+
+  if (!produto) return;
+
+  // Renderiza card no dashboard
+  var el = document.getElementById('dashProdutoInsightCard');
+  if (!el) return;
+
+  lastShown[produto.id] = agora;
+  try { localStorage.setItem('sib_prod_insight', JSON.stringify(lastShown)); } catch(z) {}
+
+  el.innerHTML =
+    '<div style="border-left:3px solid ' + produto.cor + ';padding:12px 14px;background:rgba(0,0,0,.15);border-radius:0 10px 10px 0">' +
+    '<div style="font-size:.88rem;font-weight:600;color:var(--t1);margin-bottom:4px">' + produto.titulo + '</div>' +
+    '<div style="font-size:.82rem;color:var(--t2);line-height:1.5;margin-bottom:10px">' + produto.corpo + '</div>' +
+    '<div style="display:flex;gap:8px;align-items:center">' +
+    '<a href="' + produto.url + '" target="_blank" rel="noopener" style="padding:6px 14px;background:' + produto.cor + ';color:#fff;border-radius:50px;font-size:.75rem;font-weight:700;text-decoration:none">' + produto.cta + '</a>' +
+    '<button onclick="document.getElementById(\'dashProdutoInsightCard\').style.display=\'none\'" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:.78rem">Não tenho interesse</button>' +
+    '</div></div>';
+  el.style.display = 'block';
+}
+
+/* ═══════════════════════════════════════════════════════════
    SISTEMA 2: BRIEFING MODAL DE LOGIN
    - Aparece 1x por sessão após login
    - Resumo financeiro inteligente e objetivo
@@ -15157,8 +15259,8 @@ var SIBANKI_FEATURES = {
   },
 
   ia_insights_produto: {
-    enabled:     false,                    // ← INATIVO — futuro: vendas de produtos
-    plan:        ['pro','familia'],
+    enabled:     true,                     // ← ATIVO — insights contextuais de produto
+    plan:        ['free','pro','familia'],  // todos os planos
     label:       'Insights de Produtos Financeiros',
     desc:        'IA identifica momentos ideais para oferecer empréstimos, seguros, investimentos',
     upsell:      'Com o plano Pro, a Siba analisa seu perfil e sugere produtos financeiros no momento certo.',
