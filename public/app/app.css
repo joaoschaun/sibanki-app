@@ -250,7 +250,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 .top-header-c{flex:1;display:flex;justify-content:center}
 /* Logo mista Sibanki (ícone + texto) - Copilot style */
 .sibanki-logo{display:flex;align-items:center;justify-content:center;gap:12px;flex-shrink:0}
-.sibanki-logo-icon{width:40px!important;height:40px!important;border-radius:12px;flex-shrink:0;background:linear-gradient(135deg,#4F8CFF 0%,#6366f1 100%);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:900;font-size:1.35rem;color:#fff;letter-spacing:-1px;box-shadow:0 2px 16px rgba(79,140,255,.45);user-select:none;transition:box-shadow .3s,transform .2s}
+.sibanki-logo-icon{width:36px!important;height:36px!important;border-radius:10px;object-fit:contain;flex-shrink:0;background:transparent;padding:0;box-sizing:border-box}
 .sibanki-logo-text{font-family:var(--font-display);font-weight:800;font-size:1.35rem;letter-spacing:-0.3px;color:#fff;white-space:nowrap}
 .top-header-r{display:flex;align-items:center;gap:8px}
 .lang-wrap{position:relative}
