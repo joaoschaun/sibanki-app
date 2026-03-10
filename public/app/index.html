@@ -56,7 +56,7 @@
 </head>
 <body><div id="virtSplash"><img src="https://storage.googleapis.com/app-tess-ai-platform-assets-prod/assets/uploads/313663a4-caf3-472e-813b-9d2995f8297f.png" alt="Sibanki"><h2>SIBANKI</h2><p>Controle Financeiro Inteligente</p><div class="sLoad"></div></div>
 
-<a href="#app" class="skip-link" style="position:absolute;left:-9999px;top:0;z-index:99999;padding:8px 16px;background:var(--vr);color:#fff;font-weight:700;border-radius:0 0 8px 0" onfocus="this.style.left='0'">Pular para conteúdo</a>
+<a href="#app" class="skip-link" style="position:absolute;left:-9999px;top:0;z-index:99999;padding:8px 16px;background:var(--vr);color:#fff;font-weight:700;border-radius:0 0 8px 0" onfocus="this.style.left='0'"><span data-i18n="pular_conteudo">Pular para conteúdo</span></a>
 <div class="load-bg" id="loadBg">
 <div class="load-logo"><img loading="lazy" src="https://storage.googleapis.com/app-tess-ai-platform-assets-prod/assets/uploads/313663a4-caf3-472e-813b-9d2995f8297f.png" alt="Sibanki" width="80" height="80" style="border-radius:18px;box-shadow:0 8px 32px rgba(79,140,255,0.3)"></div>
 <div class="load-txt" id="loadTxt"><span class="spinner"></span> Carregando Sibanki...</div>
@@ -71,7 +71,7 @@
 <div style="font-size:1.5em;font-weight:900;letter-spacing:-0.5px;color:#fff">Sibanki</div>
 </div>
 <div class="auth-sub">Controle Financeiro PRO</div>
-<div class="auth-tag">Gerencie suas finanças com inteligência</div>
+<div class="auth-tag"><span data-i18n="auth_slogan">Gerencie suas finanças com inteligência</span></div>
 <div class="af"><label>E-mail</label><input type="email" id="lE" placeholder="seu@email.com" aria-label="seu@email.com"></div>
 <div class="af"><label>Senha</label><input type="password" id="lP" placeholder="Sua senha" aria-label="Sua senha"></div>
 <div style="text-align:right;margin-top:-6px;margin-bottom:10px"><a href="#" onclick="showForgot();return false" class="auth-forgot-link" style="font-size:.82em;color:var(--t3);text-decoration:none">Esqueci a senha</a></div>
@@ -104,10 +104,10 @@
 </div>
 <div class="auth-sub">Verifique seu e-mail</div>
 <div class="auth-tag" style="margin-bottom:20px">Enviamos um link de confirmação para <strong id="verifyEmailAddr" style="color:var(--t1)"></strong>. Clique no link para ativar sua conta e acessar o Sibanki.</div>
-<div style="background:rgba(79,140,255,.12);border:1px solid rgba(79,140,255,.3);border-radius:12px;padding:14px;margin-bottom:20px;font-size:.88em;color:var(--t2)">Não recebeu? Confira <strong>spam</strong>, <strong>promoções</strong> (Gmail) ou lixo eletrônico. O e-mail pode levar alguns minutos. Use &quot;Reenviar e-mail&quot; abaixo para receber novamente.</div>
+<div style="background:rgba(79,140,255,.12);border:1px solid rgba(79,140,255,.3);border-radius:12px;padding:14px;margin-bottom:20px;font-size:.88em;color:var(--t2)">Não recebeu? Confira <strong>spam</strong>, <strong><span data-i18n="promocoes_spam">promoções</span></strong> (Gmail) ou lixo eletrônico. O e-mail pode levar alguns minutos. Use &quot;Reenviar e-mail&quot; abaixo para receber novamente.</div>
 <button class="auth-btn" id="verifyResendBtn" onclick="resendVerifyEmail()">Reenviar e-mail</button>
-<div style="font-size:.8em;color:var(--t3);margin-top:8px">Se não receber, aguarde 1–2 min e clique em Reenviar novamente.</div>
-<div class="auth-link" style="margin-top:12px"><a onclick="recheckEmailVerified()">Já verifiquei</a></div>
+<div style="font-size:.8em;color:var(--t3);margin-top:8px"><span data-i18n="aguarde_reenvio">Se não receber, aguarde 1–2 min e clique em Reenviar novamente.</span></div>
+<div class="auth-link" style="margin-top:12px"><a onclick="recheckEmailVerified()"><span data-i18n="ja_verifiquei">Já verifiquei</span></a></div>
 <div class="auth-link" style="margin-top:4px"><a onclick="doVerifySignOut()">Usar outro e-mail</a></div>
 <div class="auth-err" id="verifyErr"></div>
 </div>
@@ -148,8 +148,8 @@
   <div class="sib-onb-screen on" id="sibOnbWelcome" data-step="welcome">
     <div class="sib-onb-logo-wrap"><img src="https://storage.googleapis.com/app-tess-ai-platform-assets-prod/assets/uploads/313663a4-caf3-472e-813b-9d2995f8297f.png" alt="Sibanki" class="sib-onb-logo"></div>
     <h1 class="sib-onb-title">Bem-vindo ao Sibanki, <span id="sibOnbUserName">Usuário</span>! 👋</h1>
-    <p class="sib-onb-sub">Vamos entender sua situação financeira para personalizar sua experiência</p>
-    <button type="button" class="sib-onb-btn primary" onclick="sibOnbStart()">Começar →</button>
+    <p class="sib-onb-sub"><span data-i18n="onb_intro">Vamos entender sua situação financeira para personalizar sua experiência</span></p>
+    <button type="button" class="sib-onb-btn primary" onclick="sibOnbStart()"><span data-i18n="comecar_seta">Começar →</span></button>
     <p class="sib-onb-hint">Leva menos de 2 minutos</p>
   </div>
   <!-- Etapa 2: Questionário (3 perguntas) -->
@@ -161,11 +161,11 @@
   </div>
   <!-- Etapa 3: Já está pronto -->
   <div class="sib-onb-screen" id="sibOnbReady" data-step="ready">
-    <h2 class="sib-onb-title">O Sibanki já está configurado para você ✨</h2>
+    <h2 class="sib-onb-title"><span data-i18n="onb_pronto">O Sibanki já está configurado para você ✨</span></h2>
     <div class="sib-onb-blocks">
-      <div class="sib-onb-block"><div class="sib-onb-block-icon"><i data-lucide="rocket" style="width:32px;height:32px;stroke:currentColor;stroke-width:2"></i></div><h3>Pronto para usar agora</h3><p>Todos os 15 módulos já estão disponíveis. Não precisa configurar nada para começar.</p></div>
-      <div class="sib-onb-block"><div class="sib-onb-block-icon"><i data-lucide="palette" style="width:32px;height:32px;stroke:currentColor;stroke-width:2"></i></div><h3>Personalizável do seu jeito</h3><p>Você pode reorganizar o dashboard, escolher quais módulos ver e ajustar tudo nas Configurações quando quiser.</p></div>
-      <div class="sib-onb-block"><div class="sib-onb-block-icon"><i data-lucide="bot" style="width:32px;height:32px;stroke:currentColor;stroke-width:2"></i></div><h3>IA que aprende com você</h3><p>Quanto mais você usar, mais personalizados ficam os insights e sugestões do seu consultor IA.</p></div>
+      <div class="sib-onb-block"><div class="sib-onb-block-icon"><i data-lucide="rocket" style="width:32px;height:32px;stroke:currentColor;stroke-width:2"></i></div><h3>Pronto para usar agora</h3><p><span data-i18n="onb_modulos">Todos os 15 módulos já estão disponíveis. Não precisa configurar nada para começar.</span></p></div>
+      <div class="sib-onb-block"><div class="sib-onb-block-icon"><i data-lucide="palette" style="width:32px;height:32px;stroke:currentColor;stroke-width:2"></i></div><h3><span data-i18n="onb_personalizavel">Personalizável do seu jeito</span></h3><p>Você pode reorganizar o dashboard, escolher quais módulos ver e ajustar tudo nas Configurações quando quiser.</p></div>
+      <div class="sib-onb-block"><div class="sib-onb-block-icon"><i data-lucide="bot" style="width:32px;height:32px;stroke:currentColor;stroke-width:2"></i></div><h3><span data-i18n="onb_ia_aprende">IA que aprende com você</span></h3><p>Quanto mais você usar, mais personalizados ficam os insights e sugestões do seu consultor IA.</p></div>
     </div>
     <button type="button" class="sib-onb-btn primary" onclick="sibOnbEnterNow()">Entrar no Sibanki →</button>
     <button type="button" class="sib-onb-btn secondary" onclick="sibOnbShowConfig()">Configurar agora (opcional)</button>
@@ -231,7 +231,7 @@
     <div class="sib-tour-tt-body" id="sibTourTTBody">Aqui você acessa todos os 15 módulos do Sibanki.</div>
     <div class="sib-tour-tt-actions" id="sibTourTTActions">
       <button type="button" class="sib-tour-tt-skip" id="sibTourSkip">PULAR TOUR</button>
-      <button type="button" class="sib-tour-tt-next" id="sibTourNext">PRÓXIMO →</button>
+      <button type="button" class="sib-tour-tt-next" id="sibTourNext"><span data-i18n="proximo_seta">PRÓXIMO →</span></button>
     </div>
     <div class="sib-tour-tt-actions" id="sibTourTTActionsCTA" style="display:none;flex-wrap:wrap;gap:8px">
       <button type="button" class="sib-tour-tt-skip" id="sibTourCTAgora">Fazer agora</button>
@@ -344,7 +344,7 @@
 <div id="dashImportPromoCard" class="cb" style="display:none;margin-bottom:16px;background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(6,182,212,.06));border:1px solid rgba(34,197,94,.3);padding:16px 18px">
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
 <div><div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:4px;display:inline-flex;align-items:center;gap:6px"><i data-lucide="lightbulb" style="width:14px;height:14px"></i> Dica</div>
-<div style="font-size:.95rem;color:var(--t1);line-height:1.5">Importe seu extrato Nubank, Inter, Itaú ou C6 em segundos.</div></div>
+<div style="font-size:.95rem;color:var(--t1);line-height:1.5"><span data-i18n="importar_extrato_desc">Importe seu extrato Nubank, Inter, Itaú ou C6 em segundos.</span></div></div>
 <div style="display:flex;gap:8px"><button type="button" class="btn btn-g" style="font-size:.8rem;padding:8px 16px" onclick="go('cartões',null);setTimeout(function(){if(typeof impData==='function')impData();},400);">Importar extrato</button>
 <button type="button" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:1.2em;padding:4px" onclick="document.getElementById('dashImportPromoCard').style.display='none';localStorage.setItem('dicaImportarFechada',Date.now());" title="Fechar">&times;</button></div></div></div>
 <div id="dashTelegramPromoCard" class="dash-telegram-bar" style="display:none">
@@ -384,7 +384,7 @@
 <div class="fin-header">
 <div class="fin-header-text">
 <h2 style="margin:0;font-size:1.2em;display:inline-flex;align-items:center;gap:10px"><i data-lucide="arrow-left-right" style="width:26px;height:26px;color:var(--vr)"></i> <span data-i18n="menu_lancamentos">Lançamentos</span></h2>
-<p style="margin:4px 0 0;font-size:.82em;color:var(--t2)">Registre receitas, despesas, transferências e lançamentos fixos. Filtre e consulte o histórico.</p>
+<p style="margin:4px 0 0;font-size:.82em;color:var(--t2)"><span data-i18n="lancamentos_desc">Registre receitas, despesas, transferências e lançamentos fixos. Filtre e consulte o histórico.</span></p>
 </div>
 </div>
 
@@ -409,7 +409,7 @@
 <!-- Form Grid compacto -->
 <div class="lanc-grid">
 <div class="fg"><label>Valor (R$)</label><input type="text" inputmode="decimal" id="fV" placeholder="0,00" class="fi lanc-valor-input" aria-label="Valor"></div>
-<div class="fg"><label>Descrição</label><input type="text" id="fDe" placeholder="Ex: Supermercado" class="fi" onblur="autoClassify()" aria-label="Descrição"></div>
+<div class="fg"><label><span data-i18n="descricao">Descrição</span></label><input type="text" id="fDe" placeholder="Ex: Supermercado" class="fi" onblur="autoClassify()" aria-label="Descrição"></div>
 <div class="fg"><label>Data</label><input type="date" id="fD" class="fi"></div>
 <div class="fg"><label>Categoria</label>
 <div class="cat-picker-wrap">
@@ -430,7 +430,7 @@
 <details class="lanc-extras">
 <summary><i data-lucide="settings" style="width:16px;height:16px;vertical-align:middle"></i> Mais opções</summary>
 <div class="lanc-grid" style="margin-top:10px">
-<div class="fg"><label>Forma Pgto</label><select id="fPgto" class="fi"><option value="">Não informado</option><option value="pix">Pix</option><option value="debito">Débito</option><option value="credito">Crédito</option><option value="dinheiro">Dinheiro</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option></select></div>
+<div class="fg"><label>Forma Pgto</label><select id="fPgto" class="fi"><option value=""><span data-i18n="nao_informado">Não informado</span></option><option value="pix">Pix</option><option value="debito"><span data-i18n="debito">Débito</span></option><option value="credito"><span data-i18n="credito">Crédito</span></option><option value="dinheiro">Dinheiro</option><option value="boleto">Boleto</option><option value="transferencia"><span data-i18n="transferencia">Transferência</span></option></select></div>
 <div class="fg"><label>Tags</label><input type="text" id="fTags" class="fi" placeholder="Ex: viagem, mercado" aria-label="Tags"></div>
 </div>
 </details>
@@ -461,12 +461,12 @@
 <div class="fb" style="padding:16px">
 <div class="lanc-grid">
 <div class="fg"><label>Tipo</label><select id="rcT" class="fi"><option value="despesa">Despesa</option><option value="receita">Receita</option></select></div>
-<div class="fg"><label>Descrição</label><input type="text" id="rcDe" class="fi" placeholder="Ex: Aluguel" aria-label="Descrição recorrente"></div>
+<div class="fg"><label><span data-i18n="descricao">Descrição</span></label><input type="text" id="rcDe" class="fi" placeholder="Ex: Aluguel" aria-label="Descrição recorrente"></div>
 <div class="fg"><label>Valor (R$)</label><input type="text" inputmode="decimal" id="rcV" class="fi" placeholder="0,00" aria-label="Valor recorrente"></div>
 <div class="fg"><label>Categoria</label><select id="rcC" class="fi"></select></div>
 <div class="fg"><label>Conta</label><select id="rcA" class="fi"></select></div>
-<div class="fg"><label>Dia do mês</label><input type="number" id="rcDay" class="fi" min="1" max="31" value="1"></div>
-<div class="fg"><label>Frequência</label><select id="rcFreq" class="fi"><option value="mensal">Mensal</option><option value="semanal">Semanal</option><option value="quinzenal">Quinzenal</option><option value="bimestral">Bimestral</option><option value="trimestral">Trimestral</option><option value="semestral">Semestral</option><option value="anual">Anual</option></select></div>
+<div class="fg"><label><span data-i18n="dia_mes">Dia do mês</span></label><input type="number" id="rcDay" class="fi" min="1" max="31" value="1"></div>
+<div class="fg"><label><span data-i18n="frequencia">Frequência</span></label><select id="rcFreq" class="fi"><option value="mensal">Mensal</option><option value="semanal">Semanal</option><option value="quinzenal">Quinzenal</option><option value="bimestral">Bimestral</option><option value="trimestral">Trimestral</option><option value="semestral">Semestral</option><option value="anual">Anual</option></select></div>
 </div>
 <button class="btn-lanc-recorr" onclick="addRc()"><i data-lucide="pin" style="width:16px;height:16px;vertical-align:middle"></i> Adicionar Fixo</button>
 <div id="rcList" style="margin-top:14px"></div>
@@ -510,7 +510,7 @@
 <div id="tB"></div>
 <div id="filtSum" style="margin:8px 0"></div>
 <div id="rEPagination" style="margin-top:10px;padding:8px 0;border-top:1px solid var(--brd);font-size:.8em;color:var(--t2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"></div>
-<div id="emp" class="empty" style="display:none"><p>Nenhum lançamento.</p></div>
+<div id="emp" class="empty" style="display:none"><p><span data-i18n="nenhum_lancamento">Nenhum lançamento.</span></p></div>
 </div>
 
 <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
@@ -539,7 +539,7 @@
 <div id="cst-lançar" class="card-sub on">
 <div class="cst-form-grid">
 <div class="fg"><label class="fl">Cartao</label><select id="fatCard" class="fi"></select></div>
-<div class="fg"><label class="fl">Descrição</label><input id="fatDesc" class="fi" placeholder="Ex: TV Samsung"></div>
+<div class="fg"><label class="fl"><span data-i18n="descricao">Descrição</span></label><input id="fatDesc" class="fi" placeholder="Ex: TV Samsung"></div>
 <div class="fg"><label class="fl">Categoria</label><select id="fatCat" class="fi"></select></div>
 <div class="fg"><label class="fl">Valor Total (R$)</label><input type="text" inputmode="decimal" id="fatVal" class="fi" placeholder="2400"></div>
 <div class="fg"><label class="fl">Parcelas</label><input type="number" id="fatParc" class="fi" min="1" max="48" value="1"></div>
@@ -553,7 +553,7 @@
 <div id="cst-importar" class="card-sub">
 <p style="font-size:.8em;color:var(--t3);margin:0 0 12px;text-align:center">Importe CSV (Nubank, Inter, Itau, C6), OFX ou cole o texto da fatura.</p>
 <div class="cst-form-grid" style="grid-template-columns:1fr 1fr">
-<div class="fg"><label class="fl">Cartão Destino</label><select id="impCard" class="fi"></select></div>
+<div class="fg"><label class="fl"><span data-i18n="cartao_destino">Cartão Destino</span></label><select id="impCard" class="fi"></select></div>
 <div class="fg"><label class="fl">Formato</label>
 <select id="impFormat" class="fi" onchange="toggleImportMode()">
 <option value="csv">CSV</option>
@@ -611,11 +611,11 @@
 </div>
 <div class="card-modal-body">
 <div id="cardPreviewWrap" class="card-preview-wrap" style="display:none"></div>
-<label class="fl" style="display:block;margin-bottom:8px">Qual é o banco?</label>
+<label class="fl" style="display:block;margin-bottom:8px"><span data-i18n="qual_banco">Qual é o banco?</span></label>
 <div id="cardBankGrid" class="grid-bancos"></div>
 <input type="hidden" id="cardBank" value="outro">
 <div class="cst-form-grid" style="margin-top:16px">
-<div class="fg"><label class="fl">Nome do cartão</label><input id="cardName" class="fi" placeholder="Ex: Nubank Visa" oninput="updateCardPreview()"></div>
+<div class="fg"><label class="fl"><span data-i18n="nome_cartao">Nome do cartão</span></label><input id="cardName" class="fi" placeholder="Ex: Nubank Visa" oninput="updateCardPreview()"></div>
 <div class="fg"><label class="fl">Bandeira</label><select id="cardFlag" class="fi" onchange="updateCardPreview()"><option value="Visa">Visa</option><option value="Mastercard">Mastercard</option><option value="Elo">Elo</option><option value="Amex">Amex</option><option value="Hipercard">Hipercard</option><option value="Outra">Outra</option></select></div>
 <div class="fg"><label class="fl">Limite (R$)</label><input type="text" inputmode="decimal" id="cardLimit" class="fi" placeholder="5000" oninput="updateCardPreview()"></div>
 <div class="fg"><label class="fl">Fechamento (dia)</label><input type="number" id="cardClose" class="fi" min="1" max="31" value="25" onchange="updateCardPreview()"></div>
@@ -623,9 +623,9 @@
 <div class="fg"><label class="fl">Cor (se Outro)</label><input type="color" id="cardColor" class="fi" value="#8B5CF6" style="height:42px;padding:4px"></div>
 </div>
 <div style="margin-top:16px">
-<label class="fl" style="display:block;margin-bottom:8px">Este cartão tem anuidade?</label>
+<label class="fl" style="display:block;margin-bottom:8px"><span data-i18n="tem_anuidade">Este cartão tem anuidade?</span></label>
 <div style="display:flex;gap:12px;margin-bottom:12px">
-<button type="button" class="toggle-anuidade active" data-valor="nao" id="toggleAnuidadeNao" onclick="setAnuidadeCard(false)">✕ Não tem</button>
+<button type="button" class="toggle-anuidade active" data-valor="nao" id="toggleAnuidadeNao" onclick="setAnuidadeCard(false)"><span data-i18n="nao_tem">✕ Não tem</span></button>
 <button type="button" class="toggle-anuidade" data-valor="sim" id="toggleAnuidadeSim" onclick="setAnuidadeCard(true)">✓ Tem anuidade</button>
 </div>
 <div id="camposAnuidade" class="campos-anuidade">
@@ -653,7 +653,7 @@
 <div class="inv-hero-icon"><i data-lucide="trending-up" style="width:26px;height:26px;color:#10B981"></i></div>
 <div class="inv-hero-text">
 <h2 data-i18n="menu_investimentos">Investimentos</h2>
-<p>Patrimônio, rentabilidade, proventos e análise de ativos — tudo em um lugar.</p>
+<p><span data-i18n="invest_desc">Patrimônio, rentabilidade, proventos e análise de ativos — tudo em um lugar.</span></p>
 </div>
 <div class="inv-hero-actions">
 <button class="btn btn-sm" onclick="go('ia');setTimeout(function(){iaAnalyze('investimentos');},300)" style="font-size:.78em;display:inline-flex;align-items:center;gap:5px;background:rgba(76,123,244,.15);border:1px solid rgba(76,123,244,.3);color:var(--pri);border-radius:10px;padding:7px 12px;cursor:pointer;font-weight:600;transition:all .25s;white-space:nowrap"><i data-lucide="bot" style="width:14px;height:14px"></i> Consultor IA</button>
@@ -669,7 +669,7 @@
 </button>
 <button class="inv-tab" onclick="showInvSub('invAnalise')" id="invTabAnalise">
 <span class="inv-tab-icon"><i data-lucide="search" style="width:18px;height:18px"></i></span>
-<span class="inv-tab-text">Análise B3</span>
+<span class="inv-tab-text"><span data-i18n="analise_b3">Análise B3</span></span>
 </button>
 <button class="inv-tab" onclick="showInvSub('invProventos')" id="invTabProventos">
 <span class="inv-tab-icon"><i data-lucide="circle-dollar" style="width:18px;height:18px"></i></span>
@@ -707,7 +707,7 @@
 <!-- DASHBOARD KPIs ANIMADOS -->
 <div class="inv-dash-kpis" id="invDashKPIs">
 <div class="inv-dash-kpi inv-kpi-main">
-<div class="inv-kpi-label">Patrimônio Investido</div>
+<div class="inv-kpi-label"><span data-i18n="patrimonio_investido">Patrimônio Investido</span></div>
 <div class="inv-kpi-value" id="invDashPatrimonio">R$ 0,00</div>
 <div class="inv-kpi-change positive" id="invDashPatrimonioChg">+0,00%</div>
 </div>
@@ -717,12 +717,12 @@
 <div class="inv-kpi-sub" id="invDashRentVal">R$ 0,00</div>
 </div>
 <div class="inv-dash-kpi">
-<div class="inv-kpi-label">Proventos (Mês)</div>
+<div class="inv-kpi-label"><span data-i18n="proventos_mes">Proventos (Mês)</span></div>
 <div class="inv-kpi-value" id="invDashProventos">R$ 0,00</div>
 <div class="inv-kpi-sub" id="invDashDY">DY: 0,00%</div>
 </div>
 <div class="inv-dash-kpi">
-<div class="inv-kpi-label">Alocação</div>
+<div class="inv-kpi-label"><span data-i18n="alocacao">Alocação</span></div>
 <div class="inv-kpi-mini-chart" id="invDashAllocMini"></div>
 <div class="inv-kpi-sub" id="invDashAllocStatus">Configure suas metas</div>
 </div>
@@ -731,11 +731,11 @@
 <!-- MINI CHARTS ROW -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0">
 <div class="cb" style="padding:14px;overflow:hidden">
-<div class="ch" style="font-size:.82em;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="trending-up" style="width:16px;height:16px"></i>Evolução do Patrimônio</div>
+<div class="ch" style="font-size:.82em;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="trending-up" style="width:16px;height:16px"></i><span data-i18n="evolucao_patrimonio_inv">Evolução do Patrimônio</span></div>
 <canvas id="invDashEvolution" height="150"></canvas>
 </div>
 <div class="cb" style="padding:14px;overflow:hidden">
-<div class="ch" style="font-size:.82em;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="chart-pie" style="width:16px;height:16px"></i>Alocação Atual</div>
+<div class="ch" style="font-size:.82em;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="chart-pie" style="width:16px;height:16px"></i><span data-i18n="alocacao_atual">Alocação Atual</span></div>
 <canvas id="invDashAlloc" height="150"></canvas>
 <div id="invDashAllocLegend" style="margin-top:6px"></div>
 </div>
@@ -821,20 +821,20 @@
 <div class="ch" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:14px 18px;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(5,150,105,.04));border-bottom:1px solid var(--brd)">
 <div style="display:flex;align-items:center;gap:8px">
 <i data-lucide="trending-up" style="width:20px;height:20px;color:#10B981"></i>
-<span style="font-size:1rem;font-weight:700;color:var(--t1)">Análise da Carteira</span>
-<span style="font-size:.72em;color:var(--t3)">Evolução, rentabilidade e alocação</span>
+<span style="font-size:1rem;font-weight:700;color:var(--t1)"><span data-i18n="analise_carteira">Análise da Carteira</span></span>
+<span style="font-size:.72em;color:var(--t3)"><span data-i18n="evolucao_rent_alocacao">Evolução, rentabilidade e alocação</span></span>
 </div>
 <div id="portfolioAnaliseSummary" style="font-size:.8em;font-weight:600;color:var(--t2)"></div>
 </div>
 <div style="padding:16px 18px">
 <div class="inv-analise-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
 <div style="background:var(--bg2);border-radius:12px;padding:16px;border:1px solid var(--brd)">
-<div style="font-size:.78em;color:var(--t3);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Evolução Patrimonial</div>
+<div style="font-size:.78em;color:var(--t3);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px"><span data-i18n="evolucao_patrimonial"><span data-i18n="evolucao_patrimonial">Evolução Patrimonial</span></span></div>
 <p style="font-size:.72em;color:var(--t2);margin:-4px 0 8px">Investido acumulado vs valor atual por mês</p>
 <canvas id="portfolioEvolutionChart" height="200"></canvas>
 </div>
 <div style="background:var(--bg2);border-radius:12px;padding:16px;border:1px solid var(--brd)">
-<div style="font-size:.78em;color:var(--t3);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Alocação por Tipo</div>
+<div style="font-size:.78em;color:var(--t3);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px"><span data-i18n="alocacao_por_tipo">Alocação por Tipo</span></div>
 <p style="font-size:.72em;color:var(--t2);margin:-4px 0 8px">Distribuição do patrimônio</p>
 <canvas id="portfolioTypeChart"></canvas>
 <div id="portfolioTypeLegend" style="margin-top:8px"></div>
@@ -853,7 +853,7 @@
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
 <span style="font-size:.95em;font-weight:700;color:var(--t1);display:inline-flex;align-items:center;gap:6px"><i data-lucide="list" style="width:18px;height:18px"></i> Detalhamento da Carteira</span>
 <select id="portfolioSort" onchange="renderPortfolioTable()" style="padding:6px 10px;border:1px solid var(--brd);border-radius:8px;background:var(--bg2);color:var(--t1);font-size:.8em;outline:none">
-<option value="valor">Maior Posição</option>
+<option value="valor"><span data-i18n="maior_posicao">Maior Posição</span></option>
 <option value="retorno">Maior Retorno %</option>
 <option value="perda">Maior Perda %</option>
 <option value="tipo">Por Tipo</option>
@@ -1003,7 +1003,7 @@
 
 <!-- GRÁFICO DE PREÇO -->
 <div class="cb" style="margin-bottom:16px">
-<div class="ch">Gráfico de Preço</div>
+<div class="ch"><span data-i18n="grafico_preco">Gráfico de Preço</span></div>
 <canvas id="b3Chart" height="250"></canvas>
 </div>
 
@@ -1025,7 +1025,7 @@
 <!-- DIVIDENDOS HISTÓRICO -->
 <div id="b3Dividends" class="cb" style="margin-bottom:16px;display:none">
 <div class="ch" style="display:flex;justify-content:space-between;align-items:center">
-<span>Dividendos Históricos</span>
+<span><span data-i18n="dividendos_historicos">Dividendos Históricos</span></span>
 <span id="b3DivYieldBadge" style="font-size:.75em;font-weight:700;padding:3px 10px;border-radius:8px;background:rgba(34,197,94,.15);color:#22C55E"></span>
 </div>
 <div id="b3DivSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0"></div>
@@ -1084,7 +1084,7 @@
 <!-- SPRINT 3: SCREENER DE AÇÕES -->
 <div id="b3Screener" class="cb" style="margin-bottom:16px">
 <div class="ch" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-<span><i data-lucide="search" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i>Screener de Ações</span>
+<span><i data-lucide="search" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i><span data-i18n="screener_acoes">Screener de Ações</span></span>
 <div style="display:flex;gap:6px;flex-wrap:wrap">
 <button class="b3-chip" onclick="runScreener('dividendos')" style="font-size:.7em">Top Dividendos</button>
 <button class="b3-chip" onclick="runScreener('baratas')" style="font-size:.7em">Baratas (Graham)</button>
@@ -1165,7 +1165,7 @@
 <!-- SPRINT 3: ALERTAS DE PREÇO -->
 <div id="b3Alerts" class="cb" style="margin-bottom:16px">
 <div class="ch" style="display:flex;justify-content:space-between;align-items:center">
-<span><i data-lucide="bell" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i>Alertas de Preço</span>
+<span><i data-lucide="bell" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i><span data-i18n="alertas_preco">Alertas de Preço</span></span>
 <span id="alertCount" style="font-size:.72em;background:rgba(79,140,255,.15);color:var(--pri);padding:2px 8px;border-radius:10px;font-weight:600">0 ativos</span>
 </div>
 <div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;align-items:end">
@@ -1293,7 +1293,7 @@
 <div class="ch"><span><i data-lucide="layout-dashboard" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i>Dashboard de Renda Passiva</span></div>
 <div id="rendaPassivaKPIs" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:12px 0"></div>
 <div style="background:var(--bg2);border-radius:12px;padding:14px;border:1px solid var(--brd);margin-top:12px">
-<div style="font-size:.78em;color:var(--t3);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Projeção de Renda Passiva (12 meses)</div>
+<div style="font-size:.78em;color:var(--t3);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.5px"><span data-i18n="projecao_renda_passiva">Projeção de Renda Passiva (12 meses)</span></div>
 <canvas id="rendaPassivaChart" height="200"></canvas>
 </div>
 <div id="rendaPassivaTable" style="margin-top:12px"></div>
@@ -1316,7 +1316,7 @@
 <!-- 1. SIMULADOR FIRE (Independência Financeira) -->
 <div class="cb" style="margin-bottom:16px;border:1px solid rgba(34,197,94,.25);background:linear-gradient(135deg,rgba(34,197,94,.03),rgba(16,185,129,.02))">
 <div class="ch" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-<span><i data-lucide="flame" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i>Simulador FIRE — Independência Financeira</span>
+<span><i data-lucide="flame" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i><span data-i18n="simulador_fire">Simulador FIRE — Independência Financeira</span></span>
 <button class="b3-chip" onclick="toggleFireHelp()" style="font-size:.68em">O que é FIRE?</button>
 </div>
 <div id="fireHelp" style="display:none;margin-bottom:12px;padding:12px;background:var(--bg2);border-radius:10px;border:1px solid var(--brd);font-size:.82em;color:var(--t2);line-height:1.7">
@@ -1442,7 +1442,7 @@
 <div id="metasEmpty" class="metas-empty-state" style="display:none">
 <div class="metas-empty-icon"><i data-lucide="target" style="width:48px;height:48px;color:#F97316"></i></div>
 <h2 class="metas-empty-title">Nenhuma meta criada</h2>
-<p class="metas-empty-sub">Cadastre objetivos com prazo e valor. Veja quanto guardar por mês e acompanhe o progresso.</p>
+<p class="metas-empty-sub"><span data-i18n="metas_desc">Cadastre objetivos com prazo e valor. Veja quanto guardar por mês e acompanhe o progresso.</span></p>
 <div class="metas-empty-templates">
 <button type="button" class="mt-btn" onclick="openMetaModal();applyMetaTemplate('reserva')"><i data-lucide="shield-check" style="width:15px;height:15px"></i> Reserva</button>
 <button type="button" class="mt-btn" onclick="openMetaModal();applyMetaTemplate('viagem')"><i data-lucide="plane" style="width:15px;height:15px"></i> Viagem</button>
@@ -1517,7 +1517,7 @@
 <div id="orcamentoKpis" class="orc-kpis"></div>
 <div id="orcamentoEmpty" class="orc-empty-state" style="display:none">
 <div class="orc-empty-icon"><i data-lucide="target" style="width:48px;height:48px;color:var(--vr)"></i></div>
-<h2 class="orc-empty-title">Nenhum orçamento para este mês</h2>
+<h2 class="orc-empty-title"><span data-i18n="nenhum_orcamento_mes">Nenhum orçamento para este mês</span></h2>
 <p class="orc-empty-sub">Defina seus limites por categoria e tenha controle total dos seus gastos.</p>
 <button type="button" class="btn btn-b orc-btn-criar" onclick="orcamentoOpenWizard()"><i data-lucide="clipboard-list" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Criar planejamento</button>
 <button type="button" id="orcamentoCopyPrevBtn" class="btn btn-o orc-btn-copy" onclick="orcamentoCopyFromPrev()" title="Não há mês anterior com orçamento"><i data-lucide="copy" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Copiar do mês anterior</button>
@@ -1544,9 +1544,9 @@
 <div class="orc-wizard-breadcrumb" id="orcamentoBreadcrumb"></div>
 <div id="orcamentoStep1" class="orc-wizard-step">
 <div class="orc-step1-card">
-<label class="fl">Qual é sua renda mensal?</label>
+<label class="fl"><span data-i18n="qual_renda_mensal">Qual é sua renda mensal?</span></label>
 <input type="text" id="orcRenda" class="fi" placeholder="R$ 0,00" inputmode="decimal" oninput="orcamentoFormatRenda(this);orcamentoCalcRenda()">
-<label class="fl" style="margin-top:16px">Quanto quer economizar por mês?</label>
+<label class="fl" style="margin-top:16px"><span data-i18n="quanto_economizar">Quanto quer economizar por mês?</span></label>
 <div class="orc-slider-row">
 <input type="range" id="orcEconomiaPct" class="orc-slider" min="0" max="50" value="20" oninput="orcamentoCalcRenda()">
 <span id="orcEconomiaPctVal" class="orc-pct-val">20%</span>
@@ -1566,7 +1566,7 @@
 <div class="orc-step2-summary-row">Distribuído: <strong id="orcStep2SummaryDistribuido">R$ 0,00</strong> &nbsp;|&nbsp; Disponível: <strong id="orcStep2SummaryDisponivel">R$ 0,00</strong></div>
 <div class="orc-step2-summary-bar"><div id="orcStep2SummaryBar" class="orc-step2-summary-bar-fill" style="width:0%"></div></div>
 </div>
-<h3 class="orc-step2-title">Distribua seu orçamento</h3>
+<h3 class="orc-step2-title"><span data-i18n="distribua_orcamento">Distribua seu orçamento</span></h3>
 <p class="orc-step2-sub">Defina o limite para cada categoria</p>
 <div id="orcamentoCategoriasList" class="orc-cat-list"></div>
 </div>
@@ -1596,16 +1596,16 @@
 <div id="carteiraDetailWrap" class="carteira-detail-wrap" style="display:none">
 <button type="button" class="carteira-detail-back" onclick="closeCarteiraDetail()"><i data-lucide="arrow-left" style="width:20px;height:20px"></i> Voltar às contas</button>
 <div class="carteira-detail-tabs">
-<button type="button" class="carteira-detail-tab on" data-tab="visao" onclick="setCarteiraTab('visao')">Visão geral</button>
-<button type="button" class="carteira-detail-tab" data-tab="mov" onclick="setCarteiraTab('mov')">Movimentações</button>
+<button type="button" class="carteira-detail-tab on" data-tab="visao" onclick="setCarteiraTab('visao')"><span data-i18n="visao_geral">Visão geral</span></button>
+<button type="button" class="carteira-detail-tab" data-tab="mov" onclick="setCarteiraTab('mov')"><span data-i18n="movimentacoes">Movimentações</span></button>
 </div>
 <div class="carteira-detail-card">
 <div id="carteiraTabVisao" class="carteira-tab-content">
 <div class="carteira-detail-grid">
 <div class="carteira-detail-field"><span class="label">Saldo atual</span><div class="value" id="carteiraDetailSaldo">R$ 0,00</div></div>
 <div class="carteira-detail-field"><span class="label">Saldo previsto</span><div class="value" id="carteiraDetailPrevisto">R$ 0,00</div></div>
-<div class="carteira-detail-field"><span class="label">Receitas este mês</span><div class="value" style="color:var(--green)" id="carteiraDetailRec">R$ 0,00</div></div>
-<div class="carteira-detail-field"><span class="label">Despesas este mês</span><div class="value" style="color:var(--danger)" id="carteiraDetailDesp">R$ 0,00</div></div>
+<div class="carteira-detail-field"><span class="label"><span data-i18n="receitas_este_mes">Receitas este mês</span></span><div class="value" style="color:var(--green)" id="carteiraDetailRec">R$ 0,00</div></div>
+<div class="carteira-detail-field"><span class="label"><span data-i18n="despesas_este_mes">Despesas este mês</span></span><div class="value" style="color:var(--danger)" id="carteiraDetailDesp">R$ 0,00</div></div>
 </div>
 <div class="carteira-detail-actions">
 <button type="button" class="carteira-detail-btn carteira-detail-btn-o" onclick="closeCarteiraDetail();openWltTransfer()"><i data-lucide="arrow-left-right" style="width:18px;height:18px"></i> Transferir</button>
@@ -1678,7 +1678,7 @@
 <div class="reajuste-opcoes">
 <div class="reajuste-opcao selected" data-mode="transacao" onclick="setReajusteMode('transacao',this)">
 <div class="reajuste-opcao-radio"></div>
-<div><div class="reajuste-opcao-titulo">Criar transação de ajuste</div><div class="reajuste-opcao-desc">Para ajustar seu saldo uma despesa ou receita de ajuste será criada.</div></div>
+<div><div class="reajuste-opcao-titulo"><span data-i18n="criar_ajuste">Criar transação de ajuste</span></div><div class="reajuste-opcao-desc"><span data-i18n="ajuste_desc">Para ajustar seu saldo uma despesa ou receita de ajuste será criada.</span></div></div>
 </div>
 <div class="reajuste-opcao" data-mode="inicial" onclick="setReajusteMode('inicial',this)">
 <div class="reajuste-opcao-radio"></div>
@@ -1708,7 +1708,7 @@
 <div class="detalhes-conta-row"><span class="key">Saldo inicial</span><span class="val" id="detalhesContaSaldoIni">R$ 0,00</span></div>
 <div class="detalhes-conta-row"><span class="key">Despesas</span><a href="#" onclick="event.preventDefault();closeDetalhesConta();showWltExtrato(_detalhesContaAcc);return false"><span class="val despesas" id="detalhesContaDespesas">0</span></a></div>
 <div class="detalhes-conta-row"><span class="key">Receitas</span><a href="#" onclick="event.preventDefault();closeDetalhesConta();showWltExtrato(_detalhesContaAcc);return false"><span class="val receitas" id="detalhesContaReceitas">0</span></a></div>
-<div class="detalhes-conta-row"><span class="key">Transferências</span><a href="#" onclick="event.preventDefault();closeDetalhesConta();showWltExtrato(_detalhesContaAcc);return false"><span class="val" id="detalhesContaTransf">0</span></a></div>
+<div class="detalhes-conta-row"><span class="key"><span data-i18n="transferencias">Transferências</span></span><a href="#" onclick="event.preventDefault();closeDetalhesConta();showWltExtrato(_detalhesContaAcc);return false"><span class="val" id="detalhesContaTransf">0</span></a></div>
 <div class="detalhes-conta-toggle"><label>Incluir na soma da tela inicial</label><input type="checkbox" id="detalhesContaIncluir" onchange="toggleDetalhesIncluirNaSoma()" style="width:20px;height:20px;accent-color:var(--vr)"></div>
 <button type="button" class="carteira-detail-btn carteira-detail-btn-o" style="width:100%;margin-top:12px" onclick="closeDetalhesConta();openEditarConta(_detalhesContaAcc)"><i data-lucide="pencil" style="width:18px;height:18px"></i> EDITAR CONTA</button>
 </div>
@@ -1722,7 +1722,7 @@
 <button onclick="closeEditarConta()" class="wlt-panel-close"><i data-lucide="x" style="width:20px;height:20px;stroke:currentColor;stroke-width:2"></i></button>
 </div>
 <div class="fg" style="margin-bottom:12px"><label class="fl">Saldo (R$)</label><input type="text" id="editarContaSaldo" class="fi" placeholder="0,00" inputmode="decimal" readonly style="background:var(--bg2);cursor:not-allowed"></div>
-<div class="fg" style="margin-bottom:12px"><label class="fl">Instituição financeira</label><div id="editarContaInstituicao" class="tipo-conta-pill" style="display:inline-flex;align-items:center;gap:10px"><span id="editarContaInstLogo"></span><span id="editarContaInstNome">-</span></div></div>
+<div class="fg" style="margin-bottom:12px"><label class="fl"><span data-i18n="instituicao_financeira">Instituição financeira</span></label><div id="editarContaInstituicao" class="tipo-conta-pill" style="display:inline-flex;align-items:center;gap:10px"><span id="editarContaInstLogo"></span><span id="editarContaInstNome">-</span></div></div>
 <div class="fg" style="margin-bottom:12px"><label class="fl">Nome da conta</label><input type="text" id="editarContaNome" class="fi" placeholder="Ex: Conta corrente"></div>
 <div class="fg" style="margin-bottom:12px"><label class="fl">Tipo de conta</label><select id="editarContaTipo" class="fi"><option value="Conta corrente">Conta corrente</option><option value="Poupança">Poupança</option><option value="Carteira">Carteira</option><option value="Investimento">Investimento</option><option value="Outros">Outros</option></select></div>
 <div class="fg" style="margin-bottom:12px"><label class="fl">Cor da conta</label><div class="editar-conta-cores" id="editarContaCores"></div></div>
@@ -1764,14 +1764,14 @@
 </div>
 <div class="card-modal-body">
 <div class="wlt-quick-add" id="wltQuickAdd">
-<div class="wlt-quick-add-label">Adicionar rápido</div>
+<div class="wlt-quick-add-label"><span data-i18n="adicionar_rapido">Adicionar rápido</span></div>
 <div class="wlt-quick-add-card" data-id="Carteira física" onclick="selectWltQuickAdd('Carteira física',this)">
 <div class="wlt-quick-add-icon"><i data-lucide="wallet" style="width:28px;height:28px;stroke:currentColor;stroke-width:2"></i></div>
-<span class="wlt-quick-add-name">Carteira física</span>
-<span class="wlt-quick-add-desc">Dinheiro em espécie</span>
+<span class="wlt-quick-add-name"><span data-i18n="carteira_fisica">Carteira física</span></span>
+<span class="wlt-quick-add-desc"><span data-i18n="dinheiro_especie">Dinheiro em espécie</span></span>
 </div>
 </div>
-<div class="fg"><label class="fl">Ou escolha a instituição financeira</label>
+<div class="fg"><label class="fl"><span data-i18n="escolha_instituicao">Ou escolha a instituição financeira</span></label>
 <div class="wlt-bank-search-wrap"><input type="text" id="wltBankSearch" class="wlt-bank-search" placeholder="Buscar por nome" oninput="renderWltBankList(this.value)"></div>
 <div id="wltBankList" class="wlt-bank-list"></div>
 <select id="wBankSel" class="fi" onchange="wBankChg()" style="display:none;height:0;opacity:0;position:absolute;pointer-events:none"></select>
@@ -1858,7 +1858,7 @@
 <div style="display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start" class="perfil-grid-resp">
 <div class="perfil-card">
 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:10px">
-<div><div style="font-size:1.05rem;font-weight:800;color:var(--t1);margin-bottom:4px">Dados Pessoais</div><div style="font-size:.82rem;color:var(--t2)">Suas informações cadastrais</div></div>
+<div><div style="font-size:1.05rem;font-weight:800;color:var(--t1);margin-bottom:4px">Dados Pessoais</div><div style="font-size:.82rem;color:var(--t2)"><span data-i18n="suas_informacoes">Suas informações cadastrais</span></div></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-p" onclick="sibCadShow(false)" style="font-size:.82rem;padding:8px 16px"><i data-lucide="clipboard-list" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i>Completar cadastro</button><button class="btn btn-r" id="perfilEditBtn" onclick="togglePerfilEdit()">Editar dados</button></div>
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
@@ -1867,14 +1867,14 @@
 <div style="grid-column:1/-1"><label class="fl">Objetivo financeiro</label><input type="text" id="perfilObjInput" class="perfil-inp" disabled value=""></div>
 <div style="grid-column:1/-1"><label class="fl">E-mail</label><input type="text" id="perfilEmailInput" class="perfil-inp" disabled value="" style="opacity:.7"></div>
 </div>
-<div id="perfilEditActions" style="display:none;gap:10px;margin-top:20px;flex-wrap:wrap"><button class="btn btn-p" onclick="savePerfilDados()">Salvar alterações</button><button class="btn btn-r" onclick="togglePerfilEdit()">Cancelar</button></div>
+<div id="perfilEditActions" style="display:none;gap:10px;margin-top:20px;flex-wrap:wrap"><button class="btn btn-p" onclick="savePerfilDados()"><span data-i18n="salvar_alteracoes">Salvar alterações</span></button><button class="btn btn-r" onclick="togglePerfilEdit()">Cancelar</button></div>
 </div>
 <div style="display:flex;flex-direction:column;gap:20px">
 <div class="perfil-card">
-<div style="font-size:.9rem;font-weight:700;color:var(--t1);margin-bottom:16px">Preferências</div>
+<div style="font-size:.9rem;font-weight:700;color:var(--t1);margin-bottom:16px"><span data-i18n="preferencias">Preferências</span></div>
 <div style="margin-bottom:14px"><label class="fl">Idioma</label><div style="padding:11px 14px;background:var(--bg2);border-radius:10px;border:1px solid var(--brd);font-size:.88rem;color:var(--t1)">Português (Brasil)</div></div>
 <div style="margin-bottom:14px"><label class="fl">Moeda</label><div style="padding:11px 14px;background:var(--bg2);border-radius:10px;border:1px solid var(--brd);font-size:.88rem;color:var(--t1)">BRL — Real Brasileiro</div></div>
-<div><label class="fl">Aparência</label><div style="padding:11px 14px;background:var(--bg2);border-radius:10px;border:1px solid var(--brd);font-size:.88rem;color:var(--t1)" id="perfilAparencia">Modo escuro</div></div>
+<div><label class="fl"><span data-i18n="aparencia">Aparência</span></label><div style="padding:11px 14px;background:var(--bg2);border-radius:10px;border:1px solid var(--brd);font-size:.88rem;color:var(--t1)" id="perfilAparencia">Modo escuro</div></div>
 <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
 <label class="fl" style="margin-bottom:0">Resumo semanal por e-mail</label>
 <button type="button" id="perfilResumoSemanalBtn" class="perfil-toggle-btn" onclick="toggleResumoSemanalEmail()" aria-pressed="false" style="width:44px;height:24px;border-radius:12px;border:none;background:var(--bg2);cursor:pointer;position:relative;transition:background .2s"><span style="position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:var(--t3);transition:transform .2s" id="perfilResumoSemanalThumb"></span></button>
@@ -1883,7 +1883,7 @@
 </div>
 <div class="perfil-card perfil-dangercard">
 <div style="font-size:.88rem;font-weight:700;color:var(--danger);margin-bottom:6px">Zona de perigo</div>
-<div style="font-size:.82rem;color:var(--danger);margin-bottom:14px;line-height:1.6;opacity:.9">Estas ações são irreversíveis. Proceda com cautela.</div>
+<div style="font-size:.82rem;color:var(--danger);margin-bottom:14px;line-height:1.6;opacity:.9"><span data-i18n="acoes_irreversiveis">Estas ações são irreversíveis. Proceda com cautela.</span></div>
 <button class="perfil-danger-btn" style="width:100%;margin-bottom:8px" onclick="toast('Use Configurações para desconectar contas.','info')">Desconectar todas as contas</button>
 <button class="perfil-danger-btn" style="width:100%" onclick="toast('Exclusão de conta disponível em Configurações.','info')">Excluir minha conta</button>
 </div>
@@ -1893,7 +1893,7 @@
 <div id="perfilSeguranca" class="perfil-tab-content">
 <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start" class="perfil-grid-resp">
 <div class="perfil-card">
-<div style="font-size:1.05rem;font-weight:800;color:var(--t1);margin-bottom:4px">Segurança da Conta</div>
+<div style="font-size:1.05rem;font-weight:800;color:var(--t1);margin-bottom:4px"><span data-i18n="seguranca_conta">Segurança da Conta</span></div>
 <div style="font-size:.82rem;color:var(--t2);margin-bottom:24px">Mantenha sua conta protegida</div>
 <div id="perfilSegurancaList"></div>
 </div>
@@ -1907,11 +1907,11 @@
 <div id="perfilPrivacidade" class="perfil-tab-content">
 <div class="perfil-card" style="max-width:700px">
 <div style="font-size:1.05rem;font-weight:800;color:var(--t1);margin-bottom:4px">Privacidade e Dados</div>
-<div style="font-size:.82rem;color:var(--t2);margin-bottom:24px">Controle como seus dados são usados no Sibanki</div>
+<div style="font-size:.82rem;color:var(--t2);margin-bottom:24px"><span data-i18n="controle_dados">Controle como seus dados são usados no Sibanki</span></div>
 <div id="perfilPrivacidadeList"></div>
 <div style="margin-top:24px;padding:18px;background:var(--bg2);border-radius:12px;border:1px solid var(--brd)">
 <div style="font-size:.88rem;font-weight:700;color:var(--t1);margin-bottom:12px">Seus direitos — LGPD</div>
-<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-r" style="font-size:.8rem;padding:7px 14px" onclick="expJSON();toast('Backup JSON iniciado.','ok')">Baixar meus dados</button><button class="btn btn-r" style="font-size:.8rem;padding:7px 14px" onclick="toast('Em breve.','info')">Ver o que coletamos</button><button class="btn btn-r" style="font-size:.8rem;padding:7px 14px" onclick="toast('Solicite em Configurações.','info')">Solicitar exclusão</button></div>
+<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-r" style="font-size:.8rem;padding:7px 14px" onclick="expJSON();toast('Backup JSON iniciado.','ok')">Baixar meus dados</button><button class="btn btn-r" style="font-size:.8rem;padding:7px 14px" onclick="toast('Em breve.','info')">Ver o que coletamos</button><button class="btn btn-r" style="font-size:.8rem;padding:7px 14px" onclick="toast('Solicite em Configurações.','info')"><span data-i18n="solicitar_exclusao">Solicitar exclusão</span></button></div>
 </div>
 </div>
 </div>
@@ -1959,7 +1959,7 @@
 <div class="fb" style="margin-bottom:16px">
 <div class="cfg-sec-hd" style="margin-bottom:14px">
 <div class="cfg-sec-icon" style="background:rgba(79,140,255,.15)"><i data-lucide="sliders-horizontal" style="width:14px;height:14px;color:#4C7BF4"></i></div>
-<div><h3>Preferências do Dashboard</h3><p>Ajuste como os saldos das contas são calculados</p></div>
+<div><h3><span data-i18n="pref_dashboard">Preferências do Dashboard</span></h3><p>Ajuste como os saldos das contas são calculados</p></div>
 </div>
 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--c2);border:1px solid var(--brd);border-radius:12px;padding:12px 14px">
 <div>
@@ -1990,11 +1990,11 @@
 <div class="fb" style="margin-bottom:16px">
 <div class="cfg-sec-hd" style="margin-bottom:10px">
 <div class="cfg-sec-icon" style="background:rgba(239,68,68,.15)"><i data-lucide="rotate-ccw" style="width:14px;height:14px;color:#EF4444"></i></div>
-<div><h3>Recomeçar do zero</h3><p>Apaga todos os lançamentos, metas, contas e investimentos. Sua conta de login permanece.</p></div>
+<div><h3><span data-i18n="recomecar_zero">Recomeçar do zero</span></h3><p>Apaga todos os lançamentos, metas, contas e investimentos. Sua conta de login permanece.</p></div>
 </div>
 <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:12px;padding:14px;">
 <p style="font-size:.85em;color:var(--t2);margin:0 0 12px">Esta ação não pode ser desfeita. Faça um backup antes se quiser guardar seus dados.</p>
-<button type="button" class="perfil-danger-btn" style="width:100%;padding:12px;font-size:.9em" onclick="resetAllDataAndRestart()"><i data-lucide="trash-2" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i>Apagar tudo e recomeçar</button>
+<button type="button" class="perfil-danger-btn" style="width:100%;padding:12px;font-size:.9em" onclick="resetAllDataAndRestart()"><i data-lucide="trash-2" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i><span data-i18n="apagar_tudo_recomecar">Apagar tudo e recomeçar</span></button>
 </div>
 </div>
 
@@ -2012,7 +2012,7 @@
 <div class="fb">
 <div class="cfg-sec-hd" style="margin-bottom:12px">
 <div class="cfg-sec-icon" style="background:rgba(249,115,22,.15)"><i data-lucide="landmark" style="width:14px;height:14px;color:#F97316"></i></div>
-<div><h3>Contas</h3><p>Gerencie suas contas bancárias e cartões</p></div>
+<div><h3>Contas</h3><p><span data-i18n="gerenciar_contas_cartoes">Gerencie suas contas bancárias e cartões</span></p></div>
 </div>
 <div class="tag-list" id="accTags"></div>
 <div style="display:flex;gap:8px;margin-top:8px">
@@ -2031,7 +2031,7 @@
 <span style="font-size:1.5em">✅</span>
 <div>
 <div style="font-weight:600;color:var(--t1)">IA Ativa e Funcionando</div>
-<div style="font-size:.82em;color:var(--t2)">Tecnologia Gemini integrada • Nenhuma configuração necessária</div>
+<div style="font-size:.82em;color:var(--t2)"><span data-i18n="gemini_integrado">Tecnologia Gemini integrada • Nenhuma configuração necessária</span></div>
 </div>
 </div>
 <div id="iaUsageInfo" style="font-size:.85em;color:var(--t2);margin-top:8px">
@@ -2089,7 +2089,7 @@
 <!-- Corretoras OAuth -->
 <div style="border-left:3px solid #8B5CF6;padding-left:12px;margin:12px 0">
 <div style="font-weight:600;font-size:1em;margin-bottom:6px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="landmark" style="width:20px;height:20px;stroke:currentColor;stroke-width:2"></i> Sincronização de Corretoras</div>
-<p style="font-size:0.85em;color:var(--t2);margin:4px 0">Conecte sua corretora para importar posição automaticamente.</p>
+<p style="font-size:0.85em;color:var(--t2);margin:4px 0"><span data-i18n="conecte_corretora">Conecte sua corretora para importar posição automaticamente.</span></p>
 <div style="font-size:0.8em;color:var(--t3);margin:6px 0">
 <div><b>Suportadas:</b> XP Investimentos, Clear, BTG Pactual, Modal, Inter Invest</div>
 <div style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="alert-triangle" style="width:18px;height:18px;stroke:currentColor;stroke-width:2"></i> Em desenvolvimento</div>
@@ -2224,7 +2224,7 @@
 <div class="module-icon module-icon-ia" style="width:44px;height:44px;flex-shrink:0"><i data-lucide="bot" style="width:24px;height:24px;color:#4C7BF4"></i></div>
 <div>
 <h3 style="margin:0;font-size:1.05rem">Consultor Financeiro IA</h3>
-<p style="margin:4px 0 0;font-size:.82em;color:var(--t2)">Analiso seus hábitos financeiros e sugiro melhorias personalizadas</p>
+<p style="margin:4px 0 0;font-size:.82em;color:var(--t2)"><span data-i18n="ia_analiso">Analiso seus hábitos financeiros e sugiro melhorias personalizadas</span></p>
 </div>
 </div>
 
@@ -2239,7 +2239,7 @@
 </div>
 
 <div style="margin-bottom:12px">
-<label style="font-size:.85em;color:var(--t2);margin-bottom:6px;display:block">Ou faça uma pergunta personalizada:</label>
+<label style="font-size:.85em;color:var(--t2);margin-bottom:6px;display:block"><span data-i18n="pergunta_personalizada">Ou faça uma pergunta personalizada:</span></label>
 <div style="display:flex;gap:8px">
 <input type="text" id="iaQ" class="fi" placeholder="Ex: Como posso economizar mais no mês?" style="flex:1" onkeydown="if(event.key==='Enter')iaChat()" aria-label="Pergunta para o consultor IA">
 <button class="btn btn-r" onclick="iaChat()" style="white-space:nowrap">Enviar &#9658;</button>
@@ -2262,7 +2262,7 @@
 <div class="fin-header">
 <div class="fin-header-text">
 <h2 style="margin:0;font-size:1.2em;display:inline-flex;align-items:center;gap:10px"><i data-lucide="brain-circuit" style="width:26px;height:26px;color:var(--vr)"></i> Central de Inteligência Financeira</h2>
-<p style="margin:4px 0 0;font-size:.82em;color:var(--t2)">Dicas personalizadas, educação e ferramentas para suas finanças</p>
+<p style="margin:4px 0 0;font-size:.82em;color:var(--t2)"><span data-i18n="central_ia_desc">Dicas personalizadas, educação e ferramentas para suas finanças</span></p>
 </div>
 </div>
 
@@ -2272,7 +2272,7 @@
 <div class="fin-insight-icon" id="finInsightEmoji"><i data-lucide="lightbulb" style="width:32px;height:32px;color:var(--vr)"></i></div>
 <div class="fin-insight-body">
 <div class="fin-insight-label">Insight do Dia</div>
-<div class="fin-insight-text" id="finInsightText">Adicione lançamentos para receber insights personalizados.</div>
+<div class="fin-insight-text" id="finInsightText"><span data-i18n="adicione_lancamentos_insights">Adicione lançamentos para receber insights personalizados.</span></div>
 <div id="finInsightCategoria" class="fin-insight-cat" style="display:none"></div>
 <div class="fin-insight-actions">
 <button type="button" class="fin-insight-btn" id="finInsightBtn" style="display:none" onclick="openFinCalc('compostos')"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle"></i> Ver simulação</button>
@@ -2300,7 +2300,7 @@
 </div>
 <div class="fin-trail-progress">
 <div class="fin-trail-bar"><div class="fin-trail-fill" id="finTrailFill" style="width:0%"></div></div>
-<span class="fin-trail-label" id="finTrailLabel">0 de 25 lições concluídas</span>
+<span class="fin-trail-label" id="finTrailLabel"><span data-i18n="licoes_concluidas_zero">0 de 25 lições concluídas</span></span>
 </div>
 <button type="button" class="btn btn-b" id="finContinuarBtn" style="display:none;margin-bottom:12px;font-size:.85em" onclick="continuarUltimaLicao()"><i data-lucide="play" style="width:16px;height:16px;vertical-align:middle"></i> Continuar de onde parei</button>
 <div id="finTrailsList"></div>
@@ -2344,12 +2344,12 @@
 <div class="conq-hero-icon"><i data-lucide="trophy" style="width:26px;height:26px;color:#F59E0B"></i></div>
 <div class="conq-hero-text">
 <h2>Conquistas</h2>
-<p>Desbloqueie badges, acumule pontos e suba de nível mantendo suas finanças em ordem.</p>
+<p><span data-i18n="conquistas_desc">Desbloqueie badges, acumule pontos e suba de nível mantendo suas finanças em ordem.</span></p>
 </div>
 </div>
 <div class="kpi-row" style="margin-bottom:14px">
 <div class="kpi yellow"><div class="kl">Conquistas</div><div class="kv" id="cqCount">0/15</div></div>
-<div class="kpi green"><div class="kl">Sequência</div><div class="kv" id="cqStreak">0 dias</div></div>
+<div class="kpi green"><div class="kl"><span data-i18n="sequencia">Sequência</span></div><div class="kv" id="cqStreak">0 dias</div></div>
 <div class="kpi purple"><div class="kl">Nível</div><div class="kv" id="cqLevel">Iniciante</div></div>
 <div class="kpi blue"><div class="kl">Score</div><div class="kv" id="cqScore">0</div></div>
 </div>
@@ -2362,8 +2362,8 @@
 <div class="rel-hero">
 <div class="rel-hero-icon"><i data-lucide="file-bar-chart" style="width:26px;height:26px;color:#64748B"></i></div>
 <div class="rel-hero-text">
-<h2>Relatórios Avançados</h2>
-<p>Análise completa das suas finanças — resumos mensais, evolução patrimonial e comparativos.</p>
+<h2><span data-i18n="relatorios_avancados">Relatórios Avançados</span></h2>
+<p><span data-i18n="relatorios_desc">Análise completa das suas finanças — resumos mensais, evolução patrimonial e comparativos.</span></p>
 </div>
 <div class="rel-hero-actions">
 <button onclick="shareReport()" style="font-size:.75em;padding:6px 11px;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.06);border:1px solid var(--brd);border-radius:8px;color:var(--t2);cursor:pointer;font-weight:600;transition:all .2s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t2)'"><i data-lucide="share-2" style="width:13px;height:13px"></i> Compartilhar</button>
@@ -2388,20 +2388,20 @@
 <div class="rel-sec on" id="relSec0">
 <div class="tb"><h3 style="display:inline-flex;align-items:center;gap:8px"><i data-lucide="file-text" style="width:20px;height:20px"></i>Resumo Mensal</h3>
 <table><thead><tr><th>Mes</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Economia %</th><th>Status</th></tr></thead><tbody id="relB"></tbody></table></div>
-<div class="cg"><div class="cb"><div class="ch">Histórico Receitas vs Despesas</div><canvas id="c5"></canvas></div>
+<div class="cg"><div class="cb"><div class="ch"><span data-i18n="historico_rec_desp">Histórico Receitas vs Despesas</span></div><canvas id="c5"></canvas></div>
 <div class="cb"><div class="ch">Saldo Acumulado</div><canvas id="c6"></canvas></div></div>
 </div>
 
 <div class="rel-sec" id="relSec1">
-<div class="cb" style="margin-bottom:16px"><div class="ch"><i data-lucide="trending-up" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i>Evolução Patrimonial</div><p style="font-size:.8em;color:var(--t2);margin:4px 0 12px">Patrimônio total (saldo + investimentos) ao longo dos meses</p><canvas id="cPatri"></canvas></div>
+<div class="cb" style="margin-bottom:16px"><div class="ch"><i data-lucide="trending-up" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i><span data-i18n="evolucao_patrimonial"><span data-i18n="evolucao_patrimonial">Evolução Patrimonial</span></span></div><p style="font-size:.8em;color:var(--t2);margin:4px 0 12px">Patrimônio total (saldo + investimentos) ao longo dos meses</p><canvas id="cPatri"></canvas></div>
 <div class="cg"><div class="cb"><div class="ch">Composição do Patrimônio Atual</div><canvas id="cPatriComp"></canvas></div>
 <div class="cb"><div class="ch">Taxa de Poupança Mensal (%)</div><canvas id="cPoup"></canvas></div></div>
 </div>
 
 <div class="rel-sec" id="relSec2">
 <div class="cg"><div class="cb"><div class="ch"><i data-lucide="bar-chart-2" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i>Ranking de Categorias (Despesas)</div><div id="catRanking"></div></div>
-<div class="cb"><div class="ch">Distribuição por Categoria</div><canvas id="cCatPie"></canvas></div></div>
-<div class="cb" style="margin-top:16px"><div class="ch">Evolução por Categoria (Top 5)</div><canvas id="cCatEvo"></canvas></div>
+<div class="cb"><div class="ch"><span data-i18n="distrib_categoria">Distribuição por Categoria</span></div><canvas id="cCatPie"></canvas></div></div>
+<div class="cb" style="margin-top:16px"><div class="ch"><span data-i18n="evolucao_categoria_top5">Evolução por Categoria (Top 5)</span></div><canvas id="cCatEvo"></canvas></div>
 </div>
 
 <div class="rel-sec" id="relSec3">
@@ -2662,15 +2662,15 @@
 
 <div id="editMdl" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center">
 <div style="background:var(--c1);border-radius:16px;padding:24px;width:90%;max-width:420px">
-<h3 style="margin:0 0 16px">Editar Lançamento</h3>
+<h3 style="margin:0 0 16px"><span data-i18n="editar_lancamento">Editar Lançamento</span></h3>
 <div style="margin-bottom:10px"><label class="fl">Data</label><input type="date" id="edD" class="fi"></div>
 <div style="margin-bottom:10px"><label class="fl">Tipo</label><select id="edT" class="fi"><option value="despesa">Despesa</option><option value="receita">Receita</option></select></div>
 <div style="margin-bottom:10px"><label class="fl">Categoria</label><select id="edC" class="fi"></select></div>
 <div style="margin-bottom:10px"><label class="fl">Valor</label><input type="number" id="edV" class="fi" step="0.01"></div>
-<div style="margin-bottom:10px"><label class="fl">Descrição</label><input type="text" id="edDe" class="fi"></div>
+<div style="margin-bottom:10px"><label class="fl"><span data-i18n="descricao">Descrição</span></label><input type="text" id="edDe" class="fi"></div>
 <div style="margin-bottom:10px"><label class="fl">Conta</label><select id="edA" class="fi"></select></div>
 <div class="fg"><label>Status</label><select id="edStatus" class="fi"><option value="pago">Pago</option><option value="pendente">Pendente</option><option value="agendado">Agendado</option></select></div>
-<div class="fg"><label>Forma Pgto</label><select id="edPgto" class="fi"><option value="">Não informado</option><option value="pix">Pix</option><option value="debito">Débito</option><option value="credito">Crédito</option><option value="dinheiro">Dinheiro</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option></select></div>
+<div class="fg"><label>Forma Pgto</label><select id="edPgto" class="fi"><option value=""><span data-i18n="nao_informado">Não informado</span></option><option value="pix">Pix</option><option value="debito"><span data-i18n="debito">Débito</span></option><option value="credito"><span data-i18n="credito">Crédito</span></option><option value="dinheiro">Dinheiro</option><option value="boleto">Boleto</option><option value="transferencia"><span data-i18n="transferencia">Transferência</span></option></select></div>
 <div style="display:flex;gap:8px;margin-top:16px">
 <button class="btn btn-r" onclick="saveEd()" style="flex:1">Salvar</button>
 <button class="btn btn-o" onclick="closeEd()" style="flex:1">Cancelar</button>
@@ -2758,7 +2758,7 @@
 <div id="coupleNotLinked">
 <div class="couple-hero" style="margin-top:0">
 <div class="couple-hero-icon"><div class="module-icon module-icon-familia"><i data-lucide="users"></i></div></div>
-<h2 style="margin:0 0 6px;font-size:1.15em">Família Sibanki</h2>
+<h2 style="margin:0 0 6px;font-size:1.15em"><span data-i18n="familia_sibanki">Família Sibanki</span></h2>
 <p style="color:var(--t2);margin:0;font-size:.85em">Gerencie suas finanças a dois! Vincule com seu parceiro(a) e tenham visibilidade total das finanças do casal.</p>
 </div>
 
@@ -2802,7 +2802,7 @@
 <div class="couple-avatar" id="coupleAv1">👤</div>
 <div class="couple-avatar" id="coupleAv2">👤</div>
 </div>
-<h2 style="margin:0 0 4px;font-size:1.1em" id="coupleTitle">Família Sibanki</h2>
+<h2 style="margin:0 0 4px;font-size:1.1em" id="coupleTitle"><span data-i18n="familia_sibanki">Família Sibanki</span></h2>
 <div class="couple-status linked"><i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Vinculados</div>
 </div>
 
@@ -2904,7 +2904,7 @@
 <!-- MESADA -->
 <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);border-radius:10px;margin-bottom:16px">
 <div><div style="font-size:.72em;color:var(--t2)">&#128176; Mesada</div><div id="childMesada" style="font-weight:800;font-size:1.1em">R$ 0</div></div>
-<div><div style="font-size:.72em;color:var(--t2)">Próxima</div><div id="childProxMesada" style="font-weight:600;font-size:.88em">-</div></div>
+<div><div style="font-size:.72em;color:var(--t2)"><span data-i18n="proxima">Próxima</span></div><div id="childProxMesada" style="font-weight:600;font-size:.88em">-</div></div>
 </div>
 
 <!-- MISSÕES -->
@@ -3000,7 +3000,7 @@
 <span class="av-pick" onclick="pickChildAvatar(this)" style="font-size:1.5em;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent">&#127775;</span>
 </div>
 </div>
-<button class="btn btn-r" onclick="saveChildConfig()" style="font-size:.82em">Salvar Configurações</button>
+<button class="btn btn-r" onclick="saveChildConfig()" style="font-size:.82em"><span data-i18n="salvar_configuracoes">Salvar Configurações</span></button>
 </div>
 </div>
 
