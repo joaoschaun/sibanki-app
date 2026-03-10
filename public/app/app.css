@@ -139,11 +139,22 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 .drawer-plan-badge.pro{background:linear-gradient(135deg,#4C7BF4,#7C5CFC);color:#fff}
 .drawer-plan-badge.familia{background:linear-gradient(135deg,#22C55E,#16A34A);color:#fff}
 .drawer-nav{flex:1;padding:16px 0;overflow-y:auto}
+/* ── DRAWER NAV ITEMS — com descrição ── */
 .drawer-nav-item{display:flex;align-items:center;gap:12px;padding:12px 20px;font-size:.88rem;color:var(--t2);cursor:pointer;transition:all .15s ease;border-left:3px solid transparent;text-decoration:none;border-radius:0 12px 12px 0}
 .drawer-nav-item:hover{color:var(--t1);background:rgba(255,255,255,.04)}
 .drawer-nav-item.active{background:rgba(76,123,244,.15);color:var(--t1)!important;font-weight:700;border-left-color:#4C7BF4}
 .drawer-nav-item .module-icon{flex-shrink:0;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center}
 .drawer-nav-item .module-icon [data-lucide]{width:22px;height:22px}
+.dni-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dni-label{font-size:.87rem;font-weight:600;color:inherit;line-height:1.2;white-space:nowrap}
+.dni-desc{font-size:.68rem;color:var(--t3);line-height:1.2;white-space:nowrap;display:none}
+/* Descrições só aparecem no modo sidebar desktop */
+@media(min-width:1024px){
+  .drawer-sidebar-mode .dni-desc{display:block}
+  .drawer-sidebar-mode .drawer-nav-item{padding:10px 16px 10px 14px;border-radius:0 10px 10px 0;margin-right:8px}
+  .drawer-sidebar-mode .drawer-nav-item.active .dni-desc{color:rgba(255,255,255,.55)}
+  .drawer-sidebar-mode .drawer-nav-item:hover .dni-desc{color:var(--t2)}
+}
 .drawer-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.05);flex-shrink:0}
 .drawer-close-btn{position:absolute;top:16px;right:16px;padding:8px;background:none;border:none;color:var(--t3);cursor:pointer;font-size:1.2em;border-radius:8px;transition:.3s;z-index:10}
 .drawer-close-btn:hover{color:var(--t1);background:rgba(255,255,255,.06)}
