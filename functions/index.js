@@ -22,6 +22,7 @@ const brapiService = require("./services/market/brapiService");
 const newsService = require("./services/news/newsService");
 const stripeService = require("./services/billing/stripeService");
 const whatsappService = require("./services/whatsapp/whatsappService");
+const { generateAnalysis } = require("./services/llm/llmService");
 
 // Load .env for local development (mantido por compatibilidade)
 try { require("dotenv").config(); } catch(e) {}
@@ -427,9 +428,7 @@ exports.chatApi = functions.runWith(chatApiOptions).https.onCall(async (data, co
   if (!message) {
     throw new functions.https.HttpsError("invalid-argument", "Mensagem vazia.");
   }
-  if (!GEMINI_KEY) {
-    throw new functions.https.HttpsError("failed-precondition", "IA não configurada. Configure GEMINI_KEY no servidor.");
-  }
+  // GEMINI_KEY ainda pode ser usada mas o llmService tem fallback automático para Groq/OpenAI/Claude
   const contextStr = (data && data.context) ? String(data.context).trim() : "";
   const isLegacyFullPrompt = /DADOS (DO USUARIO|DA FAMÍLIA|DO USUÁRIO)/i.test(message);
   let userContent = (contextStr && !isLegacyFullPrompt)
@@ -439,48 +438,14 @@ exports.chatApi = functions.runWith(chatApiOptions).https.onCall(async (data, co
   if (ragChunks) {
     userContent = `REFERÊNCIA (use para fundamentar sua resposta, em português):\n${ragChunks}\n\n---\n\n${userContent}`;
   }
-  const body = {
-    systemInstruction: { parts: [{ text: CONSULTOR_SYSTEM_INSTRUCTION }] },
-    contents: [{ role: "user", parts: [{ text: userContent }] }],
-    generationConfig: { maxOutputTokens: 1024, temperature: 0.3 }
-  };
-  const callGemini = async (model) => {
-    const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + GEMINI_KEY;
-    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    return res.json();
-  };
-  const isQuotaError = (json) => {
-    if (!json.error) return false;
-    const msg = (json.error.message || "").toLowerCase();
-    return (json.error.code === 429) || msg.includes("quota") || msg.includes("resource has been exhausted") || msg.includes("rate limit");
-  };
-  const isModelNotFound = (json) => {
-    if (!json.error || !json.error.message) return false;
-    const msg = (json.error.message || "").toLowerCase();
-    return msg.includes("is not found") || msg.includes("not found for api");
-  };
+  // Chama o llmService com fallback automático: Gemini → Groq → OpenAI → Claude
   try {
-    const models = ["gemini-2.0-flash", "gemini-2.0-flash-lite"];
-    let lastJson = null;
-    for (const model of models) {
-      lastJson = await callGemini(model);
-      if (lastJson.candidates && lastJson.candidates[0] && lastJson.candidates[0].content && lastJson.candidates[0].content.parts && lastJson.candidates[0].content.parts[0]) {
-        const reply = (lastJson.candidates[0].content.parts[0].text || "").trim();
-        return { reply };
-      }
-      if (lastJson.error && !isQuotaError(lastJson) && !isModelNotFound(lastJson)) {
-        logError("chatApi Gemini error", lastJson.error);
-        throw new functions.https.HttpsError("internal", lastJson.error.message || "Erro na IA.");
-      }
+    const result = await generateAnalysis(contextStr, userContent);
+    if (!result || !result.text) {
+      throw new functions.https.HttpsError("resource-exhausted", "Todos os provedores de IA atingiram o limite. Tente em alguns minutos.");
     }
-    if (lastJson && lastJson.error) {
-      logError("chatApi Gemini error", lastJson.error);
-      if (isQuotaError(lastJson)) {
-        throw new functions.https.HttpsError("resource-exhausted", "Limite de uso do consultor por hoje atingido. Tente em alguns minutos ou amanhã.");
-      }
-      throw new functions.https.HttpsError("internal", lastJson.error.message || "Erro na IA. Tente novamente.");
-    }
-    return { reply: "" };
+    logEvent("chatApi", { provider: result.provider, uid: context.auth.uid });
+    return { reply: result.text };
   } catch (e) {
     if (e instanceof functions.https.HttpsError) throw e;
     logError("chatApi", e);

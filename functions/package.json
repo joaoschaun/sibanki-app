@@ -13,7 +13,8 @@
     "firebase-functions": "^4.5.0",
     "node-fetch": "^2.7.0",
     "resend": "^6.9.3",
-    "stripe": "^20.4.0"
+    "stripe": "^20.4.0",
+    "tesseract.js": "^7.0.0"
   },
   "private": true
 }

@@ -46,6 +46,28 @@ const OPENAI_KEY = process.env.OPENAI_KEY || "";
 // Anthropic Claude (segundo fallback)
 const CLAUDE_KEY = process.env.CLAUDE_KEY || "";
 
+// Groq — LLM gratuita (14.400 req/dia) + Whisper STT gratuito
+let GROQ_KEY = process.env.GROQ_KEY || "";
+if (!GROQ_KEY) {
+  try {
+    const fn = require("firebase-functions");
+    if (fn.config && fn.config().groq && fn.config().groq.key) {
+      GROQ_KEY = fn.config().groq.key;
+    }
+  } catch (e) {}
+}
+
+// Google Cloud — Vision OCR (1.000 imgs/mês grátis) + Speech STT (60min/mês grátis)
+let GOOGLE_CLOUD_KEY = process.env.GOOGLE_CLOUD_KEY || "";
+if (!GOOGLE_CLOUD_KEY) {
+  try {
+    const fn = require("firebase-functions");
+    if (fn.config && fn.config().google && fn.config().google.cloud_key) {
+      GOOGLE_CLOUD_KEY = fn.config().google.cloud_key;
+    }
+  } catch (e) {}
+}
+
 // Stripe
 const STRIPE_SECRET = process.env.STRIPE_SECRET || "";
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
