@@ -1628,7 +1628,7 @@ var doneCount=(hasAcc?1:0)+(hasGasto?1:0)+(hasMeta?1:0)+(hasOrc?1:0)+(hasIa?1:0)
 var allDone=doneCount>=5;
 var state={conta:hasAcc,gasto:hasGasto,meta:hasMeta,orcamento:hasOrc,ia:hasIa};
 if(!window._sibPPFirstRenderDone){window._sibPPFirstRenderDone=true;for(var k in state)_sibPPPrev[k]=state[k];}
-else{for(var k in state){if(state[k]&&!_sibPPPrev[k]){if(typeof toast==='function')toast('+20 XP','ok');if(U&&U.uid&&k==='ia')db.collection('users').doc(U.uid).set({primeirosPassos:{ia:true}},{merge:true}).catch(function(){});}_sibPPPrev[k]=state[k];}}
+else{for(var k in state){if(state[k]&&!_sibPPPrev[k]){if(typeof toast==='function')toast(typeof t==='function'?t('toast_xp_20'):'+20 XP','ok');if(U&&U.uid&&k==='ia')db.collection('users').doc(U.uid).set({primeirosPassos:{ia:true}},{merge:true}).catch(function(){});}_sibPPPrev[k]=state[k];}}
 if(allDone&&!window._primeirosPassosAllDoneShown){window._primeirosPassosAllDoneShown=true;if(typeof celebrateLucide==='function')celebrateLucide();if(typeof toast==='function')toast(typeof t==='function'?t('toast_config_completa_xp'):'Configuração completa! +100 XP bônus 🎉','ok');if(U&&U.uid){db.collection('users').doc(U.uid).set({primeirosPassosCompletoEm:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});}}
 wrap.classList.remove('sib-pp-hidden');
 wrap.style.display='block';
@@ -2416,7 +2416,7 @@ var avgRec=recM/diasPassados;var avgDesp=despM/diasPassados;
 var projFuturo=(avgRec-avgDesp)*diasRestP;
 var fimMes=sal+projFuturo;
 previsaoEl.style.display='block';
-previsaoEl.textContent='Com esse ritmo, você termina o mês com '+fmt(fimMes)+'.';
+previsaoEl.textContent=(typeof t==='function'?t('previsao_fim_mes'):'Com esse ritmo, você termina o mês com ')+fmt(fimMes)+'.';
 previsaoEl.style.color=fimMes>=0?'var(--green)':'var(--vr)';
 }
 
@@ -2427,7 +2427,7 @@ var emoji=nota>=8?'&#128170;':nota>=5?'&#128077;':'&#9888;&#65039;';
 var label=nota>=8?'Excelente':nota>=5?'Atenção':'Critico';
 gEl.innerHTML='<div style="width:70px;height:70px;border-radius:50%;border:4px solid '+cor+';display:flex;align-items:center;justify-content:center;flex-direction:column"><div style="font-size:1.3em;font-weight:800;color:'+cor+'">'+nota+'</div><div style="font-size:.55em;color:var(--t2)">de 10</div></div><div style="font-size:.7em;color:'+cor+';margin-top:4px">'+emoji+' '+label+'</div>';
 var descEl=document.getElementById('healthGaugeDesc');
-if(descEl)descEl.textContent='Sua saúde financeira considera gastos, metas e orçamento.';
+if(descEl)descEl.textContent=typeof t==='function'?t('saude_financeira_desc'):'Sua saúde financeira considera gastos, metas e orçamento.';
 }
 
 var txPoup=recM>0?Math.round(salM/recM*100):0;
@@ -2587,7 +2587,7 @@ if(!desc){toast(typeof t==='function'?t('toast_digite_descricao'):'Digite uma de
 if(!total||total<=0){toast(typeof t==='function'?t('toast_digite_valor'):'Digite o valor','err');return}
 if(!date){toast(typeof t==='function'?t('toast_selecione_data'):'Selecione a data','err');return}
 var card=cards.find(function(c){return c.id===cardId});
-if(!card){toast('Cartão não encontrado','err');return}
+if(!card){toast(typeof t==='function'?t('toast_cartao_nao_encontrado'):'Cartão não encontrado','err');return}
 var valParc=Math.round(total/parcelas*100)/100;
 var purchaseId=Date.now();
 for(var p=0;p<parcelas;p++){
@@ -2636,12 +2636,12 @@ return year+'-'+String(month+1).padStart(2,'0');
 }
 
 function delPurchase(cardId,purchaseId){
-if(!confirm('Excluir esta compra? (todas as parcelas serao removidas)'))return;
+if(!confirm(typeof t==='function'?t('confirm_excluir_compra'):'Excluir esta compra? (todas as parcelas serao removidas)'))return;
 var card=cards.find(function(c){return c.id===cardId});
 if(card){
 card.purchases=card.purchases.filter(function(p){return p.purchaseId!==purchaseId});
 entries=entries.filter(function(e){return e.cardPurchaseId!==purchaseId});
-saveData();renderAll();toast('Compra removida','ok');
+saveData();renderAll();toast(typeof t==='function'?t('toast_compra_removida'):'Compra removida','ok');
 }
 }
 
@@ -3015,17 +3015,17 @@ var date=document.getElementById('fD').value,type=document.getElementById('fT').
 var cat=document.getElementById('fC').value,val=pf('fV');
 var desc=document.getElementById('fDe').value.trim(),acc=document.getElementById('fA').value;
 var tags=document.getElementById('fTags')?document.getElementById('fTags').value.trim():'';
-if(!date||!val||val<=0){toast('Preencha data e valor!','err');return}
+if(!date||!val||val<=0){toast(typeof t==='function'?t('toast_preencha_data_valor'):'Preencha data e valor!','err');return}
 var status=document.getElementById('fStatus')?document.getElementById('fStatus').value:'pago';
 var pgto=document.getElementById('fPgto')?document.getElementById('fPgto').value:'';
 var newEntry={id:Date.now(),date:date,type:type,desc:desc||cat,category:cat,value:Math.round(val*100)/100,account:acc,tags:tags,status:status,formaPgto:pgto};
 entries.push(newEntry);
-saveData();clrF();renderAll();toast('Lançamento salvo!','ok');
+saveData();clrF();renderAll();toast(typeof t==='function'?t('toast_lancamento_salvo'):'Lançamento salvo!','ok');
 if(entries.length===1&&typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();
 setTimeout(function(){checkProactiveConsultor(newEntry);},500);
 }
 
-function delE(id){if(!confirm('Excluir?'))return;entries=entries.filter(function(e){return e.id!==id});saveData();renderAll();toast('Excluído','err')}
+function delE(id){if(!confirm(typeof t==='function'?t('confirm_excluir_lancamento'):'Excluir?'))return;entries=entries.filter(function(e){return e.id!==id});saveData();renderAll();toast(typeof t==='function'?t('toast_excluido'):'Excluído','err')}
 
 function clrF(){document.getElementById('fV').value='';document.getElementById('fDe').value='';var ftg=document.getElementById('fTags');if(ftg)ftg.value='';document.getElementById('fD').value=new Date().toISOString().split('T')[0]}
 
@@ -3429,11 +3429,11 @@ var valor=parseFloat(document.getElementById('invValor').value);
 var atualEl=document.getElementById('invAtual');
 var atual=parseFloat(atualEl&&atualEl.value?atualEl.value:0)||valor;
 var conta=document.getElementById('invConta').value;
-if(!date||!nome||!valor||valor<=0){toast('Preencha todos os campos!','err');return}
+if(!date||!nome||!valor||valor<=0){toast(typeof t==='function'?t('toast_preencha_todos_campos'):'Preencha todos os campos!','err');return}
 var ticker=nome.toUpperCase().trim();
 var isRV=['Ações','FIIs','ETFs'].indexOf(tipo)>=0;
 if(isRV&&/^[A-Z]{4}[0-9]{1,2}$/.test(ticker)){
-if(!_lastInvTickerValid||!(_lastInvTickerPrice[ticker]||(atualEl&&atualEl.value?parseFloat(atualEl.value):0))){toast('Ticker inválido ou não encontrado. Digite um ticker válido e aguarde a confirmação (✓) antes de registrar.','err');return;}
+if(!_lastInvTickerValid||!(_lastInvTickerPrice[ticker]||(atualEl&&atualEl.value?parseFloat(atualEl.value):0))){toast(typeof t==='function'?t('toast_ticker_invalido'):'Ticker inválido ou não encontrado. Digite um ticker válido e aguarde a confirmação (✓) antes de registrar.','err');return;}
 }
 var obj={id:Date.now(),date:date,tipo:tipo,nome:nome,valor:Math.round(valor*100)/100,atual:Math.round(atual*100)/100,conta:conta};
 if(isRV&&/^[A-Z]{4}[0-9]{1,2}$/.test(ticker)){
@@ -3460,7 +3460,7 @@ updateInvQtdDisplay();
 toast(conta?'Investimento registrado! Saída de R$ '+valorAbate.toFixed(2).replace('.',',')+' na conta '+conta+'.':'Investimento registrado!','ok');
 }
 
-function delInv(id){if(!confirm('Excluir investimento?'))return;var inv=investments.find(function(i){return i.id===id});if(inv&&inv.entryId)entries=entries.filter(function(e){return e.id!==inv.entryId});investments=investments.filter(function(i){return i.id!==id});saveData();renderAll();toast('Excluído','err')}
+function delInv(id){if(!confirm(typeof t==='function'?t('toast_excluir_investimento'):'Excluir investimento?'))return;var inv=investments.find(function(i){return i.id===id});if(inv&&inv.entryId)entries=entries.filter(function(e){return e.id!==inv.entryId});investments=investments.filter(function(i){return i.id!==id});saveData();renderAll();toast(typeof t==='function'?t('toast_excluido'):'Excluído','err')}
 
 function editInvAtual(id){
 var inv=investments.find(function(i){return i.id===id});
@@ -3468,9 +3468,9 @@ if(!inv)return;
 var nv=prompt('Novo valor atual de "'+inv.nome+'" (R$):',inv.atual);
 if(nv===null)return;
 nv=parseFloat(nv);
-if(isNaN(nv)||nv<0){toast('Valor inválido','err');return}
+if(isNaN(nv)||nv<0){toast(typeof t==='function'?t('toast_valor_invalido'):'Valor inválido','err');return}
 inv.atual=Math.round(nv*100)/100;
-saveData();renderAll();toast('Atualizado!','ok');
+saveData();renderAll();toast(typeof t==='function'?t('toast_atualizado'):'Atualizado!','ok');
 }
 
 function rInv(){
@@ -3536,11 +3536,11 @@ var alvo=parseFloat(document.getElementById('metaAlvo').value);
 var atual=parseFloat(document.getElementById('metaAtual').value)||0;
 var prazo=document.getElementById('metaPrazo').value;
 var cor=document.getElementById('metaCor').value;
-if(!nome||!alvo){toast('Preencha nome e valor alvo!','err');return false}
+if(!nome||!alvo){toast(typeof t==='function'?t('toast_preencha_todos_campos'):'Preencha nome e valor alvo!','err');return false}
 goals.push({id:Date.now(),nome:nome,alvo:alvo,atual:atual,prazo:prazo,cor:cor});
 saveData();renderAll();
 document.getElementById('metaNome').value='';document.getElementById('metaAlvo').value='';document.getElementById('metaAtual').value='0';
-toast('Meta criada!','ok');
+toast(typeof t==='function'?t('toast_meta_criada'):'Meta criada!','ok');
 if(goals.length===1&&typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();
 if(typeof closeMetaModal==='function')closeMetaModal();
 return true;
@@ -3553,7 +3553,7 @@ function closeMetaModal(){
 var ov=document.getElementById('metaModalOv');if(ov)ov.classList.remove('show');
 }
 
-function delMeta(id){if(!confirm('Excluir meta?'))return;goals=goals.filter(function(g){return g.id!==id});saveData();renderAll();toast('Meta excluida','err')}
+function delMeta(id){if(!confirm('Excluir meta?'))return;goals=goals.filter(function(g){return g.id!==id});saveData();renderAll();toast(typeof t==='function'?t('toast_meta_excluida'):'Meta excluida','err')}
 
 function getMetaPlanner(g){
 var alvo=parseFloat(g.alvo)||parseFloat(g.target)||0;
@@ -3667,7 +3667,7 @@ else if(tipo==='entrada'){nom='Entrada para imóvel';alvo=50000;var d3=new Date(
 else if(tipo==='carro'){nom='Carro';alvo=30000;var d4=new Date(y,m+1,1);d4.setFullYear(d4.getFullYear()+3);prazo=d4.getFullYear()+'-'+String(d4.getMonth()+1).padStart(2,'0')+'-01';}
 var n=document.getElementById('metaNome');var a=document.getElementById('metaAlvo');var p=document.getElementById('metaPrazo');
 if(n)n.value=nom;if(a)a.value=alvo;if(p&&prazo)p.value=prazo;
-toast('Template aplicado. Ajuste valores e prazo se quiser.','ok');
+toast(typeof t==='function'?t('toast_template_aplicado'):'Template aplicado. Ajuste valores e prazo se quiser.','ok');
 }
 
 function addValToGoal(goalId,val){
@@ -3684,10 +3684,10 @@ var g=goals.find(function(x){return x.id===id});if(!g)return;
 var nome=g.nome||g.name||'Meta';var atualVal=parseFloat(g.atual)||parseFloat(g.current)||0;
 var nv=prompt('Novo valor atual de "'+nome+'" (R$):',atualVal);
 if(nv===null)return;nv=parseFloat(nv);
-if(isNaN(nv)||nv<0){toast('Valor inválido','err');return}
+if(isNaN(nv)||nv<0){toast(typeof t==='function'?t('toast_valor_invalido'):'Valor inválido','err');return}
 var val=Math.round(nv*100)/100;
 g.atual=g.current=val;
-saveData();renderAll();toast('Meta atualizada!','ok');
+saveData();renderAll();toast(typeof t==='function'?t('toast_meta_atualizada'):'Meta atualizada!','ok');
 }
 
 function rMetas(){
@@ -3814,7 +3814,7 @@ var hasPrev=!!orcamentosByMonth[prevMonth];
 copyBtn.disabled=!hasPrev;
 copyBtn.title=hasPrev?'Copiar orçamento de '+prevMonth:'Não há planejamento no mês anterior';
 if(hasPrev){copyBtn.removeAttribute('data-state');copyBtn.innerHTML='<i data-lucide="copy" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Copiar do mês anterior';if(typeof lucide!=='undefined')lucide.createIcons();}
-else{copyBtn.setAttribute('data-state','no-prev');copyBtn.textContent='Sem planejamento anterior';}
+else{copyBtn.setAttribute('data-state','no-prev');copyBtn.textContent=typeof t==='function'?t('sem_planejamento_anterior'):'Sem planejamento anterior';}
 }
 }
 if(orc&&filledEl.style.display==='block'){
@@ -3944,7 +3944,7 @@ var v=document.getElementById('orcRenda').value;
 var raw=v.replace(/\D/g,'')||'0';
 var renda=parseFloat(raw)||0;
 if(raw.length>2)renda=parseFloat(raw.slice(0,-2)+'.'+raw.slice(-2))||0;
-if(renda<=0){toast('Informe sua renda mensal','err');return;}
+if(renda<=0){toast(typeof t==='function'?t('toast_informe_renda'):'Informe sua renda mensal','err');return;}
 document.getElementById('orcamentoStep1').style.display='none';
 document.getElementById('orcamentoStep2').style.display='flex';
 document.getElementById('orcamentoBreadcrumb').innerHTML='<span class="crumb-done">✓ Renda mensal</span> → <span class="crumb-active">● Categorias</span>';
@@ -4013,7 +4013,7 @@ orcamentosByMonth[orcamentoViewMonth]={rendaMensal:renda,metaEconomia:pct,valorE
 if(orcamentoViewMonth===getOrcamentoMonthKey()){budgets={};for(var k in categorias)budgets[k]=categorias[k];}
 saveData();
 closeOrcamentoModal();
-toast('Planejamento salvo!','ok');
+toast(typeof t==='function'?t('toast_planejamento_salvo'):'Planejamento salvo!','ok');
 rOrc();
 if(Object.keys(orcamentosByMonth).length>0&&typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();
 }
@@ -4021,10 +4021,10 @@ function orcamentoCopyFromPrev(){
 var parts=orcamentoViewMonth.split('-');
 var prevMonth=getOrcamentoMonthKey(new Date(parseInt(parts[0],10),parseInt(parts[1],10)-2,1));
 var prev=orcamentosByMonth[prevMonth];
-if(!prev){toast('Não há orçamento no mês anterior','err');return;}
+if(!prev){toast(typeof t==='function'?t('toast_orcamento_sem_anterior'):'Não há orçamento no mês anterior','err');return;}
 orcamentosByMonth[orcamentoViewMonth]={rendaMensal:prev.rendaMensal,metaEconomia:prev.metaEconomia,valorEconomia:prev.valorEconomia,orcamentoTotal:prev.orcamentoTotal,categorias:Object.assign({},prev.categorias)};
 saveData();
-toast('Orçamento copiado do mês anterior!','ok');
+toast(typeof t==='function'?t('toast_orcamento_copiado'):'Orçamento copiado do mês anterior!','ok');
 rOrc();
 }
 function saveOrc(){
@@ -4033,7 +4033,7 @@ despCats.forEach(function(cat){
 var el=document.getElementById('orc_'+cat.replace(/[^a-zA-Z0-9]/g,'_'));
 if(el){var v=parseFloat(el.value);if(v>0)budgets[cat]=v;else delete budgets[cat]}
 });
-saveData();renderAll();toast('Orçamento salvo!','ok');
+saveData();renderAll();toast(typeof t==='function'?t('toast_orcamento_salvo'):'Orçamento salvo!','ok');
 if(Object.keys(budgets).length>0&&typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();
 }
 
@@ -4231,7 +4231,7 @@ charts.c6=new Chart(document.getElementById('c6'),{type:'line',data:{labels:ml,d
 function expJSON(){
 var d=JSON.stringify({entries:entries,investments:investments,goals:goals,budgets:budgets,categories:userCats,accounts:userAccs,accountBalances:accountBalances,recurrents:recurrents,cards:cards},null,2);
 var b=new Blob([d],{type:'application/json'});var a=document.createElement('a');
-a.href=URL.createObjectURL(b);a.download='sibanki_backup_'+new Date().toISOString().split('T')[0]+'.json';a.click();toast('Backup JSON salvo!','ok');
+a.href=URL.createObjectURL(b);a.download='sibanki_backup_'+new Date().toISOString().split('T')[0]+'.json';a.click();toast(typeof t==='function'?t('toast_backup_salvo'):'Backup JSON salvo!','ok');
 }
 
 // EXPORT CSV
@@ -4244,7 +4244,7 @@ csv+='\n\nINVESTIMENTOS\nData,Tipo,Nome,Investido,Atual,Conta\n';
 csv+=investments.map(function(i){return i.date+','+i.tipo+',"'+i.nome+'",'+i.valor+','+i.atual+','+(i.conta||'')}).join('\n');
 }
 var b=new Blob([csv],{type:'text/csv;charset=utf-8'});var a=document.createElement('a');
-a.href=URL.createObjectURL(b);a.download='sibanki_export_'+new Date().toISOString().split('T')[0]+'.csv';a.click();toast('CSV exportado!','ok');
+a.href=URL.createObjectURL(b);a.download='sibanki_export_'+new Date().toISOString().split('T')[0]+'.csv';a.click();toast(typeof t==='function'?t('toast_csv_exportado'):'CSV exportado!','ok');
 }
 
 // IMPORT
@@ -4255,8 +4255,8 @@ var reader=new FileReader();
 reader.onload=function(e){
 try{
 var data=JSON.parse(e.target.result);
-if(data.entries){entries=entries.concat(data.entries);toast('Lançamentos importados: '+data.entries.length,'ok')}
-if(data.investments){investments=investments.concat(data.investments);toast('Investimentos importados: '+data.investments.length,'ok')}
+if(data.entries){entries=entries.concat(data.entries);toast((typeof t==='function'?t('toast_lancamentos_importados'):'Lançamentos importados: ')+data.entries.length,'ok')}
+if(data.investments){investments=investments.concat(data.investments);toast((typeof t==='function'?t('toast_investimentos_importados'):'Investimentos importados: ')+data.investments.length,'ok')}
 if(data.goals){goals=goals.concat(data.goals)}
 if(data.budgets){Object.assign(budgets,data.budgets)}
 if(data.categories){data.categories.forEach(function(c){if(userCats.indexOf(c)<0)userCats.push(c)})}
@@ -4286,8 +4286,8 @@ cardSubTab('cst-importar',document.querySelectorAll('.card-pill')[1]);
 document.getElementById('impPreview').style.display='block';
 renderImportPreview();
 },150);
-}else{toast('Formato não reconhecido ou nenhum registro válido','err')}
-}else{toast('Formato não reconhecido','err')}
+}else{toast(typeof t==='function'?t('toast_formato_nao_reconhecido_registros'):'Formato não reconhecido ou nenhum registro válido','err')}
+}else{toast(typeof t==='function'?t('toast_formato_nao_reconhecido'):'Formato não reconhecido','err')}
 }
 };
 reader.readAsText(file);
@@ -4361,7 +4361,7 @@ if(inp.files[0])processImportFile(inp.files[0]);
 
 function processImportFile(file){
 _impMode='card';
-if(file.size>5*1024*1024){toast('Arquivo muito grande (max 5MB)','err');return}
+if(file.size>5*1024*1024){toast(typeof t==='function'?t('toast_arquivo_muito_grande'):'Arquivo muito grande (max 5MB)','err');return}
 var reader=new FileReader();
 reader.onload=function(e){
 var text=e.target.result;
@@ -4375,7 +4375,7 @@ reader.readAsText(file,'UTF-8');
 /* ===== CSV PARSER (Nubank, Inter, Itau, C6, BTG, etc) ===== */
 function parseCSV(text){
 var lines=text.trim().split(/\r?\n/);
-if(lines.length<2){toast('Arquivo vazio ou inválido','err');return}
+if(lines.length<2){toast(typeof t==='function'?t('toast_arquivo_invalido'):'Arquivo vazio ou inválido','err');return}
 
 /* Detect separator */
 var sep=',';
@@ -4404,7 +4404,7 @@ colDate=0;colCat=1;colDesc=2;colVal=3;
 }else if(header.length>=3){
 colDate=0;colDesc=1;colVal=header.length-1;
 }else{
-toast('Nao consegui detectar as colunas. Verifique o formato.','err');return;
+toast(typeof t==='function'?t('toast_detectar_colunas'):'Nao consegui detectar as colunas. Verifique o formato.','err');return;
 }
 }
 
@@ -4430,7 +4430,7 @@ if(!val||val===0)continue;
 _impItems.push({checked:true,date:date,desc:desc,value:Math.abs(val),cat:autoDetectCategory(desc,cat),original:cols});
 }
 
-if(_impItems.length===0){toast('Nenhum item encontrado no arquivo','err');return}
+if(_impItems.length===0){toast(typeof t==='function'?t('toast_nenhum_item_arquivo'):'Nenhum item encontrado no arquivo','err');return}
 renderImportPreview();
 }
 
@@ -4455,14 +4455,14 @@ var desc=descMatch?descMatch[1].trim():'Sem descrição';
 if(val>=0)continue;
 _impItems.push({checked:true,date:date,desc:desc,value:Math.abs(val),cat:autoDetectCategory(desc,'Outros'),original:null});
 }
-if(_impItems.length===0){toast('Nenhuma transacao encontrada no OFX','err');return}
+if(_impItems.length===0){toast(typeof t==='function'?t('toast_nenhuma_transacao_ofx'):'Nenhuma transacao encontrada no OFX','err');return}
 renderImportPreview();
 }
 
 /* ===== TEXT PARSER (copy/paste) ===== */
 function parseImportText(){
 var text=document.getElementById('impTextArea').value.trim();
-if(!text){toast('Cole o texto da fatura','err');return}
+if(!text){toast(typeof t==='function'?t('toast_cole_fatura'):'Cole o texto da fatura','err');return}
 _impItems=[];
 var lines=text.split(/\r?\n/);
 for(var i=0;i<lines.length;i++){
@@ -4485,7 +4485,7 @@ if(!date||!val||val===0)continue;
 
 _impItems.push({checked:true,date:date,desc:desc,value:Math.abs(val),cat:autoDetectCategory(desc,'Outros'),original:null});
 }
-if(_impItems.length===0){toast('Nao encontrei itens. Verifique o formato do texto.','err');return}
+if(_impItems.length===0){toast(typeof t==='function'?t('toast_nao_encontrei_itens'):'Nao encontrei itens. Verifique o formato do texto.','err');return}
 renderImportPreview();
 }
 
@@ -4633,7 +4633,7 @@ document.getElementById('impSelTotal').textContent=total.toFixed(2).replace('.',
 
 function confirmGenericImport(){
 var sel=_impItems.filter(function(i){return i.checked});
-if(!sel.length){toast('Nenhum item selecionado','err');return}
+if(!sel.length){toast(typeof t==='function'?t('toast_nenhum_item_selecionado'):'Nenhum item selecionado','err');return}
 if(!confirm('Importar '+sel.length+' lançamentos?'))return;
 var imported=0;
 var baseId=Date.now();
@@ -4663,14 +4663,14 @@ function impDeselectAll(){_impItems.forEach(function(i){i.checked=false});render
 /* ===== CONFIRM IMPORT ===== */
 function confirmImport(){
 var cardId=parseInt(document.getElementById('impCard').value);
-if(!cardId){toast('Selecione o cartao destino','err');return}
+if(!cardId){toast(typeof t==='function'?t('toast_selecione_cartao_destino'):'Selecione o cartao destino','err');return}
 var card=cards.find(function(c){return c.id===cardId});
-if(!card){toast('Cartão nao encontrado','err');return}
+if(!card){toast(typeof t==='function'?t('toast_cartao_nao_encontrado'):'Cartão nao encontrado','err');return}
 
 var sel=_impItems.filter(function(i){return i.checked});
-if(!sel.length){toast('Nenhum item selecionado','err');return}
+if(!sel.length){toast(typeof t==='function'?t('toast_nenhum_item_selecionado'):'Nenhum item selecionado','err');return}
 
-if(!confirm('Importar '+sel.length+' itens no cartao '+card.name+'?'))return;
+if(!confirm((typeof t==='function'?t('confirm_importar_itens_cartao'):'Importar {0} itens no cartao {1}?').replace('{0}',sel.length).replace('{1}',card.name)))return;
 
 var imported=0;
 sel.forEach(function(it){
@@ -4814,7 +4814,7 @@ document.getElementById('cardAnuidadeMes').value=String(c.anuidade.mesCobranca||
 calcAnuidadeMensal();
 }
 title.innerHTML='<i data-lucide="pencil" style="width:20px;height:20px"></i> Editar Cartão';
-btn.textContent='Salvar';
+btn.textContent=typeof t==='function'?t('btn_salvar'):'Salvar';
 }
 }else{
 document.getElementById('cardName').value='';
@@ -4828,7 +4828,7 @@ setAnuidadeCard(false);
 document.getElementById('cardAnuidadeValor').value='';
 document.getElementById('cardAnuidadeMes').value='3';
 title.innerHTML='<i data-lucide="credit-card" style="width:20px;height:20px"></i> Novo Cartão';
-btn.textContent='Adicionar';
+btn.textContent=typeof t==='function'?t('btn_adicionar'):'Adicionar';
 }
 renderCardBankGrid();
 updateCardPreview();
@@ -4861,15 +4861,15 @@ var anoProx=now.getFullYear();
 if(now.getMonth()+1>=mesCobranca)anoProx++;
 var proximaCobranca=anoProx+'-'+String(mesCobranca).padStart(2,'0')+'-15';
 var anuidadeObj=temAnuidade&&valorAnual>0?{valorAnual:valorAnual,valorMensal:valorMensal,mesCobranca:mesCobranca,proximaCobranca:proximaCobranca}:null;
-if(!name){toast('Digite o nome do cartão','err');return}
-if(!limit||limit<=0){toast('Digite o limite','err');return}
+if(!name){toast(typeof t==='function'?t('toast_dig_nome_cartao'):'Digite o nome do cartão','err');return}
+if(!limit||limit<=0){toast(typeof t==='function'?t('toast_dig_limite'):'Digite o limite','err');return}
 if(_editingCardId){
 var c=cards.find(function(x){return x.id===_editingCardId});
 if(c){c.name=name;c.flag=flag;c.limit=limit;c.closeDay=close;c.dueDay=due;c.color=color;c.bank=bankKey;c.temAnuidade=!!temAnuidade;c.anuidade=anuidadeObj;
-toast('Cartão atualizado!','ok');}
+toast(typeof t==='function'?t('toast_cartao_atualizado'):'Cartão atualizado!','ok');}
 }else{
 cards.push({id:Date.now(),name:name,flag:flag,limit:limit,closeDay:close,dueDay:due,color:color,bank:bankKey,temAnuidade:!!temAnuidade,anuidade:anuidadeObj,purchases:[],active:true});
-toast('Cartão adicionado!','ok');
+toast(typeof t==='function'?t('toast_cartao_adicionado'):'Cartão adicionado!','ok');
 }
 saveData();renderCards();closeCardModal();
 }
@@ -5276,22 +5276,22 @@ function applyReajusteSaldo(){
 var acc=document.getElementById('balAcc').value;
 var val=parseFloat((document.getElementById('balVal').value||'0').replace(',','.'))||0;
 var desc=(document.getElementById('balDesc').value||'').trim()||'Ajuste de saldo';
-if(!acc){toast('Selecione uma conta','err');return;}
+if(!acc){toast(typeof t==='function'?t('toast_selecione_conta'):'Selecione uma conta','err');return;}
 var b=getAccBal(acc);
 var diff=val-b.atual;
-if(Math.abs(diff)<0.01){toast('O novo saldo é igual ao atual','info');closeWltPanel('wltAjustePanel');return;}
+if(Math.abs(diff)<0.01){toast(typeof t==='function'?t('toast_saldo_igual_atual'):'O novo saldo é igual ao atual','info');closeWltPanel('wltAjustePanel');return;}
 if(window._reajusteMode==='transacao'){
 var now=new Date().toISOString().split('T')[0];
 var tipo=diff>0?'receita':'despesa';
 var valor=Math.abs(diff);
 entries.push({id:Date.now(),type:tipo,desc:desc,value:valor,category:'Ajuste',date:now,tags:['ajuste'],account:acc,status:'pago'});
 saveData();renderCarteira();renderDashW();
-toast('Transação de ajuste criada!','ok');
+toast(typeof t==='function'?t('toast_transacao_ajuste_criada'):'Transação de ajuste criada!','ok');
 }else{
 var newIni=val-b.rec+b.desp;
 accountBalances[acc]=Math.round(newIni*100)/100;
 saveData();renderCarteira();renderDashW();
-toast('Saldo inicial atualizado!','ok');
+toast(typeof t==='function'?t('toast_saldo_inicial_atualizado'):'Saldo inicial atualizado!','ok');
 }
 document.getElementById('balVal').value='';
 document.getElementById('balDesc').value='';
@@ -5452,7 +5452,7 @@ accountMeta[_editarContaAcc]=meta;
 }else{
 accountMeta[_editarContaAcc]=meta;
 }
-saveData();renderCarteira();renderDashW();closeEditarConta();toast('Conta atualizada!','ok');
+saveData();renderCarteira();renderDashW();closeEditarConta();toast(typeof t==='function'?t('toast_conta_atualizada'):'Conta atualizada!','ok');
 }
 
 function setCarteiraTab(tab){
@@ -5782,7 +5782,7 @@ if(saveBtn)saveBtn.style.display='inline-block';
 if(newBtn)updateNovaDicaBtn();
 }else{
 window._currentInsight=null;
-el.textContent='Adicione lançamentos para receber insights personalizados sobre suas finanças.';
+el.textContent=typeof t==='function'?t('adicione_lancamentos_insights_full'):'Adicione lançamentos para receber insights personalizados sobre suas finanças.';
 var catEl=document.getElementById('finInsightCategoria');if(catEl)catEl.style.display='none';
 var saveBtn=document.getElementById('finInsightSaveBtn');if(saveBtn)saveBtn.style.display='none';
 if(btn)btn.style.display='none';
@@ -5800,22 +5800,22 @@ if(typeof window.refreshLucide==='function')window.refreshLucide();
 }
 function salvarInsightDoDia(){
 var insight=window._currentInsight;
-if(!insight){toast('Nenhuma dica para salvar.','err');return;}
+if(!insight){toast(typeof t==='function'?t('toast_nenhuma_dica_salvar'):'Nenhuma dica para salvar.','err');return;}
 try{
 var arr=JSON.parse(localStorage.getItem('virtus_edu_dicas')||'[]');
 arr.push({text:insight.text,cat:insight.cat||'Dica',emoji:insight.emoji||'💡',saved:true,date:new Date().toISOString()});
 if(arr.length>50)arr=arr.slice(-50);
 localStorage.setItem('virtus_edu_dicas',JSON.stringify(arr));
-toast('Dica salva nas favoritas!','ok');
+toast(typeof t==='function'?t('toast_dica_salva_favoritas'):'Dica salva nas favoritas!','ok');
 renderEduDicaCard();
-}catch(e){toast('Erro ao salvar.','err');}
+}catch(e){toast(typeof t==='function'?t('toast_erro_salvar'):'Erro ao salvar.','err');}
 }
 var INSIGHT_NOVAS_LIMIT=3;
 function novaInsightDoDia(){
 var key='virtus_insight_novas';var today=new Date().toDateString();
 try{var o=JSON.parse(localStorage.getItem(key)||'{}');var count=o[today]||0;}
 catch(e){var o={};var count=0;}
-if(count>=INSIGHT_NOVAS_LIMIT){toast('Limite de 3 novas dicas por dia.','err');return;}
+if(count>=INSIGHT_NOVAS_LIMIT){toast(typeof t==='function'?t('toast_limite_dicas'):'Limite de 3 novas dicas por dia.','err');return;}
 o[today]=(count||0)+1;localStorage.setItem(key,JSON.stringify(o));
 updateNovaDicaBtn();
 renderFinInsight();
@@ -6171,7 +6171,7 @@ arr.unshift({titulo:String(titulo),emoji:emoji||'💡',date:new Date().toISOStri
 if(arr.length>20)arr.pop();
 saveEduDicasSalvas(arr);
 if(document.getElementById('eduDicaHistory')){var saved=loadEduDicasSalvas();document.getElementById('eduDicaHistory').innerHTML='<h4 style="font-size:.9em;margin-bottom:8px;display:flex;align-items:center;gap:6px"><i data-lucide="star" style="width:14px;height:14px;stroke:currentColor;stroke-width:2"></i> Dicas salvas</h4>'+saved.slice(0,7).map(function(d){return '<div class="edu-dica-hist-item"><i data-lucide="lightbulb" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;flex-shrink:0"></i> '+d.titulo+'</div>'}).join('');if(typeof lucide!=='undefined')lucide.createIcons();}
-toast('Dica salva!','ok');
+toast(typeof t==='function'?t('toast_dica_salva'):'Dica salva!','ok');
 }
 
 var EDU_DESAFIOS=[
@@ -6198,7 +6198,7 @@ if(dias>=d.duracao){
 a.concluido=true;a.diasPassados=d.duracao;
 if(typeof addEducationXP==='function')addEducationXP(d.xp);
 if(typeof achievements!=='undefined'){achievements[d.badgeId||a.id]={date:new Date().toISOString()};if(typeof saveData==='function')saveData();}
-toast('Desafio "'+d.nome+'" concluído! +'+d.xp+' XP','ok');
+toast((typeof t==='function'?t('toast_desafio_concluido'):'Desafio "{0}" concluído! +{1} XP').replace('{0}',d.nome).replace('{1}',d.xp),'ok');
 changed=true;
 }
 });
@@ -6228,13 +6228,13 @@ if(typeof lucide!=='undefined')lucide.createIcons();
 
 function aceitarEduDesafio(id){
 loadEduDesafios();
-if(eduDesafiosAtivos.filter(function(a){return !a.concluido}).length>=2){toast('Máximo 2 desafios ativos.','info');return;}
+if(eduDesafiosAtivos.filter(function(a){return !a.concluido}).length>=2){toast(typeof t==='function'?t('toast_max_desafios'):'Máximo 2 desafios ativos.','info');return;}
 var d=EDU_DESAFIOS.find(function(x){return x.id===id});
 if(!d)return;
 eduDesafiosAtivos.push({id:id,start:new Date().toISOString(),diasPassados:0,concluido:false});
 saveEduDesafios();
 renderEduDesafios();
-toast('Desafio aceito! Boa sorte.','ok');
+toast(typeof t==='function'?t('toast_desafio_aceito'):'Desafio aceito! Boa sorte.','ok');
 }
 
 function renderFinTrails(){
@@ -6329,9 +6329,9 @@ finCompletedLessons.push(id);
 addEducationXP(50);
 saveFinLessons();
 var trail=FIN_TRAILS[tidx];
-if(trail){var tComp=trail.lessons.filter(function(l){return finCompletedLessons.indexOf(l.id)>=0}).length;if(tComp===trail.lessons.length){addEducationXP(300);if(typeof achievements!=='undefined'){achievements['edu_trail_'+(tidx+1)]={date:new Date().toISOString()};if(typeof saveData==='function')saveData();}toast('Trilha completa! +300 XP e badge.','ok');}}
+if(trail){var tComp=trail.lessons.filter(function(l){return finCompletedLessons.indexOf(l.id)>=0}).length;if(tComp===trail.lessons.length){addEducationXP(300);if(typeof achievements!=='undefined'){achievements['edu_trail_'+(tidx+1)]={date:new Date().toISOString()};if(typeof saveData==='function')saveData();}toast(typeof t==='function'?t('toast_trilha_completa'):'Trilha completa! +300 XP e badge.','ok');}}
 renderFinTrails();updateEduXPLabel();if(typeof updateContinuarBtn==='function')updateContinuarBtn();if(typeof rBadges==='function')rBadges();
-toast('Lição concluída! +50 XP','ok');
+toast(typeof t==='function'?t('toast_licao_concluida'):'Lição concluída! +50 XP','ok');
 closeFinArticle();
 }
 }
@@ -6388,7 +6388,7 @@ set('cdVal',5000);
 set('cdTax',10);
 set('cdParc',Math.round(Math.min(d.mediaGasto*0.2,500)));
 }
-toast('Campos preenchidos com seus dados.','ok');
+toast(typeof t==='function'?t('toast_campos_preenchidos_auto'):'Campos preenchidos com seus dados.','ok');
 }
 
 function openFinCalc(type,prefill){
@@ -6812,9 +6812,9 @@ if(nList[i]){nList[i].rd=true;var ri=JSON.parse(localStorage.getItem('vrt_nr')||
 function mAllRead(){
 var ri=JSON.parse(localStorage.getItem('vrt_nr')||'{}');
 nList.forEach(function(n){n.rd=true;ri[n.id]=true});
-localStorage.setItem('vrt_nr',JSON.stringify(ri));rndN();uNB();toast('Todas marcadas como lidas','ok');
+localStorage.setItem('vrt_nr',JSON.stringify(ri));rndN();uNB();toast(typeof t==='function'?t('toast_todas_lidas'):'Todas marcadas como lidas','ok');
 }
-function clrN(){nList=[];rndN();uNB();toast('Notificações limpas','ok')}
+function clrN(){nList=[];rndN();uNB();toast(typeof t==='function'?t('toast_notificacoes_limpas'):'Notificações limpas','ok')}
 
 document.addEventListener('click',function(e){
 var btn=e.target.closest('.btn-r');if(!btn)return;
@@ -7031,19 +7031,19 @@ txt+='\n=================================';
 
 if(navigator.clipboard){
 navigator.clipboard.writeText(txt);
-toast('Relatório copiado!','ok');
+toast(typeof t==='function'?t('toast_relatorio_copiado'):'Relatório copiado!','ok');
 }else{
 var ta=document.createElement('textarea');
 ta.value=txt;document.body.appendChild(ta);ta.select();
 document.execCommand('copy');document.body.removeChild(ta);
-toast('Relatório copiado!','ok');
+toast(typeof t==='function'?t('toast_relatorio_copiado'):'Relatório copiado!','ok');
 }
-}catch(e){toast('Erro ao compartilhar','err')}
+}catch(e){toast(typeof t==='function'?t('toast_erro_compartilhar'):'Erro ao compartilhar','err')}
 }
 
 function exportPDF(){
 if(typeof gerarPDF==='function'){gerarPDF();return;}
-toast('Gerando PDF... Use Ctrl+P para salvar como PDF','ok');
+toast(typeof t==='function'?t('toast_gerando_pdf'):'Gerando PDF... Use Ctrl+P para salvar como PDF','ok');
 setTimeout(function(){window.print()},500);
 }
 
@@ -7116,9 +7116,9 @@ function addTransfer(){
 var from=document.getElementById('wTfFrom').value;
 var to=document.getElementById('wTfTo').value;
 var val=parseFloat(document.getElementById('wTfVal').value);
-if(!from||!to){toast('Selecione as contas','err');return}
-if(from===to){toast('Selecione contas diferentes','err');return}
-if(!val||val<=0){toast('Digite um valor','err');return}
+if(!from||!to){toast(typeof t==='function'?t('toast_selecione_contas'):'Selecione as contas','err');return}
+if(from===to){toast(typeof t==='function'?t('toast_contas_diferentes'):'Selecione contas diferentes','err');return}
+if(!val||val<=0){toast(typeof t==='function'?t('toast_digite_valor'):'Digite um valor','err');return}
 
 var now=new Date().toISOString().split('T')[0];
 var tfId=Date.now();
@@ -7383,16 +7383,16 @@ modal.addEventListener('click',function(e){if(e.target===modal)modal.remove()});
 }
 
 async function startCheckout(plan,billing){
-if(!checkoutFn){toast('Erro ao iniciar checkout','err');return}
-try{await loadStripeScript();}catch(e){toast('Pagamentos temporariamente indisponíveis. Tente novamente.','err');return;}
-if(!stripeInstance){toast('Erro ao iniciar checkout','err');return}
+if(!checkoutFn){toast(typeof t==='function'?t('toast_max_tentativas_checkout'):'Erro ao iniciar checkout','err');return}
+try{await loadStripeScript();}catch(e){toast(typeof t==='function'?t('toast_pagamentos_indisponiveis'):'Pagamentos temporariamente indisponíveis. Tente novamente.','err');return;}
+if(!stripeInstance){toast(typeof t==='function'?t('toast_max_tentativas_checkout'):'Erro ao iniciar checkout','err');return}
 var priceId='';
 if(plan==='pro'&&billing==='monthly')priceId=STRIPE_PRICES.proMonthly;
 if(plan==='pro'&&billing==='annual')priceId=STRIPE_PRICES.proAnnual;
 if(plan==='familia'&&billing==='monthly')priceId=STRIPE_PRICES.familyMonthly;
 if(plan==='familia'&&billing==='annual')priceId=STRIPE_PRICES.familyAnnual;
-if(!priceId){toast('Preço não encontrado','err');return}
-toast('Redirecionando para pagamento...','info');
+if(!priceId){toast(typeof t==='function'?t('toast_preco_nao_encontrado'):'Preço não encontrado','err');return}
+toast(typeof t==='function'?t('toast_redirecionando_pagamento'):'Redirecionando para pagamento...','info');
 try{
 var result=await checkoutFn({priceId:priceId,plan:plan,billing:billing});
 if(result.data&&result.data.url){
@@ -7407,8 +7407,8 @@ toast('Erro no checkout: '+e.message,'err');
 }
 
 async function openCustomerPortal(){
-if(!portalFn){toast('Erro ao abrir portal','err');return}
-toast('Abrindo portal de assinatura...','info');
+if(!portalFn){toast(typeof t==='function'?t('toast_erro_portal'):'Erro ao abrir portal','err');return}
+toast(typeof t==='function'?t('toast_abrindo_portal'):'Abrindo portal de assinatura...','info');
 try{
 var result=await portalFn();
 if(result.data&&result.data.url){
@@ -7477,11 +7477,11 @@ if(typeof lucide!=='undefined')lucide.createIcons();
 function checkCheckoutResult(){
 var params=new URLSearchParams(window.location.search);
 if(params.get('checkout')==='success'){
-toast('Assinatura ativada com sucesso!','ok');
+toast(typeof t==='function'?t('toast_assinatura_ativada'):'Assinatura ativada com sucesso!','ok');
 window.history.replaceState({},'',window.location.pathname);
 setTimeout(loadUserPlan,2000);
 }else if(params.get('checkout')==='cancel'){
-toast('Checkout cancelado','info');
+toast(typeof t==='function'?t('toast_checkout_cancelado'):'Checkout cancelado','info');
 window.history.replaceState({},'',window.location.pathname);
 }
 }
@@ -7518,8 +7518,8 @@ return t||'';
 
 function saveB3Token(){
 var t=document.getElementById('b3Token').value.trim();
-if(t){localStorage.setItem('vrt_b3token',t);toast('Token brapi salvo!','ok')}
-else{localStorage.removeItem('vrt_b3token');toast('Token removido','ok')}
+if(t){localStorage.setItem('vrt_b3token',t);toast(typeof t==='function'?t('toast_token_brapi_salvo'):'Token brapi salvo!','ok')}
+else{localStorage.removeItem('vrt_b3token');toast(typeof t==='function'?t('toast_token_removido'):'Token removido','ok')}
 }
 
 function quickB3(ticker){
@@ -7534,7 +7534,7 @@ async function searchB3(){
 var searchEl=document.getElementById('b3Search');
 var rangeEl=document.getElementById('b3Range');
 var ticker=(searchEl&&searchEl.value?searchEl.value:'').trim().toUpperCase();
-if(!ticker){toast('Digite um ticker','err');return;}
+if(!ticker){toast(typeof t==='function'?t('toast_digite_ticker'):'Digite um ticker','err');return;}
 var range=rangeEl&&rangeEl.value?rangeEl.value:'1mo';
 
 var resEl=document.getElementById('b3Result');
@@ -8663,9 +8663,9 @@ renderWatchlist();
 
 function addToWatchlist(){
 var ticker=document.getElementById('b3Search').value.trim().toUpperCase();
-if(!ticker){toast('Pesquise um ativo primeiro','err');return}
+if(!ticker){toast(typeof t==='function'?t('toast_pesquise_ativo'):'Pesquise um ativo primeiro','err');return}
 if(watchlist.indexOf(ticker)>=0){toast(ticker+' já esta na watchlist','err');return}
-if(watchlist.length>=20){toast('Máximo 20 ativos na watchlist','err');return}
+if(watchlist.length>=20){toast(typeof t==='function'?t('toast_max_watchlist'):'Máximo 20 ativos na watchlist','err');return}
 watchlist.push(ticker);
 localStorage.setItem('vrt_watchlist',JSON.stringify(watchlist));
 renderWatchlist();
@@ -8693,14 +8693,14 @@ if(typeof lucide!=='undefined')lucide.createIcons();
 
 function submitB3QuickAdd(){
 var ticker=(document.getElementById('b3Search')||{}).value.trim().toUpperCase();
-if(!ticker){toast('Pesquise um ativo primeiro','err');return}
+if(!ticker){toast(typeof t==='function'?t('toast_pesquise_ativo'):'Pesquise um ativo primeiro','err');return}
 var cached=b3Cache[ticker];
-if(!cached||!cached.stock){toast('Dados do ativo não disponíveis. Faça a busca novamente.','err');return}
+if(!cached||!cached.stock){toast(typeof t==='function'?t('toast_dados_ativo_indisponiveis'):'Dados do ativo não disponíveis. Faça a busca novamente.','err');return}
 var valor=parseFloat(document.getElementById('b3QuickValor').value);
-if(!valor||valor<=0){toast('Informe o valor investido','err');return}
+if(!valor||valor<=0){toast(typeof t==='function'?t('toast_informe_valor_investido'):'Informe o valor investido','err');return}
 var conta=document.getElementById('b3QuickConta').value||'';
 var price=cached.stock.regularMarketPrice||0;
-if(price<=0){toast('Preço do ativo indisponível','err');return}
+if(price<=0){toast(typeof t==='function'?t('toast_preco_ativo_indisponivel'):'Preço do ativo indisponível','err');return}
 var _assetType=typeof detectAssetType==='function'?detectAssetType(ticker):'acao';
 var tipoMap={'acao':'Ações','fii':'FIIs','etf':'ETFs','bdr':'Ações'};
 var tipo=tipoMap[_assetType]||'Ações';
@@ -8766,13 +8766,13 @@ el.innerHTML=h;
 // ATUALIZAR COTAÇÕES DA CARTEIRA via Cloud Function
 // ============================================
 async function updateInvestQuotes(){
-if(!investments||!investments.length){toast('Nenhum investimento para atualizar','err');return}
+if(!investments||!investments.length){toast(typeof t==='function'?t('toast_nenhum_inv_atualizar'):'Nenhum investimento para atualizar','err');return}
 var tickers=[];
 investments.forEach(function(inv){
 var name=(inv.nome||inv.name||'').toUpperCase().trim();
 if(/^[A-Z]{4}[0-9]{1,2}$/.test(name)&&tickers.indexOf(name)<0)tickers.push(name);
 });
-if(!tickers.length){toast('Nenhum ticker válido encontrado','err');return}
+if(!tickers.length){toast(typeof t==='function'?t('toast_nenhum_ticker_b3_encontrado'):'Nenhum ticker válido encontrado','err');return}
 
 toast('Atualizando '+tickers.length+' cotação(ões)...','ok');
 
@@ -8816,7 +8816,7 @@ saveData();
 renderAll();
 toast('\u{1F4C8} '+updated+' cotação(ões) atualizada(s)!','ok');
 }else{
-toast('Nenhuma cotação encontrada','err');
+toast(typeof t==='function'?t('toast_nenhuma_cotacao'):'Nenhuma cotação encontrada','err');
 }
 }catch(e){
 toast('Erro: '+e.message,'err');
@@ -9205,8 +9205,8 @@ ctx.fillText(sr.l,lx+i*70+14,14);
 async function compareStocks(){
 var t1=document.getElementById('b3Compare1').value.trim().toUpperCase();
 var t2=document.getElementById('b3Compare2').value.trim().toUpperCase();
-if(!t1||!t2){toast('Preencha os dois tickers','err');return}
-if(t1===t2){toast('Tickers devem ser diferentes','err');return}
+if(!t1||!t2){toast(typeof t==='function'?t('toast_preencha_dois_tickers'):'Preencha os dois tickers','err');return}
+if(t1===t2){toast(typeof t==='function'?t('toast_tickers_diferentes'):'Tickers devem ser diferentes','err');return}
 
 var el=document.getElementById('b3CompareResult');
 el.innerHTML='<div style="text-align:center;padding:20px;color:var(--t2)"><div style="font-size:2em;animation:spin 1s linear infinite;display:inline-block">&#9881;</div><div>Comparando '+t1+' vs '+t2+'...</div></div>';
@@ -9420,7 +9420,7 @@ tickers=screenerPresets[preset].tickers;
 sortKey=screenerPresets[preset].sort;
 sortDesc=screenerPresets[preset].desc;
 }else{
-toast('Preset não encontrado','err');return;
+toast(typeof t==='function'?t('toast_formato_nao_reconhecido'):'Preset não encontrado','err');return;
 }
 
 var el=document.getElementById('screenerResult');
@@ -9603,7 +9603,7 @@ document.getElementById('scrDY').value='4';
 document.getElementById('scrROE').value='10';
 document.getElementById('scrDivPL').value='1';
 document.getElementById('scrSetor').value='';
-toast('Filtros resetados','ok');
+toast(typeof t==='function'?t('toast_filtros_resetados'):'Filtros resetados','ok');
 }
 
 // ============================================
@@ -9676,8 +9676,8 @@ var ticker=document.getElementById('alertTicker').value.trim().toUpperCase();
 var price=parseFloat(document.getElementById('alertPrice').value);
 var condition=document.getElementById('alertCondition').value;
 
-if(!ticker){toast('Digite o ticker','err');return}
-if(!price||price<=0){toast('Preço inválido','err');return}
+if(!ticker){toast(typeof t==='function'?t('toast_digite_ticker'):'Digite o ticker','err');return}
+if(!price||price<=0){toast(typeof t==='function'?t('toast_preco_invalido'):'Preço inválido','err');return}
 
 // Verificar duplicata
 var exists=priceAlerts.find(function(a){return a.ticker===ticker&&a.condition===condition});
@@ -9705,7 +9705,7 @@ function removePriceAlert(id){
 priceAlerts=priceAlerts.filter(function(a){return a.id!==id});
 localStorage.setItem('vrt_priceAlerts',JSON.stringify(priceAlerts));
 renderAlertsList();
-toast('Alerta removido','ok');
+toast(typeof t==='function'?t('toast_alerta_removido'):'Alerta removido','ok');
 }
 
 function renderAlertsList(){
@@ -10065,7 +10065,7 @@ var qtdAtual=parseFloat(document.getElementById('pmQtdAtual').value)||0;
 var pmAtual=parseFloat(document.getElementById('pmPrecoAtual').value)||0;
 var qtdNova=parseFloat(document.getElementById('pmQtdNova').value)||0;
 var precoNovo=parseFloat(document.getElementById('pmPrecoNovo').value)||0;
-if(qtdNova<=0||precoNovo<=0){toast('Preencha qtd e preco da nova compra','err');return}
+if(qtdNova<=0||precoNovo<=0){toast(typeof t==='function'?t('toast_preencha_qtd_preco'):'Preencha qtd e preco da nova compra','err');return}
 var totalAtual=qtdAtual*pmAtual;var totalNovo=qtdNova*precoNovo;
 var qtdTotal=qtdAtual+qtdNova;var pmNovo=qtdTotal>0?(totalAtual+totalNovo)/qtdTotal:0;
 var diff=pmAtual>0?((pmNovo/pmAtual-1)*100):0;
@@ -10084,7 +10084,7 @@ if(allocTargetsData){var map={'Ações':'allocAcoes','FIIs':'allocFIIs','Renda F
 
 function saveAllocTargets(){
 allocTargetsData={'Ações':parseFloat(document.getElementById('allocAcoes').value)||0,'FIIs':parseFloat(document.getElementById('allocFIIs').value)||0,'Renda Fixa':parseFloat(document.getElementById('allocRF').value)||0,'Cripto':parseFloat(document.getElementById('allocCripto').value)||0,'Outros':parseFloat(document.getElementById('allocOutros').value)||0};
-localStorage.setItem('vrt_allocTargets',JSON.stringify(allocTargetsData));renderAllocComparison();toast('Metas salvas!','ok');document.getElementById('allocTargets').style.display='none';
+localStorage.setItem('vrt_allocTargets',JSON.stringify(allocTargetsData));renderAllocComparison();toast(typeof t==='function'?t('toast_metas_alocacao_salvas'):'Metas salvas!','ok');document.getElementById('allocTargets').style.display='none';
 }
 
 function renderAllocComparison(){
@@ -10113,9 +10113,9 @@ h+='</div>';if(el)el.innerHTML=h;
 }
 
 async function refreshPortfolio(){
-if(!investments||!investments.length){toast('Nenhum investimento','err');return}
+if(!investments||!investments.length){toast(typeof t==='function'?t('toast_nenhum_inv_atualizar'):'Nenhum investimento','err');return}
 var tickers=[];investments.forEach(function(inv){var name=(inv.nome||'').toUpperCase().trim();if(/^[A-Z]{4}[0-9]{1,2}$/.test(name)&&tickers.indexOf(name)<0)tickers.push(name);});
-if(!tickers.length){toast('Nenhum ticker B3 identificado','err');renderPortfolio();return}
+if(!tickers.length){toast(typeof t==='function'?t('toast_nenhum_ticker_b3'):'Nenhum ticker B3 identificado','err');renderPortfolio();return}
 toast('Atualizando '+tickers.length+' ativos...','ok');
 try{
 var priceMap={};
@@ -10136,7 +10136,7 @@ saveData();renderPortfolio();renderAll();toast(updated+' ativos atualizados!','o
 }
 
 function exportPortfolioPDF(){
-if(!investments||!investments.length){toast('Nenhum investimento','err');return}
+if(!investments||!investments.length){toast(typeof t==='function'?t('toast_nenhum_inv_atualizar'):'Nenhum investimento','err');return}
 var totalInv=0,totalAtual=0;investments.forEach(function(inv){totalInv+=invCostBasis(inv);totalAtual+=inv.atual||inv.valor||0;});
 var retorno=totalAtual-totalInv;var pctRet=totalInv>0?((retorno/totalInv)*100):0;
 var txt='=== PORTFOLIO SIBANKI ===\n';
@@ -10144,7 +10144,7 @@ txt+='Data: '+new Date().toLocaleDateString('pt-BR')+'\n';
 txt+='Total Investido: R$ '+totalInv.toFixed(2)+'\nValor Atual: R$ '+totalAtual.toFixed(2)+'\n';
 txt+='Resultado: '+(retorno>=0?'+':'')+retorno.toFixed(2)+' ('+pctRet.toFixed(2)+'%)\n\n--- DETALHAMENTO ---\n';
 investments.forEach(function(inv){var base=invCostBasis(inv);var ret=base>0?((inv.atual||inv.valor||0)-base)/base*100:0;txt+=inv.nome+' ('+inv.tipo+') | R$ '+base.toFixed(2)+' -> R$ '+(inv.atual||inv.valor||0).toFixed(2)+' | '+(ret>=0?'+':'')+ret.toFixed(2)+'%\n';});
-try{navigator.clipboard.writeText(txt);toast('Portfolio copiado!','ok');}catch(e){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('Portfolio copiado!','ok');}
+try{navigator.clipboard.writeText(txt);toast(typeof t==='function'?t('toast_portfolio_copiado'):'Portfolio copiado!','ok');}catch(e){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast(typeof t==='function'?t('toast_portfolio_copiado'):'Portfolio copiado!','ok');}
 }
 
 function quickB3(ticker){if(!ticker)return;if(typeof showInvSub==='function')showInvSub('invAnalise');var si=document.getElementById('b3Search');if(si){si.value=ticker.toUpperCase();if(typeof searchB3==='function')searchB3();setTimeout(function(){var re=document.getElementById('b3Result');if(re)re.scrollIntoView({behavior:'smooth',block:'start'});},400);}}
@@ -10177,7 +10177,7 @@ gastoMensal=count3>0?Math.round(total3/Math.min(3,Math.ceil(count3/30))):5000;
 }
 }
 document.getElementById('fireGasto').value=Math.round(gastoMensal)||5000;
-toast('Dados preenchidos automaticamente!','ok');
+toast(typeof t==='function'?t('toast_dados_preenchidos_auto'):'Dados preenchidos automaticamente!','ok');
 }
 
 function calcFIRE(){
@@ -10188,7 +10188,7 @@ var rentAnual=parseFloat(document.getElementById('fireRent').value)||10;
 var inflacao=parseFloat(document.getElementById('fireInflacao').value)||4.5;
 var idade=parseInt(document.getElementById('fireIdade').value)||30;
 
-if(gasto<=0){toast('Informe o gasto mensal','err');return}
+if(gasto<=0){toast(typeof t==='function'?t('toast_informe_gasto_mensal'):'Informe o gasto mensal','err');return}
 
 // Patrimonio necessario (regra 4% ajustada pela inflacao)
 var taxaReal=(1+rentAnual/100)/(1+inflacao/100)-1;
@@ -10356,7 +10356,7 @@ if(typeof lucide!=='undefined')lucide.createIcons();
 function selectProfileAnswerModal(val){profileAnswers[profileStep]=val;renderProfileStepModal();}
 
 function nextProfileStepModal(){
-if(profileAnswers[profileStep]===undefined){toast('Selecione uma opção','err');return;}
+if(profileAnswers[profileStep]===undefined){toast(typeof t==='function'?t('toast_selecione_opcao'):'Selecione uma opção','err');return;}
 profileStep++;renderProfileStepModal();
 }
 
@@ -10394,7 +10394,7 @@ nav.innerHTML=nh;
 function selectProfileAnswer(val){profileAnswers[profileStep]=val;renderProfileStep()}
 
 function nextProfileStep(){
-if(profileAnswers[profileStep]===undefined){toast('Selecione uma opção','err');return}
+if(profileAnswers[profileStep]===undefined){toast(typeof t==='function'?t('toast_selecione_opcao'):'Selecione uma opção','err');return}
 profileStep++;renderProfileStep();
 }
 
@@ -10433,7 +10433,7 @@ window._profileQuizInModal=false;
 if(typeof showInvSub==='function')showInvSub('invPerfil');
 }
 showProfileResult(total,profile,data.date);
-if(wasModal&&typeof toast==='function')toast('Perfil do investidor salvo!','ok');
+if(wasModal&&typeof toast==='function')toast(typeof t==='function'?t('toast_perfil_investidor_salvo'):'Perfil do investidor salvo!','ok');
 }
 
 function showProfileResult(score,profile,date){
@@ -10493,27 +10493,27 @@ var proventos=JSON.parse(localStorage.getItem('vrt_proventos')||'[]');
 function addProvento(){
 var ticker=prompt('Ticker do ativo (ex: PETR4):');if(!ticker)return;
 var tipo=prompt('Tipo (dividendo / jcp / rendimento):','dividendo');if(!tipo)return;
-var valor=parseFloat(prompt('Valor recebido (R$):','0'));if(!valor||valor<=0){toast('Valor invalido','err');return}
+var valor=parseFloat(prompt('Valor recebido (R$):','0'));if(!valor||valor<=0){toast(typeof t==='function'?t('toast_valor_invalido'):'Valor invalido','err');return}
 var data=prompt('Data de pagamento (YYYY-MM-DD):',new Date().toISOString().substring(0,10));if(!data)return;
 
 proventos.push({id:Date.now(),ticker:ticker.toUpperCase().trim(),tipo:tipo.toLowerCase(),valor:valor,data:data});
 localStorage.setItem('vrt_proventos',JSON.stringify(proventos));
 renderProventos();
-toast('Provento registrado!','ok');
+toast(typeof t==='function'?t('toast_provento_registrado'):'Provento registrado!','ok');
 }
 
 function delProvento(id){
 if(!confirm('Excluir provento?'))return;
 proventos=proventos.filter(function(p){return p.id!==id});
 localStorage.setItem('vrt_proventos',JSON.stringify(proventos));
-renderProventos();toast('Excluído','err');
+renderProventos();toast(typeof t==='function'?t('toast_excluido'):'Excluído','err');
 }
 
 async function loadProventosB3(){
-if(!investments||!investments.length){toast('Registre investimentos primeiro','err');return}
+if(!investments||!investments.length){toast(typeof t==='function'?t('toast_registre_investimentos'):'Registre investimentos primeiro','err');return}
 var tickers=[];
 investments.forEach(function(inv){var n=(inv.nome||'').toUpperCase().trim();if(/^[A-Z]{4}[0-9]{1,2}$/.test(n)&&tickers.indexOf(n)<0)tickers.push(n)});
-if(!tickers.length){toast('Nenhum ticker B3 encontrado','err');return}
+if(!tickers.length){toast(typeof t==='function'?t('toast_nenhum_ticker_b3_encontrado'):'Nenhum ticker B3 encontrado','err');return}
 toast('Buscando proventos de '+tickers.length+' ativos...','ok');
 
 for(var i=0;i<tickers.length;i++){
@@ -10540,7 +10540,7 @@ if(i<tickers.length-1)await new Promise(function(r){setTimeout(r,300)});
 
 localStorage.setItem('vrt_proventos',JSON.stringify(proventos));
 renderProventos();
-toast('Proventos atualizados!','ok');
+toast(typeof t==='function'?t('toast_proventos_atualizados'):'Proventos atualizados!','ok');
 }
 
 function renderProventos(){
@@ -11580,7 +11580,7 @@ h.scrollTop=h.scrollHeight;
 }
 function openModalConsultorFAB(){
 try{
-if(!document.getElementById('modalContent')){if(typeof toast==='function')toast('Erro ao abrir. Recarregue a página.','err');return;}
+if(!document.getElementById('modalContent')){if(typeof toast==='function')toast(typeof t==='function'?t('toast_erro_abrir'):'Erro ao abrir. Recarregue a página.','err');return;}
 var welcome='';
 if(window._fabConsultorHistory.length===0){
 var welcomeText='**Consultor Financeiro Sibanki**\n\nSeu assistente para controle financeiro. Você pode:\n• **Lançar** receitas e despesas (ex: "almoço 45", "recebi 3000 salário")\n• **Adicionar, editar ou excluir** contas e cartões\n• **Criar metas** e **definir orçamentos** por categoria\n• **Tirar dúvidas** sobre finanças e sobre o uso do app\n\nDigite ou use o microfone para falar.';
@@ -11595,7 +11595,7 @@ openModal(html);
 var ov=document.getElementById('modalOverlay');var box=document.getElementById('modalBox');
 if(ov)ov.classList.add('modal-ia-lanc');if(box)box.classList.add('modal-ia-lanc');
 setTimeout(function(){var el=document.getElementById('fabConsultorInput');if(el)el.focus();if(typeof window.refreshLucide==='function')window.refreshLucide();},150);
-}catch(e){console.error('openModalConsultorFAB error:',e);if(typeof toast==='function')toast('Erro ao abrir consultor.','err');}
+}catch(e){console.error('openModalConsultorFAB error:',e);if(typeof toast==='function')toast(typeof t==='function'?t('toast_erro_abrir_consultor'):'Erro ao abrir consultor.','err');}
 }
 var _fabConsultorRecognition=null;
 function fabConsultorStartVoice(){
@@ -11603,15 +11603,15 @@ var inp=document.getElementById('fabConsultorInput');
 var btn=document.getElementById('fabConsultorMicBtn');
 if(!inp)return;
 var SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(!SpeechRecognition){if(typeof toast==='function')toast('Seu navegador não suporta reconhecimento de voz. Use Chrome ou Edge.','err');return;}
+if(!SpeechRecognition){if(typeof toast==='function')toast(typeof t==='function'?t('toast_voz_nao_suportada'):'Seu navegador não suporta reconhecimento de voz. Use Chrome ou Edge.','err');return;}
 if(_fabConsultorRecognition&&_fabConsultorRecognition.abort)_fabConsultorRecognition.abort();
 _fabConsultorRecognition=new SpeechRecognition();
 _fabConsultorRecognition.lang='pt-BR';
 _fabConsultorRecognition.continuous=false;
 _fabConsultorRecognition.interimResults=false;
-_fabConsultorRecognition.onstart=function(){if(btn){btn.classList.add('listening');btn.setAttribute('aria-label','Ouvindo...');}if(typeof toast==='function')toast('Fale agora...','ok');};
+_fabConsultorRecognition.onstart=function(){if(btn){btn.classList.add('listening');btn.setAttribute('aria-label','Ouvindo...');}if(typeof toast==='function')toast(typeof t==='function'?t('toast_fale_agora'):'Fale agora...','ok');};
 _fabConsultorRecognition.onend=function(){if(btn){btn.classList.remove('listening');btn.setAttribute('aria-label','Falar');}if(typeof window.refreshLucide==='function')window.refreshLucide();};
-_fabConsultorRecognition.onerror=function(e){if(btn)btn.classList.remove('listening');if(e.error!=='aborted'&&typeof toast==='function')toast('Não consegui ouvir. Tente de novo.','err');};
+_fabConsultorRecognition.onerror=function(e){if(btn)btn.classList.remove('listening');if(e.error!=='aborted'&&typeof toast==='function')toast(typeof t==='function'?t('toast_nao_consegui_ouvir'):'Não consegui ouvir. Tente de novo.','err');};
 _fabConsultorRecognition.onresult=function(e){var t=e.results[0][0].transcript||'';if(t.trim()){inp.value=(inp.value?inp.value+' ':'')+t;inp.focus();}if(btn)btn.classList.remove('listening');};
 _fabConsultorRecognition.start();
 }
@@ -11620,13 +11620,13 @@ var inp=document.getElementById('fabConsultorInput');
 var hist=document.getElementById('fabConsultorHistory');
 if(!inp||!hist)return;
 var txt=(inp.value||'').trim();
-if(!txt){if(typeof toast==='function')toast('Digite uma mensagem','err');return;}
+if(!txt){if(typeof toast==='function')toast(typeof t==='function'?t('toast_pergunta_vazia'):'Digite uma mensagem','err');return;}
 addFabConsultorMsg('user',txt);
 inp.value='';
 var loadingEl=document.createElement('div');
 loadingEl.className='fab-consultor-loading';
 loadingEl.id='fabConsultorLoading';
-loadingEl.textContent='Analisando...';
+loadingEl.textContent=typeof t==='function'?t('lbl_analisando'):'Analisando...';
 hist.appendChild(loadingEl);
 hist.scrollTop=hist.scrollHeight;
 var user=typeof firebase!=='undefined'&&firebase.auth&&firebase.auth().currentUser;
@@ -11634,7 +11634,7 @@ if(!user){var ld=document.getElementById('fabConsultorLoading');if(ld)ld.remove(
 tryExecuteFabAction(txt,function(done,msg){
 var ld=document.getElementById('fabConsultorLoading');
 if(ld)ld.remove();
-if(done){addFabConsultorMsg('ai',msg);if(typeof toast==='function')toast('Pronto!','ok');return;}
+if(done){addFabConsultorMsg('ai',msg);if(typeof toast==='function')toast(typeof t==='function'?t('toast_pronto'):'Pronto!','ok');return;}
 var ctx=typeof getFinancialContext==='function'?getFinancialContext():{};
 var contextStr='Receita mensal: R$'+(ctx.receita_mes||0).toFixed(2)+'\nDespesa mensal: R$'+(ctx.despesa_mes||0).toFixed(2)+'\nSaldo: R$'+((ctx.receita_mes||0)-(ctx.despesa_mes||0)).toFixed(2)+'\n';
 if(ctx.top_categorias)contextStr+='Categorias: '+ctx.top_categorias+'\n';
@@ -11939,7 +11939,7 @@ var baseUrl=window.location.origin+(path.indexOf('/app')>=0?path.replace(/\/+$/,
 var link=baseUrl+'#invite='+docRef.id;
 var fromName=(U.name||'Usuário').replace(/'/g,"\\'");
 statusEl.innerHTML='<span style="color:var(--green)">\u2705 Convite enviado!</span> Envie o link ou o e-mail para <b>'+escapeHtml(email)+'</b>: <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="text" readonly value="'+String(link).replace(/"/g,'&quot;')+'" style="flex:1;min-width:0;padding:6px 10px;font-size:.75em;background:var(--bg2);border:1px solid var(--brd);border-radius:6px;color:var(--t1)" id="coupleInviteLinkInput"><button type="button" class="btn btn-sm" style="font-size:.75em;padding:6px 12px" onclick="var i=document.getElementById(\'coupleInviteLinkInput\');if(i)navigator.clipboard.writeText(i.value).then(function(){toast(\'Link copiado!\',\'ok\')});">Copiar link</button><button type="button" class="btn btn-sm" style="font-size:.75em;padding:6px 12px;background:var(--green)" id="btnSendInviteEmail" onclick="sendInviteByEmail(\''+docRef.id+'\',\''+String(email).replace(/'/g,"\\'")+'\',\''+fromName+'\')">Enviar por e-mail</button></div>';
-toast('Convite enviado! Envie o link ou use "Enviar por e-mail".','ok');
+toast(typeof t==='function'?t('toast_convite_enviado'):'Convite enviado! Envie o link ou use "Enviar por e-mail".','ok');
 loadCoupleStatus();
 }).catch(function(err){
 statusEl.innerHTML='<span style="color:var(--vr)">Erro: '+err.message+'</span>';
@@ -11949,15 +11949,15 @@ statusEl.innerHTML='<span style="color:var(--vr)">Erro: '+err.message+'</span>';
 
 function sendInviteByEmail(inviteId,toEmail,fromName){
 var btn=document.getElementById('btnSendInviteEmail');
-if(btn){btn.disabled=true;btn.textContent='Enviando...';}
+if(btn){btn.disabled=true;btn.textContent=typeof t==='function'?t('btn_enviando_email'):'Enviando...';}
 var fn=firebase.functions().httpsCallable('sendFamilyInviteEmail');
 fn({inviteId:inviteId,toEmail:toEmail,fromName:fromName||'Usuário'}).then(function(r){
-if(btn){btn.disabled=false;btn.textContent='Enviar por e-mail';}
-if(r.data&&r.data.ok){toast('E-mail enviado! O convidado receberá uma mensagem com o link e apresentação do Sibanki.','ok');}
-else if(r.data&&r.data.error==='EMAIL_NOT_CONFIGURED'){toast('Envio por e-mail não configurado. Copie o link e envie por WhatsApp ou e-mail.','info');}
+if(btn){btn.disabled=false;btn.textContent=typeof t==='function'?t('btn_enviar_por_email'):'Enviar por e-mail';}
+if(r.data&&r.data.ok){toast(typeof t==='function'?t('toast_email_enviado_familia'):'E-mail enviado! O convidado receberá uma mensagem com o link e apresentação do Sibanki.','ok');}
+else if(r.data&&r.data.error==='EMAIL_NOT_CONFIGURED'){toast(typeof t==='function'?t('toast_email_nao_configurado'):'Envio por e-mail não configurado. Copie o link e envie por WhatsApp ou e-mail.','info');}
 else{toast((r.data&&r.data.message)||'Erro ao enviar e-mail.','err');}
 }).catch(function(err){
-if(btn){btn.disabled=false;btn.textContent='Enviar por e-mail';}
+if(btn){btn.disabled=false;btn.textContent=typeof t==='function'?t('btn_enviar_por_email'):'Enviar por e-mail';}
 toast('Erro: '+(err.message||'tente novamente'),'err');
 });
 }
@@ -12046,7 +12046,7 @@ db.collection('users').doc(U.uid).set({coupleId:coupleRef.id},{merge:true}).catc
 /* Limpar alerta */
 var alertBar=document.getElementById('alertBar');
 if(alertBar){alertBar.style.display='none';alertBar.innerHTML=''}
-toast('\u{1F48F} Família vinculada com sucesso! Dashboard disponível.','ok');
+toast(typeof t==='function'?t('toast_familia_vinculada'):'💏 Família vinculada com sucesso! Dashboard disponível.','ok');
 loadCoupleStatus();
 if(typeof go==='function')go('casal',null);
 });
@@ -12059,14 +12059,14 @@ if(!confirm('Recusar o convite familiar?'))return;
 db.collection('invites').doc(invId).update({status:'rejected'});
 var alertBar=document.getElementById('alertBar');
 if(alertBar){alertBar.style.display='none';alertBar.innerHTML=''}
-toast('Convite recusado','ok');
+toast(typeof t==='function'?t('toast_convite_recusado'):'Convite recusado','ok');
 }
 
 /* --- CANCELAR CONVITE ENVIADO --- */
 function cancelCoupleInvite(invId){
 if(!confirm('Cancelar o convite?'))return;
 db.collection('invites').doc(invId).delete().then(function(){
-toast('Convite cancelado','ok');
+toast(typeof t==='function'?t('toast_convite_cancelado'):'Convite cancelado','ok');
 loadCoupleStatus();
 var box=document.getElementById('couplePendingSent');
 if(box)box.style.display='none';
@@ -12209,14 +12209,14 @@ function addCoupleGoal(){
 if(!coupleId)return;
 var name=document.getElementById('coupleGoalName').value.trim();
 var value=parseFloat(document.getElementById('coupleGoalValue').value);
-if(!name||!value||value<=0){toast('Preencha nome e valor da meta','err');return}
+if(!name||!value||value<=0){toast(typeof t==='function'?t('toast_preencha_todos_campos'):'Preencha nome e valor da meta','err');return}
 var goals=coupleData.goals||[];
 goals.push({name:name,target:value,current:0,created:new Date().toISOString()});
 db.collection('couples').doc(coupleId).update({goals:goals}).then(function(){
 coupleData.goals=goals;
 document.getElementById('coupleGoalName').value='';
 document.getElementById('coupleGoalValue').value='';
-toast('Meta da família adicionada! \u{1F3AF}','ok');
+toast(typeof t==='function'?t('toast_meta_familia_adicionada'):'Meta da família adicionada! 🎯','ok');
 renderCoupleGoals();
 });
 }
@@ -12230,7 +12230,7 @@ db.collection('couples').doc(coupleId).delete().then(function(){
 coupleId=null;coupleData=null;
 document.getElementById('coupleNotLinked').style.display='block';
 document.getElementById('coupleLinked').style.display='none';
-toast('Família desvinculada','ok');
+toast(typeof t==='function'?t('toast_familia_desvinculada'):'Família desvinculada','ok');
 });
 }
 
@@ -12251,7 +12251,7 @@ if(_inviteListenerUnsub){_inviteListenerUnsub();_inviteListenerUnsub=null;}
 if(_invitePollInterval){clearInterval(_invitePollInterval);_invitePollInterval=null;}
 loadCoupleStatus();
 if(typeof go==='function')go('casal',null);
-toast('\u{1F389} Convite aceito! Dashboard familiar disponível.','ok');
+toast(typeof t==='function'?t('toast_convite_aceito'):'🎉 Convite aceito! Dashboard familiar disponível.','ok');
 setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons();},300);
 }
 _inviteListenerUnsub=db.collection('invites').doc(invDoc.id).onSnapshot(function(doc){
@@ -12648,7 +12648,7 @@ return '\u{1F680} Lenda Financeira';
 
 /* ADICIONAR FILHO */
 function addChild(){
-if(!coupleId&&!U){toast('Faça login primeiro','err');return}
+if(!coupleId&&!U){toast(typeof t==='function'?t('toast_faca_login'):'Faça login primeiro','err');return}
 
 var nameEl=document.getElementById('childName');
 var ageEl=document.getElementById('childAge');
@@ -12656,8 +12656,8 @@ if(!nameEl||!ageEl)return;
 
 var name=nameEl.value.trim();
 var ageRange=ageEl.value;
-if(!name){toast('Digite o nome do filho(a)','err');return}
-if(familyChildren.length>=5){toast('Máximo 5 filhos','err');return}
+if(!name){toast(typeof t==='function'?t('toast_dig_descricao_curto'):'Digite o nome do filho(a)','err');return}
+if(familyChildren.length>=5){toast(typeof t==='function'?t('toast_max_filhos'):'Máximo 5 filhos','err');return}
 
 var child={
 name:name,
@@ -12789,7 +12789,7 @@ familyChildren.splice(idx,1);
 if(activeChildIdx>=familyChildren.length)activeChildIdx=familyChildren.length-1;
 saveFamilyChildren();
 renderChildrenList();
-toast('Perfil removido','ok');
+toast(typeof t==='function'?t('toast_perfil_removido'):'Perfil removido','ok');
 }
 
 /* CONFIGURAR FILHO */
@@ -12820,7 +12820,7 @@ lastPaid:c.mesada?c.mesada.lastPaid:''
 };
 c.limite=parseFloat(document.getElementById('childLimite').value)||0;
 saveFamilyChildren();
-toast('Configurações salvas! \u2705','ok');
+toast(typeof t==='function'?t('toast_config_salvas'):'Configurações salvas! ✅','ok');
 document.getElementById('childConfigPanel').style.display='none';
 renderChildDash();
 }
@@ -12922,7 +12922,7 @@ var label=tipo==='gastar'?'Gastar':tipo==='guardar'?'Guardar':'Doar';
 var valorStr=prompt('Quanto adicionar ao cofrinho '+label+'? (R$)');
 if(!valorStr)return;
 var valor=parseFloat(valorStr.replace(',','.'));
-if(isNaN(valor)||valor<=0){toast('Valor inválido','err');return}
+if(isNaN(valor)||valor<=0){toast(typeof t==='function'?t('toast_valor_invalido'):'Valor inválido','err');return}
 
 /* Checar limite */
 if(tipo==='gastar'&&c.limite>0){
@@ -13099,7 +13099,7 @@ c.budgetLimits[cat]=parseFloat(v)||0;
 });
 saveFamilyChildren();
 renderChildDash();
-toast('Orçamentos definidos! \u2705','ok');
+toast(typeof t==='function'?t('toast_orcamentos_definidos'):'Orçamentos definidos! ✅','ok');
 }
 
 /* RENDERIZAR DESAFIOS (10-13) */
@@ -13127,7 +13127,7 @@ if(c.activeChallenges.indexOf(idx)<0){
 c.activeChallenges.push(idx);
 saveFamilyChildren();
 renderChildDash();
-toast('Desafio aceito! \u{1F525}','ok');
+toast((typeof t==='function'?t('toast_desafio_aceito'):'Desafio aceito! Boa sorte.')+' \u{1F525}','ok');
 }
 }
 
@@ -13195,11 +13195,11 @@ var s=document.getElementById('wBankSel');
 var nm='';
 if(s.value==='__custom__'){
 nm=document.getElementById('wCustName').value.trim();
-if(!nm){toast('Digite o nome da conta','err');return;}
+if(!nm){toast(typeof t==='function'?t('toast_dig_descricao_curto'):'Digite o nome da conta','err');return;}
 }else if(s.value){
 nm=s.value;
 }else{
-toast('Selecione um banco','err');return;
+toast(typeof t==='function'?t('toast_selecione_banco'):'Selecione um banco','err');return;
 }
 if(userAccs.indexOf(nm)>=0){
 toast('Conta '+nm+' j\u00e1 existe!','err');return;
@@ -13363,11 +13363,11 @@ if(idx>=0){userAccs.splice(idx,1);delete accountBalances[acc];saveData();renderC
 // Salvar tokens de APIs
 function saveBrapiToken(){
 var token=document.getElementById('brapiToken').value.trim();
-if(!token){toast('Cole o token da brapi.dev','err');return;}
+if(!token){toast(typeof t==='function'?t('toast_token_brapi_salvo'):'Cole o token da brapi.dev','err');return;}
 localStorage.setItem('vrt_b3token',token);
 var b3El=document.getElementById('b3Token');
 if(b3El)b3El.value=token;
-toast('Token brapi.dev salvo! ✅','ok');
+toast(typeof t==='function'?t('toast_token_brapi_salvo'):'Token brapi.dev salvo! ✅','ok');
 }
 
 function loadBrapiToken(){
@@ -13386,10 +13386,10 @@ localStorage.setItem('vrt_b3token',token);
 function saveBinanceKeys(){
 var key=document.getElementById('binanceKey').value.trim();
 var secret=document.getElementById('binanceSecret').value.trim();
-if(!key||!secret){toast('Preencha API Key e Secret','err');return;}
+if(!key||!secret){toast(typeof t==='function'?t('toast_preencha_api_key'):'Preencha API Key e Secret','err');return;}
 localStorage.setItem('binanceKey',key);
 localStorage.setItem('binanceSecret',secret);
-toast('Chaves Binance salvas! ✅','ok');
+toast(typeof t==='function'?t('toast_chaves_binance_salvas'):'Chaves Binance salvas! ✅','ok');
 }
 
 // Carregar tokens salvos ao abrir config
@@ -13447,7 +13447,7 @@ var cs=document.getElementById('familyChildSection');
 if(cs)cs.style.display='block';
 var ap=document.getElementById('childAdminPanel');
 if(ap)ap.style.display='block';
-toast('Modo Filhos ativado! Adicione os perfis dos filhos.','ok');
+toast(typeof t==='function'?t('toast_modo_filhos_ativado'):'Modo Filhos ativado! Adicione os perfis dos filhos.','ok');
 }
 
 /* ── next block ── */
