@@ -7278,12 +7278,58 @@ var result=await getPlanFn();
 userPlanData=result.data||{};
 userPlan=userPlanData.plan||'free';
 console.log('User plan:',userPlan);
+// Após carregar o plano real, verifica se veio da landing com trial
+checkTrialPlanFromURL();
 updatePlanUI();
 }catch(e){
 console.error('Load plan error:',e);
 userPlan='free';
 updatePlanUI();
 }
+}
+
+// ── TRIAL 30 DIAS — aplicado quando o usuário vem da landing com ?plan=X&trial=30 ──
+function checkTrialPlanFromURL(){
+if(!U||!U.uid)return;
+var params=new URLSearchParams(window.location.search);
+var planParam=params.get('plan');
+var trialParam=params.get('trial');
+// Também checa localStorage (set pelos botões de detalhe dos cards)
+if(!planParam){try{planParam=localStorage.getItem('sib_selected_plan');}catch(z){}}
+if(!planParam||planParam==='free')return;
+if(planParam!=='pro'&&planParam!=='familia')return;
+// Só aplica se o usuário AINDA está no free (não sobrescreve plano pago existente)
+if(userPlan&&userPlan!=='free')return;
+// Calcula data de expiração do trial
+var dias=parseInt(trialParam)||30;
+var trialEnd=new Date();
+trialEnd.setDate(trialEnd.getDate()+dias);
+var trialEndISO=trialEnd.toISOString();
+// Salva no Firestore
+db.collection('users').doc(U.uid).set({
+  plan: planParam,
+  trialPlan: planParam,
+  trialEnd: trialEndISO,
+  trialStarted: new Date().toISOString(),
+  planSource: 'landing_trial'
+},{merge:true}).then(function(){
+  userPlan=planParam;
+  userPlanData=userPlanData||{};
+  userPlanData.plan=planParam;
+  userPlanData.trialEnd=trialEndISO;
+  updatePlanUI();
+  if(typeof updateDrawerUser==='function')updateDrawerUser();
+  var diasRestantes=dias;
+  toast('🎉 Plano '+( planParam==='pro'?'Pro':'Família')+' ativado! '+diasRestantes+' dias gratuitos.','ok');
+  // Limpa os parâmetros da URL
+  try{
+    var url=window.location.pathname;
+    history.replaceState({},'',url);
+    localStorage.removeItem('sib_selected_plan');
+  }catch(z){}
+}).catch(function(e){
+  console.error('Trial plan error:',e);
+});
 }
 
 function updatePlanUI(){
@@ -15067,8 +15113,19 @@ function checkProdutoInsight() {
    ═══════════════════════════════════════════════════════════ */
 
 function showBriefingModal() {
+  // ── Só para Pro e Família ──
+  var plano = (typeof userPlan !== 'undefined' ? userPlan : 'free') || 'free';
+  if (plano !== 'pro' && plano !== 'familia') return;
+
+  // ── 1x por dia: chave = sib_briefing_YYYY-MM-DD ──
   try {
-    if (sessionStorage.getItem('sib_briefing_shown')) return;
+    var hoje = new Date().toISOString().split('T')[0]; // "2026-03-10"
+    var chave = 'sib_briefing_' + hoje;
+    if (localStorage.getItem(chave)) return;
+    // Limpa chaves de dias anteriores (máx 7 dias guardados)
+    Object.keys(localStorage).forEach(function(k) {
+      if (k.startsWith('sib_briefing_') && k !== chave) localStorage.removeItem(k);
+    });
   } catch(z) {}
 
   var modal = document.getElementById('sibBriefingModal');
@@ -15151,7 +15208,10 @@ function showBriefingModal() {
   if (saiba) saiba.onclick = function() { closeBriefing(); go(mainTab, null); };
 
   modal.style.display = 'flex';
-  try { sessionStorage.setItem('sib_briefing_shown', '1'); } catch(z) {}
+  try {
+    var hoje = new Date().toISOString().split('T')[0];
+    localStorage.setItem('sib_briefing_' + hoje, '1');
+  } catch(z) {}
   if (typeof lucide !== 'undefined') lucide.createIcons();
 
   // ── Insight IA: chama briefingIa Cloud Function ──
@@ -15229,8 +15289,8 @@ var SIBANKI_FEATURES = {
 
   /* ── ANÁLISE & IA ─────────────────────────────────────────── */
   briefing_ia: {
-    enabled:     true,                     // ← ATIVO para todos
-    plan:        ['free','pro','familia'],  // todos os planos
+    enabled:     true,                     // ← ATIVO para Pro/Família
+    plan:        ['pro','familia'],         // só planos pagos — 1x por dia
     label:       'Briefing Inteligente com IA',
     desc:        'Resumo financeiro gerado por IA ao fazer login',
     upsell:      'Tenha um briefing financeiro personalizado toda vez que abrir o Sibanki.',

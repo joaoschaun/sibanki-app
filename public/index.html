@@ -411,28 +411,66 @@ a:hover{color:var(--pri3)}
 <section class="section section-center" id="planos">
 <div class="section-tag">💎 Planos</div>
 <h2 class="section-title">Escolha seu <span>plano ideal</span></h2>
-<p class="section-desc">Comece grátis e evolua quando quiser. Primeiro mês Pro é por nossa conta.</p>
+<p class="section-desc">Comece grátis ou experimente Pro/Família por <strong>30 dias sem custo</strong>. Cancele ou mude para o plano gratuito quando quiser.</p>
 
-<!-- Grátis vs Pro em 10 segundos -->
-<div class="plan-compare fade-up" style="max-width:700px;margin:0 auto 48px;background:var(--card);border:1px solid var(--brd2);border-radius:var(--r);padding:24px 28px">
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center;text-align:left">
-<div>
-<div style="font-size:.8em;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:4px">Grátis</div>
-<div style="font-size:1.5em;font-weight:800">R$ 0/mês</div>
-<div style="font-size:.9em;color:var(--t2);margin-top:4px">50 lançamentos, 1 cartão, 2 contas, 5 consultas IA/mês. Dashboard, conquistas básicas.</div>
+<!-- SELETOR DE PLANO — passa para o app via query string -->
+<div class="plan-selector fade-up" id="planSelector">
+  <div class="plan-sel-title">Com qual plano você quer começar?</div>
+  <div class="plan-sel-row">
+    <div class="plan-sel-card" data-plan="free" onclick="selectPlan('free')">
+      <div class="plan-sel-icon">🆓</div>
+      <div class="plan-sel-name">Gratuito</div>
+      <div class="plan-sel-price">R$ 0/mês</div>
+      <div class="plan-sel-desc">Sempre grátis, sem cartão</div>
+      <div class="plan-sel-badge free">Para sempre</div>
+    </div>
+    <div class="plan-sel-card popular" data-plan="pro" onclick="selectPlan('pro')">
+      <div class="plan-sel-hot">⭐ MAIS POPULAR</div>
+      <div class="plan-sel-icon">⭐</div>
+      <div class="plan-sel-name">Pro</div>
+      <div class="plan-sel-price">R$ 19,90/mês</div>
+      <div class="plan-sel-desc">Tudo ilimitado + IA avançada</div>
+      <div class="plan-sel-badge trial">30 dias grátis</div>
+    </div>
+    <div class="plan-sel-card" data-plan="familia" onclick="selectPlan('familia')">
+      <div class="plan-sel-icon">👨‍👩‍👧‍👦</div>
+      <div class="plan-sel-name">Família</div>
+      <div class="plan-sel-price">R$ 29,90/mês</div>
+      <div class="plan-sel-desc">Até 5 membros, finanças juntos</div>
+      <div class="plan-sel-badge trial">30 dias grátis</div>
+    </div>
+  </div>
+  <div class="plan-sel-info" id="planSelInfo">
+    ← Escolha um plano para começar
+  </div>
+  <a href="#" id="planSelBtn" class="btn btn-pri btn-lg plan-sel-btn" style="display:none" onclick="goToPlan(event)">
+    Criar minha conta →
+  </a>
+  <div class="plan-sel-note" id="planSelNote" style="display:none"></div>
 </div>
-<div>
-<div style="font-size:.8em;text-transform:uppercase;letter-spacing:1px;color:var(--pri);margin-bottom:4px">Pro</div>
-<div style="font-size:1.5em;font-weight:800;background:linear-gradient(135deg,var(--pri),var(--pri2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">R$ 19,90/mês</div>
-<div style="font-size:.9em;color:var(--t2);margin-top:4px">Tudo ilimitado + Investimentos B3, PDF, suporte prioritário. 30 dias grátis.</div>
-</div>
-</div>
-<div style="text-align:center;margin-top:20px">
-<a href="/app" class="btn btn-pri btn-sm">Começar grátis →</a>
-<span style="color:var(--t3);margin:0 12px;font-size:.9em">ou</span>
-<a href="/app" class="btn btn-out btn-sm">Testar Pro 30 dias grátis</a>
-</div>
-</div>
+
+<style>
+.plan-selector{max-width:780px;margin:0 auto 48px;background:var(--card);border:1px solid var(--brd2);border-radius:24px;padding:32px 28px;text-align:center}
+.plan-sel-title{font-size:1.1rem;font-weight:700;margin-bottom:24px;color:var(--t1)}
+.plan-sel-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.plan-sel-card{background:var(--bg2);border:2px solid var(--brd);border-radius:16px;padding:20px 16px;cursor:pointer;transition:all .25s;position:relative}
+.plan-sel-card:hover{border-color:var(--pri);transform:translateY(-3px)}
+.plan-sel-card.selected{border-color:var(--pri);background:rgba(79,140,255,.08);box-shadow:0 0 24px rgba(79,140,255,.15)}
+.plan-sel-card.popular{border-color:rgba(79,140,255,.4)}
+.plan-sel-hot{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;padding:3px 12px;border-radius:20px;font-size:.68rem;font-weight:700;white-space:nowrap}
+.plan-sel-icon{font-size:1.8rem;margin-bottom:8px}
+.plan-sel-name{font-size:1rem;font-weight:800;color:var(--t1);margin-bottom:4px}
+.plan-sel-price{font-size:.85rem;font-weight:700;color:var(--pri);margin-bottom:4px}
+.plan-sel-desc{font-size:.75rem;color:var(--t3);margin-bottom:10px;line-height:1.4}
+.plan-sel-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:700}
+.plan-sel-badge.free{background:rgba(255,255,255,.08);color:var(--t2)}
+.plan-sel-badge.trial{background:rgba(34,197,94,.15);color:#22C55E}
+.plan-sel-info{font-size:.88rem;color:var(--t3);margin-bottom:16px;min-height:20px;transition:all .3s}
+.plan-sel-btn{margin:0 auto;display:none}
+.plan-sel-note{font-size:.78rem;color:var(--t3);margin-top:10px;line-height:1.6}
+.plan-sel-note a{color:var(--pri)}
+@media(max-width:600px){.plan-sel-row{grid-template-columns:1fr}.plan-sel-card.popular{order:-1}}
+</style>
 
 <div class="price-grid">
 <!-- GRÁTIS -->
@@ -449,11 +487,11 @@ a:hover{color:var(--pri3)}
 <li><span class="check">✓</span> 5 consultas à IA/mês</li>
 <li><span class="check">✓</span> Dashboard completo</li>
 <li><span class="check">✓</span> Conquistas básicas</li>
-<li><span class="cross">✗</span> <span style="color:var(--t3)">Investimentos</span></li>
+<li><span class="cross">✗</span> <span style="color:var(--t3)">Briefing IA diário</span></li>
 <li><span class="cross">✗</span> <span style="color:var(--t3)">Relatórios PDF</span></li>
 <li><span class="cross">✗</span> <span style="color:var(--t3)">Módulo Família</span></li>
 </ul>
-<a href="/app" class="btn btn-out" style="width:100%;justify-content:center">Começar Grátis</a>
+<a href="/app" class="btn btn-out" style="width:100%;justify-content:center" onclick="setSelectedPlan('free')">Começar Grátis</a>
 </div>
 
 <!-- PRO -->
@@ -462,21 +500,22 @@ a:hover{color:var(--pri3)}
 <div class="price-icon">⭐</div>
 <div class="price-name">Pro</div>
 <div class="price-val">R$ 19<sup>,90</sup><small>/mês</small></div>
-<div class="price-period">Tudo ilimitado para você</div>
+<div class="price-period">Após 30 dias de degustação gratuita</div>
 <div class="price-annual">💡 No anual: R$ 14,90/mês (economia de 25%)</div>
 <ul class="price-list">
 <li><span class="check">✓</span> <strong>Lançamentos ilimitados</strong></li>
 <li><span class="check">✓</span> <strong>Cartões ilimitados</strong></li>
 <li><span class="check">✓</span> <strong>Contas ilimitadas</strong></li>
-<li><span class="check">✓</span> <strong>Metas ilimitadas</strong></li>
 <li><span class="check">✓</span> <strong>IA ilimitada</strong></li>
+<li><span class="check">✓</span> <strong>Briefing IA — 1x por dia</strong></li>
 <li><span class="check">✓</span> Investimentos com cotação B3</li>
 <li><span class="check">✓</span> Relatórios PDF profissionais</li>
 <li><span class="check">✓</span> Conquistas completas</li>
 <li><span class="check">✓</span> Suporte prioritário</li>
 <li><span class="cross">✗</span> <span style="color:var(--t3)">Módulo Família</span></li>
 </ul>
-<a href="/app" class="btn btn-pri" style="width:100%;justify-content:center">Testar 30 dias grátis →</a>
+<a href="/app?plan=pro" class="btn btn-pri" style="width:100%;justify-content:center" onclick="setSelectedPlan('pro')">Testar grátis por 30 dias →</a>
+<div style="font-size:.73rem;color:var(--t3);margin-top:10px">Sem cobrança. Após 30 dias escolha continuar ou mudar para o plano gratuito.</div>
 </div>
 
 <!-- FAMÍLIA -->
@@ -484,19 +523,20 @@ a:hover{color:var(--pri3)}
 <div class="price-icon">👨‍👩‍👧‍👦</div>
 <div class="price-name">Família</div>
 <div class="price-val">R$ 29<sup>,90</sup><small>/mês</small></div>
-<div class="price-period">Para até 5 membros</div>
+<div class="price-period">Após 30 dias de degustação gratuita</div>
 <div class="price-annual">💡 No anual: R$ 22,90/mês (economia de 23%)</div>
 <ul class="price-list">
 <li><span class="check">✓</span> <strong>Tudo do plano Pro</strong></li>
 <li><span class="check">✓</span> <strong>Até 5 membros</strong></li>
+<li><span class="check">✓</span> <strong>Briefing IA — 1x por dia</strong></li>
 <li><span class="check">✓</span> Finanças compartilhadas</li>
 <li><span class="check">✓</span> Orçamento familiar</li>
 <li><span class="check">✓</span> Metas em conjunto</li>
 <li><span class="check">✓</span> Relatório consolidado</li>
-<li><span class="check">✓</span> Conquistas familiares</li>
 <li><span class="check">✓</span> Suporte prioritário</li>
 </ul>
-<a href="/app" class="btn btn-out" style="width:100%;justify-content:center">Começar com a família →</a>
+<a href="/app?plan=familia" class="btn btn-out" style="width:100%;justify-content:center" onclick="setSelectedPlan('familia')">Testar grátis por 30 dias →</a>
+<div style="font-size:.73rem;color:var(--t3);margin-top:10px">Sem cobrança. Após 30 dias escolha continuar ou mudar para o plano gratuito.</div>
 </div>
 </div>
 </section>
@@ -889,6 +929,34 @@ var t=document.querySelector(this.getAttribute('href'));
 if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth'})}
 });
 });
+
+// ── SELETOR DE PLANO ──
+var _selectedPlan = null;
+var _planInfo = {
+  free:    { info: 'Plano gratuito — sem cobrança, para sempre.', note: '' },
+  pro:     { info: '30 dias grátis de Pro, depois R$ 19,90/mês. Sem cartão agora. Pode mudar para o plano gratuito quando quiser.', note: '✅ Sem cobrança nos primeiros 30 dias. Após esse período você escolhe: continuar no Pro, migrar para o Família, ou voltar para o gratuito.' },
+  familia: { info: '30 dias grátis de Família, depois R$ 29,90/mês. Sem cartão agora. Pode mudar para o plano gratuito quando quiser.', note: '✅ Sem cobrança nos primeiros 30 dias. Após esse período você escolhe: continuar no Família, migrar para Pro, ou voltar para o gratuito.' }
+};
+function selectPlan(plan) {
+  _selectedPlan = plan;
+  document.querySelectorAll('.plan-sel-card').forEach(function(c){
+    c.classList.toggle('selected', c.dataset.plan === plan);
+  });
+  var info = document.getElementById('planSelInfo');
+  var btn  = document.getElementById('planSelBtn');
+  var note = document.getElementById('planSelNote');
+  if (info) info.textContent = _planInfo[plan].info;
+  if (btn)  { btn.style.display = 'inline-flex'; btn.textContent = plan === 'free' ? 'Criar conta gratuita →' : 'Começar degustação gratuita →'; }
+  if (note) { note.style.display = _planInfo[plan].note ? 'block' : 'none'; note.textContent = _planInfo[plan].note; }
+}
+function goToPlan(e) {
+  e.preventDefault();
+  var url = _selectedPlan && _selectedPlan !== 'free' ? '/app?plan=' + _selectedPlan + '&trial=30' : '/app';
+  window.location.href = url;
+}
+function setSelectedPlan(plan) {
+  try { localStorage.setItem('sib_selected_plan', plan); } catch(z) {}
+}
 </script>
 </body>
 </html>
