@@ -63,6 +63,10 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 .app{display:none;min-height:100vh}
 .app.on{display:block;min-height:100vh}
 .wrap{max-width:1440px;margin:0 auto;padding:clamp(10px,3vw,20px);padding-left:max(clamp(10px,3vw,20px),var(--safe-left));padding-right:max(clamp(10px,3vw,20px),var(--safe-right));overflow-x:hidden;max-width:100vw;box-sizing:border-box}
+/* No modo sidebar, o wrap não precisa de padding lateral extra — a sidebar já define a borda */
+@media(min-width:1024px){
+  .drawer-sidebar-mode .wrap{padding-left:16px;padding-right:16px}
+}
 .app-content .wrap{padding-top:0;display:flex;flex-direction:column;gap:0;align-items:stretch}
 .app-content .wrap>.top-header{flex-shrink:0}
 .app-content .wrap>.tab.on{flex-shrink:0}
@@ -139,7 +143,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 .drawer-plan-badge.pro{background:linear-gradient(135deg,#4C7BF4,#7C5CFC);color:#fff}
 .drawer-plan-badge.familia{background:linear-gradient(135deg,#22C55E,#16A34A);color:#fff}
 .drawer-nav{flex:1;padding:16px 0;overflow-y:auto}
-/* ── DRAWER NAV ITEMS — com descrição ── */
+/* Lucide icons */
 .drawer-nav-item{display:flex;align-items:center;gap:12px;padding:12px 20px;font-size:.88rem;color:var(--t2);cursor:pointer;transition:all .15s ease;border-left:3px solid transparent;text-decoration:none;border-radius:0 12px 12px 0}
 .drawer-nav-item:hover{color:var(--t1);background:rgba(255,255,255,.04)}
 .drawer-nav-item.active{background:rgba(76,123,244,.15);color:var(--t1)!important;font-weight:700;border-left-color:#4C7BF4}
@@ -170,32 +174,37 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 .drawer-logout-btn:hover{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#EF4444}
 /* ── DRAWER: MODO SIDEBAR FIXO EM DESKTOP ── */
 @media(min-width:1024px){
-  /* Sidebar sempre visível como coluna lateral */
   .drawer-sidebar-mode .drawer{
     transform:translateX(0);
     position:fixed;
     top:0;left:0;bottom:0;
+    width:260px;
     box-shadow:none;
     border-right:1px solid rgba(255,255,255,.07);
     transition:transform .3s ease;
   }
   .drawer-sidebar-mode .drawer-overlay{display:none}
-  /* Conteúdo desloca para direita */
-  .drawer-sidebar-mode #appContent{margin-left:280px;transition:margin-left .3s ease}
-  .drawer-sidebar-mode .app-content .wrap{padding-left:28px;padding-right:28px}
-  /* Top header no modo sidebar: mais slim, sem hamburger redundante */
+  /* Conteúdo — margem = largura exata da sidebar, sem gap */
+  .drawer-sidebar-mode #appContent{margin-left:260px;transition:margin-left .3s ease}
+  .drawer-sidebar-mode .app-content{margin-left:260px;transition:margin-left .3s ease}
+  .drawer-sidebar-mode .app-content .wrap{padding-left:20px;padding-right:20px;max-width:100%}
+  /* Top header */
   .drawer-sidebar-mode .top-header-btn-menu{opacity:.45;pointer-events:auto}
   .drawer-sidebar-mode .top-header-btn-menu:hover{opacity:1}
-  /* Nav pills ocultas no desktop com sidebar — redundantes */
+  /* Nav pills — redundantes com sidebar */
   .drawer-sidebar-mode .nav{display:none!important}
-  /* Ajuste do nav pill bar que ficava abaixo do top-header */
   .drawer-sidebar-mode .tab{padding-top:0}
-  /* Sections max-width ajustado para tela grande com sidebar */
   .drawer-sidebar-mode section.tab{max-width:1200px}
+  /* Descrições visíveis */
+  .drawer-sidebar-mode .dni-desc{display:block}
+  .drawer-sidebar-mode .drawer-nav-item{padding:10px 16px 10px 14px;border-radius:0 10px 10px 0;margin-right:8px}
+  .drawer-sidebar-mode .drawer-nav-item.active .dni-desc{color:rgba(255,255,255,.55)}
+  .drawer-sidebar-mode .drawer-nav-item:hover .dni-desc{color:var(--t2)}
 }
 @media(min-width:1280px){
-  .drawer-sidebar-mode #appContent{margin-left:320px}
-  .drawer{width:280px}
+  .drawer-sidebar-mode .drawer{width:280px}
+  .drawer-sidebar-mode #appContent{margin-left:280px}
+  .drawer-sidebar-mode .app-content{margin-left:280px}
 }
 /* Lucide icons */
 [data-lucide]{width:20px;height:20px;stroke-width:1.75;vertical-align:middle;flex-shrink:0}
