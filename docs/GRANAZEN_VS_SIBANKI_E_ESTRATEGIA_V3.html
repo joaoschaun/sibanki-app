@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GranaZen vs Sibanki + Estratégia Sibanki v3.1</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: #f5f5f5;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 2.5rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      border-bottom: 3px solid #6366f1;
+      padding-bottom: 1rem;
+    }
+    .header h1 {
+      color: #6366f1;
+      font-size: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .meta {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 0.5rem;
+    }
+    h2 {
+      color: #6366f1;
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      font-size: 1.35rem;
+      border-left: 4px solid #6366f1;
+      padding-left: 0.75rem;
+    }
+    h3 {
+      color: #444;
+      margin-top: 1.25rem;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+    p { margin-bottom: 0.75rem; }
+    ul {
+      margin: 0.5rem 0 1rem 1.5rem;
+    }
+    li { margin: 0.35rem 0; }
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 1.5rem 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+    th {
+      background: #6366f1;
+      color: #fff;
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      font-weight: 600;
+    }
+    td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #eee;
+    }
+    tr:nth-child(even) { background: #f9f9f9; }
+    .block {
+      background: #f0f4ff;
+      border-left: 4px solid #6366f1;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+      border-radius: 0 4px 4px 0;
+    }
+    .block h4 { color: #6366f1; margin-bottom: 0.5rem; }
+    .footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #ddd;
+      font-size: 0.85rem;
+      color: #888;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .container { box-shadow: none; max-width: 100%; padding: 1rem; }
+      h2 { page-break-after: avoid; }
+      table { page-break-inside: avoid; }
+      .block { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>GranaZen vs Sibanki + Estratégia Sibanki v3.1</h1>
+      <p class="meta">Data: 08 de Março de 2026 · Referência: Análise da conversa (Perplexity) + staging Sibanki (staging-13a0b.web.app)</p>
+    </div>
+
+    <h2>Parte 1 — O que o GranaZen oferece</h2>
+    <h3>Núcleo do produto</h3>
+    <ul>
+      <li><strong>Registro por WhatsApp com IA:</strong> texto, áudio, foto e PDF (ex.: "conta de luz 220 reais todo dia 12").</li>
+      <li><strong>Painel web</strong> com gráficos e relatórios em tempo real (saldo, despesas, receitas).</li>
+      <li><strong>Categorias e subcategorias automáticas com IA</strong> + categorias personalizadas.</li>
+      <li><strong>Múltiplas contas bancárias e cartões</strong> com visão consolidada.</li>
+    </ul>
+    <h3>Automação e lembretes</h3>
+    <ul>
+      <li>Lembretes de contas a pagar/receber via WhatsApp e e-mail.</li>
+      <li>Identificação de recorrências (contas mensais) e organização temporal.</li>
+    </ul>
+    <h3>Colaboração e planos</h3>
+    <ul>
+      <li>Perfil individual (quem está gastando); útil para casais/famílias.</li>
+      <li>Modo compartilhado (plano Zen): vários usuários, seus WhatsApps, visão centralizada.</li>
+      <li><strong>Premium:</strong> até 3 contas bancárias.</li>
+      <li><strong>Zen:</strong> contas ilimitadas + gestão compartilhada.</li>
+      <li>Teste grátis 3 dias, cobrança via Stripe.</li>
+    </ul>
+    <h3>Segurança</h3>
+    <ul>
+      <li>WhatsApp E2E, servidores seguros, backups, promessa de não usar dados financeiros para treinar modelos.</li>
+      <li>Prova social (depoimentos, "+38 mil pessoas").</li>
+    </ul>
+
+    <hr>
+
+    <h2>Parte 2 — Sibanki: o que já temos</h2>
+    <table>
+      <thead>
+        <tr><th>Área</th><th>Status</th><th>Detalhes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Menu / Módulos</strong></td><td>✅</td><td>Dashboard, Lançamentos, Investimentos, Metas, Orçamento, Cartões, Consultor IA, Educação, Família, Relatórios, Conquistas, Configurações</td></tr>
+        <tr><td><strong>Lançamentos</strong></td><td>✅</td><td>Despesa/Receita, valor, descrição, data, categoria, conta/cartão, status, forma de pagamento, tags, parcelas</td></tr>
+        <tr><td><strong>Transferências</strong></td><td>✅</td><td>Conta origem → destino</td></tr>
+        <tr><td><strong>Fixos/Recorrentes</strong></td><td>✅</td><td>Tipo, valor, categoria, frequência mensal, dia do mês</td></tr>
+        <tr><td><strong>Investimentos</strong></td><td>✅</td><td>Visão geral, Carteira, Análise B3, Proventos, cotações</td></tr>
+        <tr><td><strong>Metas</strong></td><td>✅</td><td>Reserva, Viagem, Imóvel, Carro; valor alvo, atual, prazo</td></tr>
+        <tr><td><strong>Orçamento</strong></td><td>✅</td><td>Limites por categoria (15+ categorias)</td></tr>
+        <tr><td><strong>Cartões</strong></td><td>✅</td><td>Múltiplos cartões, saldo, vencimento</td></tr>
+        <tr><td><strong>Dashboard</strong></td><td>✅</td><td>Saldo mensal, KPIs, importar extrato (Nubank/Inter/C6/Itaú)</td></tr>
+        <tr><td><strong>Auth e plano</strong></td><td>✅</td><td>Login e-mail/senha, plano Gratuito, upgrade Pro</td></tr>
+        <tr><td><strong>Modo Família</strong></td><td>✅</td><td>Mencionado na proposta; implementação a validar</td></tr>
+        <tr><td><strong>Telegram</strong></td><td>✅</td><td>Vincular Telegram (alertas/insights)</td></tr>
+        <tr><td><strong>Resumo semanal</strong></td><td>✅</td><td>Preferência no perfil + Cloud Function agendada (e-mail segunda 8h)</td></tr>
+      </tbody>
+    </table>
+
+    <hr>
+
+    <h2>Parte 3 — O que falta (comparado ao GranaZen)</h2>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Funcionalidade</th><th>GranaZen</th><th>Sibanki hoje</th><th>Prioridade</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td><strong>Canal WhatsApp</strong></td><td>Registro por texto/áudio/foto/PDF com IA</td><td>❌ Não tem</td><td>Crítica</td></tr>
+        <tr><td>2</td><td><strong>IA categorização automática</strong></td><td>Reconhece categoria, valor, data, recorrência</td><td>❌ Manual</td><td>Alta</td></tr>
+        <tr><td>3</td><td><strong>Lembretes inteligentes</strong></td><td>Contas a pagar/receber via WhatsApp/e-mail</td><td>❌ Sem lembretes</td><td>Alta</td></tr>
+        <tr><td>4</td><td><strong>Bot Telegram</strong></td><td>Alertas e resumos nativos</td><td>✅ Vincular Telegram; fluxo a aprofundar</td><td>Média</td></tr>
+        <tr><td>5</td><td><strong>Modo família/multiusuário</strong></td><td>Vários usuários, WhatsApps, visão central</td><td>✅ Módulo Família; alinhar com Zen</td><td>Média</td></tr>
+        <tr><td>6</td><td><strong>Importação OFX/automática</strong></td><td>OFX e bancos</td><td>✅ Botão importar; evoluir OFX completo</td><td>Média</td></tr>
+        <tr><td>7</td><td><strong>Relatórios avançados</strong></td><td>PDF mensal, envio WhatsApp/e-mail</td><td>Parcial; sem PDF automático/envio</td><td>Média</td></tr>
+        <tr><td>8</td><td><strong>IA conversacional</strong></td><td>Consultor que analisa orçamento</td><td>✅ Consultor IA; evoluir para AIKO</td><td>Média</td></tr>
+        <tr><td>9</td><td><strong>Reconhecimento de recorrências</strong></td><td>"Todo dia 12" → recorrência + lembretes</td><td>✅ Fixos manuais; falta detecção automática</td><td>Média</td></tr>
+        <tr><td>10</td><td><strong>OCR boletos/notas</strong></td><td>Foto/PDF → valor e vencimento</td><td>❌ Não tem</td><td>Desejável</td></tr>
+      </tbody>
+    </table>
+
+    <hr>
+
+    <h2>Parte 4 — Como adicionar ao Sibanki (arquitetura em 4 blocos)</h2>
+    <div class="block">
+      <h4>1. Canal WhatsApp + ingestão</h4>
+      <p><strong>Meta:</strong> WhatsApp Cloud API para receber texto, áudio, foto, PDF.</p>
+      <p><strong>Backend:</strong> fila para transcrever áudio (Speech-to-Text), OCR em imagem/PDF, normalizar para formato interno.</p>
+      <p><strong>Stack:</strong> Node/Python + WhatsApp Cloud API + transcrição + Tesseract/Google Vision.</p>
+    </div>
+    <div class="block">
+      <h4>2. Camada de IA e regras</h4>
+      <p><strong>NLP/LLM</strong> para extrair: valor, moeda, categoria, subcategoria, periodicidade, conta.</p>
+      <p><strong>Motor de regras:</strong> lançamento simples, recorrente, lembretes. Ajuste para vocabulário financeiro BR.</p>
+    </div>
+    <div class="block">
+      <h4>3. Backend financeiro (core ledger)</h4>
+      <p><strong>Entidades:</strong> Usuário, Conta, Cartão, Lançamento, Categoria, Recorrência, Lembrete.</p>
+      <p><strong>Cálculos:</strong> saldo por conta, consolidado, fluxo por período. <strong>Cron:</strong> lembretes diários; geração de lançamentos futuros. <strong>Importação:</strong> OFX e planilha.</p>
+    </div>
+    <div class="block">
+      <h4>4. Front-end e relatórios</h4>
+      <p>Painel: gráficos por categoria, linha de saldo, tabela de lançamentos. Filtros: conta, período, pessoa. Exportar CSV/Excel; resumo mensal PDF; envio WhatsApp/e-mail.</p>
+    </div>
+
+    <hr>
+
+    <h2>Parte 5 — Roteiro de implementação (MVP)</h2>
+    <table>
+      <thead>
+        <tr><th>Fase</th><th>Prazo</th><th>Foco</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Fase 1</strong></td><td>2–3 semanas</td><td>WhatsApp Cloud API, webhook texto; analisador regex + NLP básico; criar lançamento no app</td></tr>
+        <tr><td><strong>Fase 2</strong></td><td>2 semanas</td><td>Áudio → transcrição; IA categorização; regras de recorrência</td></tr>
+        <tr><td><strong>Fase 3</strong></td><td>1–2 semanas</td><td>Cron lembretes; bot Telegram; notificações e-mail</td></tr>
+        <tr><td><strong>Fase 4</strong></td><td>1 semana</td><td>OCR boletos/imagens; testes e refinamento</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Fluxo mínimo (MVP):</strong> Usuário manda mensagem → Webhook WhatsApp → Backend chama IA → IA devolve JSON → Backend grava e responde ("Lancei sua conta de luz de 220 todo dia 12").</p>
+
+    <hr>
+
+    <h2>Parte 6 — Estratégia Sibanki v3.1 (resumo)</h2>
+    <h3>Os 4 pilares</h3>
+    <ol>
+      <li><strong>AIKO v3.1 — Financial Products Advisor:</strong> consultor pós-ativo com psicologia comportamental; análise em camadas; recomendação ética de produtos.</li>
+      <li><strong>Visão Inteligente (OCR/PDF):</strong> boletos, notas, extratos, faturas, comprovantes PIX, tickets; alta precisão em documentos BR.</li>
+      <li><strong>WhatsApp nativo + Telegram:</strong> registro por texto/voz/imagem; lembretes; insights; &lt; 5 s de resposta.</li>
+      <li><strong>Produtos financeiros com vendas consultivas:</strong> empréstimos, consórcios, investimentos, seguros, cartões, refinanciamento (comissões definidas).</li>
+    </ol>
+    <h3>Receita (projeção)</h3>
+    <p>Assinaturas + comissões: ordem de <strong>R$ 1,47M–2,94M/ano</strong>. Vendas éticas: regras de horário, perfil e contexto.</p>
+    <h3>Próximos passos</h3>
+    <ol>
+      <li>Priorizar <strong>WhatsApp + IA</strong>.</li>
+      <li>Em seguida: lembretes, recorrências inteligentes, bot Telegram, OCR.</li>
+      <li>Documentar modelo de dados para o backend do canal WhatsApp.</li>
+    </ol>
+
+    <hr>
+
+    <h2>Como usar este documento</h2>
+    <ul>
+      <li><strong>Produto:</strong> Partes 1–3 = checklist Sibanki vs GranaZen; Partes 4–5 = roadmap técnico.</li>
+      <li><strong>Estratégia:</strong> Parte 6 = resumo visão v3.1.</li>
+      <li><strong>PDF:</strong> Abra este HTML no navegador → Ctrl+P (Imprimir) → Salvar como PDF.</li>
+    </ul>
+
+    <p class="footer">Documento gerado a partir da análise da conversa (GranaZen, Sibanki staging, estratégia v3.1).</p>
+  </div>
+</body>
+</html>

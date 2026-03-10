@@ -1,0 +1,185 @@
+=== AUDITORIA I18N — STRINGS PT-BR VISÍVEIS AO USUÁRIO ===
+
+
+## Erros / Alertas (15 principais)
+  L83: E-mail inválido
+  L102: Usuário não encontrado.
+  L102: E-mail inválido.
+  L585: Última confirmação: realmente apagar TUDO e recomeçar do zero?
+  L7546: Resposta inválida da API
+  L7553: Ativo não encontrado:
+  L7561: Ativo não encontrado:
+  L7572: Ativo não encontrado:
+  L7597: Erro ao exibir análise
+  L8063: Dados do ativo inválidos.
+  L11707: Lançamento não encontrado.
+  L11716: Lançamento não encontrado.
+  L11748: Cartão não encontrado.
+  L11773: Meta não encontrada.
+  L11784: Meta não encontrada.
+
+## Dashboard / KPIs (20 principais)
+  L790: Score de crédito
+  L906: Suas despesas estão altas este mês. Quer que eu te ajude a organizar?
+  L908: Como posso organizar minhas despesas este mês?
+  L1378: Aqui você acessa todos os 15 módulos do Sibanki. Dashboard, Investimentos, Família e muito mais — tudo em um lugar.
+  L1381: Dashboard Configurável
+  L1384: Seu score vai de 0 a 100 e mede sua saúde financeira. Quanto mais você lançar, mais preciso ele fica. Meta: chegar ao Score 100! 🎯
+  L1385: Complete esses passos para aproveitar o Sibanki ao máximo. Cada item concluído melhora seu score e desbloqueia recursos da IA.
+  L1443: Registre aqui todas as receitas e despesas. Use a data, descrição, valor, categoria e conta. Você pode filtrar por mês e categoria para analisar seus gastos.
+  L1455: Aqui ficam suas contas bancárias e o saldo de cada uma. Registre o saldo inicial e os lançamentos passam a debitar/creditar automaticamente.
+  L2230: \u2705 Parabéns! Saldo positivo este mês. Continue assim!
+  L2231: \u26A0\uFE0F Atenção! Despesas superaram receitas. Revise seus gastos.
+  L2351: &#8505; Saldo das contas inclui pendentes/agendados (modo competência).
+  L2366: &#8505; Saldo das contas inclui pendentes/agendados (modo competência).
+  L2421: Sua saúde financeira considera gastos, metas e orçamento.
+  L3580: Só use em situação real de emergência (desemprego, saúde).
+  L4041: Atenção ao Saldo
+  L6041: Use este app: lance tudo aqui e acompanhe pelo dashboard. Consistência é mais importante que perfeição.
+  L6041: Na aba Lançar e no Dashboard
+  L6126: Gere UMA dica financeira personalizada e educativa para este usuário. Dados: score financeiro
+  L6599: Suas despesas superam as receitas. Revise gastos não essenciais para inverter isso.
+
+## Lançamentos / Contas (20 principais)
+  L314: Esqueço de pagar contas no prazo
+  L793: Dentro do orçamento
+  L793: Acima do orçamento
+  L1038: Orçamento do Mês
+  L1042: Últimos Lançamentos
+  L1382: Lançamento Rápido
+  L1444: excluir cartão X
+  L1601: Adicionar sua primeira conta bancária
+  L1604: Configurar um orçamento mensal
+  L1759: Total Lançamentos
+  L1849: : Orçamento ESTOURADO! (
+  L2012: Nenhum cartão
+  L2021: Nenhum orçamento definido
+  L2025: Nenhum lançamento recorrente
+  L2052: - Total lançamentos:
+  L2063: - Orçamentos:
+  L2066: - Total de lançamentos:
+  L2175: +ctx.orçamentos+
+  L2555: Excluir este cartão e todas as suas faturas?
+  L2608: cartão
+
+## Botões / Labels (7 principais)
+  L1152: Concluir Edição
+  L1381: O Sibanki é seu. Clique aqui para reorganizar os blocos, remover o que não usa e adicionar o que prefere ver em destaque.
+  L1460: Digite sua dúvida e clique em Enviar. Use também os atalhos acima: Análise Geral, Dicas de Economia, Investimentos ou Família.
+  L1541: ENTENDIDO, VAMOS LÁ! 🚀
+  L3607: Faça orçamentos em pelo menos 3 fornecedores antes de fechar.
+  L11832: ÚLTIMOS LANÇAMENTOS (use entryId para excluir ou editar):
+  L12219: CONFIRMAR: Desvincular a família?
+
+## Notificações / Mensagens (16 principais)
+  L441: Ótimo. Agora preciso do seu contato e localização para alertas e recomendações regionais.
+  L908: Como encaixar esse imprevisto no meu orçamento deste mês?
+  L1383: Sua IA monitora suas finanças 24h. Você recebe alertas quando um orçamento estourar, uma conta vencer ou uma oportunidade aparecer.
+  L2418: Atenção
+  L2448: Você gastou mais que o mês anterior
+  L2449: Parabéns! Você economizou!
+  L2799: Parabéns! Você atingiu a meta
+  L4053: Atenção:
+  L5871: este mês. Continue assim!
+  L5933: Atenção
+  L6126: /100, maior gasto este mês:
+  L6654: Atenção necessária
+  L6655: Algumas áreas precisam de atenção.
+  L12398: \nFormate com emojis, seções claras (Resumo, Destaques, Alertas, Recomendações). Máximo 250 palavras.
+  L12459: Atenção! Revise seus gastos.
+  L12503: \nGere 3-5 alertas com nível (🔴 crítico, 🟡 atenção, 🟢 positivo). Seja direto e prático. Máximo 150 palavras.
+
+## Onboarding / Tour (9 principais)
+  L304: Conta pra gente: qual sua situação financeira atual?
+  L320: Começar a investir
+  L436: Começar a investir
+  L441: Último passo. Me conta qual é o seu principal objetivo — pode escolher mais de um.
+  L1436: Questionário de Perfil do Investidor
+  L1447: Defina um limite de gastos por categoria para o mês. O Sibanki avisa quando você se aproximar ou estourar o orçamento, ajudando a controlar os gastos.
+  L1459: Converse com a IA financeira do Sibanki. Faça perguntas sobre seus gastos, peça análises ou sugestões. Quanto mais você usar, mais personalizadas ficam as respostas.
+  L2073: Análise as metas financeiras do usuario e sugira estrategias para alcanca-las mais rapido. Se não tem metas, sugira metas adequadas ao perfil.
+  L3595: Quanto antes começar, menor o aporte mensal necessário.
+
+## Conquistas / Gamificação (8 principais)
+  L790: Não disponível
+  L2689: +disponível.toFixed(2)+
+  L4100: Centenário
+  L4110: Econômico
+  L12586: Troféu
+  L12767: anos | Nível
+  L12864: XP | Próximo nível:
+  L12994: Missão Completa!
+
+## Investimentos (20 principais)
+  L476: Carteira física
+  L500: Carteira física
+  L584: Tem certeza? Todos os lançamentos, metas, contas, investimentos e categorias serão apagados. Sua conta de login continua. Esta ação não pode ser desfeita.
+  L588: Carteira física
+  L594: Carteira física
+  L660: educação
+  L801: Última alteração: 45 dias atrás
+  L801: Autenticação de dois fatores
+  L805: Personalização de recomendações
+  L1074: Variação do mês:
+  L1433: Navegação
+  L2075: Crie um planejamento financeiro detalhado para o próximo mes. Inclua: quanto gastar em cada categoria, quanto investir, quanto guardar para metas.
+  L3585: Inclua no orçamento: transporte, hospedagem, alimentação e um extra para imprevistos.
+  L3611: Antes de investir, garanta a reserva de emergência (6 meses de gastos).
+  L4062: Fundos Imobiliários pagam dividendos mensais isentos de IR para pessoa física.
+  L4064: Investir em ações e para quem tem horizonte de 5+ anos. Foque em empresas sólidas.
+  L4069: Revise sua alocação a cada 6 meses. Venda o que subiu muito e compre o que ficou barato.
+  L4070: Investir todo mês e mais eficiente do que tentar acertar o melhor momento.
+  L4108: quitação
+  L4119: Completou a trilha Análise de investimentos
+
+## Score / Saúde Financeira (2 principais)
+  L6655: Revise as recomendações abaixo para melhorar.
+  L6655: Foque nas recomendações urgentes abaixo.
+
+## Família / IA (20 principais)
+  L67: convidou você para o modo Família. Crie sua conta ou faça login com o e-mail
+  L321: Organizar as finanças da família
+  L789: Reserva de emergência
+  L797: Reserva de emergência
+  L805: Permite que a IA use seu histórico para sugestões mais relevantes
+  L1380: Inteligência Artificial
+  L1439: Aqui você cria objetivos com valor e prazo: reserva de emergência, viagem, entrada do imóvel, carro. O Sibanki mostra quanto guardar por mês e acompanha o progresso.
+  L1444: Seu assistente completo: lançamentos, contas, cartões, metas, orçamento e dúvidas. Toque no ícone para abrir o chat com a IA. Ex.:
+  L1464: Plano e preferências
+  L2038: DADOS DA FAMÍLIA (casal):\n
+  L2051: - Metas da família:
+  L2064: - Tendência (últimos meses):
+  L2087: Não foi possível carregar os dados da família.
+  L2164: &#9888;&#65039; Faça login para usar o consultor IA.
+  L2179: Tendência:
+  L2797: dia(s) e está em
+  L2844: Seus números estão sendo organizados. Use o Consultor IA para dúvidas ou planejamento.
+  L3375: Previdência
+  L3583: Separe em uma conta ou subconta para não misturar com o dia a dia.
+  L3584: Pesquise com antecedência: passagens e hospedagem costumam ser mais baratas.
+
+## Outros UI (20 principais)
+  L41: Cartões
+  L66: Alguém
+  L83: E-mail não cadastrado
+  L305: Tenho dívidas para quitar
+  L306: Não tenho dívidas mas não consigo guardar
+  L307: Consigo economizar um pouco todo mês
+  L308: Economizo bem e já invisto
+  L310: O que mais te preocupa quando o assunto é dinheiro?
+  L312: Sei onde gasto mas não consigo diminuir
+  L436: Sair das dívidas
+  L436: Organizar e eliminar dívidas
+  L436: Ter 6 meses de segurança
+  L436: Guardar para o imóvel próprio
+  L438: Empresário
+  L440: Não-binário
+  L440: Prefiro não informar
+  L441: Agora a parte mais importante: entender seu contexto financeiro. Sem julgamentos — só para te ajudar melhor.
+  L799: Agora há pouco
+  L801: Adicione uma camada extra de segurança
+  L801: Sessões ativas
+
+
+TOTAL PRIORITÁRIO: ~157 strings a traduzir
+(Restantes são prompts internos da IA, nomes de bancos, categorias — ficam em PT)

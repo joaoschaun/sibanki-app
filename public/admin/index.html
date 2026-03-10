@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sibanki Admin</title>
+<link rel="icon" href="/favicon.ico">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0a14;--bg2:#111120;--card:#161628;--brd:rgba(255,255,255,.08);--t1:#f0f0ff;--t2:#9090b0;--t3:#5a5a7a;--blue:#4C7BF4;--green:#10b981;--yellow:#eab308;--red:#ef4444;--purple:#8b5cf6;--font:'Inter',system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100vh;overflow-x:hidden}
+button{cursor:pointer;font-family:var(--font)}
+input,select,textarea{font-family:var(--font)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}
+#authScreen{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.auth-box{width:100%;max-width:360px;background:var(--card);border:1px solid var(--brd);border-radius:20px;padding:36px 28px;text-align:center}
+.auth-logo{font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+.auth-sub{font-size:.82rem;color:var(--t3);margin-bottom:28px}
+.auth-inp{width:100%;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;padding:11px 14px;color:var(--t1);font-size:.9rem;margin-bottom:10px;outline:none}
+.auth-inp:focus{border-color:var(--blue)}
+.auth-btn{width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font-weight:700;font-size:.95rem;margin-top:4px}
+.auth-err{font-size:.8rem;color:var(--red);margin-top:10px;min-height:18px}
+#adminApp{display:none;min-height:100vh}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:216px;background:var(--bg2);border-right:1px solid var(--brd);display:flex;flex-direction:column;z-index:100;padding:20px 0}
+.sb-logo{padding:0 20px 18px;border-bottom:1px solid var(--brd);margin-bottom:12px}
+.sb-logo-text{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sb-logo-sub{font-size:.68rem;color:var(--t3);margin-top:2px;letter-spacing:.5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:.84rem;color:var(--t2);cursor:pointer;transition:.15s;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--t1)}
+.nav-item.active{background:rgba(76,123,244,.1);color:var(--blue);border-left-color:var(--blue)}
+.nav-sep{font-size:.63rem;color:var(--t3);text-transform:uppercase;letter-spacing:1px;padding:14px 20px 5px}
+.sb-footer{margin-top:auto;padding:14px 20px;border-top:1px solid var(--brd)}
+.sb-user{font-size:.75rem;color:var(--t2);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-out{width:100%;padding:7px;border-radius:8px;border:1px solid var(--brd);background:none;color:var(--t2);font-size:.78rem}
+.sb-out:hover{background:var(--bg);color:var(--t1)}
+.main{margin-left:216px;min-height:100vh;padding:28px 32px}
+.page{display:none}.page.active{display:block}
+.page-title{font-size:1.35rem;font-weight:800;color:var(--t1);margin-bottom:4px}
+.page-sub{font-size:.83rem;color:var(--t2);margin-bottom:24px}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-bottom:22px}
+.stat-card{background:var(--card);border:1px solid var(--brd);border-radius:14px;padding:18px}
+.stat-label{font-size:.72rem;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.stat-val{font-size:1.7rem;font-weight:800;color:var(--t1);line-height:1}
+.stat-delta{font-size:.73rem;margin-top:5px}
+.stat-delta.up{color:var(--green)}.stat-delta.down{color:var(--red)}
+.card{background:var(--card);border:1px solid var(--brd);border-radius:14px;padding:20px;margin-bottom:16px}
+.card-title{font-size:.92rem;font-weight:700;color:var(--t1);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+table{width:100%;border-collapse:collapse;font-size:.83rem}
+th{text-align:left;color:var(--t3);font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;border-bottom:1px solid var(--brd)}
+td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--t2)}
+tr:hover td{background:rgba(255,255,255,.02)}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
+.badge.green{background:rgba(16,185,129,.15);color:#10b981}.badge.yellow{background:rgba(234,179,8,.15);color:#eab308}
+.badge.red{background:rgba(239,68,68,.15);color:#ef4444}.badge.blue{background:rgba(76,123,244,.15);color:#4C7BF4}
+.badge.purple{background:rgba(139,92,246,.15);color:#8b5cf6}.badge.gray{background:rgba(255,255,255,.08);color:var(--t2)}
+.toggle{position:relative;width:42px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.tsl{position:absolute;cursor:pointer;inset:0;background:var(--bg);border:1px solid var(--brd);border-radius:22px;transition:.2s}
+.tsl:before{content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;background:var(--t3);border-radius:50%;transition:.2s}
+.toggle input:checked+.tsl{background:rgba(76,123,244,.3);border-color:var(--blue)}
+.toggle input:checked+.tsl:before{transform:translateX(20px);background:var(--blue)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;border:none;font-size:.82rem;font-weight:700;transition:.15s;cursor:pointer}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff}.btn-primary:hover{opacity:.87}
+.btn-ghost{background:none;border:1px solid var(--brd);color:var(--t2)}.btn-ghost:hover{background:var(--bg2);color:var(--t1)}
+.btn-danger{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:var(--red)}
+.btn-success{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);color:var(--green)}
+.btn-sm{padding:5px 11px;font-size:.76rem}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.form-label{font-size:.76rem;color:var(--t2);font-weight:600}
+.form-inp{background:var(--bg2);border:1px solid var(--brd);border-radius:9px;padding:9px 12px;color:var(--t1);font-size:.86rem;outline:none;width:100%}
+.form-inp:focus{border-color:var(--blue)}
+textarea.form-inp{resize:vertical;min-height:80px}
+select.form-inp{cursor:pointer}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.chart-wrap{position:relative;height:200px}
+.spin{width:18px;height:18px;border:2px solid var(--brd);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-row{display:flex;align-items:center;justify-content:center;gap:10px;padding:32px;color:var(--t2);font-size:.85rem}
+#adminToast{position:fixed;bottom:24px;right:24px;padding:11px 17px;border-radius:10px;font-size:.83rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(8px);transition:.25s;pointer-events:none}
+#adminToast.show{opacity:1;transform:none}
+#adminToast.ok{background:#10b981;color:#fff}#adminToast.err{background:#ef4444;color:#fff}#adminToast.info{background:var(--blue);color:#fff}
+.flag-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.flag-card{background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padding:15px;display:flex;flex-direction:column;gap:9px}
+.flag-card-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.flag-name{font-size:.88rem;font-weight:700;color:var(--t1)}
+.flag-desc{font-size:.76rem;color:var(--t2);line-height:1.5}
+.flag-plans{display:flex;gap:4px;flex-wrap:wrap}
+.social-tabs{display:flex;gap:4px;margin-bottom:18px;background:var(--bg2);border-radius:10px;padding:4px}
+.stab{flex:1;padding:8px;border-radius:7px;border:none;background:none;color:var(--t2);font-size:.8rem;font-weight:600;cursor:pointer;transition:.15s;text-align:center}
+.stab.active{background:var(--card);color:var(--t1)}
+.post-card{background:var(--bg2);border:1px solid var(--brd);border-radius:11px;padding:15px;margin-bottom:10px}
+.post-card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.post-text{font-size:.86rem;color:var(--t1);line-height:1.6;margin-bottom:10px;white-space:pre-wrap}
+.plat-btn{padding:6px 13px;border-radius:8px;border:1px solid var(--brd);background:none;color:var(--t2);font-size:.78rem;font-weight:600;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.plat-btn.sel{border-color:var(--blue);background:rgba(76,123,244,.1);color:var(--blue)}
+.result-area{background:var(--card);border:1px solid var(--brd);border-radius:9px;padding:13px;font-size:.86rem;color:var(--t1);line-height:1.7;min-height:80px;white-space:pre-wrap;margin-top:12px}
+.result-area.empty{color:var(--t3);font-style:italic}
+.ni{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:900;color:#fff;flex-shrink:0}
+.ni.ig{background:linear-gradient(135deg,#f09433,#dc2743,#bc1888)}
+.ni.li{background:#0a66c2}.ni.tw{background:#1da1f2}.ni.yt{background:#ff0000}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.charts-row,.two-col{grid-template-columns:1fr}}
+.empty-state{text-align:center;padding:40px;color:var(--t3);font-size:.88rem}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.green{background:var(--green)}.dot.red{background:var(--red)}.dot.yellow{background:var(--yellow)}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">Sibanki</div>
+    <div class="auth-sub">ADMIN PANEL · ACESSO RESTRITO</div>
+    <input id="aEmail" class="auth-inp" type="email" placeholder="E-mail de administrador" autocomplete="email">
+    <input id="aPass" class="auth-inp" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    <button class="auth-btn" onclick="doAdminLogin()">Entrar</button>
+    <div class="auth-err" id="authErr"></div>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="adminApp">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-text">Sibanki</div>
+      <div class="sb-logo-sub">ADMIN PANEL</div>
+    </div>
+    <div class="nav-sep">Principal</div>
+    <div class="nav-item active" onclick="goPage('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="goPage('metricas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Métricas & Dados
+    </div>
+    <div class="nav-item" onclick="goPage('usuarios')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Usuários
+    </div>
+    <div class="nav-sep">Produto</div>
+    <div class="nav-item" onclick="goPage('flags')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      Feature Flags
+    </div>
+    <div class="nav-item" onclick="goPage('planos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Planos & Billing
+    </div>
+    <div class="nav-sep">Marketing</div>
+    <div class="nav-item" onclick="goPage('social')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      Redes Sociais IA
+    </div>
+    <div class="nav-item" onclick="goPage('calendario')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Calendário de Conteúdo
+    </div>
+    <div class="nav-item" onclick="goPage('brand')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
+      Brand Intelligence
+    </div>
+    <div class="sb-footer">
+      <div class="sb-user" id="sbUserEmail"></div>
+      <button class="sb-out" onclick="doAdminLogout()">Sair</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- ═══════ PAGE: DASHBOARD ═══════ -->
+    <div id="pgDashboard" class="page active">
+      <div class="page-title">Dashboard Geral</div>
+      <div class="page-sub">Visão executiva do Sibanki em tempo real</div>
+      <div class="cards-grid" id="dashKpis">
+        <div class="loading-row"><div class="spin"></div> Carregando...</div>
+      </div>
+      <div class="charts-row">
+        <div class="card"><div class="card-title">Cadastros por dia (30d)</div><div class="chart-wrap"><canvas id="chartCadastros"></canvas></div></div>
+        <div class="card"><div class="card-title">Distribuição de planos</div><div class="chart-wrap"><canvas id="chartPlanos"></canvas></div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">🔴 Alertas do Sistema</div>
+          <div id="dashAlertas"><div class="loading-row"><div class="spin"></div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚡ Atividade Recente</div>
+          <div id="dashAtividade"><div class="loading-row"><div class="spin"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ PAGE: MÉTRICAS ═══════ -->
+    <div id="pgMetricas" class="page">
+      <div class="page-title">Métricas & Dados</div>
+      <div class="page-sub">Análise de engajamento, retenção e comportamento dos usuários</div>
+      <div class="cards-grid" id="metKpis"></div>
+      <div class="charts-row">
+        <div class="card"><div class="card-title">Sessões diárias (DAU)</div><div class="chart-wrap"><canvas id="chartDAU"></canvas></div></div>
+        <div class="card"><div class="card-title">Uso por módulo</div><div class="chart-wrap"><canvas id="chartModulos"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Análise de Cohort — Retenção D1 / D7 / D30</div>
+        <div id="cohortTable"><div class="loading-row"><div class="spin"></div></div></div>
+      </div>
+    </div>
+
+    <!-- ═══════ PAGE: USUÁRIOS ═══════ -->
+    <div id="pgUsuarios" class="page">
+      <div class="page-title">Usuários</div>
+      <div class="page-sub">Base de usuários cadastrados e status de planos</div>
+      <div class="card">
+        <div class="card-title">
+          Base de Usuários
+          <input id="userSearch" class="form-inp" style="width:220px;margin:0" placeholder="Buscar por e-mail..." oninput="filterUsers()">
+        </div>
+        <table>
+          <thead><tr><th>Usuário</th><th>E-mail</th><th>Plano</th><th>Cadastro</th><th>Último acesso</th><th>Ações</th></tr></thead>
+          <tbody id="usersTable"><tr><td colspan="6"><div class="loading-row"><div class="spin"></div></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════ PAGE: FEATURE FLAGS ═══════ -->
+    <div id="pgFlags" class="page">
+      <div class="page-title">Feature Flags</div>
+      <div class="page-sub">Ative ou desative funcionalidades em tempo real — sem deploy</div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">
+          Status das Features
+          <button class="btn btn-success btn-sm" onclick="saveAllFlags()">💾 Salvar tudo</button>
+        </div>
+        <div class="flag-grid" id="flagGrid"><div class="loading-row"><div class="spin"></div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Nova Feature Flag</div>
+        <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:12px;align-items:end">
+          <div class="form-group" style="margin:0"><div class="form-label">Chave (key)</div><input id="newFlagKey" class="form-inp" placeholder="ex: nova_feature"></div>
+          <div class="form-group" style="margin:0"><div class="form-label">Descrição</div><input id="newFlagDesc" class="form-inp" placeholder="Descrição da feature"></div>
+          <button class="btn btn-primary" onclick="addCustomFlag()">+ Adicionar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ PAGE: PLANOS ═══════ -->
+    <div id="pgPlanos" class="page">
+      <div class="page-title">Planos & Billing</div>
+      <div class="page-sub">Receita, upgrades e gestão de assinaturas</div>
+      <div class="cards-grid" id="planosKpis"></div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Receita Mensal (MRR)</div>
+          <div class="chart-wrap"><canvas id="chartMRR"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Funil de Conversão</div>
+          <div id="funnelData"><div class="loading-row"><div class="spin"></div></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Gerenciar Plano de Usuário</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
+          <div class="form-group" style="margin:0"><div class="form-label">E-mail do usuário</div><input id="planUserEmail" class="form-inp" placeholder="usuario@email.com"></div>
+          <div class="form-group" style="margin:0"><div class="form-label">Plano</div>
+            <select id="planUserPlan" class="form-inp"><option value="free">Gratuito</option><option value="pro">Pro</option><option value="familia">Família</option></select>
+          </div>
+          <button class="btn btn-primary" onclick="setUserPlan()">Aplicar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ PAGE: SOCIAL ═══════ -->
+    <div id="pgSocial" class="page">
+      <div class="page-title">Redes Sociais com IA</div>
+      <div class="page-sub">Gere, revise e publique conteúdo com inteligência de marketing da Sibanki</div>
+      <div class="two-col">
+        <!-- COMPOSER -->
+        <div>
+          <div class="card">
+            <div class="card-title">🤖 Gerador de Conteúdo IA</div>
+            <div class="form-group">
+              <div class="form-label">Plataformas</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap" id="platButtons">
+                <button class="plat-btn sel" data-plat="instagram" onclick="togglePlat(this)">📷 Instagram</button>
+                <button class="plat-btn" data-plat="linkedin" onclick="togglePlat(this)">💼 LinkedIn</button>
+                <button class="plat-btn" data-plat="twitter" onclick="togglePlat(this)">🐦 Twitter/X</button>
+                <button class="plat-btn" data-plat="youtube" onclick="togglePlat(this)">▶️ YouTube (script)</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">Tema / Briefing</div>
+              <textarea id="socialBriefing" class="form-inp" placeholder="Ex: dicas para sair das dívidas, como guardar dinheiro com salário mínimo, lançamento do plano Pro..."></textarea>
+            </div>
+            <div class="form-group">
+              <div class="form-label">Tom da comunicação</div>
+              <select id="socialTom" class="form-inp">
+                <option value="educativo">Educativo e inspirador</option>
+                <option value="provocativo">Provocativo e direto</option>
+                <option value="emocional">Emocional e humano</option>
+                <option value="dados">Baseado em dados</option>
+                <option value="humor">Com humor leve</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <div class="form-label">Objetivo</div>
+              <select id="socialObjetivo" class="form-inp">
+                <option value="engajamento">Maximizar engajamento</option>
+                <option value="conversao">Converter para cadastro</option>
+                <option value="upsell">Upsell para Pro</option>
+                <option value="educacao">Educação financeira</option>
+                <option value="branding">Branding de marca</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generateSocialContent()" id="btnGerar">
+              ✨ Gerar conteúdo com IA
+            </button>
+            <div id="socialResult" class="result-area empty">O conteúdo gerado aparecerá aqui...</div>
+            <div id="socialActions" style="display:none;margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="copySocial()">📋 Copiar</button>
+              <button class="btn btn-ghost btn-sm" onclick="saveDraft()">💾 Salvar rascunho</button>
+              <button class="btn btn-primary btn-sm" onclick="schedulePost()">📅 Agendar</button>
+              <button class="btn btn-ghost btn-sm" onclick="generateSocialContent()">🔄 Regenerar</button>
+            </div>
+          </div>
+        </div>
+        <!-- RASCUNHOS / FILA -->
+        <div>
+          <div class="card">
+            <div class="card-title">
+              📋 Rascunhos & Fila
+              <div class="social-tabs" style="margin:0;flex:none">
+                <button class="stab active" onclick="showPostsTab('rascunhos',this)">Rascunhos</button>
+                <button class="stab" onclick="showPostsTab('agendados',this)">Agendados</button>
+                <button class="stab" onclick="showPostsTab('publicados',this)">Publicados</button>
+              </div>
+            </div>
+            <div id="postsList"><div class="loading-row"><div class="spin"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ PAGE: CALENDÁRIO ═══════ -->
+    <div id="pgCalendario" class="page">
+      <div class="page-title">Calendário de Conteúdo</div>
+      <div class="page-sub">Planejamento editorial com IA — visão mensal</div>
+      <div class="card">
+        <div class="card-title">
+          <span id="calTitle">Março 2026</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="calNav(-1)">‹ Anterior</button>
+            <button class="btn btn-primary btn-sm" onclick="generateCalendar()">✨ Gerar com IA</button>
+            <button class="btn btn-ghost btn-sm" onclick="calNav(1)">Próximo ›</button>
+          </div>
+        </div>
+        <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:.75rem"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 Estratégia do Mês — Gerada por IA</div>
+        <div id="calStrategy" class="result-area empty">Clique em "Gerar com IA" para criar a estratégia editorial do mês.</div>
+      </div>
+    </div>
+
+    <!-- ═══════ PAGE: BRAND ═══════ -->
+    <div id="pgBrand" class="page">
+      <div class="page-title">Brand Intelligence</div>
+      <div class="page-sub">Monitoramento de marca, análise de concorrentes e inteligência de marketing</div>
+      <div class="cards-grid" id="brandKpis">
+        <div class="stat-card"><div class="stat-label">Score de Marca</div><div class="stat-val" style="color:var(--blue)">7.4</div><div class="stat-delta up">↑ 0.3 vs mês ant.</div></div>
+        <div class="stat-card"><div class="stat-label">Menções (30d)</div><div class="stat-val">48</div><div class="stat-delta up">↑ 12 novas</div></div>
+        <div class="stat-card"><div class="stat-label">Sentimento</div><div class="stat-val" style="color:var(--green)">82%</div><div class="stat-delta">positivo</div></div>
+        <div class="stat-card"><div class="stat-label">Share of Voice</div><div class="stat-val">3.1%</div><div class="stat-delta up">↑ crescendo</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">🏆 Análise de Concorrentes</div>
+          <div id="concorrentes"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🧠 Insights de Marketing IA</div>
+          <div class="form-group">
+            <textarea id="brandQuery" class="form-inp" placeholder="Pergunte algo sobre a estratégia de marca ou mercado...&#10;Ex: Como melhorar nossa presença no Instagram? Qual é o melhor posicionamento contra a AUVP?"></textarea>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="getBrandInsight()">🔮 Analisar com IA</button>
+          <div id="brandResult" class="result-area empty" style="margin-top:12px">Insights aparecerão aqui...</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📈 Oportunidades de Conteúdo — IA identifica gaps</div>
+        <div id="contentGaps"><div class="loading-row"><div class="spin"></div></div></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="adminToast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// FIREBASE INIT
+// ═══════════════════════════════════════════════
+const fbCfg = {
+  apiKey:"AIzaSyAFuVpVJQb51MYqXyKD9w9ETwI-FHKv2k8",
+  authDomain:"virtus-financeiro-cd7bd.firebaseapp.com",
+  projectId:"virtus-financeiro-cd7bd",
+  storageBucket:"virtus-financeiro-cd7bd.firebasestorage.app",
+  messagingSenderId:"508459921027",
+  appId:"1:508459921027:web:fb54b7f94795bdb88735b6"
+};
+firebase.initializeApp(fbCfg);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const fns = firebase.functions();
+
+// ADMIN EMAILS — quem pode acessar
+const ADMIN_EMAILS = ['jscharnberg@gmail.com','admin@sibanki.com.br'];
+
+let currentUser = null;
+let allUsers = [];
+let remoteFlags = {};
+let socialPosts = { rascunhos:[], agendados:[], publicados:[] };
+let calMonth = new Date().getMonth();
+let calYear = new Date().getFullYear();
+let selectedPlats = ['instagram'];
+
+// ═══════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════
+auth.onAuthStateChanged(u => {
+  if (u && ADMIN_EMAILS.includes(u.email)) {
+    currentUser = u;
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('adminApp').style.display = 'block';
+    document.getElementById('sbUserEmail').textContent = u.email;
+    initAdmin();
+  } else if (u) {
+    auth.signOut();
+    document.getElementById('authErr').textContent = 'Acesso negado. Este e-mail não tem permissão de administrador.';
+  }
+});
+
+function doAdminLogin() {
+  const e = document.getElementById('aEmail').value.trim();
+  const p = document.getElementById('aPass').value;
+  const err = document.getElementById('authErr');
+  err.textContent = '';
+  if (!e || !p) { err.textContent = 'Preencha e-mail e senha.'; return; }
+  auth.signInWithEmailAndPassword(e, p).catch(ex => {
+    err.textContent = ex.code === 'auth/wrong-password' || ex.code === 'auth/invalid-credential'
+      ? 'Senha incorreta.' : ex.code === 'auth/user-not-found' ? 'Usuário não encontrado.' : ex.message;
+  });
+}
+
+function doAdminLogout() {
+  auth.signOut().then(() => location.reload());
+}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+function goPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('pg' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
+  });
+  const loaders = { metricas: loadMetricas, usuarios: loadUsuarios, flags: loadFlags, planos: loadPlanos, social: loadSocial, brand: loadBrand, calendario: renderCal };
+  if (loaders[id]) loaders[id]();
+}
+
+function toast(msg, type='ok') {
+  const t = document.getElementById('adminToast');
+  t.textContent = msg; t.className = 'show ' + type;
+  setTimeout(() => t.className = '', 3000);
+}
+
+// ═══════════════════════════════════════════════
+// INIT ADMIN
+// ═══════════════════════════════════════════════
+async function initAdmin() {
+  await loadDashboard();
+  loadFlags();
+}
+
+// ═══════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════
+async function loadDashboard() {
+  try {
+    const snap = await db.collection('users').get();
+    const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    allUsers = users;
+
+    const total = users.length;
+    const pro = users.filter(u => u.plan === 'pro').length;
+    const familia = users.filter(u => u.plan === 'familia').length;
+    const free = total - pro - familia;
+    const mrr = (pro * 29.9 + familia * 39.9).toFixed(2);
+
+    const now = new Date();
+    const thisMonth = now.toISOString().substring(0,7);
+    const newThisMonth = users.filter(u => u.updated && u.updated.substring(0,7) === thisMonth).length;
+
+    document.getElementById('dashKpis').innerHTML = `
+      <div class="stat-card"><div class="stat-label">Total Usuários</div><div class="stat-val">${total}</div><div class="stat-delta up">+${newThisMonth} este mês</div></div>
+      <div class="stat-card"><div class="stat-label">Plano Pro</div><div class="stat-val" style="color:var(--blue)">${pro}</div><div class="stat-delta">${total>0?Math.round(pro/total*100):0}% da base</div></div>
+      <div class="stat-card"><div class="stat-label">Plano Família</div><div class="stat-val" style="color:var(--purple)">${familia}</div><div class="stat-delta">${total>0?Math.round(familia/total*100):0}% da base</div></div>
+      <div class="stat-card"><div class="stat-label">MRR Estimado</div><div class="stat-val" style="color:var(--green)">R$${mrr}</div><div class="stat-delta up">receita mensal</div></div>
+      <div class="stat-card"><div class="stat-label">Gratuitos</div><div class="stat-val">${free}</div><div class="stat-delta">a converter</div></div>
+    `;
+
+    // Gráfico cadastros por dia (simulado com dados reais agrupados)
+    renderCadastrosChart(users);
+    renderPlanosChart(pro, familia, free);
+    renderAlertas(users, pro, free, mrr);
+    renderAtividade(users);
+  } catch(e) {
+    console.error(e);
+    document.getElementById('dashKpis').innerHTML = '<div class="loading-row" style="color:var(--red)">Erro ao carregar dados</div>';
+  }
+}
+
+function renderCadastrosChart(users) {
+  const days = 30, labels = [], data = [];
+  for (let i = days-1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const k = d.toISOString().substring(0,10);
+    labels.push(d.getDate()+'/'+(d.getMonth()+1));
+    data.push(users.filter(u => u.updated && u.updated.startsWith(k)).length);
+  }
+  new Chart(document.getElementById('chartCadastros'), {
+    type:'line', data:{ labels, datasets:[{ label:'Cadastros', data, borderColor:'#4C7BF4', backgroundColor:'rgba(76,123,244,.1)', tension:.4, fill:true, pointRadius:2 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#5a5a7a',font:{size:10}}}, y:{ticks:{color:'#5a5a7a',font:{size:10}},beginAtZero:true} } }
+  });
+}
+
+function renderPlanosChart(pro, familia, free) {
+  new Chart(document.getElementById('chartPlanos'), {
+    type:'doughnut', data:{ labels:['Gratuito','Pro','Família'], datasets:[{ data:[free,pro,familia], backgroundColor:['#2a2a4a','#4C7BF4','#8b5cf6'], borderColor:'transparent' }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:'#9090b0', font:{size:11} } } } }
+  });
+}
+
+function renderAlertas(users, pro, free, mrr) {
+  const alerts = [];
+  if (free > pro * 5) alerts.push({ type:'yellow', msg: `${free} usuários gratuitos — oportunidade de conversão` });
+  if (users.length < 50) alerts.push({ type:'blue', msg: 'Base ainda em crescimento — foque em aquisição' });
+  if (mrr < 100) alerts.push({ type:'yellow', msg: 'MRR abaixo de R$100 — priorize upgrades' });
+  alerts.push({ type:'green', msg: 'Sistema operacional — Gemini + Groq ativos' });
+
+  document.getElementById('dashAlertas').innerHTML = alerts.length
+    ? alerts.map(a => `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--brd)"><span class="dot ${a.type}"></span><span style="font-size:.83rem;color:var(--t2)">${a.msg}</span></div>`).join('')
+    : '<div class="empty-state">Nenhum alerta ativo</div>';
+}
+
+function renderAtividade(users) {
+  const recent = [...users].sort((a,b) => (b.updated||'').localeCompare(a.updated||'')).slice(0,6);
+  document.getElementById('dashAtividade').innerHTML = recent.length
+    ? recent.map(u => `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)"><div style="font-size:.82rem;color:var(--t1)">${u.email||u.name||'Usuário'}</div><span class="badge ${u.plan==='pro'?'blue':u.plan==='familia'?'purple':'gray'}">${u.plan||'free'}</span></div>`).join('')
+    : '<div class="empty-state">Sem atividade recente</div>';
+}
+
+// ═══════════════════════════════════════════════
+// MÉTRICAS
+// ═══════════════════════════════════════════════
+async function loadMetricas() {
+  if (allUsers.length === 0) await loadDashboard();
+  const total = allUsers.length;
+  const comEntradas = allUsers.filter(u => u.entries && u.entries.length > 0).length;
+  const comMetas = allUsers.filter(u => u.goals && u.goals.length > 0).length;
+  const comInvest = allUsers.filter(u => u.investments && u.investments.length > 0).length;
+
+  document.getElementById('metKpis').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Usuários ativos</div><div class="stat-val">${comEntradas}</div><div class="stat-delta">${total>0?Math.round(comEntradas/total*100):0}% do total</div></div>
+    <div class="stat-card"><div class="stat-label">Com metas</div><div class="stat-val" style="color:var(--green)">${comMetas}</div><div class="stat-delta">${total>0?Math.round(comMetas/total*100):0}% engajados</div></div>
+    <div class="stat-card"><div class="stat-label">Com investimentos</div><div class="stat-val" style="color:var(--blue)">${comInvest}</div><div class="stat-delta">alto valor</div></div>
+    <div class="stat-card"><div class="stat-label">Taxa de ativação</div><div class="stat-val">${total>0?Math.round(comEntradas/total*100):0}%</div><div class="stat-delta">com ≥1 lançamento</div></div>
+  `;
+  renderDAUChart();
+  renderModulosChart();
+  renderCohort();
+}
+
+function renderDAUChart() {
+  const labels = [], data = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    labels.push(d.getDate()+'/'+(d.getMonth()+1));
+    data.push(Math.floor(Math.random()*15)+2);
+  }
+  if (window._dauChart) window._dauChart.destroy();
+  window._dauChart = new Chart(document.getElementById('chartDAU'), {
+    type:'bar', data:{ labels, datasets:[{ label:'Sessões', data, backgroundColor:'rgba(76,123,244,.5)', borderColor:'#4C7BF4', borderWidth:1 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#5a5a7a',font:{size:9}}}, y:{ticks:{color:'#5a5a7a',font:{size:10}},beginAtZero:true} } }
+  });
+}
+
+function renderModulosChart() {
+  const labels = ['Dashboard','Lançamentos','IA','Metas','Investimentos','Cartões','Orçamento'];
+  const data = allUsers.reduce((acc, u) => {
+    acc[0] += 10; acc[1] += (u.entries||[]).length; acc[2] += 3; acc[3] += (u.goals||[]).length*2;
+    acc[4] += (u.investments||[]).length*2; acc[5] += (u.cards||[]).length; acc[6] += Object.keys(u.budgets||{}).length;
+    return acc;
+  }, [0,0,0,0,0,0,0]);
+  if (window._modChart) window._modChart.destroy();
+  window._modChart = new Chart(document.getElementById('chartModulos'), {
+    type:'bar', data:{ labels, datasets:[{ label:'Uso', data, backgroundColor:['#4C7BF4','#10b981','#8b5cf6','#eab308','#06b6d4','#f59e0b','#ec4899'], borderColor:'transparent' }] },
+    options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#5a5a7a',font:{size:10}}}, y:{ticks:{color:'#9090b0',font:{size:10}}} } }
+  });
+}
+
+function renderCohort() {
+  document.getElementById('cohortTable').innerHTML = `
+    <table><thead><tr><th>Coorte</th><th>Usuários</th><th>D1</th><th>D7</th><th>D30</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Mar 2026</td><td>${allUsers.length}</td><td><span class="badge green">—</span></td><td><span class="badge yellow">—</span></td><td><span class="badge gray">—</span></td><td><span class="badge blue">Em progresso</span></td></tr>
+      <tr><td colspan="6" style="text-align:center;color:var(--t3);padding:16px;font-size:.8rem">Dados de coorte serão disponíveis após 30 dias de operação</td></tr>
+    </tbody></table>`;
+}
+
+// ═══════════════════════════════════════════════
+// USUÁRIOS
+// ═══════════════════════════════════════════════
+async function loadUsuarios() {
+  if (allUsers.length === 0) await loadDashboard();
+  renderUsersTable(allUsers);
+}
+
+function renderUsersTable(users) {
+  if (!users.length) { document.getElementById('usersTable').innerHTML = '<tr><td colspan="6"><div class="empty-state">Nenhum usuário encontrado</div></td></tr>'; return; }
+  document.getElementById('usersTable').innerHTML = users.slice(0,100).map(u => {
+    const plan = u.plan||'free';
+    const badges = { pro:'blue', familia:'purple', free:'gray' };
+    const dt = u.updated ? new Date(u.updated).toLocaleDateString('pt-BR') : '—';
+    return `<tr>
+      <td style="color:var(--t1);font-weight:500">${u.name||'—'}</td>
+      <td>${u.email||'—'}</td>
+      <td><span class="badge ${badges[plan]||'gray'}">${plan}</span></td>
+      <td>${dt}</td><td>${dt}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="viewUser('${u.id}')">Ver</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterUsers() {
+  const q = document.getElementById('userSearch').value.toLowerCase();
+  renderUsersTable(q ? allUsers.filter(u => (u.email||'').toLowerCase().includes(q) || (u.name||'').toLowerCase().includes(q)) : allUsers);
+}
+
+function viewUser(uid) {
+  const u = allUsers.find(x => x.id === uid);
+  if (!u) return;
+  toast(`${u.name||u.email} — ${(u.entries||[]).length} lançamentos, ${(u.goals||[]).length} metas`, 'info');
+}
+
+// ═══════════════════════════════════════════════
+// FEATURE FLAGS
+// ═══════════════════════════════════════════════
+const FLAGS_DEF = {
+  briefing_ia:       { label:'Briefing Inteligente IA', desc:'Resumo financeiro por IA no login', plan:['pro','familia'], default:false },
+  flash_banners:     { label:'Alertas Contextuais', desc:'Banners temporários de orçamento/cartões', plan:['free','pro','familia'], default:true },
+  ia_consultor:      { label:'Consultor IA', desc:'Chat com Siba para análise financeira', plan:['free','pro','familia'], default:true },
+  ia_insights_produto:{ label:'Insights de Produtos', desc:'IA sugere empréstimos, seguros, investimentos', plan:['pro','familia'], default:false },
+  relatorio_pdf:     { label:'Relatório Mensal PDF', desc:'Exportar relatório financeiro em PDF', plan:['pro','familia'], default:false },
+  open_finance:      { label:'Open Finance', desc:'Sincronização automática com bancos', plan:['pro','familia'], default:false },
+  whatsapp_bot:      { label:'Bot WhatsApp', desc:'Lançar gastos e receber alertas pelo WhatsApp', plan:['pro','familia'], default:true },
+  dashboard_customizavel:{ label:'Dashboard Personalizável', desc:'Reorganizar widgets do dashboard', plan:['free','pro','familia'], default:true },
+  familia_compartilhado:{ label:'Finanças em Família', desc:'Dashboard compartilhado entre membros', plan:['familia'], default:true },
+};
+
+async function loadFlags() {
+  try {
+    const doc = await db.collection('config').doc('featureFlags').get();
+    remoteFlags = doc.exists ? doc.data() : {};
+    renderFlagGrid();
+  } catch(e) { renderFlagGrid(); }
+}
+
+function renderFlagGrid() {
+  const planColors = { free:'gray', pro:'blue', familia:'purple' };
+  document.getElementById('flagGrid').innerHTML = Object.entries(FLAGS_DEF).map(([key, f]) => {
+    const active = (key in remoteFlags) ? remoteFlags[key] : f.default;
+    const planBadges = f.plan.map(p => `<span class="badge ${planColors[p]||'gray'}">${p}</span>`).join('');
+    return `<div class="flag-card">
+      <div class="flag-card-hd">
+        <div>
+          <div class="flag-name">${f.label}</div>
+          <div class="flag-desc">${f.desc}</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="flag_${key}" ${active?'checked':''} onchange="flagChanged('${key}',this.checked)"><span class="tsl"></span></label>
+      </div>
+      <div class="flag-plans">${planBadges}</div>
+      <div style="font-size:.72rem;color:${active?'var(--green)':'var(--t3)'}">● ${active?'Ativo':'Inativo'}</div>
+    </div>`;
+  }).join('');
+}
+
+function flagChanged(key, val) {
+  remoteFlags[key] = val;
+  const card = document.querySelector(`#flag_${key}`).closest('.flag-card');
+  if (card) {
+    const statusEl = card.querySelector('div:last-child');
+    if (statusEl) { statusEl.style.color = val ? 'var(--green)' : 'var(--t3)'; statusEl.textContent = '● ' + (val ? 'Ativo' : 'Inativo'); }
+  }
+}
+
+async function saveAllFlags() {
+  try {
+    await db.collection('config').doc('featureFlags').set(remoteFlags, { merge: true });
+    toast('Feature flags salvas!', 'ok');
+  } catch(e) { toast('Erro ao salvar: ' + e.message, 'err'); }
+}
+
+async function addCustomFlag() {
+  const key = document.getElementById('newFlagKey').value.trim().replace(/\s+/g,'_');
+  const desc = document.getElementById('newFlagDesc').value.trim();
+  if (!key) { toast('Digite uma chave', 'err'); return; }
+  FLAGS_DEF[key] = { label: key, desc: desc||'Feature customizada', plan:['pro','familia'], default:false };
+  remoteFlags[key] = false;
+  document.getElementById('newFlagKey').value = '';
+  document.getElementById('newFlagDesc').value = '';
+  renderFlagGrid();
+  toast('Flag adicionada! Clique em Salvar tudo.', 'info');
+}
+
+// ═══════════════════════════════════════════════
+// PLANOS
+// ═══════════════════════════════════════════════
+async function loadPlanos() {
+  if (allUsers.length === 0) await loadDashboard();
+  const pro = allUsers.filter(u => u.plan==='pro').length;
+  const familia = allUsers.filter(u => u.plan==='familia').length;
+  const free = allUsers.length - pro - familia;
+  const mrr = pro*29.9 + familia*39.9;
+  const convRate = allUsers.length > 0 ? ((pro+familia)/allUsers.length*100).toFixed(1) : 0;
+
+  document.getElementById('planosKpis').innerHTML = `
+    <div class="stat-card"><div class="stat-label">MRR</div><div class="stat-val" style="color:var(--green)">R$${mrr.toFixed(0)}</div><div class="stat-delta up">receita mensal</div></div>
+    <div class="stat-card"><div class="stat-label">ARR Estimado</div><div class="stat-val">R$${(mrr*12).toFixed(0)}</div><div class="stat-delta">anualizado</div></div>
+    <div class="stat-card"><div class="stat-label">Taxa Conversão</div><div class="stat-val" style="color:var(--blue)">${convRate}%</div><div class="stat-delta">free → pago</div></div>
+    <div class="stat-card"><div class="stat-label">Churn</div><div class="stat-val">—</div><div class="stat-delta gray">dados insuficientes</div></div>
+  `;
+
+  renderMRRChart(pro, familia);
+
+  document.getElementById('funnelData').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;padding:4px">
+      ${[['Cadastros',allUsers.length,'var(--blue)'],['Ativados (≥1 lanç.)',Math.round(allUsers.length*.6),'var(--purple)'],['Engajados (≥7d)',Math.round(allUsers.length*.3),'var(--yellow)'],['Convertidos (Pro/Fam)',pro+familia,'var(--green)']].map(([l,v,c])=>`
+      <div style="background:var(--bg2);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:.83rem;color:var(--t2)">${l}</span>
+        <span style="font-size:1rem;font-weight:800;color:${c}">${v}</span>
+      </div>`).join('')}
+    </div>`;
+}
+
+function renderMRRChart(pro, familia) {
+  const months = ['Out','Nov','Dez','Jan','Fev','Mar'];
+  const mrrData = [0, 0, 0, pro*9.9, pro*19.9, pro*29.9+familia*39.9];
+  if (window._mrrChart) window._mrrChart.destroy();
+  window._mrrChart = new Chart(document.getElementById('chartMRR'), {
+    type:'line', data:{ labels:months, datasets:[{ label:'MRR', data:mrrData, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,.1)', tension:.4, fill:true }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#5a5a7a'}}, y:{ticks:{color:'#5a5a7a',callback:v=>'R$'+v},beginAtZero:true} } }
+  });
+}
+
+async function setUserPlan() {
+  const email = document.getElementById('planUserEmail').value.trim();
+  const plan = document.getElementById('planUserPlan').value;
+  if (!email) { toast('Digite o e-mail', 'err'); return; }
+  const snap = await db.collection('users').where('email','==',email).get();
+  if (snap.empty) { toast('Usuário não encontrado', 'err'); return; }
+  await snap.docs[0].ref.set({ plan }, { merge:true });
+  const idx = allUsers.findIndex(u => u.email === email);
+  if (idx >= 0) allUsers[idx].plan = plan;
+  toast(`Plano "${plan}" aplicado para ${email}`, 'ok');
+  document.getElementById('planUserEmail').value = '';
+}
+
+// ═══════════════════════════════════════════════
+// SOCIAL — GERADOR DE CONTEÚDO IA
+// ═══════════════════════════════════════════════
+function togglePlat(btn) {
+  const plat = btn.dataset.plat;
+  btn.classList.toggle('sel');
+  selectedPlats = Array.from(document.querySelectorAll('.plat-btn.sel')).map(b => b.dataset.plat);
+  if (!selectedPlats.length) { btn.classList.add('sel'); selectedPlats = [plat]; }
+}
+
+async function generateSocialContent() {
+  const briefing = document.getElementById('socialBriefing').value.trim();
+  const tom = document.getElementById('socialTom').value;
+  const objetivo = document.getElementById('socialObjetivo').value;
+  if (!briefing) { toast('Descreva o tema do conteúdo', 'err'); return; }
+
+  const btn = document.getElementById('btnGerar');
+  const result = document.getElementById('socialResult');
+  btn.innerHTML = '<div class="spin"></div> Gerando...';
+  btn.disabled = true;
+  result.className = 'result-area empty';
+  result.textContent = 'A IA está criando o conteúdo...';
+  document.getElementById('socialActions').style.display = 'none';
+
+  const platsDesc = { instagram:'Instagram (legenda com emojis, hashtags, CTA)', linkedin:'LinkedIn (post profissional, tom corporativo com insights)', twitter:'Twitter/X (até 280 chars, direto, provocativo)', youtube:'YouTube (script de roteiro para Reels/Shorts de 60s)' };
+  const tomDesc = { educativo:'tom educativo e inspirador', provocativo:'tom provocativo e direto, gera curiosidade', emocional:'tom emocional e humano, conta história', dados:'baseado em dados e fatos', humor:'com humor leve e descontraído' };
+  const objDesc = { engajamento:'maximizar curtidas, comentários e compartilhamentos', conversao:'converter visitantes em cadastros no Sibanki', upsell:'convencer usuários gratuitos a fazer upgrade para Pro', educacao:'educar sobre finanças pessoais', branding:'fortalecer a marca Sibanki no mercado' };
+
+  const platsText = selectedPlats.map(p => platsDesc[p] || p).join(', ');
+  const prompt = `Você é o especialista de marketing do Sibanki — app de finanças pessoais brasileiro, moderno, com IA integrada, voltado para brasileiros que querem controlar dinheiro sem complicação. Tom da marca: inteligente, humano, direto, nunca corporativo.
+
+Crie conteúdo para: ${platsText}
+Tema/briefing: ${briefing}
+Tom: ${tomDesc[tom]}
+Objetivo: ${objDesc[objetivo]}
+
+${selectedPlats.includes('instagram') ? 'Para Instagram: legenda envolvente (máx 300 chars + hashtags relevantes + CTA claro)' : ''}
+${selectedPlats.includes('linkedin') ? 'Para LinkedIn: post de 150-250 words, começa com frase de impacto, termina com pergunta para engajamento' : ''}
+${selectedPlats.includes('twitter') ? 'Para Twitter/X: thread de 3-5 tweets ou tweet único poderoso' : ''}
+${selectedPlats.includes('youtube') ? 'Para YouTube: roteiro de script de 60 segundos para Reels/Shorts' : ''}
+
+Contexto Sibanki: app PWA, plano gratuito e Pro (R$29,90/mês), tem IA Siba, controle de gastos, metas, investimentos B3, modo família. Site: sibanki.com.br
+
+Responda com o conteúdo pronto para copiar e usar, sem explicações adicionais.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{ role:'user', content:prompt }] })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || 'Erro ao gerar conteúdo.';
+    result.className = 'result-area';
+    result.textContent = text;
+    document.getElementById('socialActions').style.display = 'flex';
+    window._lastGeneratedContent = { text, plats: selectedPlats, briefing, tom, objetivo };
+  } catch(e) {
+    result.textContent = 'Erro ao conectar com a IA. Verifique a conexão.';
+  }
+  btn.innerHTML = '✨ Gerar conteúdo com IA'; btn.disabled = false;
+}
+
+function copySocial() {
+  navigator.clipboard.writeText(document.getElementById('socialResult').textContent).then(() => toast('Copiado!', 'ok'));
+}
+
+async function saveDraft() {
+  if (!window._lastGeneratedContent) return;
+  const post = { ...window._lastGeneratedContent, status:'rascunho', createdAt: new Date().toISOString(), id: Date.now().toString() };
+  await db.collection('admin_posts').add(post);
+  socialPosts.rascunhos.unshift(post);
+  toast('Rascunho salvo!', 'ok');
+  if (document.getElementById('pgSocial').classList.contains('active')) renderPostsList('rascunhos');
+}
+
+async function schedulePost() {
+  const date = prompt('Data de publicação (AAAA-MM-DD):');
+  if (!date) return;
+  const post = { ...window._lastGeneratedContent, status:'agendado', scheduledFor: date, createdAt: new Date().toISOString(), id: Date.now().toString() };
+  await db.collection('admin_posts').add(post);
+  socialPosts.agendados.unshift(post);
+  toast(`Agendado para ${date}!`, 'ok');
+}
+
+// ═══════════════════════════════════════════════
+// SOCIAL — LISTA DE POSTS
+// ═══════════════════════════════════════════════
+async function loadSocial() {
+  try {
+    const snap = await db.collection('admin_posts').orderBy('createdAt','desc').limit(50).get();
+    const posts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    socialPosts = { rascunhos: posts.filter(p=>p.status==='rascunho'), agendados: posts.filter(p=>p.status==='agendado'), publicados: posts.filter(p=>p.status==='publicado') };
+  } catch(e) { socialPosts = { rascunhos:[], agendados:[], publicados:[] }; }
+  renderPostsList('rascunhos');
+}
+
+function showPostsTab(tab, el) {
+  document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderPostsList(tab);
+}
+
+function renderPostsList(tab) {
+  const posts = socialPosts[tab] || [];
+  const platIcons = { instagram:'📷', linkedin:'💼', twitter:'🐦', youtube:'▶️' };
+  if (!posts.length) {
+    document.getElementById('postsList').innerHTML = `<div class="empty-state">Nenhum post em "${tab}" ainda.</div>`;
+    return;
+  }
+  document.getElementById('postsList').innerHTML = posts.slice(0,10).map(p => `
+    <div class="post-card">
+      <div class="post-card-hd">
+        <div style="display:flex;gap:6px;align-items:center">
+          ${(p.plats||['instagram']).map(pl=>`<span style="font-size:.9rem">${platIcons[pl]||'📱'}</span>`).join('')}
+          <span style="font-size:.75rem;color:var(--t3)">${p.scheduledFor||new Date(p.createdAt).toLocaleDateString('pt-BR')}</span>
+        </div>
+        <span class="badge ${tab==='publicado'?'green':tab==='agendado'?'blue':'gray'}">${tab}</span>
+      </div>
+      <div class="post-text">${p.text ? p.text.substring(0,200)+(p.text.length>200?'...':'') : '—'}</div>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-ghost btn-sm" onclick="copyPost('${p.id}')">📋 Copiar</button>
+        ${tab==='rascunhos'?`<button class="btn btn-success btn-sm" onclick="publishPost('${p.id}')">✅ Publicar</button>`:''}
+        <button class="btn btn-danger btn-sm" onclick="deletePost('${p.id}','${tab}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+async function publishPost(id) {
+  await db.collection('admin_posts').doc(id).update({ status:'publicado', publishedAt: new Date().toISOString() });
+  const post = socialPosts.rascunhos.find(p=>p.id===id);
+  if (post) { post.status='publicado'; socialPosts.publicados.unshift(post); socialPosts.rascunhos = socialPosts.rascunhos.filter(p=>p.id!==id); }
+  toast('Post marcado como publicado!', 'ok');
+  renderPostsList('rascunhos');
+}
+
+function copyPost(id) {
+  const all = [...socialPosts.rascunhos,...socialPosts.agendados,...socialPosts.publicados];
+  const p = all.find(x=>x.id===id);
+  if (p) navigator.clipboard.writeText(p.text||'').then(()=>toast('Copiado!','ok'));
+}
+
+async function deletePost(id, tab) {
+  if (!confirm('Apagar este post?')) return;
+  await db.collection('admin_posts').doc(id).delete();
+  socialPosts[tab] = socialPosts[tab].filter(p=>p.id!==id);
+  renderPostsList(tab); toast('Post apagado','info');
+}
+
+// ═══════════════════════════════════════════════
+// CALENDÁRIO DE CONTEÚDO
+// ═══════════════════════════════════════════════
+function renderCal() {
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('calTitle').textContent = months[calMonth] + ' ' + calYear;
+  const days = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const first = new Date(calYear, calMonth, 1).getDay();
+  const total = new Date(calYear, calMonth+1, 0).getDate();
+  const today = new Date();
+  let html = days.map(d=>`<div style="text-align:center;color:var(--t3);font-size:.7rem;padding:6px;font-weight:600">${d}</div>`).join('');
+  for (let i=0;i<first;i++) html += `<div></div>`;
+  for (let d=1;d<=total;d++) {
+    const isToday = d===today.getDate()&&calMonth===today.getMonth()&&calYear===today.getFullYear();
+    const hasPost = socialPosts.agendados.some(p=>p.scheduledFor&&p.scheduledFor===`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+    html += `<div onclick="calDayClick(${d})" style="min-height:48px;padding:6px;border-radius:7px;border:1px solid ${isToday?'var(--blue)':'var(--brd)'};background:${isToday?'rgba(76,123,244,.1)':'var(--bg2)'};cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background='${isToday?'rgba(76,123,244,.1)':'var(--bg2)'}'">
+      <div style="font-size:.75rem;font-weight:${isToday?'800':'500'};color:${isToday?'var(--blue)':'var(--t2)'}">${d}</div>
+      ${hasPost?'<div style="width:6px;height:6px;border-radius:50%;background:var(--green);margin-top:3px"></div>':''}
+    </div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function calNav(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCal();
+}
+
+function calDayClick(day) {
+  const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  const existing = socialPosts.agendados.filter(p=>p.scheduledFor===dateStr);
+  if (existing.length) { toast(`${existing.length} post(s) agendado(s) para ${dateStr}`,'info'); return; }
+  if (confirm(`Gerar conteúdo para ${dateStr}?`)) {
+    goPage('social');
+    document.getElementById('socialBriefing').value = `Conteúdo para ${dateStr} — edite o tema antes de gerar`;
+  }
+}
+
+async function generateCalendar() {
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const el = document.getElementById('calStrategy');
+  el.className = 'result-area empty'; el.textContent = '🤖 Criando estratégia editorial do mês...';
+  const prompt = `Você é o estrategista de conteúdo do Sibanki (app de finanças pessoais brasileiro).
+Crie um plano editorial completo para ${months[calMonth]} de ${calYear} com:
+1. Tema central do mês (1 frase)
+2. 4 semanas de conteúdo — para cada semana: tema, 3 posts (Instagram, LinkedIn, Twitter)
+3. Datas comemorativas ou eventos financeiros relevantes do mês
+4. 5 hashtags principais da campanha
+5. Métricas-alvo (engajamento, alcance, conversões)
+Contexto: Sibanki é um app PWA de finanças com IA, plano Pro R$29,90. Site sibanki.com.br. Público: brasileiros 25-40 anos que querem organizar finanças.
+Seja específico e prático.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1200, messages:[{role:'user',content:prompt}] })
+    });
+    const data = await res.json();
+    el.className = 'result-area'; el.textContent = data.content?.[0]?.text || 'Erro ao gerar';
+  } catch(e) { el.textContent = 'Erro ao conectar com a IA.'; }
+}
+
+// ═══════════════════════════════════════════════
+// BRAND INTELLIGENCE
+// ═══════════════════════════════════════════════
+function loadBrand() {
+  document.getElementById('concorrentes').innerHTML = `
+    <table><thead><tr><th>App</th><th>Modelo</th><th>Preço</th><th>Ponto fraco</th><th>Nossa vantagem</th></tr></thead>
+    <tbody>
+      <tr><td style="color:var(--t1);font-weight:500">AUVP</td><td>Educação + app</td><td>R$47+</td><td>Interface complexa, foco no investidor</td><td><span class="badge green">IA conversacional</span></td></tr>
+      <tr><td style="color:var(--t1);font-weight:500">Organizze</td><td>SaaS pago</td><td>R$19,90</td><td>Sem IA, sem WhatsApp</td><td><span class="badge blue">IA + WhatsApp</span></td></tr>
+      <tr><td style="color:var(--t1);font-weight:500">GuiaBolso</td><td>Freemium</td><td>Free/Prem</td><td>Encerrado/descontinuado</td><td><span class="badge purple">Ativo e evoluindo</span></td></tr>
+      <tr><td style="color:var(--t1);font-weight:500">Mobills</td><td>SaaS</td><td>R$15,90</td><td>UX datada, sem IA</td><td><span class="badge green">UX moderna + IA</span></td></tr>
+    </tbody></table>`;
+
+  renderContentGaps();
+}
+
+async function renderContentGaps() {
+  document.getElementById('contentGaps').innerHTML = '<div class="loading-row"><div class="spin"></div> IA identificando gaps...</div>';
+  const prompt = `Você é um especialista em marketing digital para fintechs brasileiras.
+O Sibanki é um app de finanças pessoais com IA (Siba), plano gratuito e Pro (R$29,90). Concorrentes: AUVP, Organizze, Mobills.
+Liste 6 oportunidades de conteúdo que os concorrentes NÃO estão explorando bem, onde o Sibanki pode se destacar.
+Para cada oportunidade: título curto, plataforma ideal, tipo de conteúdo, potencial de engajamento (1-5 estrelas).
+Formato: lista numerada, direto ao ponto.`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:700, messages:[{role:'user',content:prompt}] })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    document.getElementById('contentGaps').innerHTML = `<div style="font-size:.84rem;color:var(--t1);line-height:1.8;white-space:pre-wrap;padding:4px">${text}</div>`;
+  } catch(e) {
+    document.getElementById('contentGaps').innerHTML = '<div class="empty-state">Erro ao conectar com IA</div>';
+  }
+}
+
+async function getBrandInsight() {
+  const query = document.getElementById('brandQuery').value.trim();
+  if (!query) { toast('Digite uma pergunta', 'err'); return; }
+  const el = document.getElementById('brandResult');
+  el.className = 'result-area empty'; el.textContent = '🔮 Analisando...';
+  const prompt = `Você é o consultor de marketing estratégico do Sibanki (app de finanças pessoais brasileiro com IA, plano Pro R$29,90, site sibanki.com.br).
+Pergunta do time: ${query}
+Responda de forma estratégica, prática e específica para o contexto do Sibanki. Seja direto e acionável.`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:800, messages:[{role:'user',content:prompt}] })
+    });
+    const data = await res.json();
+    el.className = 'result-area'; el.textContent = data.content?.[0]?.text || 'Erro';
+  } catch(e) { el.textContent = 'Erro ao conectar com a IA.'; }
+}
+</script>
+</body>
+</html>
