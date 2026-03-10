@@ -747,10 +747,26 @@ function syncDrawerActiveTab(id){
 var items=document.querySelectorAll('.drawer-nav-item');items.forEach(function(it){var goId=it.getAttribute('data-go');it.classList.toggle('active',goId===id);});
 }
 function initDrawerDesktop(){
-if(window.innerWidth>=1024){var open=localStorage.getItem('sibanki_drawer_open')==='1';if(open)document.body.classList.add('drawer-sidebar-mode');}
+if(window.innerWidth>=1024){
+// Desktop: sidebar aberta por padrão (a não ser que o usuário tenha fechado explicitamente)
+var pref=localStorage.getItem('sibanki_drawer_open');
+var shouldOpen=(pref===null)?true:(pref==='1');
+if(shouldOpen)document.body.classList.add('drawer-sidebar-mode');
+}
 }
 (function(){initDrawerDesktop();var nav=document.querySelector('.drawer-nav');if(nav&&!nav.querySelector('.drawer-nav-sep')){[{b:'orçamento',t:'Planejamento'},{b:'invest',t:'Crescimento'},{b:'casal',t:'Social'},{b:'rel',t:'Sistema'}].forEach(function(s){var item=nav.querySelector('[data-go="'+s.b+'"]');if(item){var d=document.createElement('div');d.className='drawer-nav-sep';d.textContent=s.t;nav.insertBefore(d,item);}});}document.querySelectorAll('.drawer-nav-item').forEach(function(it){it.addEventListener('click',function(){var id=it.getAttribute('data-go');if(id){go(id,null);if(window.innerWidth<768)closeDrawer();}});});})();
-window.addEventListener('resize',function(){if(window.innerWidth>=1024){document.getElementById('drawerOverlay').classList.remove('show');document.getElementById('drawer').classList.remove('open');}else{document.body.classList.remove('drawer-sidebar-mode');}});
+window.addEventListener('resize',function(){
+if(window.innerWidth>=1024){
+document.getElementById('drawerOverlay').classList.remove('show');
+document.getElementById('drawer').classList.remove('open');
+// Reaplica preferência de sidebar no desktop
+var pref=localStorage.getItem('sibanki_drawer_open');
+var shouldOpen=(pref===null)?true:(pref==='1');
+document.body.classList.toggle('drawer-sidebar-mode',shouldOpen);
+}else{
+document.body.classList.remove('drawer-sidebar-mode');
+}
+});
 
 // PERFIL
 (function(){document.querySelectorAll('.perfil-tab').forEach(function(btn){btn.addEventListener('click',function(){var id=btn.getAttribute('data-perfil-tab');if(!id)return;document.querySelectorAll('.perfil-tab').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-perfil-tab')===id);});document.querySelectorAll('.perfil-tab-content').forEach(function(c){c.classList.toggle('on',c.id==='perfil'+id.charAt(0).toUpperCase()+id.slice(1));});if(typeof lucide!=='undefined')lucide.createIcons();});});})();

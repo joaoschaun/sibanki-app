@@ -109,7 +109,20 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s}
 .drawer-overlay.show{opacity:1;visibility:visible}
 .drawer{position:fixed;top:0;left:0;width:280px;height:100vh;height:100dvh;background:linear-gradient(180deg,#0d1825 0%,#070d16 100%);border-right:1px solid rgba(255,255,255,.06);z-index:9999;transform:translateX(-100%);transition:transform .3s ease;overflow-y:auto;display:flex;flex-direction:column;box-shadow:4px 0 32px rgba(0,0,0,.6);backdrop-filter:blur(20px)}
-@media(min-width:1024px){.drawer{width:320px}}
+@media(min-width:1024px){
+  /* Sidebar items mais compactos em desktop */
+  .drawer-nav-item{padding:10px 16px;font-size:.84rem;border-radius:0 10px 10px 0;margin-right:10px}
+  .drawer-nav-item .module-icon{width:36px;height:36px;border-radius:10px}
+  .drawer-nav-item .module-icon [data-lucide]{width:18px;height:18px}
+  .drawer-header{padding:20px 16px;margin:6px;margin-bottom:0}
+  .drawer-avatar{width:52px;height:52px;font-size:1.2rem;margin-bottom:10px}
+  .drawer-user-name{font-size:.9rem}
+  .drawer-user-email{font-size:.68rem}
+  /* Separadores de seção mais sutis */
+  .drawer-nav-sep{font-size:.6rem;letter-spacing:1.5px;padding:10px 20px 4px;color:var(--t3)}
+  /* Upgrade button menor */
+  .drawer-upgrade-btn{padding:9px 16px;font-size:.82rem}
+}
 .drawer.open{transform:translateX(0)}
 .drawer-header{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0;position:relative;border-radius:12px;margin:8px;margin-bottom:0;transition:background .2s}
 .drawer-header:hover{background:rgba(255,255,255,.04)}
@@ -138,7 +151,35 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 .drawer-upgrade-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(76,123,244,.4)}
 .drawer-logout-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;background:transparent;border:1px solid var(--brd);border-radius:var(--rs);color:var(--t2);font-size:.85rem;cursor:pointer;transition:.3s;font-family:"Inter",sans-serif}
 .drawer-logout-btn:hover{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#EF4444}
-@media(min-width:1024px){.drawer-sidebar-mode .drawer{transform:translateX(0)}.drawer-sidebar-mode .drawer-overlay{display:none}.drawer-sidebar-mode .app-content{margin-left:320px}.drawer-sidebar-mode .app-content .wrap{padding-left:12px}}
+/* ── DRAWER: MODO SIDEBAR FIXO EM DESKTOP ── */
+@media(min-width:1024px){
+  /* Sidebar sempre visível como coluna lateral */
+  .drawer-sidebar-mode .drawer{
+    transform:translateX(0);
+    position:fixed;
+    top:0;left:0;bottom:0;
+    box-shadow:none;
+    border-right:1px solid rgba(255,255,255,.07);
+    transition:transform .3s ease;
+  }
+  .drawer-sidebar-mode .drawer-overlay{display:none}
+  /* Conteúdo desloca para direita */
+  .drawer-sidebar-mode #appContent{margin-left:280px;transition:margin-left .3s ease}
+  .drawer-sidebar-mode .app-content .wrap{padding-left:clamp(12px,2vw,20px)}
+  /* Top header no modo sidebar: mais slim, sem hamburger redundante */
+  .drawer-sidebar-mode .top-header-btn-menu{opacity:.45;pointer-events:auto}
+  .drawer-sidebar-mode .top-header-btn-menu:hover{opacity:1}
+  /* Nav pills ocultas no desktop com sidebar — redundantes */
+  .drawer-sidebar-mode .nav{display:none!important}
+  /* Ajuste do nav pill bar que ficava abaixo do top-header */
+  .drawer-sidebar-mode .tab{padding-top:0}
+  /* Sections max-width ajustado para tela grande com sidebar */
+  .drawer-sidebar-mode section.tab{max-width:1200px}
+}
+@media(min-width:1280px){
+  .drawer-sidebar-mode #appContent{margin-left:320px}
+  .drawer{width:280px}
+}
 /* Lucide icons */
 [data-lucide]{width:20px;height:20px;stroke-width:1.75;vertical-align:middle;flex-shrink:0}
 .drawer-nav [data-lucide]{width:22px;height:22px;stroke-width:1.5;color:#90A4AE}
