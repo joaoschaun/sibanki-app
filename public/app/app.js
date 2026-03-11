@@ -1229,17 +1229,11 @@ function renderDashTelegramPromo(){renderDashPromos();}
 function renderDashPromos(){
 var impCard=document.getElementById('dashImportPromoCard');
 var telCard=document.getElementById('dashTelegramPromoCard');
-if(!impCard||!telCard)return;
-impCard.style.display='none';telCard.style.display='none';
+if(telCard)telCard.style.display='none';
+if(impCard)impCard.style.display='none';
 if(!onboardingDone)return;
-// Avalia import: só mostra se poucos lançamentos e não fechou recentemente
-var showImport=entries.length<=15;
-if(showImport){var fi=localStorage.getItem('dicaImportarFechada');if(fi&&(Date.now()-parseInt(fi,10))<7*24*60*60*1000)showImport=false;}
-// Avalia telegram
 var showTelegram=!localStorage.getItem('vrt_telegram_promo');
-// Mostra apenas 1 — import tem prioridade sobre telegram
-if(showImport){impCard.style.display='block';}
-else if(showTelegram){telCard.style.display='flex';}
+if(showTelegram&&telCard)telCard.style.display='flex';
 }
 function setLancFirstGuide(){
 var box=document.getElementById('lancFormBox');
@@ -3006,9 +3000,10 @@ var kRel=document.getElementById('kR');if(!kRel)return;kRel.innerHTML=
 '<div class="kpi kpi-custos" onclick="openKpiModal(\'custos\')"><div class="kl"><i data-lucide="pin" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;vertical-align:middle;margin-right:5px"></i>Fixos</div><div class="kv">'+fmt(custoFixo)+'</div><div class="ks">'+fmt(recFixa)+' fixa \u25b8</div></div>'+
 '<div class="kpi kpi-investido" onclick="openKpiModal(\'investido\')"><div class="kl"><i data-lucide="bar-chart-2" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;vertical-align:middle;margin-right:5px"></i>Investido</div><div class="kv">'+fmt(totalInvAtual)+'</div><div class="ks">Detalhes \u25b8</div></div>'+
 '</div>';
-var tips=getSmartTips();
+var tips=getSmartTips().filter(function(t){var s=(t.title||'')+(t.text||'');return !/importe|importar|extrato|nubank|inter|itaú|c6/i.test(s);});
 if(tips.length>0){var t=tips[0];
 var tb=document.getElementById('tipBanner');if(tb)tb.innerHTML='<div class="tip-card '+t.color+'" style="margin-bottom:16px"><b>'+t.title+'</b> - '+t.text+'</div>'}
+else{var tb=document.getElementById('tipBanner');if(tb)tb.innerHTML='';}
 setTimeout(drawSparklineSaldo,50);
 if(typeof window.refreshLucide==='function')window.refreshLucide();
 }
@@ -3044,9 +3039,9 @@ if(daysWithData===0){
 var dadosPlaceholder=[40,38,40,39,41,40,40];
 var phMin=Math.min.apply(null,dadosPlaceholder),phMax=Math.max.apply(null,dadosPlaceholder),phRange=phMax-phMin||1;
 ctx.save();
-ctx.globalAlpha=0.2;
-ctx.strokeStyle='#ffffff';
-ctx.lineWidth=1.5;
+ctx.globalAlpha=0.55;
+ctx.strokeStyle='#94a3b8';
+ctx.lineWidth=2;
 ctx.lineJoin='round';ctx.lineCap='round';
 ctx.beginPath();
 for(var j=0;j<7;j++){var xj=x(j),yj=h-pad-(h-pad*2)*((dadosPlaceholder[j]-phMin)/phRange);if(j===0)ctx.moveTo(xj,yj);else ctx.lineTo(xj,yj);}
@@ -5722,6 +5717,49 @@ menu.innerHTML='<button type="button" style="display:block;width:100%;text-align
 '<button type="button" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;color:var(--danger);font-size:.85rem;cursor:pointer" onclick="document.getElementById(\'contasCardMenuDropdown\')?.remove();delAccount(\''+esc+'\')">Excluir</button>';
 document.body.appendChild(menu);
 document.addEventListener('click',function closeMenu(ev){if(!menu.contains(ev.target)&&ev.target!==btn){menu.remove();document.removeEventListener('click',closeMenu);}});
+}
+
+function toggleContasHeaderMenu(btn){
+var existing=document.getElementById('contasHeaderMenuDropdown');
+if(existing){existing.remove();return;}
+var menu=document.createElement('div');
+menu.id='contasHeaderMenuDropdown';
+menu.style.cssText='position:fixed;background:var(--card);border:1px solid var(--brd);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:6px 0;z-index:9999;min-width:200px';
+var r=btn.getBoundingClientRect();
+var left=Math.max(8,r.right-200);
+menu.style.left=left+'px';
+menu.style.top=(r.bottom+6)+'px';
+var itemStyle='display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 16px;border:none;background:none;color:var(--t1);font-size:.88rem;cursor:pointer;';
+menu.innerHTML=
+'<button type="button" style="'+itemStyle+'" onclick="document.getElementById(\'contasHeaderMenuDropdown\')?.remove();openTransferModal()"><i data-lucide="arrow-left-right" style="width:16px;height:16px;opacity:.7"></i> Transferir entre contas</button>'+
+'<button type="button" style="'+itemStyle+'" onclick="document.getElementById(\'contasHeaderMenuDropdown\')?.remove();openWltModal()"><i data-lucide="plus-circle" style="width:16px;height:16px;opacity:.7"></i> Nova conta</button>'+
+'<button type="button" style="'+itemStyle+'" onclick="document.getElementById(\'contasHeaderMenuDropdown\')?.remove();openAjustarSaldoGlobal()"><i data-lucide="settings-2" style="width:16px;height:16px;opacity:.7"></i> Ajustar saldos iniciais</button>'+
+'<div style="height:1px;background:var(--brd);margin:4px 0"></div>'+
+'<button type="button" style="'+itemStyle+'" onclick="document.getElementById(\'contasHeaderMenuDropdown\')?.remove();typeof showPatrimonio===\'function\'&&showPatrimonio()"><i data-lucide="bar-chart-2" style="width:16px;height:16px;opacity:.7"></i> Resumo do patrimônio</button>'+
+'<button type="button" style="'+itemStyle+'" onclick="document.getElementById(\'contasHeaderMenuDropdown\')?.remove();expCSV&&expCSV()"><i data-lucide="download" style="width:16px;height:16px;opacity:.7"></i> Exportar extrato CSV</button>';
+document.body.appendChild(menu);
+if(typeof lucide!=='undefined')lucide.createIcons();
+document.addEventListener('click',function closeHMenu(ev){if(!menu.contains(ev.target)&&ev.target!==btn){menu.remove();document.removeEventListener('click',closeHMenu);}});
+}
+
+function openAjustarSaldoGlobal(){
+// Abre o modal de ajuste de saldo para que o usuário escolha a conta
+var accs=(typeof userAccs!=='undefined'&&Array.isArray(userAccs))?userAccs:[];
+if(accs.length===0){toast('Nenhuma conta cadastrada.','warn');return;}
+if(accs.length===1){openWltAjuste(accs[0]);return;}
+// Mais de uma conta: mostra picker simples
+var ov=document.createElement('div');
+ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;display:flex;align-items:center;justify-content:center';
+var box=document.createElement('div');
+box.style.cssText='background:var(--card);border:1px solid var(--brd);border-radius:16px;padding:24px;min-width:280px;max-width:340px;width:90%';
+box.innerHTML='<h3 style="margin:0 0 16px;font-size:1rem">Selecionar conta para ajustar</h3>'+
+accs.map(function(a){return'<button type="button" onclick="this.closest(\'[data-ov]\').remove();openWltAjuste(\''+String(a).replace(/'/g,"\\'")+'\')" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;margin-bottom:8px;border:1px solid var(--brd);border-radius:10px;background:var(--bg2);color:var(--t1);cursor:pointer;font-size:.9rem">'+getBankLogoHtml(a,28)+' '+escapeHtml(a)+'</button>';}).join('')+
+'<button type="button" onclick="this.closest(\'[data-ov]\').remove()" style="width:100%;padding:10px;border:none;background:none;color:var(--t3);cursor:pointer;font-size:.85rem;margin-top:4px">Cancelar</button>';
+ov.setAttribute('data-ov','1');
+ov.appendChild(box);
+ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+document.body.appendChild(ov);
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 
@@ -13407,6 +13445,26 @@ var cmF=rM>0?(cF/rM*100):0;
 c='<h3><i data-lucide="landmark" style="width:22px;height:22px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Patrim\u00f4nio Total</h3>';
 c+='<div class="kpi-modal-value" style="color:var(--pri)">'+fmt(pT)+'</div>';
 
+// ── Gráfico de evolução de saldo (últimos 7 meses) ──
+var evLabels=[],evSaldo=[],evInv=[];
+for(var mi=6;mi>=0;mi--){
+var d2=new Date(now.getFullYear(),now.getMonth()-mi,1);
+var ym=d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0');
+var label=d2.toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
+var sAcc=tIni,sInv=tIA;
+if(mi>0){
+// Recalcula saldo acumulado até o fim deste mês
+var sAcc2=tIni,rAcc=0,dAcc=0;
+ent.forEach(function(e){if(e.date&&e.date<=ym+'-31'){if(e.type==='receita')rAcc+=e.value;else dAcc+=e.value;}});
+sAcc=tIni+rAcc-dAcc;
+// Investimentos: usa valor atual (simplificado — não temos histórico de cotas)
+sInv=tIA;
+}
+evLabels.push(label);evSaldo.push(parseFloat(sAcc.toFixed(2)));evInv.push(parseFloat(sInv.toFixed(2)));
+}
+c+='<div class="kpi-detail-section" style="padding-bottom:4px"><h4 style="margin-bottom:8px"><i data-lucide="trending-up" style="width:16px;height:16px;vertical-align:middle"></i> Evolução do Saldo (7 meses)</h4>';
+c+='<canvas id="patrimonioEvoChart" height="130" style="width:100%;max-height:130px"></canvas></div>';
+
 c+='<div class="kpi-detail-section"><h4><i data-lucide="bar-chart-2" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Composi\u00e7\u00e3o do Patrim\u00f4nio</h4>';
 c+='<div class="kpi-detail-item"><span class="di-label"><i data-lucide="landmark" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Saldos Iniciais</span><span class="di-value">'+fmt(tIni)+'</span></div>';
 c+='<div class="kpi-detail-item"><span class="di-label"><i data-lucide="check" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Receitas</span><span class="di-value" style="color:var(--green)">'+fmt(tR)+'</span></div>';
@@ -13480,6 +13538,42 @@ c+='<div class="kpi-tip warn"><div class="kpi-tip-title"><i data-lucide="alert-t
 ct.innerHTML=c;
 ov.classList.add('active');
 if(typeof lucide!=='undefined')lucide.createIcons();
+// Renderiza o gráfico de evolução
+setTimeout(function(){
+var canvas=document.getElementById('patrimonioEvoChart');
+if(!canvas||typeof Chart==='undefined')return;
+var isLight=document.body.classList.contains('theme-light');
+var gridColor=isLight?'rgba(0,0,0,.08)':'rgba(255,255,255,.08)';
+var txtColor=isLight?'#64748b':'#94a3b8';
+var zero=evSaldo.every(function(v){return v===0;});
+if(zero){canvas.style.display='none';return;}
+new Chart(canvas,{
+type:'line',
+data:{
+labels:evLabels,
+datasets:[{
+label:'Saldo em Contas',
+data:evSaldo,
+borderColor:'#4C7BF4',
+backgroundColor:'rgba(76,123,244,.12)',
+fill:true,
+tension:0.4,
+pointRadius:4,
+pointBackgroundColor:'#4C7BF4',
+borderWidth:2
+}]
+},
+options:{
+responsive:true,
+maintainAspectRatio:false,
+plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return'R$ '+ctx.parsed.y.toLocaleString('pt-BR',{minimumFractionDigits:2});}}}},
+scales:{
+x:{grid:{color:gridColor},ticks:{color:txtColor,font:{size:11}}},
+y:{grid:{color:gridColor},ticks:{color:txtColor,font:{size:11},callback:function(v){return'R$'+(Math.abs(v)>=1000?(v/1000).toFixed(1)+'k':v.toFixed(0));}}}
+}
+}
+});
+},120);
 }
 
 function delAccount(acc){

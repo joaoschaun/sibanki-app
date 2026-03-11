@@ -260,7 +260,7 @@
 
 <!-- DRAWER (menu lateral) -->
 <aside class="drawer" id="drawer" role="navigation" aria-label="Menu principal">
-<button class="drawer-close-btn" onclick="event.stopPropagation();closeDrawer()" aria-label="Fechar menu" type="button"><i data-lucide="x" style="width:22px;height:22px"></i></button>
+<button class="drawer-close-btn" id="drawerToggleBtn" onclick="event.stopPropagation();(window.innerWidth>=1024?toggleDrawer():closeDrawer())" aria-label="Fechar menu" type="button"><i data-lucide="x" style="width:22px;height:22px"></i><span class="drawer-expand-icon" style="display:none" aria-hidden="true"><i data-lucide="panel-right-open" style="width:20px;height:20px"></i></span></button>
 <div class="drawer-header" onclick="go('perfil',null);closeDrawer()" role="button" tabindex="0" title="Abrir Perfil" style="cursor:pointer">
 <div class="drawer-avatar" id="drawerAvatar"><span id="drawerAvatarInicial">U</span></div>
 <div class="drawer-user-name" id="drawerUserName">Usuário</div>
@@ -318,15 +318,7 @@
 </div>
 </div>
 <div class="top-header-r">
-<!-- lang-wrap desativado temporariamente — muitas strings ainda em revisão
-<div class="lang-wrap">
-<button type="button" id="langBtn" class="lang-btn" onclick="toggleLangDropdown()" title="Idioma / Language" aria-label="Idioma"><i data-lucide="globe" style="width:20px;height:20px"></i></button>
-<div id="langDropdown" class="lang-dropdown">
-<button type="button" onclick="setLang('pt-BR');closeLangDropdown();if(typeof toast==='function')toast(typeof t==='function'?t('config_salvo'):'Configurações salvas!','ok');"><span class="flag">🇧🇷</span><span>Português (Brasil)</span></button>
-<button type="button" onclick="setLang('en');closeLangDropdown();if(typeof toast==='function')toast(typeof t==='function'?t('config_salvo'):'Settings saved!','ok');"><span class="flag">🇺🇸</span><span>English</span></button>
-</div>
-</div>
--->
+<button type="button" id="importBtn" class="top-header-icon-btn" onclick="go('cartões',null);setTimeout(function(){if(typeof impData==='function')impData();},400);" title="Importar extrato (Nubank, Inter, Itaú, C6)" aria-label="Importar extrato"><i data-lucide="upload" style="width:20px;height:20px"></i></button>
 <button onclick="toggleTheme()" id="themeBtn" class="top-header-icon-btn" style="display:inline-flex;align-items:center;justify-content:center" title="Alternar tema claro/escuro"><i data-lucide="sun" style="width:20px;height:20px"></i></button>
 <button class="notif-btn" onclick="toggleNP()" title="Notificações"><i data-lucide="bell"></i><span class="notif-badge" id="nBadge" style="display:none">0</span></button>
 <div class="top-header-avatar" id="topHeaderAvatar" onclick="go('perfil',null);closeDrawer()" role="button" tabindex="0" title="Abrir Perfil" style="cursor:pointer"><span id="topHeaderAvatarInicial">U</span></div>
@@ -347,12 +339,6 @@
 <!-- FLASH BANNER (contextual, temporário, colorido) -->
 <div id="sibFlashBar" style="margin-bottom:0"></div>
 <div id="tipBanner" style="margin-bottom:12px"></div>
-<div id="dashImportPromoCard" class="cb" style="display:none;margin-bottom:16px;background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(6,182,212,.06));border:1px solid rgba(34,197,94,.3);padding:16px 18px">
-<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-<div><div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:4px;display:inline-flex;align-items:center;gap:6px"><i data-lucide="lightbulb" style="width:14px;height:14px"></i> Dica</div>
-<div style="font-size:.95rem;color:var(--t1);line-height:1.5"><span data-i18n="importar_extrato_desc">Importe seu extrato Nubank, Inter, Itaú ou C6 em segundos.</span></div></div>
-<div style="display:flex;gap:8px"><button type="button" class="btn btn-g" style="font-size:.8rem;padding:8px 16px" onclick="go('cartões',null);setTimeout(function(){if(typeof impData==='function')impData();},400);">Importar extrato</button>
-<button type="button" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:1.2em;padding:4px" onclick="document.getElementById('dashImportPromoCard').style.display='none';localStorage.setItem('dicaImportarFechada',Date.now());" title="Fechar">&times;</button></div></div></div>
 <div id="dashTelegramPromoCard" class="dash-telegram-bar" style="display:none">
 <span class="dash-telegram-bar-txt">Vincule o Telegram para receber insights no celular.</span>
 <button type="button" class="dash-telegram-bar-btn" onclick="go('config',null);document.getElementById('dashTelegramPromoCard').style.display='none';localStorage.setItem('vrt_telegram_promo','1');">Vincular</button>
@@ -1596,7 +1582,7 @@
 <div class="contas-header-actions">
 <button type="button" class="contas-btn-add" onclick="openWltModal()" title="Nova conta" data-i18n-title="nova_conta"><i data-lucide="plus" style="width:22px;height:22px"></i></button>
 <button type="button" onclick="typeof showPatrimonio==='function'&&showPatrimonio()" title="Evolução"><i data-lucide="line-chart" style="width:20px;height:20px"></i></button>
-<button type="button" title="Opções"><i data-lucide="more-vertical" style="width:20px;height:20px"></i></button>
+<button type="button" id="contasHeaderMenuBtn" title="Opções" onclick="toggleContasHeaderMenu(this)"><i data-lucide="more-vertical" style="width:20px;height:20px"></i></button>
 </div>
 </div>
 
@@ -1634,7 +1620,7 @@
 <div class="contas-sidebar-value" id="contasSidebarAtual">R$ 0,00</div>
 <div class="contas-sidebar-title" data-i18n="saldo_previsto">Saldo previsto</div>
 <div class="contas-sidebar-value" id="contasSidebarPrevisto">R$ 0,00</div>
-<button type="button" class="contas-sidebar-btn" onclick="typeof showPatrimonio==='function'&&showPatrimonio()"><i data-lucide="trending-up" style="width:18px;height:18px"></i> <span data-i18n="grafico_evolucao">Gráfico de evolução</span></button>
+<button type="button" class="contas-sidebar-btn" onclick="typeof showPatrimonio==='function'&&showPatrimonio()"><i data-lucide="bar-chart-2" style="width:18px;height:18px"></i> <span data-i18n="grafico_evolucao">Patrimônio &amp; Evolução</span></button>
 </aside>
 </div>
 
