@@ -318,6 +318,7 @@
 </div>
 </div>
 <div class="top-header-r">
+<!-- lang-wrap desativado temporariamente — muitas strings ainda em revisão
 <div class="lang-wrap">
 <button type="button" id="langBtn" class="lang-btn" onclick="toggleLangDropdown()" title="Idioma / Language" aria-label="Idioma"><i data-lucide="globe" style="width:20px;height:20px"></i></button>
 <div id="langDropdown" class="lang-dropdown">
@@ -325,6 +326,7 @@
 <button type="button" onclick="setLang('en');closeLangDropdown();if(typeof toast==='function')toast(typeof t==='function'?t('config_salvo'):'Settings saved!','ok');"><span class="flag">🇺🇸</span><span>English</span></button>
 </div>
 </div>
+-->
 <button onclick="toggleTheme()" id="themeBtn" class="top-header-icon-btn" style="display:inline-flex;align-items:center;justify-content:center" title="Alternar tema claro/escuro"><i data-lucide="sun" style="width:20px;height:20px"></i></button>
 <button class="notif-btn" onclick="toggleNP()" title="Notificações"><i data-lucide="bell"></i><span class="notif-badge" id="nBadge" style="display:none">0</span></button>
 <div class="top-header-avatar" id="topHeaderAvatar" onclick="go('perfil',null);closeDrawer()" role="button" tabindex="0" title="Abrir Perfil" style="cursor:pointer"><span id="topHeaderAvatarInicial">U</span></div>

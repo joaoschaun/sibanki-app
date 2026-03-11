@@ -302,9 +302,9 @@ loadData();
 var sibOnbCurrentQ=0,sibOnbAnswers={situacao:'',dor:'',objetivo:''};
 var sibOnbQuestions=[
 {key:'situacao',title:'Conta pra gente: qual sua situação financeira atual?',options:[
-{value:'endividado',label:'Tenho dívidas para quitar',lucide:'frown'},
-{value:'equilibrado',label:'Não tenho dívidas mas não consigo guardar',lucide:'minus-circle'},
-{value:'poupador',label:'Consigo economizar um pouco todo mês',lucide:'smile'},
+{value:'endividado',label:'Tenho dívidas para quitar',lucide:'circle-x'},
+{value:'equilibrado',label:'Não tenho dívidas mas não consigo guardar',lucide:'minus-square'},
+{value:'poupador',label:'Consigo economizar um pouco todo mês',lucide:'circle-check'},
 {value:'investidor',label:'Economizo bem e já invisto',lucide:'trending-up'}
 ]},
 {key:'dor',title:'O que mais te preocupa quando o assunto é dinheiro?',options:[
@@ -506,7 +506,7 @@ setTimeout(function(){if(typeof go==='function')go('dash',null);},50);
 setTimeout(function(){if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();},400);
 setTimeout(function(){
 if(onboardingDone&&window._tourCompleto!==true){if(typeof startSibankiTour==='function')startSibankiTour();}
-},800);
+},1400);
 }catch(e){console.error('applyDocFromServer error:',e);toast(typeof t==='function'?t('toast_erro_preparar'):'Erro ao preparar a tela. Recarregue a página.','err');}
 if(typeof updateResumoSemanalToggle==='function')updateResumoSemanalToggle(!!window._resumoSemanalEmail);
 if(lb){lb.classList.add('hidden');lb.style.display='none'}
@@ -660,7 +660,7 @@ renderAccTags();saveData();toast(typeof t==='function'?t('toast_conta_removida')
 }
 
 var _CImap={'moradia':'🏠','transporte':'🚗','alimentacao':'🍔','saude':'💊','bem-estar':'🧘','educação':'📚','lazer':'🎮','cartoes':'💳','emprestimo':'🏦','assinaturas':'📱','salário':'💼','freela':'💻','investimentos':'📈','transferencia':'🔄','outros':'📦','mercado':'🛒','supermercado':'🛒','farmacia':'💊','restaurante':'🍽️','delivery':'🛵','cafe':'☕','uber':'🚕','combustivel':'⛽','energia':'⚡','agua':'💧','gas':'🔥','aluguel':'🏡','condominio':'🏢','seguro':'🛡️','imposto':'📋','pet':'🐾','internet':'🌐','telefone':'📞','streaming':'📺','vestuario':'👕','beleza':'💅','viagem':'✈️','hotel':'🏨','presente':'🎁','academia':'🏋️','escola':'🎓','cinema':'🎬','shows':'🎵','esporte':'⚽','dentista':'🦷','médico':'🩺','poupança':'🏦','dividendos':'💹','renda extra':'💰','bonus':'🎯','luz':'💡','parcela':'💳','compras':'🛍️','doacao':'❤️'};
-var _CImapLucide={'moradia':'home','transporte':'car','alimentacao':'utensils-crossed','saude':'heart-pulse','bem-estar':'sparkles','educacao':'graduation-cap','lazer':'gamepad-2','cartoes':'credit-card','emprestimo':'landmark','assinaturas':'smartphone','salario':'briefcase','freela':'laptop','investimentos':'trending-up','transferencia':'arrow-left-right','outros':'package','mercado':'shopping-cart','supermercado':'shopping-cart','farmacia':'pill','restaurante':'utensils-crossed','delivery':'bike','cafe':'coffee','uber':'car','combustivel':'fuel','energia':'zap','agua':'droplets','gas':'flame','aluguel':'home','condominio':'building-2','pet':'paw-print','internet':'globe','telefone':'phone','streaming':'tv','vestuario':'shirt','viagem':'plane','hotel':'building','presente':'gift','academia':'dumbbell','escola':'graduation-cap','cinema':'film','compras':'shopping-bag'};
+var _CImapLucide={'moradia':'home','transporte':'car','alimentacao':'utensils-crossed','saude':'heart-pulse','bem-estar':'sparkles','educacao':'graduation-cap','lazer':'gamepad-2','cartoes':'credit-card','emprestimo':'landmark','assinaturas':'smartphone','salario':'briefcase','freela':'laptop','investimentos':'trending-up','transferencia':'arrow-left-right','outros':'package','mercado':'shopping-cart','supermercado':'shopping-cart','farmacia':'tablets','restaurante':'utensils-crossed','delivery':'truck','cafe':'coffee','uber':'car','combustivel':'droplets','energia':'zap','agua':'droplets','gas':'flame','aluguel':'home','condominio':'building-2','pet':'paw-print','internet':'globe','telefone':'phone','streaming':'tv','vestuario':'shirt','viagem':'plane','hotel':'building','presente':'gift','academia':'dumbbell','escola':'graduation-cap','cinema':'film','compras':'shopping-bag'};
 function _rmAc(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,'-')}
 function _gCI(c){if(!c)return'';var k=_rmAc(c);return _CImap[k]||''}
 function _gCILucide(c){if(!c)return'package';var k=_rmAc(c);return _CImapLucide[k]||'package'}
@@ -1431,6 +1431,8 @@ if(!step||!spotlight||!tooltip)return;
 var el=document.querySelector(step.selector);
 if(el){
 var r=el.getBoundingClientRect();
+// Só reposiciona se elemento está visível (evita calcular com r={0,0,0,0})
+if(r.width===0&&r.height===0){spotlight.style.display='none';return;}
 var pad=12;
 spotlight.style.display='block';
 spotlight.style.top=(r.top-pad)+'px';
@@ -1543,15 +1545,24 @@ sibTourEnd();return;
 }
 var el=step.selector?document.querySelector(step.selector):null;
 if(el){
+// Garante que o elemento está visível antes de calcular posição
 if(el.scrollIntoView){el.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'});}
+// Esconde o spotlight durante o scroll para não "vaguear"
+spotlight.style.display='none';
+// Aguarda o scroll terminar + animações de aba (450ms) antes de posicionar
+setTimeout(function(){
 var r=el.getBoundingClientRect();
+// Só mostra se o elemento está de fato na viewport
+if(r.width>0&&r.height>0){
 var pad=12;
 spotlight.style.display='block';
 spotlight.style.top=(r.top-pad)+'px';
 spotlight.style.left=(r.left-pad)+'px';
 spotlight.style.width=(r.width+pad*2)+'px';
 spotlight.style.height=(r.height+pad*2)+'px';
-setTimeout(function(){sibTourRefreshPosition();},380);
+}
+sibTourRefreshPosition();
+},460);
 }else{
 spotlight.style.display='none';
 }
