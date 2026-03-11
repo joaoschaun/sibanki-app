@@ -1571,58 +1571,98 @@
 </div>
 </div>
 
-<!-- TAB: ORÇAMENTO (redesenhado Mobills-style) -->
+<!-- TAB: ORÇAMENTO v2 (Lovable-style) -->
 <div id="orçamento" class="tab">
 <div id="orcamentoWrap" class="orcamento-wrap">
-<header class="orc-header">
-<button type="button" class="orc-nav-btn" onclick="orcamentoPrevMonth()" aria-label="Mês anterior"><i data-lucide="chevron-left" style="width:22px;height:22px"></i></button>
-<h1 id="orcamentoMonthTitle" class="orc-month-title">Março 2026</h1>
-<button type="button" class="orc-nav-btn" onclick="orcamentoNextMonth()" aria-label="Próximo mês"><i data-lucide="chevron-right" style="width:22px;height:22px"></i></button>
-</header>
-<div id="orcamentoKpis" class="orc-kpis"></div>
-<div id="orcamentoEmpty" class="orc-empty-state" style="display:none">
-<div class="orc-empty-icon"><i data-lucide="target" style="width:48px;height:48px;color:var(--vr)"></i></div>
-<h2 class="orc-empty-title"><span data-i18n="nenhum_orcamento_mes">Nenhum orçamento para este mês</span></h2>
-<p class="orc-empty-sub">Defina seus limites por categoria e tenha controle total dos seus gastos.</p>
-<button type="button" class="btn btn-b orc-btn-criar" onclick="orcamentoOpenWizard()"><i data-lucide="clipboard-list" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Criar planejamento</button>
-<button type="button" id="orcamentoCopyPrevBtn" class="btn btn-o orc-btn-copy" onclick="orcamentoCopyFromPrev()" title="Não há mês anterior com orçamento"><i data-lucide="copy" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Copiar do mês anterior</button>
-</div>
-<div id="orcamentoFilled" class="orc-filled" style="display:none">
-<!-- Toolbar -->
-<div class="orc-filled-top">
-<button type="button" class="btn btn-b btn-sm" onclick="orcamentoOpenAddCategorias()"><i data-lucide="plus" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Categorias</button>
-<button type="button" class="btn btn-o btn-sm" onclick="orcamentoOpenWizard(true)"><i data-lucide="pencil" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Editar</button>
-</div>
-<!-- KPI cards v2 -->
-<div id="orcamentoFilledKpis" class="orc-kpis-v2"></div>
-<!-- Overview bar -->
-<div id="orcOverviewBar" class="orc-overview-bar" style="display:none"></div>
-<!-- Charts row -->
-<div class="orc-charts-row">
-<div class="orc-chart-card" id="orcBarChartWrap" style="display:none">
-<div class="orc-chart-header">
-<div><div class="orc-chart-title">Planejado vs Real</div><div class="orc-chart-sub">Últimos 6 meses</div></div>
-</div>
-<canvas id="orcBarChart" style="max-height:200px"></canvas>
-</div>
-<div class="orc-chart-card" id="orcPieChartWrap" style="display:none">
-<div class="orc-chart-header">
-<div><div class="orc-chart-title">Distribuição de Gastos</div><div class="orc-chart-sub" id="orcPieChartSub"></div></div>
-</div>
-<canvas id="orcPieChart" style="max-height:180px"></canvas>
-<div id="orcPieLegend" class="orc-pie-legend"></div>
-</div>
-</div>
-<!-- Categories grid -->
-<div class="orc-cats-section-header">
-<span class="orc-cats-section-title">Categorias</span>
-</div>
-<div id="orcamentoFilledList" class="orc-cats-grid"></div>
-<!-- IA Insight -->
-<div id="orcIaTip" class="metas-ia-tip" style="display:none"></div>
-</div>
-</div>
-</div>
+
+  <!-- Page Header -->
+  <div class="orc-page-header">
+    <div class="orc-page-header-left">
+      <p class="orc-page-sub">Planejamento</p>
+      <h1 class="orc-page-title">Orçamento Mensal 📊</h1>
+      <p class="orc-page-desc">Controle seus limites de gastos por categoria</p>
+    </div>
+    <div class="orc-page-actions" id="orcPageActions" style="display:none">
+      <button type="button" class="btn btn-o btn-sm" onclick="orcamentoOpenWizard(true)">
+        <i data-lucide="pencil" style="width:15px;height:15px;vertical-align:middle;margin-right:4px"></i> Editar
+      </button>
+      <button type="button" class="btn btn-b btn-sm" onclick="orcamentoOpenAddCategorias()">
+        <i data-lucide="plus" style="width:15px;height:15px;vertical-align:middle;margin-right:4px"></i> Adicionar categoria
+      </button>
+    </div>
+  </div>
+
+  <!-- Month Navigator -->
+  <div class="orc-month-nav">
+    <button type="button" class="orc-nav-btn" onclick="orcamentoPrevMonth()" aria-label="Mês anterior">
+      <i data-lucide="chevron-left" style="width:20px;height:20px"></i>
+    </button>
+    <h2 id="orcamentoMonthTitle" class="orc-month-title">Março 2026</h2>
+    <button type="button" class="orc-nav-btn" onclick="orcamentoNextMonth()" aria-label="Próximo mês">
+      <i data-lucide="chevron-right" style="width:20px;height:20px"></i>
+    </button>
+  </div>
+
+  <!-- Estado vazio -->
+  <div id="orcamentoEmpty" class="orc-empty-state" style="display:none">
+    <div class="orc-empty-icon"><i data-lucide="target" style="width:48px;height:48px;color:var(--vr)"></i></div>
+    <h2 class="orc-empty-title">Nenhum orçamento para este mês</h2>
+    <p class="orc-empty-sub">Defina seus limites por categoria e tenha controle total dos seus gastos.</p>
+    <button type="button" class="btn btn-b orc-btn-criar" onclick="orcamentoOpenWizard()">
+      <i data-lucide="clipboard-list" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i> Criar planejamento
+    </button>
+    <button type="button" id="orcamentoCopyPrevBtn" class="btn btn-o orc-btn-copy" onclick="orcamentoCopyFromPrev()">
+      <i data-lucide="copy" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i> Copiar do mês anterior
+    </button>
+  </div>
+
+  <!-- Estado preenchido -->
+  <div id="orcamentoFilled" class="orc-filled" style="display:none">
+
+    <!-- 4 KPI cards -->
+    <div id="orcamentoFilledKpis" class="orc-kpis-v2"></div>
+
+    <!-- Barra de uso total -->
+    <div id="orcOverviewBar" class="orc-overview-bar" style="display:none"></div>
+
+    <!-- Gráficos: Planejado vs Real + Distribuição -->
+    <div class="orc-charts-row">
+      <div class="orc-chart-card" id="orcBarChartWrap" style="display:none">
+        <div class="orc-chart-header">
+          <div>
+            <div class="orc-chart-title">Planejado vs Real</div>
+            <div class="orc-chart-sub">Últimos 6 meses</div>
+          </div>
+        </div>
+        <canvas id="orcBarChart"></canvas>
+      </div>
+      <div class="orc-chart-card" id="orcPieChartWrap" style="display:none">
+        <div class="orc-chart-header">
+          <div>
+            <div class="orc-chart-title">Distribuição de Gastos</div>
+            <div class="orc-chart-sub" id="orcPieChartSub"></div>
+          </div>
+        </div>
+        <canvas id="orcPieChart"></canvas>
+        <div id="orcPieLegend" class="orc-pie-legend"></div>
+      </div>
+    </div>
+
+    <!-- Seção Categorias -->
+    <div class="orc-cats-section-header">
+      <span class="orc-cats-section-title">Categorias</span>
+      <button type="button" class="orc-cats-ver-detalhes" onclick="orcamentoOpenAddCategorias()">
+        Ver detalhes <i data-lucide="arrow-right" style="width:13px;height:13px;vertical-align:middle"></i>
+      </button>
+    </div>
+    <div id="orcamentoFilledList" class="orc-cats-grid"></div>
+
+    <!-- IA Insight -->
+    <div id="orcIaTip" class="metas-ia-tip" style="display:none"></div>
+
+  </div><!-- /orcamentoFilled -->
+</div><!-- /orcamentoWrap -->
+</div><!-- /tab orçamento -->
 
 <!-- MODAL NOVO PLANEJAMENTO (orçamento) -->
 <div id="orcamentoModalOv" class="card-modal-ov" onclick="if(event.target===this)closeOrcamentoModal()">
@@ -2517,35 +2557,48 @@
 
 <!-- TAB: COMUNIDADE -->
 <div id="comunidade" class="tab">
-<div id="commSetup" class="comm-setup" style="display:none">
-<div class="comm-avatar-preview" id="commAvatarPreview" style="background:var(--pri)">?</div>
-<h2 style="display:flex;align-items:center;gap:8px"><i data-lucide="globe" style="width:28px;height:28px"></i>Bem-vindo a Comunidade!</h2>
-<p>Escolha um apelido ficticio. Ninguem vera seu nome real ou valores.</p>
-<div class="fg" style="margin-bottom:12px">
-<label style="font-size:.85em;font-weight:600;margin-bottom:6px;display:block">Seu Apelido</label>
-<input type="text" id="commNickInput" placeholder="Ex: InvestidorX42" maxlength="20" style="width:100%;padding:12px;background:var(--bg2);border:1px solid var(--brd);border-radius:12px;color:var(--t1);font-size:1em;outline:none;text-align:center">
+<div id="commSetup" class="comm-setup comm-aceite" style="display:none">
+<div class="comm-aceite-box">
+<div class="comm-aceite-icon"><i data-lucide="globe" style="width:40px;height:40px;stroke:currentColor;stroke-width:2"></i></div>
+<h2 class="comm-aceite-title">Comunidade Sibanki</h2>
+<p class="comm-aceite-text">Ao continuar, você concorda em participar da comunidade com respeito e em conformidade com as regras. Seu perfil já está vinculado ao seu cadastro; você pode alterar apelido e cor na aba <strong>Perfil</strong> da comunidade a qualquer momento.</p>
+<button type="button" class="btn btn-p comm-aceite-btn" onclick="acceptCommAndEnter()"><i data-lucide="check-circle" style="width:20px;height:20px;vertical-align:middle;margin-right:8px"></i>Aceitar e entrar</button>
 </div>
-<button class="btn btn-g" onclick="generateRandomNick()" style="margin-bottom:12px;width:100%;font-size:.85em;display:inline-flex;align-items:center;justify-content:center;gap:6px"><i data-lucide="shuffle" style="width:18px;height:18px"></i>Gerar Apelido</button>
-<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:16px" id="commColorPicker"></div>
-<button class="btn btn-p" onclick="saveCommProfile()" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px"><i data-lucide="rocket" style="width:18px;height:18px"></i>Entrar na Comunidade</button>
 </div>
 <div id="commMain" style="display:none">
-<div class="comm-header">
-<h2 style="font-size:1.3em;font-weight:800;display:flex;align-items:center;gap:8px"><i data-lucide="globe" style="width:24px;height:24px"></i>Comunidade <span style="font-size:.5em;background:var(--pri);color:#fff;padding:3px 10px;border-radius:10px;font-weight:700">BETA</span></h2>
-<div style="margin-left:auto;position:relative">
-<button id="commNotifBtn" onclick="toggleCommNotifs()" style="background:none;border:none;cursor:pointer;position:relative;padding:4px;display:flex;align-items:center"><i data-lucide="bell" style="width:22px;height:22px"></i>
-<span id="commNotifBadge" style="display:none;position:absolute;top:-2px;right:-2px;width:16px;height:16px;background:#EF4444;border-radius:50%;font-size:.55em;color:#fff;font-weight:700;align-items:center;justify-content:center">0</span>
+<header class="comm-page-header">
+<div>
+<p class="comm-page-sub">Rede Social</p>
+<h1 class="comm-page-title">Comunidade</h1>
+<p class="comm-page-desc">Conecte-se, aprenda e compartilhe com outros usuários</p>
+</div>
+<div class="comm-header-actions">
+<div class="comm-search-wrap">
+<i data-lucide="search" style="width:16px;height:16px;position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--t3);pointer-events:none"></i>
+<input type="text" id="commSearchInputTop" placeholder="Buscar na comunidade..." oninput="var e=document.getElementById('commSearchInput');if(e)e.value=this.value;searchCommPosts();">
+</div>
+<button id="commNotifBtn" onclick="toggleCommNotifs()" style="background:none;border:none;cursor:pointer;position:relative;padding:6px;display:flex;align-items:center;color:var(--t2)"><i data-lucide="bell" style="width:22px;height:22px"></i>
+<span id="commNotifBadge" style="display:none;position:absolute;top:2px;right:2px;width:16px;height:16px;background:#EF4444;border-radius:50%;font-size:.55em;color:#fff;font-weight:700;align-items:center;justify-content:center">0</span>
 </button>
 <div id="commNotifDropdown" style="display:none;position:absolute;right:0;top:40px;width:320px;max-height:400px;overflow-y:auto;background:var(--card);border:1px solid var(--brd);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.3);z-index:100;padding:8px">
-<div style="padding:10px 12px;font-weight:700;font-size:.88em;border-bottom:1px solid var(--brd);display:flex;justify-content:space-between;align-items:center">Notificacoes <button onclick="clearCommNotifs()" style="background:none;border:none;color:var(--pri);cursor:pointer;font-size:.78em;font-weight:600">Limpar</button></div>
-<div id="commNotifList" style="padding:4px 0"><div style="text-align:center;padding:20px;color:var(--t3);font-size:.85em">Nenhuma notificacao</div></div>
+<div style="padding:10px 12px;font-weight:700;font-size:.88em;border-bottom:1px solid var(--brd);display:flex;justify-content:space-between;align-items:center">Notificações <button onclick="clearCommNotifs()" style="background:none;border:none;color:var(--pri);cursor:pointer;font-size:.78em;font-weight:600">Limpar</button></div>
+<div id="commNotifList" style="padding:4px 0"><div style="text-align:center;padding:20px;color:var(--t3);font-size:.85em">Nenhuma notificação</div></div>
 </div>
 </div>
+</header>
+<div class="comm-stats-bar" id="commStatsBar">
+<div class="comm-stat-card"><div class="comm-stat-icon" style="background:rgba(59,130,246,.15);color:var(--vr)"><i data-lucide="users" style="width:18px;height:18px"></i></div><div><div class="comm-stat-label">Membros</div><div class="comm-stat-value" id="commStatMembros">—</div></div></div>
+<div class="comm-stat-card"><div class="comm-stat-icon" style="background:rgba(34,197,94,.15);color:#22C55E"><i data-lucide="message-circle" style="width:18px;height:18px"></i></div><div><div class="comm-stat-label">Posts hoje</div><div class="comm-stat-value" id="commStatPostsHoje">0</div></div></div>
+<div class="comm-stat-card"><div class="comm-stat-icon" style="background:rgba(245,158,11,.15);color:#F59E0B"><i data-lucide="trophy" style="width:18px;height:18px"></i></div><div><div class="comm-stat-label">Seu ranking</div><div class="comm-stat-value" id="commStatRanking">—</div></div></div>
+<div class="comm-stat-card"><div class="comm-stat-icon" style="background:rgba(239,68,68,.15);color:#EF4444"><i data-lucide="flame" style="width:18px;height:18px"></i></div><div><div class="comm-stat-label">Sua sequência</div><div class="comm-stat-value" id="commStatStreak">0 dias</div></div></div>
+</div>
+<div class="comm-tabs-wrap">
 <div class="comm-tabs">
 <div class="comm-tab on" onclick="switchCommTab('feed',this)"><i data-lucide="message-circle" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i>Feed</div>
-<div class="comm-tab" onclick="switchCommTab('news',this)"><i data-lucide="newspaper" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i>Noticias</div>
+<div class="comm-tab" onclick="switchCommTab('news',this)"><i data-lucide="newspaper" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i>Notícias</div>
 <div class="comm-tab" onclick="switchCommTab('ranking',this)"><i data-lucide="trophy" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i>Ranking</div>
-<div class="comm-tab" onclick="switchCommTab('prizes',this)"><i data-lucide="gift" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i>Premios</div>
+<div id="commTabGrupos" class="comm-tab" onclick="switchCommTab('grupos',this)"><i data-lucide="users" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i>Grupos</div>
+<div class="comm-tab" onclick="switchCommTab('prizes',this)"><i data-lucide="gift" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i>Prêmios</div>
 <div class="comm-tab" onclick="switchCommTab('profile',this)"><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i>Perfil</div>
 </div>
 </div>
@@ -2559,7 +2612,7 @@
 <div class="comm-profile-stats" id="commProfileStats"></div>
 </div>
 <div class="comm-search-bar">
-<input type="text" id="commSearchInput" placeholder="Buscar na comunidade..." oninput="searchCommPosts()">
+<input type="text" id="commSearchInput" placeholder="Buscar na comunidade..." oninput="var t=document.getElementById('commSearchInputTop');if(t)t.value=this.value;searchCommPosts();">
 </div>
 <div id="commTrendingSection" class="comm-trending-section" style="display:none">
 <div class="comm-trending-title"><i data-lucide="flame" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i>Em Alta</div>
@@ -2603,6 +2656,16 @@
 </div>
 <div id="commNewPostsBanner" class="comm-new-posts-banner" onclick="scrollToTopComm()">&#8593; Novas publicacoes disponiveis</div>
 <div id="commPosts"><div class="comm-empty"><div class="comm-empty-icon"><i data-lucide="message-circle" style="width:48px;height:48px;color:var(--t3)"></i></div><p>Nenhuma publicacao ainda.<br>Seja o primeiro a compartilhar!</p></div></div>
+</div>
+<div id="commGrupos" style="display:none" class="comm-grupos-wrap">
+<div class="comm-grupos-grid" id="commGruposGrid">
+<div class="comm-grupo-card"><div class="comm-grupo-icon" style="background:rgba(59,130,246,.15);color:var(--vr)"><i data-lucide="bar-chart-3" style="width:20px;height:20px"></i></div><div class="comm-grupo-head"><h3 class="comm-grupo-name">Renda Fixa &amp; CDBs</h3><p class="comm-grupo-members">1.243 membros</p></div><p class="comm-grupo-desc">Discussões sobre títulos, CDBs e renda fixa</p><button type="button" class="btn btn-o comm-grupo-btn"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>Participar</button></div>
+<div class="comm-grupo-card"><div class="comm-grupo-icon" style="background:rgba(34,197,94,.15);color:#22C55E"><i data-lucide="book-open" style="width:20px;height:20px"></i></div><div class="comm-grupo-head"><h3 class="comm-grupo-name">Investidores Iniciantes</h3><p class="comm-grupo-members">3.891 membros</p></div><p class="comm-grupo-desc">Apoio e aprendizado para quem está começando</p><button type="button" class="btn btn-o comm-grupo-btn"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>Participar</button></div>
+<div class="comm-grupo-card"><div class="comm-grupo-icon" style="background:rgba(139,92,246,.15);color:#8B5CF6"><i data-lucide="users" style="width:20px;height:20px"></i></div><div class="comm-grupo-head"><h3 class="comm-grupo-name">Planejamento Familiar</h3><p class="comm-grupo-members">876 membros</p></div><p class="comm-grupo-desc">Finanças em casal e gestão familiar</p><button type="button" class="btn btn-o comm-grupo-btn"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>Participar</button></div>
+<div class="comm-grupo-card"><div class="comm-grupo-icon" style="background:rgba(239,68,68,.15);color:#EF4444"><i data-lucide="target" style="width:20px;height:20px"></i></div><div class="comm-grupo-head"><h3 class="comm-grupo-name">Metas Agressivas</h3><p class="comm-grupo-members">654 membros</p></div><p class="comm-grupo-desc">Para quem quer acelerar objetivos financeiros</p><button type="button" class="btn btn-o comm-grupo-btn"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>Participar</button></div>
+<div class="comm-grupo-card"><div class="comm-grupo-icon" style="background:rgba(245,158,11,.15);color:#F59E0B"><i data-lucide="trending-up" style="width:20px;height:20px"></i></div><div class="comm-grupo-head"><h3 class="comm-grupo-name">Cripto &amp; Alternativos</h3><p class="comm-grupo-members">2.105 membros</p></div><p class="comm-grupo-desc">Criptomoedas e investimentos alternativos</p><button type="button" class="btn btn-o comm-grupo-btn"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>Participar</button></div>
+<div class="comm-grupo-card"><div class="comm-grupo-icon" style="background:rgba(34,197,94,.15);color:#22C55E"><i data-lucide="wallet" style="width:20px;height:20px"></i></div><div class="comm-grupo-head"><h3 class="comm-grupo-name">Economizar no Dia a Dia</h3><p class="comm-grupo-members">5.420 membros</p></div><p class="comm-grupo-desc">Dicas práticas de economia cotidiana</p><button type="button" class="btn btn-o comm-grupo-btn"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>Participar</button></div>
+</div>
 </div>
 <div id="commNews" style="display:none;max-width:700px;margin:0 auto">
 
@@ -2739,6 +2802,15 @@
 </div>
 <button class="btn btn-p" onclick="updateCommProfile()" style="font-size:.85em;padding:8px 20px">Salvar Alteracoes</button>
 </div>
+</div>
+
+<div class="comm-ai-tip" id="commAiTip">
+<div class="comm-ai-tip-icon"><i data-lucide="sparkles" style="width:20px;height:20px;color:var(--vr)"></i></div>
+<div class="comm-ai-tip-body">
+<p class="comm-ai-tip-title">Sugestão da Comunidade</p>
+<p class="comm-ai-tip-text">Baseado no seu perfil, o grupo <strong>Investidores Iniciantes</strong> pode te ajudar a alcançar suas metas <strong>30% mais rápido</strong>.</p>
+</div>
+<button type="button" class="btn btn-o comm-ai-tip-btn" onclick="switchCommTab('grupos',document.getElementById('commTabGrupos')); setTimeout(function(){ var g=document.getElementById('commGruposGrid'); if(g) g.scrollIntoView({behavior:'smooth'}); }, 100);"><i data-lucide="arrow-right" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>Explorar</button>
 </div>
 
 </div>

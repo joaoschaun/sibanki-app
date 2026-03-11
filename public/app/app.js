@@ -4026,24 +4026,11 @@ var parts=orcamentoViewMonth.split('-');
 tit.textContent=mesNomes[parseInt(parts[1],10)-1]+' '+parts[0];
 var rec=getReceitasMes(orcamentoViewMonth);
 var gastos=getGastosMes(orcamentoViewMonth);
-var kpisHtml='<div class="orc-kpi rec"><div class="orc-kpi-label">Receitas do mês</div><div class="orc-kpi-value">R$ '+(rec.toFixed(2).replace('.',','))+'</div></div>'+
-'<div class="orc-kpi desp"><div class="orc-kpi-label">Gastos planejados</div><div class="orc-kpi-value" id="orcKpiPlanejado">R$ 0,00</div></div>'+
-'<div class="orc-kpi bal"><div class="orc-kpi-label">Balanço planejado</div><div class="orc-kpi-value" id="orcKpiBalanco">R$ 0,00</div></div>'+
-'<div class="orc-kpi econ"><div class="orc-kpi-label">Economia planejada</div><div class="orc-kpi-value" id="orcKpiEconomiaPct">0%</div></div>';
-var kpisCont=document.getElementById('orcamentoKpis');
-if(kpisCont){kpisCont.innerHTML=kpisHtml;}
-if(orc){
-var totalOrc=orc.orcamentoTotal||0;
-var renda=orc.rendaMensal||0;
-var econVal=orc.valorEconomia||0;
-var econPct=renda>0?((orc.metaEconomia||0)):0;
-if(document.getElementById('orcKpiPlanejado'))document.getElementById('orcKpiPlanejado').textContent='R$ '+(totalOrc.toFixed(2).replace('.',','));
-if(document.getElementById('orcKpiBalanco'))document.getElementById('orcKpiBalanco').textContent='R$ '+(renda-totalOrc-econVal).toFixed(2).replace('.',',');
-if(document.getElementById('orcKpiEconomiaPct'))document.getElementById('orcKpiEconomiaPct').textContent=econPct+'%';
-}
-if(!orc){if(document.getElementById('orcKpiPlanejado'))document.getElementById('orcKpiPlanejado').textContent='R$ 0,00';if(document.getElementById('orcKpiBalanco'))document.getElementById('orcKpiBalanco').textContent='R$ 0,00';if(document.getElementById('orcKpiEconomiaPct'))document.getElementById('orcKpiEconomiaPct').textContent='-';}
 emptyEl.style.display=orc?'none':'block';
 filledEl.style.display=orc?'block':'none';
+// Mostrar botões do header ao ter orçamento
+var pageActions=document.getElementById('orcPageActions');
+if(pageActions)pageActions.style.display=orc?'flex':'none';
 if(emptyEl.style.display==='block'){
 var copyBtn=document.getElementById('orcamentoCopyPrevBtn');
 if(copyBtn){
@@ -14322,12 +14309,29 @@ setup.style.display="none";
 main.style.display="block";
 updateCommAvatar();
 loadCommPosts();
+if(typeof loadCommRanking==="function")loadCommRanking();
 }else{
 setup.style.display="block";
 main.style.display="none";
-renderColorPicker();
 }
 if(typeof window.refreshLucide==='function')setTimeout(window.refreshLucide,80);
+}
+
+function acceptCommAndEnter(){
+if(!U||!U.uid)return;
+var nick=(U.name&&U.name.trim())?U.name.trim().substring(0,20):(U.email?U.email.split("@")[0].substring(0,20):"Anônimo");
+if(nick.length<2)nick="Anônimo";
+var color=AV_COLORS[Math.floor(Math.random()*AV_COLORS.length)];
+commProfile={nickname:nick,color:color,joinedAt:new Date().toISOString()};
+saveData();
+var setup=document.getElementById("commSetup");
+var main=document.getElementById("commMain");
+if(setup)setup.style.display="none";
+if(main)main.style.display="block";
+updateCommAvatar();
+loadCommPosts();
+toast("Bem-vindo à Comunidade!","ok");
+if(typeof window.refreshLucide==='function')window.refreshLucide();
 }
 
 function renderColorPicker(){
@@ -14384,13 +14388,14 @@ function switchCommTab(tab,el){
 commCurrentTab=tab;
 document.querySelectorAll(".comm-tab").forEach(function(t){t.classList.remove("on");});
 if(el)el.classList.add("on");
-["commFeed","commNews","commRanking","commPrizes","commProfile"].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display="none";});
-var map={feed:"commFeed",news:"commNews",ranking:"commRanking",prizes:"commPrizes",profile:"commProfile"};
+["commFeed","commNews","commRanking","commGrupos","commPrizes","commProfile"].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display="none";});
+var map={feed:"commFeed",news:"commNews",ranking:"commRanking",grupos:"commGrupos",prizes:"commPrizes",profile:"commProfile"};
 var target=document.getElementById(map[tab]);
 if(target)target.style.display="block";
 if(tab==="news")loadCommNews();
 if(tab==="ranking")loadCommRanking();
 if(tab==="profile")renderCommProfileTab();
+if(typeof lucide!="undefined"&&lucide.createIcons)lucide.createIcons();
 }
 
 function toggleCommCat(el){
@@ -14440,9 +14445,23 @@ if(d.createdAt&&d.createdAt.toDate)d.createdAt=d.createdAt.toDate().toISOString(
 commPosts.push(d);
 });
 renderCommPosts();
+updateCommStats();
 },function(err){
 console.error("Community listen error:",err);
 });
+}
+
+function updateCommStats(){
+var today=new Date().toISOString().split("T")[0];
+var postsHoje=(commPosts||[]).filter(function(p){return p.createdAt&&p.createdAt.substring(0,10)===today;}).length;
+var el=document.getElementById("commStatPostsHoje");if(el)el.textContent=String(postsHoje);
+el=document.getElementById("commStatMembros");if(el)el.textContent="—";
+var myPos=-1;var myStreak=0;
+if(commRankData&&commRankData.length&&commProfile){
+for(var i=0;i<commRankData.length;i++){if(commRankData[i].nickname===commProfile.nickname){myPos=i;myStreak=commRankData[i].streak||0;break;}}
+}
+el=document.getElementById("commStatRanking");if(el)el.textContent=myPos>=0?"#"+String(myPos+1):"—";
+el=document.getElementById("commStatStreak");if(el)el.textContent=(myStreak||0)+" dia"+(myStreak!==1?"s":"");
 }
 
 function escH(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
@@ -15159,11 +15178,13 @@ if(!rankings.length)rankings=buildLocalRanking();
 commRankData=rankings;
 commRankCurrentTab="geral";
 renderRankingView(rankings,podium,ct);
+updateCommStats();
 }).catch(function(e){
 console.error("Ranking error:",e);
 var rankings=buildLocalRanking();
 commRankData=rankings;
 renderRankingView(rankings,podium,ct);
+updateCommStats();
 });
 }
 
