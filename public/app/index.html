@@ -418,13 +418,45 @@
 </div>
 <div class="fg"><label>Conta</label><select id="fA" class="fi"></select></div>
 <div class="fg"><label>Status</label><select id="fStatus" class="fi"><option value="pago">Pago</option><option value="pendente">Pendente</option><option value="agendado">Agendado</option></select></div>
+<div class="fg"><label>Forma de Pagamento</label>
+<select id="fPgto" class="fi" onchange="onChangePgto(this.value)">
+<option value="">Não informado</option>
+<option value="dinheiro">💵 Dinheiro</option>
+<option value="pix">⚡ Pix</option>
+<option value="transferencia">🔄 Transferência</option>
+<option value="boleto">🔖 Boleto</option>
+<option value="cartao">💳 Cartão de Crédito</option>
+</select>
+</div>
+</div>
+
+<!-- Campos de cartão — aparece só quando forma = cartão -->
+<div id="fPgtoCartaoRow" style="display:none;margin-top:10px;display:none">
+<div class="lanc-grid">
+<div class="fg"><label>Cartão</label><select id="fPgtoCard" class="fi"></select></div>
+<div class="fg"><label>Parcelas</label>
+<select id="fPgtoParc" class="fi">
+<option value="1">1x (à vista)</option>
+<option value="2">2x</option>
+<option value="3">3x</option>
+<option value="4">4x</option>
+<option value="5">5x</option>
+<option value="6">6x</option>
+<option value="7">7x</option>
+<option value="8">8x</option>
+<option value="9">9x</option>
+<option value="10">10x</option>
+<option value="11">11x</option>
+<option value="12">12x</option>
+</select>
+</div>
+</div>
 </div>
 
 <!-- Campos extras colapsáveis -->
 <details class="lanc-extras">
 <summary><i data-lucide="settings" style="width:16px;height:16px;vertical-align:middle"></i> Mais opções</summary>
 <div class="lanc-grid" style="margin-top:10px">
-<div class="fg"><label>Forma Pgto</label><select id="fPgto" class="fi"><option value=""><span data-i18n="nao_informado">Não informado</span></option><option value="pix">Pix</option><option value="debito"><span data-i18n="debito">Débito</span></option><option value="credito"><span data-i18n="credito">Crédito</span></option><option value="dinheiro">Dinheiro</option><option value="boleto">Boleto</option><option value="transferencia"><span data-i18n="transferencia">Transferência</span></option></select></div>
 <div class="fg"><label>Tags</label><input type="text" id="fTags" class="fi" placeholder="Ex: viagem, mercado" aria-label="Tags"></div>
 </div>
 </details>

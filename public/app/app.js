@@ -3087,6 +3087,21 @@ ctx.stroke();
 }
 
 // LANÇAMENTOS
+function onChangePgto(val){
+var row=document.getElementById('fPgtoCartaoRow');
+if(!row)return;
+if(val==='cartao'){
+// Popular select de cartões
+var sel=document.getElementById('fPgtoCard');
+if(sel&&typeof cards!=='undefined'){
+sel.innerHTML=cards.length===0?'<option value="">Nenhum cartão cadastrado</option>':cards.map(function(c){return'<option value="'+c.id+'">'+escapeHtml(c.name)+'</option>';}).join('');
+}
+row.style.display='block';
+}else{
+row.style.display='none';
+}
+}
+
 function addE(){
 var date=document.getElementById('fD').value,type=document.getElementById('fT').value;
 var cat=document.getElementById('fC').value,val=pf('fV');
@@ -3095,6 +3110,30 @@ var tags=document.getElementById('fTags')?document.getElementById('fTags').value
 if(!date||!val||val<=0){toast(typeof t==='function'?t('toast_preencha_data_valor'):'Preencha data e valor!','err');return}
 var status=document.getElementById('fStatus')?document.getElementById('fStatus').value:'pago';
 var pgto=document.getElementById('fPgto')?document.getElementById('fPgto').value:'';
+
+// ── Roteamento para cartão de crédito ──
+if(pgto==='cartao'&&type==='despesa'){
+var cardSel=document.getElementById('fPgtoCard');
+var parcSel=document.getElementById('fPgtoParc');
+var cardId=cardSel?parseInt(cardSel.value):0;
+var parcelas=parcSel?parseInt(parcSel.value)||1:1;
+if(!cardId){toast('Selecione um cartão','err');return;}
+var card=typeof cards!=='undefined'?cards.find(function(c){return c.id===cardId}):null;
+if(!card){toast('Cartão não encontrado','err');return;}
+var valParc=Math.round(val/parcelas*100)/100;
+var purchaseId=Date.now();
+for(var p=0;p<parcelas;p++){
+var d2=new Date(date+'T12:00:00');d2.setMonth(d2.getMonth()+p);
+var pDate=d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');
+card.purchases.push({id:purchaseId+p,purchaseId:purchaseId,desc:(desc||cat)+(parcelas>1?' ('+(p+1)+'/'+parcelas+')':''),category:cat,value:valParc,totalValue:val,parcela:p+1,totalParcelas:parcelas,date:pDate,billingMonth:getBillingMonth(card,pDate)});
+entries.push({id:purchaseId+p,cardPurchaseId:purchaseId,type:'despesa',desc:'['+card.name+'] '+(desc||cat)+(parcelas>1?' ('+(p+1)+'/'+parcelas+')':''),value:valParc,category:cat,date:pDate,tags:['cartão',card.name.toLowerCase()],account:card.name,status:'pendente',formaPgto:'cartao'});
+}
+saveData();clrF();renderAll();
+toast(parcelas>1?(desc||cat)+' em '+parcelas+'x de R$ '+valParc.toFixed(2).replace('.',',')+'  no '+card.name:'Lançado no '+card.name,'ok');
+if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();
+return;
+}
+
 var newEntry={id:Date.now(),date:date,type:type,desc:desc||cat,category:cat,value:Math.round(val*100)/100,account:acc,tags:tags,status:status,formaPgto:pgto};
 entries.push(newEntry);
 saveData();clrF();renderAll();toast(typeof t==='function'?t('toast_lancamento_salvo'):'Lançamento salvo!','ok');
@@ -3104,7 +3143,15 @@ setTimeout(function(){checkProactiveConsultor(newEntry);},500);
 
 function delE(id){if(!confirm(typeof t==='function'?t('confirm_excluir_lancamento'):'Excluir?'))return;entries=entries.filter(function(e){return e.id!==id});saveData();renderAll();toast(typeof t==='function'?t('toast_excluido'):'Excluído','err')}
 
-function clrF(){document.getElementById('fV').value='';document.getElementById('fDe').value='';var ftg=document.getElementById('fTags');if(ftg)ftg.value='';document.getElementById('fD').value=new Date().toISOString().split('T')[0]}
+function clrF(){
+document.getElementById('fV').value='';
+document.getElementById('fDe').value='';
+var ftg=document.getElementById('fTags');if(ftg)ftg.value='';
+document.getElementById('fD').value=new Date().toISOString().split('T')[0];
+var fp=document.getElementById('fPgto');if(fp)fp.value='';
+var row=document.getElementById('fPgtoCartaoRow');if(row)row.style.display='none';
+var fp2=document.getElementById('fPgtoParc');if(fp2)fp2.value='1';
+}
 
 var _rEPage=0,_rEPageSize=50;
 function setREPage(p){_rEPage=p;rE();}
@@ -3128,7 +3175,7 @@ var groups={},groupOrder=[];
 pageRows.forEach(function(e){var d=e.date;if(!groups[d]){groups[d]=[];groupOrder.push(d);}groups[d].push(e);});
 var stIcoLucide={'pago':'','pendente':'clock','agendado':'calendar'};
 var stCls={'pendente':'entry-st-pendente','agendado':'entry-st-agendado'};
-var pgLbl={'pix':'Pix','debito':'Débito','credito':'Crédito','dinheiro':'Dinheiro','boleto':'Boleto','transferencia':'Transf.'};
+var pgLbl={'pix':'Pix','debito':'Débito','credito':'Crédito','dinheiro':'Dinheiro','boleto':'Boleto','transferencia':'Transf.','cartao':'Cartão'};
 var weekDays=['dom','seg','ter','qua','qui','sex','sáb'];
 var monthsAb=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 if(tb)tb.innerHTML=groupOrder.map(function(date){
