@@ -141,6 +141,34 @@
 </div>
 </div>
 
+<!-- MODAL REGISTRAR PROVENTO (Investimentos > Proventos) -->
+<div class="modal-overlay" id="proventoModalOverlay" onclick="if(event.target===this)closeProventoModal()" style="display:none">
+<div class="modal-box" id="proventoModalBox" style="position:relative;max-width:400px" onclick="event.stopPropagation()">
+<button class="modal-close" onclick="closeProventoModal()" aria-label="Fechar">&times;</button>
+<h3 style="margin:0 0 16px;font-size:1.1rem;color:var(--t1)">Registrar Provento</h3>
+<div class="fg"><label class="fl" style="font-size:.72em;color:var(--t2)">Ticker do ativo</label><input type="text" id="proventoModalTicker" class="fi" placeholder="Ex: PETR4, VALE3" style="width:100%;padding:10px 12px;border:1px solid var(--brd);border-radius:10px;background:var(--bg2);color:var(--t1);font-size:.9em;outline:none;text-transform:uppercase"></div>
+<div class="fg"><label class="fl" style="font-size:.72em;color:var(--t2)">Tipo</label><select id="proventoModalTipo" class="fi" style="width:100%;padding:10px 12px;border:1px solid var(--brd);border-radius:10px;background:var(--bg2);color:var(--t1);font-size:.9em;outline:none"><option value="dividendo">Dividendo</option><option value="jcp">JCP</option><option value="rendimento">Rendimento</option></select></div>
+<div class="fg"><label class="fl" style="font-size:.72em;color:var(--t2)">Valor recebido (R$)</label><input type="text" inputmode="decimal" id="proventoModalValor" class="fi" placeholder="0,00" style="width:100%;padding:10px 12px;border:1px solid var(--brd);border-radius:10px;background:var(--bg2);color:var(--t1);font-size:.9em;outline:none"></div>
+<div class="fg"><label class="fl" style="font-size:.72em;color:var(--t2)">Data de pagamento</label><input type="date" id="proventoModalData" class="fi" style="width:100%;padding:10px 12px;border:1px solid var(--brd);border-radius:10px;background:var(--bg2);color:var(--t1);font-size:.9em;outline:none"></div>
+<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+<button type="button" onclick="closeProventoModal()" style="padding:10px 20px;border-radius:10px;border:1px solid var(--brd);background:none;color:var(--t2);font-size:.88rem;cursor:pointer">Cancelar</button>
+<button type="button" onclick="saveProventoFromModal()" style="padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,#4F8CFF,#6366f1);color:#fff;font-weight:600;font-size:.88rem;cursor:pointer">Registrar</button>
+</div>
+</div>
+</div>
+
+<!-- CONFIRM EXCLUIR PROVENTO -->
+<div class="modal-overlay" id="proventoConfirmOverlay" onclick="if(event.target===this)closeProventoConfirm()" style="display:none">
+<div class="modal-box" id="proventoConfirmBox" style="position:relative;max-width:360px;text-align:center" onclick="event.stopPropagation()">
+<h3 style="margin:0 0 12px;font-size:1.05rem;color:var(--t1)">Excluir provento?</h3>
+<p style="margin:0 0 20px;font-size:.9em;color:var(--t2)">Esta ação não pode ser desfeita.</p>
+<div style="display:flex;gap:10px;justify-content:center">
+<button type="button" onclick="closeProventoConfirm()" style="padding:10px 20px;border-radius:10px;border:1px solid var(--brd);background:none;color:var(--t2);font-size:.88rem;cursor:pointer">Cancelar</button>
+<button type="button" id="proventoConfirmExcluirBtn" style="padding:10px 20px;border-radius:10px;border:none;background:#EF4444;color:#fff;font-weight:600;font-size:.88rem;cursor:pointer">Excluir</button>
+</div>
+</div>
+</div>
+
 <!-- NOVO ONBOARDING SIBANKI (fluxo completo) -->
 <div id="sibankiOnboarding" class="sib-onb" aria-hidden="true" style="display:none">
   <div class="sib-onb-bg"></div>
@@ -1478,12 +1506,26 @@
 <button type="button" class="btn btn-b metas-btn-criar" onclick="openMetaModal()"><i data-lucide="target" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Criar primeira meta</button>
 </div>
 <div id="metasFilled" class="metas-filled" style="display:none">
-<div id="metasSummaryBox" class="metas-summary" style="display:none"></div>
-<div id="metasSavingsBox" class="meta-savings-box" style="display:none"></div>
-<div class="metas-filled-top">
-<button type="button" class="btn btn-o btn-sm" onclick="openMetaModal()"><i data-lucide="plus" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Nova meta</button>
+<!-- KPI cards -->
+<div id="metasKpiGrid" class="metas-kpi-grid"></div>
+<!-- Progresso geral -->
+<div id="metasProgressGeral" class="metas-progress-geral" style="display:none"></div>
+<!-- Toolbar: filtros + botão nova meta -->
+<div class="metas-toolbar">
+<div class="metas-filter-tabs" id="metasFilterTabs">
+<button class="mf-tab active" onclick="setMetasFilter('all',this)">Todas</button>
+<button class="mf-tab" onclick="setMetasFilter('active',this)">Ativas</button>
+<button class="mf-tab" onclick="setMetasFilter('completed',this)">Concluídas</button>
 </div>
-<div id="metasContainer" class="metas-filled-list"></div>
+<button type="button" class="metas-btn-add" onclick="openMetaModal()" title="Nova meta"><i data-lucide="plus" style="width:20px;height:20px"></i></button>
+</div>
+<!-- Grid de cards -->
+<div id="metasContainer" class="metas-cards-grid"></div>
+<!-- Dica IA -->
+<div id="metasIaTip" class="metas-ia-tip" style="display:none"></div>
+<!-- Caixas legadas (mantidas para compatibilidade) -->
+<div id="metasSummaryBox" style="display:none"></div>
+<div id="metasSavingsBox" style="display:none"></div>
 </div>
 </div>
 

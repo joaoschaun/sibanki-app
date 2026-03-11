@@ -2946,7 +2946,7 @@ popFilMes();popTfSels();
 if(tabId==='dash'){rKPI();renderDashPremium();renderDashboardWidgets();rDicas();checkAlerts();renderDashImportPromo();renderDashTelegramPromo();if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();}
 else if(tabId==='lanc'){rE();setLancFirstGuide();if(typeof window.refreshLucide==='function')window.refreshLucide();}
 else if(tabId==='invest'){rInv();try{renderPortfolio();}catch(e){}}
-else if(tabId==='metas'){rMetas();if(typeof updateDashMetasBlock==='function')updateDashMetasBlock();}
+else if(tabId==='metas'){metasIaTipLoaded=false;rMetas();if(typeof updateDashMetasBlock==='function')updateDashMetasBlock();}
 else if(tabId==='orçamento'){rOrc();}
 else if(tabId==='contas'){renderCarteira();}
 else if(tabId==='cartões'||tabId==='cartoes'){renderCards();renderFatura();}
@@ -3659,6 +3659,141 @@ document.getElementById('calcResult').innerHTML=
 }
 
 // METAS
+var metasFilterType='all';
+var metasIaTipLoaded=false;
+var metasIaTipGoalsCount=-1;
+
+function getMetaPct(g){var alvo=parseFloat(g.alvo||g.target)||0;var atual=parseFloat(g.atual||g.current)||0;return alvo>0?Math.min((atual/alvo)*100,100):0;}
+
+function getMetaLucideIcon(nome){nome=(nome||'').toLowerCase();if(/reserva|emergên|emergenc|poupan/.test(nome))return'shield-check';if(/viagem|férias|ferias|turismo/.test(nome))return'plane';if(/carro|veículo|veiculo|moto/.test(nome))return'car';if(/casa|imóvel|imovel|aparta|moradia|entrada/.test(nome))return'home';if(/educa|facul|curso|pós|pos|mestrad|grad/.test(nome))return'graduation-cap';if(/invest|fundo|rend|ativo|portf/.test(nome))return'trending-up';if(/casam|bodas|festa/.test(nome))return'heart';if(/saúde|saude|médic|medic|plano/.test(nome))return'activity';if(/aposentad|reform/.test(nome))return'coffee';return'target';}
+
+function getMetaCategory(nome){nome=(nome||'').toLowerCase();if(/reserva|emergên|emergenc|poupan/.test(nome))return'Segurança';if(/viagem|férias|ferias/.test(nome))return'Lazer';if(/carro|veículo|veiculo|moto/.test(nome))return'Bens';if(/casa|imóvel|imovel|aparta|moradia/.test(nome))return'Moradia';if(/educa|facul|curso|pós|pos|grad/.test(nome))return'Educação';if(/invest|fundo/.test(nome))return'Investimentos';if(/saúde|saude/.test(nome))return'Saúde';return'Pessoal';}
+
+function getMetaColor(g,idx){var corMap={green:'#10B981',blue:'#3b82f6',purple:'#8b5cf6',yellow:'#f59e0b',red:'#ef4444',cyan:'#06b6d4'};if(g.cor&&corMap[g.cor])return corMap[g.cor];var palette=['#3b82f6','#10B981','#8b5cf6','#f59e0b','#ef4444','#06b6d4','#f97316','#ec4899'];return palette[(idx||0)%palette.length];}
+
+function setMetasFilter(type,btn){
+  metasFilterType=type;
+  document.querySelectorAll('.mf-tab').forEach(function(t){t.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  renderMetasCards();
+  if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},60);
+}
+
+function showMetaMenu(id,btn){
+  document.querySelectorAll('.meta-dropdown').forEach(function(d){d.remove();});
+  var g=goals.find(function(x){return x.id===id;});
+  if(!g)return;
+  var menu=document.createElement('div');
+  menu.className='meta-dropdown';
+  menu.innerHTML=[
+    '<button onclick="editMetaAtual('+id+');closeMetaDropdown()">✏️ Atualizar valor</button>',
+    '<button onclick="addValToGoal('+id+',50);closeMetaDropdown()">+ R$ 50</button>',
+    '<button onclick="addValToGoal('+id+',100);closeMetaDropdown()">+ R$ 100</button>',
+    '<button onclick="addValToGoal('+id+',200);closeMetaDropdown()">+ R$ 200</button>',
+    '<button onclick="openFinCalcWithGoal('+id+');closeMetaDropdown()">📈 Como atingir?</button>',
+    '<button onclick="delMeta('+id+');closeMetaDropdown()" style="color:var(--danger)">🗑 Excluir</button>',
+  ].join('');
+  if(btn){btn.style.position='relative';btn.appendChild(menu);}
+  setTimeout(function(){
+    document.addEventListener('click',function handler(e){
+      if(!menu.contains(e.target)&&e.target!==btn){menu.remove();document.removeEventListener('click',handler);}
+    });
+  },10);
+}
+
+function closeMetaDropdown(){document.querySelectorAll('.meta-dropdown').forEach(function(d){d.remove();});}
+
+function renderMetasCards(){
+  var c=document.getElementById('metasContainer');
+  if(!c)return;
+  var filtered=goals.filter(function(g){
+    var pct=getMetaPct(g);
+    if(metasFilterType==='active')return pct<100;
+    if(metasFilterType==='completed')return pct>=100;
+    return true;
+  });
+  if(!filtered.length){c.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--t2);font-size:.85rem">Nenhuma meta neste filtro.</div>';return;}
+  c.innerHTML=filtered.map(function(g,idx){
+    var alvo=parseFloat(g.alvo||g.target)||0;
+    var atual=parseFloat(g.atual||g.current)||0;
+    var nome=g.nome||g.name||'Meta';
+    var pct=alvo>0?Math.min((atual/alvo)*100,100):0;
+    var isCompleted=pct>=100;
+    var cor=getMetaColor(g,idx);
+    var icon=getMetaLucideIcon(nome);
+    var category=getMetaCategory(nome);
+    var pl=getMetaPlanner(g);
+    var prazoTxt=g.prazo?new Date(g.prazo+'T12:00:00').toLocaleDateString('pt-BR',{month:'short',year:'numeric'}):'Sem prazo';
+    var monthlyTxt=pl&&pl.aporteMensal>0?fmt(Math.round(pl.aporteMensal))+'/mês':'—';
+    var remaining=alvo-atual;
+    return '<div class="meta-card-v2">'+
+      '<div class="meta-card-v2-glow" style="background:'+cor+'"></div>'+
+      '<div class="meta-card-v2-header">'+
+        '<div style="display:flex;align-items:center;gap:10px">'+
+          '<div class="meta-card-v2-icon" style="background:'+cor+'18"><i data-lucide="'+icon+'" style="width:20px;height:20px;color:'+cor+'"></i></div>'+
+          '<div><div class="meta-card-v2-title">'+nome+'</div><div class="meta-card-v2-cat">'+category+'</div></div>'+
+        '</div>'+
+        '<button type="button" class="meta-card-v2-menu" onclick="showMetaMenu('+g.id+',this)" title="Opções"><i data-lucide="more-horizontal" style="width:16px;height:16px"></i></button>'+
+      '</div>'+
+      '<div class="meta-card-v2-amounts"><span class="meta-card-v2-current">'+fmt(atual)+'</span><span class="meta-card-v2-target">de '+fmt(alvo)+'</span></div>'+
+      '<div class="meta-card-v2-bar"><div class="meta-card-v2-fill" style="width:'+pct+'%;background:'+cor+'"></div></div>'+
+      '<div class="meta-card-v2-bar-info">'+
+        '<span class="meta-card-v2-pct" style="color:'+cor+'">'+pct.toFixed(1)+'%</span>'+
+        (isCompleted?'<span class="meta-card-v2-completed-badge"><i data-lucide="check-circle-2" style="width:12px;height:12px"></i> Concluída</span>':'<span class="meta-card-v2-remaining">Faltam '+fmt(remaining)+'</span>')+
+      '</div>'+
+      (isCompleted?'':'<div class="meta-card-v2-footer"><div class="meta-card-v2-footer-item"><i data-lucide="calendar" style="width:12px;height:12px"></i>'+prazoTxt+'</div><div class="meta-card-v2-footer-item"><i data-lucide="flame" style="width:12px;height:12px"></i>'+monthlyTxt+'</div></div>')+
+    '</div>';
+  }).join('');
+}
+
+function renderMetasIaTip(){
+  var tipEl=document.getElementById('metasIaTip');
+  if(!tipEl||goals.length===0){if(tipEl)tipEl.style.display='none';return;}
+  if(metasIaTipLoaded&&metasIaTipGoalsCount===goals.length)return;
+  metasIaTipGoalsCount=goals.length;
+  tipEl.style.display='flex';
+  tipEl.innerHTML='<div class="metas-ia-tip-icon"><i data-lucide="sparkles" style="width:22px;height:22px;color:var(--vr)"></i></div>'+
+    '<div class="metas-ia-tip-body">'+
+      '<div class="metas-ia-tip-title">Dica do Consultor IA</div>'+
+      '<div class="metas-ia-tip-text" id="metasIaTipText" style="color:var(--t3)">Analisando suas metas...</div>'+
+    '</div>';
+  if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},50);
+  try{
+    var user=firebase.auth().currentUser;
+    if(!user)return;
+    var metasStr=goals.slice(0,6).map(function(g){
+      var nome=g.nome||g.name;
+      var alvo=parseFloat(g.alvo||g.target)||0;
+      var atual=parseFloat(g.atual||g.current)||0;
+      var pct=alvo>0?Math.round(atual/alvo*100):0;
+      var pl=getMetaPlanner(g);
+      return nome+': '+pct+'% ('+fmt(atual)+'/'+fmt(alvo)+(pl&&pl.aporteMensal>0?', guardar '+fmt(Math.round(pl.aporteMensal))+'/mês':'')+')';
+    }).join('; ');
+    var ctx=getFinancialContext();
+    var prompt='Analise as metas do usuário e dê UMA dica prática e específica em no máximo 2 frases curtas. Seja direto e motivador. Metas: '+metasStr+'. Receita: '+fmt(ctx.receita_mes||0)+'/mês. Saldo livre: '+fmt((ctx.receita_mes||0)-(ctx.despesa_mes||0))+'/mês. Destaque a meta mais próxima de ser concluída ou a que precisa de ajuste.';
+    var callIAFn=firebase.functions().httpsCallable('chatApi');
+    callIAFn({message:prompt,context:''}).then(function(res){
+      var data=res&&res.data?res.data:{};
+      var reply=data.reply||'Continue contribuindo regularmente nas suas metas! 💪';
+      reply=reply.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n+/g,' ').trim();
+      var sentences=reply.match(/[^.!?]+[.!?]+/g);
+      if(sentences&&sentences.length>2)reply=sentences.slice(0,2).join(' ');
+      var textEl=document.getElementById('metasIaTipText');
+      if(textEl){textEl.style.color='';textEl.innerHTML=reply;}
+      var tipElNow=document.getElementById('metasIaTip');
+      if(tipElNow){
+        tipElNow.insertAdjacentHTML('beforeend','<button class="metas-ia-tip-btn" onclick="go(\'ia\');setTimeout(function(){iaAnalyze(\'metas\');},350)">Ver análise →</button>');
+      }
+      metasIaTipLoaded=true;
+      if(typeof lucide!=='undefined')lucide.createIcons();
+    }).catch(function(){
+      var textEl=document.getElementById('metasIaTipText');
+      if(textEl){textEl.style.color='';textEl.innerHTML='Continue contribuindo regularmente para alcançar seus objetivos! 💪';}
+      metasIaTipLoaded=true;
+    });
+  }catch(e){metasIaTipLoaded=false;}
+}
+
 function addMeta(){
 var nome=document.getElementById('metaNome').value.trim();
 var alvo=parseFloat(document.getElementById('metaAlvo').value);
@@ -3822,75 +3957,49 @@ saveData();renderAll();toast(typeof t==='function'?t('toast_meta_atualizada'):'M
 function rMetas(){
 var emptyEl=document.getElementById('metasEmpty');
 var filledEl=document.getElementById('metasFilled');
-if(emptyEl&&filledEl){
-emptyEl.style.display=goals.length===0?'block':'none';
-filledEl.style.display=goals.length>0?'block':'none';
+if(emptyEl&&filledEl){emptyEl.style.display=goals.length===0?'block':'none';filledEl.style.display=goals.length>0?'block':'none';}
+if(goals.length===0){if(typeof lucide!=='undefined')lucide.createIcons();return;}
+
+// KPI cards
+var ativas=goals.filter(function(g){return getMetaPct(g)<100;});
+var concluidas=goals.filter(function(g){return getMetaPct(g)>=100;});
+var totalGuardado=goals.reduce(function(s,g){return s+(parseFloat(g.atual||g.current)||0);},0);
+var maisProxima=ativas.length>0?Math.max.apply(null,ativas.map(function(g){return getMetaPct(g);})):0;
+var kpiEl=document.getElementById('metasKpiGrid');
+if(kpiEl){
+  var kpis=[
+    {label:'Metas Ativas',value:ativas.length,icon:'target',color:'#3b82f6'},
+    {label:'Total Guardado',value:fmt(totalGuardado),icon:'wallet',color:'#10B981'},
+    {label:'Mais Próxima',value:maisProxima.toFixed(0)+'%',icon:'trending-up',color:'#8b5cf6'},
+    {label:'Concluídas',value:concluidas.length,icon:'check-circle-2',color:'#10B981'},
+  ];
+  kpiEl.innerHTML=kpis.map(function(k){
+    return '<div class="metas-kpi-card">'+
+      '<div class="metas-kpi-icon" style="background:'+k.color+'18"><i data-lucide="'+k.icon+'" style="width:20px;height:20px;color:'+k.color+'"></i></div>'+
+      '<div><div class="metas-kpi-label">'+k.label+'</div><div class="metas-kpi-value">'+k.value+'</div></div>'+
+    '</div>';
+  }).join('');
 }
-if(goals.length===0){
-if(typeof lucide!=='undefined')lucide.createIcons();
-return;
-}
-var summaryBox=document.getElementById('metasSummaryBox');
-var savingsBox=document.getElementById('metasSavingsBox');
-var totalNeeded=getTotalMetasNeeded();
-var sug=getMetaSavingsSuggestion();
-if(summaryBox&&goals.length>0){
-var needTxt=totalNeeded>0?'Suas metas pedem <span class="ms-val">'+fmt(totalNeeded)+'/mês</span> no total.':'Defina prazos nas metas para ver o total mensal necessário.';
-var capTxt=sug?'Sua capacidade: <span class="ms-val">'+fmt(sug.sugerido)+'/mês</span>.':'';
-var statusTxt='';
-if(totalNeeded>0&&sug){if(sug.sugerido>=totalNeeded)statusTxt='<span class="ms-ok">&#128994; No caminho!</span>';else statusTxt='<span class="ms-warn">&#9888; Ajuste prazos ou valores para caber no orçamento.</span>';}
-summaryBox.style.display='block';
-summaryBox.innerHTML='<div class="ms-item">'+needTxt+'</div>'+(capTxt?'<div class="ms-item">'+capTxt+'</div>':'')+(statusTxt?'<div class="ms-item">'+statusTxt+'</div>':'');
-}else if(summaryBox)summaryBox.style.display='none';
-if(savingsBox){
-if(sug&&sug.sobra!==undefined){
-savingsBox.style.display='block';
-savingsBox.innerHTML='<div class="meta-savings-title">&#128200; Sua capacidade de poupança (este mês)</div>'+
-'<div>Sobra do mês: <span class="meta-savings-val">'+fmt(sug.sobra)+'</span></div>'+
-'<div style="margin-top:4px;color:var(--t2)">Sugestão: destine até <b>'+fmt(sug.sugerido)+'</b> para metas (até 20% da sobra).</div>'+
-'<div class="meta-savings-cta"><button type="button" class="btn btn-b" onclick="iaAnalyze(\'metas\')">&#129302; Estratégia com IA</button></div>';
-}else savingsBox.style.display='none';
-}
-var c=document.getElementById('metasContainer');
-if(!goals.length){c.innerHTML='<div class="empty"><p>Nenhuma meta criada.</p><p style="font-size:.85em;color:var(--t3);margin-top:8px">Use um template acima (Reserva, Viagem, Entrada, Carro) para preencher rápido ou crie do zero. Você verá quanto guardar por mês e dicas para alcançar.</p></div>';return}
-c.innerHTML=goals.map(function(g){
-var alvo=parseFloat(g.alvo)||parseFloat(g.target)||0;
-var atual=parseFloat(g.atual)||parseFloat(g.current)||0;
-var nome=g.nome||g.name||'Meta';
-var pct=alvo>0?Math.min((atual/alvo)*100,100):0;
-var corMap={green:'var(--green)',blue:'var(--blue)',purple:'var(--purple)',yellow:'var(--yellow)',red:'var(--vr)',cyan:'var(--cyan)'};
-var barColor=corMap[g.cor]||'var(--blue)';
-var prazoTxt=g.prazo?'Prazo: '+new Date(g.prazo+'T12:00:00').toLocaleDateString('pt-BR'):'Sem prazo';
-var pl=getMetaPlanner(g);
-var plannerTxt='';
-if(pl.jaAtingida){plannerTxt='<div class="meta-planner" style="margin-top:8px;padding:8px 10px;background:rgba(34,197,94,.12);border-radius:8px;font-size:.78rem;color:var(--green)">&#127942; Meta atingida! Parabéns.</div>';}
-else if(pl.mesesAte>0&&pl.aporteMensal>0){plannerTxt='<div class="meta-planner" style="margin-top:8px;padding:8px 10px;background:rgba(79,140,255,.08);border-radius:8px;font-size:.78rem;color:var(--t2)">&#128200; <b>Guardar R$ '+Math.round(pl.aporteMensal)+'/mês</b> (ou ~R$ '+Math.round(pl.aporteSemana)+'/semana) — <b>'+pl.mesesAte+' meses</b> até o prazo.</div>';}
-else if(pl.falta>0){plannerTxt='<div class="meta-planner" style="margin-top:8px;padding:8px 10px;background:rgba(79,140,255,.08);border-radius:8px;font-size:.78rem;color:var(--t2)">Faltam <b>'+fmt(pl.falta)+'</b>. Defina um prazo para ver quanto guardar por mês.</div>';}
-var btnAtingir=pl.jaAtingida?'':('<button type="button" class="btn btn-b btn-sm" onclick="openFinCalcWithGoal('+g.id+')" style="margin-top:6px;font-size:.8rem">&#128200; Como atingir?</button>');
-var nextM=getNextMilestone(alvo,atual);
-var nextTxt=nextM?'<div style="font-size:.72rem;color:var(--t3);margin-top:4px">&#128203; Próximo marco: <b>'+nextM.label+'</b> — R$ '+fmt(nextM.value)+'</div>':'';
-var milestonesHtml='<div class="meta-milestones"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>';
-var marcoBadge='';
-if(pct>=75&&pct<100)marcoBadge='<span class="meta-marco-badge warn">Quase lá!</span>';
-else if(pct>=50)marcoBadge='<span class="meta-marco-badge">50%!</span>';
-else if(pct>=25)marcoBadge='<span class="meta-marco-badge">25%!</span>';
-var quickAdd=pl.jaAtingida?'':'<div class="meta-quick-add">Adicionar: <button type="button" onclick="addValToGoal('+g.id+',50)">+ R$ 50</button><button type="button" onclick="addValToGoal('+g.id+',100)">+ R$ 100</button><button type="button" onclick="addValToGoal('+g.id+',200)">+ R$ 200</button></div>';
-var tipsArr=getMetaTips(g);
-var tipsHtml='<details class="meta-tips"><summary>&#128161; Dicas para esta meta</summary><ul>'+tipsArr.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></details>';
-return '<div class="meta-card">'+marcoBadge+'<div style="display:flex;justify-content:space-between;align-items:center">'+
-'<h4 style="font-size:.9rem">'+nome+'</h4>'+
-'<div><button class="btn btn-b btn-sm" onclick="editMetaAtual('+g.id+')" style="margin-right:4px">Atualizar</button><button class="btn-d" onclick="delMeta('+g.id+')">X</button></div></div>'+
-'<div class="meta-progress"><div class="meta-bar" style="width:'+pct+'%;background:'+barColor+'"></div></div>'+
-milestonesHtml+
-'<div class="meta-info"><span>'+fmt(atual)+' de '+fmt(alvo)+'</span><span>'+pct.toFixed(1)+'%</span></div>'+
-'<div style="font-size:.68rem;color:var(--t3);margin-top:4px">'+prazoTxt+'</div>'+
-nextTxt+
-plannerTxt+
-quickAdd+
-btnAtingir+
-tipsHtml+
-'</div>';
-}).join('');
+
+// Progresso geral (só metas ativas)
+var totalTarget=ativas.reduce(function(s,g){return s+(parseFloat(g.alvo||g.target)||0);},0);
+var totalCurrent=ativas.reduce(function(s,g){return s+(parseFloat(g.atual||g.current)||0);},0);
+var overallPct=totalTarget>0?Math.min(Math.round(totalCurrent/totalTarget*100),100):0;
+var pgEl=document.getElementById('metasProgressGeral');
+if(pgEl&&ativas.length>0){
+  pgEl.style.display='block';
+  pgEl.innerHTML='<div class="metas-progress-geral-header">'+
+    '<div class="metas-progress-geral-title"><i data-lucide="sparkles" style="width:15px;height:15px;color:var(--vr)"></i> Progresso Geral</div>'+
+    '<div class="metas-progress-geral-sub">'+fmt(totalCurrent)+' de '+fmt(totalTarget)+' nas metas ativas</div>'+
+  '</div>'+
+  '<div class="metas-progress-geral-bar"><div class="metas-progress-geral-fill" style="width:'+overallPct+'%"></div></div>'+
+  '<div class="metas-progress-geral-pct">'+overallPct+'% concluído</div>';
+}else if(pgEl)pgEl.style.display='none';
+
+// Cards + IA tip
+renderMetasCards();
+renderMetasIaTip();
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},60);
 }
 
 // ORÇAMENTO (redesenhado)
@@ -10707,24 +10816,64 @@ if(badge)badge.innerHTML='<span style="padding:3px 10px;border-radius:6px;backgr
 
 // --- 5.3 CALENDARIO DE PROVENTOS ---
 var proventos=JSON.parse(localStorage.getItem('vrt_proventos')||'[]');
+var _proventoConfirmId=null;
 
-function addProvento(){
-var ticker=prompt('Ticker do ativo (ex: PETR4):');if(!ticker)return;
-var tipo=prompt('Tipo (dividendo / jcp / rendimento):','dividendo');if(!tipo)return;
-var valor=parseFloat(prompt('Valor recebido (R$):','0'));if(!valor||valor<=0){toast(typeof t==='function'?t('toast_valor_invalido'):'Valor invalido','err');return}
-var data=prompt('Data de pagamento (YYYY-MM-DD):',new Date().toISOString().substring(0,10));if(!data)return;
-
-proventos.push({id:Date.now(),ticker:ticker.toUpperCase().trim(),tipo:tipo.toLowerCase(),valor:valor,data:data});
+function openProventoModal(){
+var ov=document.getElementById('proventoModalOverlay');
+var tickerEl=document.getElementById('proventoModalTicker');
+var tipoEl=document.getElementById('proventoModalTipo');
+var valorEl=document.getElementById('proventoModalValor');
+var dataEl=document.getElementById('proventoModalData');
+if(!ov||!tickerEl)return;
+tickerEl.value='';tipoEl.value='dividendo';valorEl.value='';dataEl.value=new Date().toISOString().substring(0,10);
+ov.style.display='flex';
+setTimeout(function(){if(tickerEl)tickerEl.focus();},100);
+}
+function closeProventoModal(){
+var ov=document.getElementById('proventoModalOverlay');
+if(ov)ov.style.display='none';
+}
+function saveProventoFromModal(){
+var tickerEl=document.getElementById('proventoModalTicker');
+var tipoEl=document.getElementById('proventoModalTipo');
+var valorEl=document.getElementById('proventoModalValor');
+var dataEl=document.getElementById('proventoModalData');
+if(!tickerEl||!valorEl||!dataEl)return;
+var ticker=(tickerEl.value||'').toUpperCase().trim();
+if(!ticker){toast(typeof t==='function'?t('toast_valor_invalido'):'Informe o ticker','err');return}
+var valor=parseFloat(String(valorEl.value).replace(',','.'));
+if(!valor||valor<=0){toast(typeof t==='function'?t('toast_valor_invalido'):'Valor inválido','err');return}
+var data=(dataEl.value||'').trim();
+if(!data){toast(typeof t==='function'?t('toast_valor_invalido'):'Informe a data','err');return}
+var tipo=(tipoEl&&tipoEl.value)?tipoEl.value:'dividendo';
+proventos.push({id:Date.now(),ticker:ticker,tipo:tipo.toLowerCase(),valor:valor,data:data});
 localStorage.setItem('vrt_proventos',JSON.stringify(proventos));
 renderProventos();
+closeProventoModal();
 toast(typeof t==='function'?t('toast_provento_registrado'):'Provento registrado!','ok');
 }
 
+function addProvento(){openProventoModal();}
+
+function closeProventoConfirm(){
+var ov=document.getElementById('proventoConfirmOverlay');
+if(ov)ov.style.display='none';
+_proventoConfirmId=null;
+}
 function delProvento(id){
-if(!confirm('Excluir provento?'))return;
-proventos=proventos.filter(function(p){return p.id!==id});
+_proventoConfirmId=id;
+var ov=document.getElementById('proventoConfirmOverlay');
+var btn=document.getElementById('proventoConfirmExcluirBtn');
+if(!ov||!btn)return;
+btn.onclick=function(){
+if(_proventoConfirmId==null)return;
+proventos=proventos.filter(function(p){return p.id!==_proventoConfirmId});
 localStorage.setItem('vrt_proventos',JSON.stringify(proventos));
-renderProventos();toast(typeof t==='function'?t('toast_excluido'):'Excluído','err');
+renderProventos();
+closeProventoConfirm();
+toast(typeof t==='function'?t('toast_excluido'):'Excluído','err');
+};
+ov.style.display='flex';
 }
 
 async function loadProventosB3(){
@@ -15632,12 +15781,27 @@ function requireFeature(key, fn) {
   showFeatureUpsell(key);
 }
 
+/* Persiste "Agora não" e remove o overlay de upsell */
+function dismissUpsellAndClose(key) {
+  try { localStorage.setItem('sibanki_upsell_dismissed_' + key, '1'); } catch (e) {}
+  var el = document.getElementById('sibUpsellModal');
+  if (el) el.remove();
+}
+function closeUpsellAndGoConfig() {
+  var el = document.getElementById('sibUpsellModal');
+  if (el) el.remove();
+  if (typeof go === 'function') go('config', null);
+}
+
 /* Modal de upsell para features PRO */
 function showFeatureUpsell(key) {
   var feat = SIBANKI_FEATURES[key];
   if (!feat || !feat.upsell) return;
+  /* Usuário já escolheu "Agora não" — não mostrar de novo */
+  if (localStorage.getItem('sibanki_upsell_dismissed_' + key)) return;
 
   var modal = document.createElement('div');
+  modal.id = 'sibUpsellModal';
   modal.style.cssText = 'position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,5,16,.75);backdrop-filter:blur(8px)';
   modal.innerHTML =
     '<div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--brd);border-radius:20px;padding:28px 24px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.6)">' +
@@ -15645,8 +15809,8 @@ function showFeatureUpsell(key) {
       '<div style="font-size:1.1rem;font-weight:800;color:var(--t1);margin-bottom:8px">' + feat.label + '</div>' +
       '<div style="font-size:.88rem;color:var(--t2);line-height:1.6;margin-bottom:20px">' + feat.upsell + '</div>' +
       '<div style="display:flex;gap:10px;justify-content:center">' +
-        '<button onclick="this.closest(\'div[style]\').remove()" style="padding:10px 20px;border-radius:10px;border:1px solid var(--brd);background:none;color:var(--t2);font-size:.88rem;cursor:pointer">Agora não</button>' +
-        '<button onclick="this.closest(\'div[style]\').remove();go(\'config\',null)" style="padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,#4F8CFF,#6366f1);color:#fff;font-weight:700;font-size:.88rem;cursor:pointer">Ver planos</button>' +
+        '<button type="button" onclick="dismissUpsellAndClose(\'' + key.replace(/'/g, '\\\'') + '\')" style="padding:10px 20px;border-radius:10px;border:1px solid var(--brd);background:none;color:var(--t2);font-size:.88rem;cursor:pointer">Agora não</button>' +
+        '<button type="button" onclick="closeUpsellAndGoConfig()" style="padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,#4F8CFF,#6366f1);color:#fff;font-weight:700;font-size:.88rem;cursor:pointer">Ver planos</button>' +
       '</div>' +
     '</div>';
   modal.onclick = function(e) { if (e.target === modal) modal.remove(); };

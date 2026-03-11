@@ -9,7 +9,9 @@
       "Bash(TEST_EMAIL=\"$TEST_EMAIL\" TEST_SENHA=\"$TEST_SENHA\" npx playwright:*)",
       "Bash(TEST_EMAIL=\"teste@gmail.com\" TEST_SENHA=\"123456\" npx playwright:*)",
       "Bash(curl:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(cd \"C:/Users/jscha/virtus-financeiro\" && node -e \"\nconst fs = require\\('fs'\\);\nlet content = fs.readFileSync\\('public/app/app.js', 'utf8'\\);\n\n// Check exact bytes for the unicode ones\nconst lines = content.split\\('\\\\n'\\);\nfor \\(let i = 0; i < lines.length; i++\\) {\n  if \\(lines[i].includes\\('Família vinculada'\\) || lines[i].includes\\('Convite aceito'\\) || lines[i].includes\\('Configurações salvas'\\)\\) {\n    console.log\\('Line', i+1, ':', JSON.stringify\\(lines[i].substring\\(0, 200\\)\\)\\);\n  }\n}\n\" 2>&1 | head -20)",
+      "Bash(cd \"C:/Users/jscha/virtus-financeiro\" && grep -n \"textContent\\\\s*=\\\\s*'\" public/app/app.js | grep -v \"R\\\\$\\\\|score\\\\|Score\\\\|Saldo\\\\|saldo\\\\|Nível\\\\|total\\\\|DY\\\\|+\\\\|//\\\\|widget\\\\|data-\" | grep \"[áéíóúâêîôûãõàçÁÉÍÓÚÂÊÎÔÛÃÕÀÇ]\" | head -20)"
     ]
   }
 }
