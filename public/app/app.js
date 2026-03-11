@@ -3175,7 +3175,7 @@ var groups={},groupOrder=[];
 pageRows.forEach(function(e){var d=e.date;if(!groups[d]){groups[d]=[];groupOrder.push(d);}groups[d].push(e);});
 var stIcoLucide={'pago':'','pendente':'clock','agendado':'calendar'};
 var stCls={'pendente':'entry-st-pendente','agendado':'entry-st-agendado'};
-var pgLbl={'pix':'Pix','debito':'Débito','credito':'Crédito','dinheiro':'Dinheiro','boleto':'Boleto','transferencia':'Transf.','cartao':'Cartão'};
+var pgLbl={'pix':'<i data-lucide="zap" style="width:12px;height:12px;vertical-align:middle"></i> Pix','debito':'<i data-lucide="credit-card" style="width:12px;height:12px;vertical-align:middle"></i> Débito','credito':'<i data-lucide="credit-card" style="width:12px;height:12px;vertical-align:middle"></i> Crédito','dinheiro':'<i data-lucide="banknote" style="width:12px;height:12px;vertical-align:middle"></i> Dinheiro','boleto':'<i data-lucide="file-text" style="width:12px;height:12px;vertical-align:middle"></i> Boleto','transferencia':'<i data-lucide="arrow-left-right" style="width:12px;height:12px;vertical-align:middle"></i> Transf.','cartao':'<i data-lucide="credit-card" style="width:12px;height:12px;vertical-align:middle"></i> Cartão'};
 var weekDays=['dom','seg','ter','qua','qui','sex','sáb'];
 var monthsAb=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 if(tb)tb.innerHTML=groupOrder.map(function(date){
