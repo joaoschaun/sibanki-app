@@ -771,6 +771,16 @@ if(!g)return;
 var isOpen=g.classList.toggle('open');
 var btn=g.querySelector('.drawer-nav-group-head');
 if(btn)btn.setAttribute('aria-expanded',isOpen?'true':'false');
+// Fechar todos os outros grupos
+if(isOpen){
+document.querySelectorAll('.drawer-nav-group').forEach(function(other){
+if(other!==g&&other.classList.contains('open')){
+other.classList.remove('open');
+var ob=other.querySelector('.drawer-nav-group-head');
+if(ob)ob.setAttribute('aria-expanded','false');
+}
+});
+}
 if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},10);
 try{var keys=[];document.querySelectorAll('.drawer-nav-group.open').forEach(function(gr){if(gr.id&&gr.id.indexOf('drawerGroup')===0)keys.push(gr.id.replace('drawerGroup','').toLowerCase());});localStorage.setItem('sibanki_drawer_groups',JSON.stringify(keys));}catch(e){}
 }
