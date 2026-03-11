@@ -757,6 +757,30 @@ var planEl=document.getElementById('drawerPlanBadge');var upgBtn=document.getEle
 if(planEl){var p=(typeof userPlan!=='undefined'?userPlan:'free')||'free';planEl.textContent=p==='pro'?'Pro':p==='familia'?'Família':'Gratuito';planEl.className='drawer-plan-badge '+(p==='pro'?'pro':p==='familia'?'familia':'gratuito');}
 if(upgBtn)upgBtn.style.display=(typeof userPlan!=='undefined'&&(userPlan==='pro'||userPlan==='familia'))?'none':'block';
 }
+/* ── Avatar dropdown ── */
+function toggleAvatarDropdown(e){
+if(e)e.stopPropagation();
+var dd=document.getElementById('avatarDropdown');
+var av=document.getElementById('topHeaderAvatar');
+if(!dd)return;
+var isOpen=dd.classList.toggle('open');
+if(av)av.setAttribute('aria-expanded',isOpen?'true':'false');
+if(isOpen){
+setTimeout(function(){
+document.addEventListener('click',function _cad(ev){
+if(!dd.contains(ev.target)&&ev.target!==av){closeAvatarDropdown();}
+document.removeEventListener('click',_cad);
+});
+},10);
+if(typeof lucide!=='undefined')lucide.createIcons();
+}
+}
+function closeAvatarDropdown(){
+var dd=document.getElementById('avatarDropdown');
+var av=document.getElementById('topHeaderAvatar');
+if(dd)dd.classList.remove('open');
+if(av)av.setAttribute('aria-expanded','false');
+}
 function syncDrawerActiveTab(id){
 var items=document.querySelectorAll('.drawer-nav-item');items.forEach(function(it){var goId=it.getAttribute('data-go');it.classList.toggle('active',goId===id);});
 // Abrir grupo que contém o item ativo
@@ -879,6 +903,7 @@ var saldo=userAccs.reduce(function(s,a){return s+getAccBal(a).atual;},0);
 document.getElementById('perfilSaldo').textContent=fmt(saldo);document.getElementById('perfilContas').textContent=userAccs.length;document.getElementById('perfilScore').textContent=score;
 document.getElementById('perfilAparencia').textContent=document.body.classList.contains('theme-light')?'Modo claro':'Modo escuro';}
 if(typeof updateResumoSemanalToggle==='function')updateResumoSemanalToggle(!!window._resumoSemanalEmail);
+if(typeof perfilAtualizarStatusNotif==='function')perfilAtualizarStatusNotif();
 if(typeof lucide!=='undefined')lucide.createIcons();
 }
 function togglePerfilAlerta(k,el){_perfilAlertasState[k]=!_perfilAlertasState[k];el.classList.toggle('on',_perfilAlertasState[k]);}
@@ -888,6 +913,31 @@ function savePerfilDados(){var n=document.getElementById('perfilNomeInput').valu
 function updateResumoSemanalToggle(on){var btn=document.getElementById('perfilResumoSemanalBtn');var thumb=document.getElementById('perfilResumoSemanalThumb');if(!btn||!thumb)return;btn.setAttribute('aria-pressed',on?'true':'false');btn.classList.toggle('on',on);btn.style.background=on?'rgba(76,123,244,.35)':'var(--bg2)';thumb.style.transform=on?'translateX(20px)':'translateX(3px)';thumb.style.background=on?'#4C7BF4':'var(--t3)';}
 function toggleResumoSemanalEmail(){if(!U||!U.uid)return;window._resumoSemanalEmail=!window._resumoSemanalEmail;var on=window._resumoSemanalEmail;updateResumoSemanalToggle(on);db.collection('users').doc(U.uid).set({resumoSemanalEmail:on},{merge:true}).then(function(){toast(on?'Resumo semanal ativado. Você receberá o e-mail às segundas.':'Resumo semanal desativado.','ok');}).catch(function(e){window._resumoSemanalEmail=!on;updateResumoSemanalToggle(!on);toast(typeof t==='function'?t('toast_erro_salvar'):'Erro ao salvar. Tente novamente.','err');});}
 
+/* ── Perfil: Telegram + WhatsApp ── */
+function perfilAtualizarStatusNotif(){
+var tgLinked=typeof window._tgLinked!=='undefined'?window._tgLinked:false;
+var tgNick=window._tgNick||'';
+var tgStatus=document.getElementById('tgStatusPerfil');
+var tgBtn=document.getElementById('tgBtnPerfil');
+if(tgStatus)tgStatus.textContent=tgLinked?'Vinculado como @'+tgNick:'Não vinculado';
+if(tgBtn){tgBtn.textContent='';tgBtn.innerHTML=tgLinked?'<i data-lucide="unlink" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Desvincular':'<i data-lucide="link" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Vincular';tgBtn.onclick=tgLinked?perfilDesvincularTelegram:perfilVincularTelegram;}
+var waNum=window._waNumber||localStorage.getItem('sibanki_wa_number')||'';
+var waStatus=document.getElementById('waStatusPerfil');
+var waBtn=document.getElementById('waBtnPerfil');
+if(waStatus)waStatus.textContent=waNum?'Configurado: '+waNum:'Não configurado';
+if(waBtn){waBtn.innerHTML=waNum?'<i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Editar':'<i data-lucide="link" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Configurar';}
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);
+}
+function perfilVincularTelegram(){go('config',null);setTimeout(function(){var s=document.getElementById('configSectionTelegram');if(s)s.scrollIntoView({behavior:'smooth'});},400);}
+function perfilDesvincularTelegram(){if(!confirm('Desvincular o Telegram?'))return;if(U&&U.uid)db.collection('users').doc(U.uid).set({telegramId:null,telegramNick:null},{merge:true});window._tgLinked=false;window._tgNick='';perfilAtualizarStatusNotif();toast('Telegram desvinculado','ok');}
+function perfilVincularWhatsApp(){
+var num=prompt('Digite seu número de WhatsApp com DDD (ex: 11999998888):','');
+if(!num)return;num=num.replace(/\D/g,'');
+if(num.length<10||num.length>11){toast('Número inválido. Use apenas dígitos, com DDD.','err');return;}
+window._waNumber=num;localStorage.setItem('sibanki_wa_number',num);
+if(U&&U.uid)db.collection('users').doc(U.uid).set({whatsappNumber:num},{merge:true}).catch(function(){});
+perfilAtualizarStatusNotif();toast('WhatsApp configurado! Notificações serão enviadas para '+num,'ok');
+}
 // NAV
 function go(id,el){
 /* Hook: show child section when entering family tab */
@@ -1108,7 +1158,9 @@ c.innerHTML=h;
 
 var DASHBOARD_WIDGETS=[
 {id:'insight',title:'Insight da IA',size:'full',iconName:'bot'},
-{id:'saldo',title:'Saldo Total',size:'full',iconName:'banknote'},
+{id:'saldo',title:'Patrimônio',size:'full',iconName:'banknote'},
+{id:'evolucao-financeira',title:'Evolução Financeira',size:'medium',iconName:'trending-up'},
+{id:'despesas-categoria',title:'Despesas por Categoria',size:'medium',iconName:'pie-chart'},
 {id:'receitas-despesas',title:'Receitas vs Despesas',size:'medium',iconName:'bar-chart-2'},
 {id:'progresso-metas',title:'Progresso das Metas',size:'medium',iconName:'target'},
 {id:'orcamento',title:'Orçamento do Mês',size:'full',iconName:'chart-pie'},
@@ -1119,10 +1171,9 @@ var DASHBOARD_WIDGETS=[
 {id:'calendario-mini',title:'Calendário Mini',size:'medium',iconName:'calendar'}
 ];
 var DEFAULT_DASHBOARD_LAYOUT=[
-{id:'insight',ordem:0,visivel:true},{id:'saldo',ordem:1,visivel:true},
-{id:'receitas-despesas',ordem:2,visivel:true},{id:'progresso-metas',ordem:3,visivel:true},
-{id:'orcamento',ordem:4,visivel:true},{id:'contas',ordem:5,visivel:true},{id:'proximos-vencimentos',ordem:6,visivel:true},
-{id:'ultimos-lancamentos',ordem:7,visivel:true}
+{id:'insight',ordem:0,visivel:true},{id:'evolucao-financeira',ordem:1,visivel:true},{id:'despesas-categoria',ordem:2,visivel:true},
+{id:'ultimos-lancamentos',ordem:3,visivel:true},{id:'orcamento',ordem:4,visivel:true},{id:'receitas-despesas',ordem:5,visivel:true},
+{id:'progresso-metas',ordem:6,visivel:true},{id:'contas',ordem:7,visivel:true},{id:'proximos-vencimentos',ordem:8,visivel:true}
 ];
 function getDashboardLayout(){
 var L=dashboardLayout&&Array.isArray(dashboardLayout)&&dashboardLayout.length>0?dashboardLayout:DEFAULT_DASHBOARD_LAYOUT;
@@ -1132,6 +1183,9 @@ function renderWidgetContent(widgetId,container){
 if(!container)return;
 var now=new Date(),cm=now.getMonth(),cy=now.getFullYear(),mesAtual=cy+'-'+String(cm+1).padStart(2,'0');
 var mesE=entries.filter(function(e){var d=new Date(e.date+'T12:00:00');return d.getMonth()===cm&&d.getFullYear()===cy});
+var mesesNome=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var hideVal=!!window._dashHideValues;
+var fmtVal=function(v){return hideVal?'••••':fmt(v);};
 var recM=mesE.filter(function(e){return e.type==='receita'&&!e.isTransfer&&e.category!=='Transferencia'}).reduce(function(s,e){return s+e.value},0);
 var despM=mesE.filter(function(e){return e.type==='despesa'&&!e.isTransfer&&e.category!=='Transferencia'}).reduce(function(s,e){return s+e.value},0);
 var salM=recM-despM;
@@ -1140,16 +1194,24 @@ var totalInv=0;investments.forEach(function(inv){totalInv+=inv.atual||inv.valor|
 var w=DASHBOARD_WIDGETS.find(function(x){return x.id===widgetId});if(!w)return;
 var h='';
 if(widgetId==='saldo'){
-var mesAnt=cm===0?11:cm-1,anoAnt=cm===0?cy-1:cy;
-var recAnt=entries.filter(function(e){var d=new Date(e.date+'T12:00:00');return d.getMonth()===mesAnt&&d.getFullYear()===anoAnt&&e.type==='receita'}).reduce(function(s,e){return s+e.value},0);
-var salAnt=totalSaldo-salM;
-var variacao=recAnt>0?((salM/recAnt)*100).toFixed(1):'0';
-var trendUp=salM>=0;
-var trendCls=trendUp?'widget-saldo-trend-up':'widget-saldo-trend-down';
-var trendChar=trendUp?'\u2191':'\u2193';
-h='<div class="widget-label">Saldo consolidado</div><div class="widget-saldo-value">'+fmt(totalSaldo)+'</div><div class="widget-saldo-variacao '+trendCls+'">'+trendChar+' Variação do mês: '+fmt(salM)+'</div>';
+var patrimonioWidget=totalSaldo+totalInv;
+var mesesNomeShort=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var saldoPorMes=[];for(var ei=5;ei>=0;ei--){var dP=new Date(cy,cm-ei,1);var mP=dP.getMonth(),yP=dP.getFullYear(),mesKeyP=yP+'-'+String(mP+1).padStart(2,'0');var recP=entries.filter(function(e){return e.date&&e.date.startsWith(mesKeyP)&&e.type==='receita'&&!e.isTransfer&&e.category!=='Transferencia'}).reduce(function(s,e){return s+e.value},0);var despP=entries.filter(function(e){return e.date&&e.date.startsWith(mesKeyP)&&e.type==='despesa'&&!e.isTransfer&&e.category!=='Transferencia'}).reduce(function(s,e){return s+e.value},0);saldoPorMes.push(recP-despP);}
+var patrimonioEvol=[];patrimonioEvol[5]=Math.round(patrimonioWidget);for(var pi=4;pi>=0;pi--)patrimonioEvol[pi]=Math.round(patrimonioEvol[pi+1]-saldoPorMes[pi+1]);if(patrimonioEvol[0]!==patrimonioEvol[0])patrimonioEvol[0]=0;
+var patrimonioVsAnterior=patrimonioEvol.length>=2?patrimonioEvol[5]-patrimonioEvol[4]:0;
+var patrimonioLabels=[];for(var li=5;li>=0;li--){var dL=new Date(cy,cm-li,1);patrimonioLabels.push(mesesNomeShort[dL.getMonth()]);}
+h='<div class="widget-patrimonio-header"><div class="widget-label">Patrim\u00f4nio</div><div class="widget-saldo-value">'+fmtVal(patrimonioWidget)+'</div><p class="widget-patrimonio-sub">Contas + Investimentos</p></div><div class="widget-patrimonio-chart-wrap"><canvas id="w_c3_patrimonio_evol"></canvas></div><div class="widget-patrimonio-vs '+(patrimonioVsAnterior>=0?'widget-patrimonio-vs-pos':'widget-patrimonio-vs-neg')+'">'+(hideVal?'••••':(patrimonioVsAnterior>=0?'+':'')+fmt(patrimonioVsAnterior))+' <span class="widget-patrimonio-vs-label">vs m\u00eas anterior</span></div>';
 }else if(widgetId==='receitas-despesas'){
 h='<div class="widget-label">Receitas vs Despesas</div><div style="height:180px;position:relative"><canvas id="w_c3_'+widgetId.replace(/-/g,'_')+'"></canvas></div>';
+}else if(widgetId==='evolucao-financeira'){
+var mesesNome=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var evolData=[];for(var ei=5;ei>=0;ei--){var dEv=new Date(cy,cm-ei,1);var mEv=dEv.getMonth(),yEv=dEv.getFullYear(),mesKey=yEv+'-'+String(mEv+1).padStart(2,'0');var recEv=entries.filter(function(e){return e.date&&e.date.startsWith(mesKey)&&e.type==='receita'&&!e.isTransfer&&e.category!=='Transferencia'}).reduce(function(s,e){return s+e.value},0);var despEv=entries.filter(function(e){return e.date&&e.date.startsWith(mesKey)&&e.type==='despesa'&&!e.isTransfer&&e.category!=='Transferencia'}).reduce(function(s,e){return s+e.value},0);evolData.push({month:mesesNome[mEv],receita:Math.round(recEv),despesa:Math.round(despEv)});}
+h='<div class="widget-label">Evolução Financeira</div><p class="widget-sublabel">Últimos 6 meses</p><div style="height:200px;position:relative"><canvas id="w_c3_evolucao_financeira"></canvas></div>';
+}else if(widgetId==='despesas-categoria'){
+var catMap={};mesE.filter(function(e){return e.type==='despesa'&&!e.isTransfer&&e.category!=='Transferencia'}).forEach(function(e){var c=e.category||'Outros';catMap[c]=(catMap[c]||0)+e.value;});var pieEntries=Object.keys(catMap).map(function(k){return{name:k,value:catMap[k]};}).sort(function(a,b){return b.value-a.value;});
+var coresPie=['hsl(221, 83%, 53%)','hsl(160, 64%, 43%)','hsl(38, 92%, 50%)','hsl(262, 60%, 58%)','hsl(220, 9%, 46%)','hsl(0, 84%, 60%)'];
+h='<div class="widget-label">Despesas por Categoria</div><p class="widget-sublabel">'+mesesNome[cm]+' '+cy+'</p><div style="height:180px;position:relative"><canvas id="w_c3_despesas_categoria"></canvas></div>';
+if(pieEntries.length>0){h+='<div class="widget-pie-legend">';pieEntries.forEach(function(pe,i){h+='<div class="widget-pie-legend-item"><span class="widget-pie-dot" style="background:'+coresPie[i%coresPie.length]+'"></span><span class="widget-pie-name">'+escapeHtml(pe.name)+'</span></div>';});h+='</div>';}
 }else if(widgetId==='progresso-metas'){
 var gl=goals||[];var totalMeta=0,currentMeta=0;
 gl.forEach(function(g){var alvo=parseFloat(g.target||g.alvo)||0;var atual=parseFloat(g.current||g.atual)||0;totalMeta+=alvo;currentMeta+=Math.min(atual,alvo);});
@@ -1163,7 +1225,7 @@ if(gl.length===0)h+='<p style="color:var(--t2);font-size:.85em">Nenhuma meta cad
 h='<div id="insightDoDiaCard" class="widget-insight-wrap"><div class="widget-insight-icon"><i data-lucide="bot" style="width:28px;height:28px;color:#4C7BF4"></i></div><div class="widget-insight-title">INSIGHT DO DIA</div><div id="insightDoDiaText" class="widget-insight-text">Carregando...</div><div class="widget-insight-actions"><button type="button" class="btn btn-r" onclick="renderInsightDoDia(true)" style="font-size:.8rem;padding:6px 12px">Novo insight</button><button type="button" class="btn" onclick="go(\'ia\',null)" style="font-size:.8rem;padding:6px 12px;background:transparent;border:1px solid var(--brd);color:var(--t2);border-radius:8px;cursor:pointer">Ver no Consultor IA</button></div></div>';
 }else if(widgetId==='contas'){
 var saldoContas=0;for(var sc=0;sc<userAccs.length;sc++){var bx=getAccBal(userAccs[sc]);saldoContas+=bx.atual;}
-h='<div class="widget-label">Saldo em Contas</div><div class="widget-value" style="color:'+(saldoContas>=0?'var(--green)':'var(--danger)')+'">'+fmt(saldoContas)+'</div><div style="font-size:.8em;color:var(--t2);margin-top:4px">'+userAccs.length+' conta(s)</div>';
+h='<div class="widget-label">Saldo em Contas</div><div class="widget-value" style="color:'+(saldoContas>=0?'var(--green)':'var(--danger)')+'">'+fmtVal(saldoContas)+'</div><div style="font-size:.8em;color:var(--t2);margin-top:4px">'+userAccs.length+' conta(s)</div>';
 }else if(widgetId==='proximos-vencimentos'){
 var hoje=new Date().toISOString().split('T')[0];
 var em7Dias=new Date();em7Dias.setDate(em7Dias.getDate()+7);var ate=em7Dias.toISOString().split('T')[0];
@@ -1171,13 +1233,13 @@ var proximos=[];cards.forEach(function(c){var faturas=c.faturas||[];faturas.forE
 entries.filter(function(e){return e.status==='pendente'&&e.date>=hoje&&e.date<=ate}).forEach(function(e){proximos.push({tipo:'Conta',nome:e.desc,valor:e.value,data:e.date});});
 proximos.sort(function(a,b){return a.data.localeCompare(b.data)});
 h='<div class="widget-label">Próximos 7 dias</div>';
-proximos.slice(0,5).forEach(function(p){h+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--brd);font-size:.85em"><span>'+escapeHtml(p.nome)+'</span><span style="font-weight:700;color:var(--vr)">'+fmt(p.valor)+'</span></div>';});
+proximos.slice(0,5).forEach(function(p){h+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--brd);font-size:.85em"><span>'+escapeHtml(p.nome)+'</span><span style="font-weight:700;color:var(--vr)">'+fmtVal(p.valor)+'</span></div>';});
 if(proximos.length===0)h+='<p style="color:var(--t2);font-size:.85em">Nada a vencer</p>';
 }else if(widgetId==='orcamento'){
 var orc=budgets||{};var keys=Object.keys(orc);
 h='<div class="widget-label">Orçamento do Mês</div>';
 keys.slice(0,5).forEach(function(cat){var lim=orc[cat]||0;var usado=mesE.filter(function(e){return e.type==='despesa'&&e.category===cat}).reduce(function(s,e){return s+e.value},0);var p=lim>0?Math.min(100,Math.round(usado/lim*100)):0;
-h+='<div style="margin-bottom:10px"><div style="font-size:.8em;margin-bottom:4px">'+escapeHtml(cat)+'</div><div style="height:6px;background:var(--bg2);border-radius:6px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:'+(p>90?'var(--danger)':p>70?'var(--alerta)':'var(--green)')+';border-radius:6px"></div></div><div style="font-size:.7em;color:var(--t2)">'+fmt(usado)+' / '+fmt(lim)+'</div></div>';
+h+='<div style="margin-bottom:10px"><div style="font-size:.8em;margin-bottom:4px">'+escapeHtml(cat)+'</div><div style="height:6px;background:var(--bg2);border-radius:6px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:'+(p>90?'var(--danger)':p>70?'var(--alerta)':'var(--green)')+';border-radius:6px"></div></div><div style="font-size:.7em;color:var(--t2)">'+fmtVal(usado)+' / '+fmtVal(lim)+'</div></div>';
 });
 if(keys.length===0)h+='<p style="color:var(--t2);font-size:.85em">Nenhum orçamento definido</p>';
 }else if(widgetId==='conquistas'){
@@ -1188,7 +1250,7 @@ if(keys.length===0)h+='<p style="color:var(--t2);font-size:.85em">Nenhuma conqui
 }else if(widgetId==='ultimos-lancamentos'){
 var ultimos=entries.slice().sort(function(a,b){return b.date.localeCompare(a.date)}).slice(0,5);
 h='<div class="widget-label">Últimos Lançamentos</div>';
-ultimos.forEach(function(e){h+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--brd);font-size:.85em"><span>'+escapeHtml(e.desc||e.category)+'</span><span class="m '+(e.type==='receita'?'g':'r')+'">'+(e.type==='receita'?'+ ':'- ')+fmt(e.value)+'</span></div>';});
+ultimos.forEach(function(e){h+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--brd);font-size:.85em"><span>'+escapeHtml(e.desc||e.category)+'</span><span class="m '+(e.type==='receita'?'g':'r')+'">'+(e.type==='receita'?'+ ':'- ')+fmtVal(e.value)+'</span></div>';});
 if(ultimos.length===0)h+='<p style="color:var(--t2);font-size:.85em">Nenhum lançamento</p>';
 }else if(widgetId==='calendario-mini'){
 var dia1=new Date(cy,cm,1);var lastD=new Date(cy,cm+1,0).getDate();
@@ -1199,8 +1261,18 @@ for(var d=1;d<=lastD;d++){var ds=cy+'-'+String(cm+1).padStart(2,'0')+'-'+String(
 h+='</div>';
 }
 container.innerHTML=h;
+if(widgetId==='saldo'){
+setTimeout(function(){var cid='w_c3_patrimonio_evol';var can=document.getElementById(cid);if(!can||typeof Chart==='undefined')return;if(charts[cid])charts[cid].destroy();var trendData=[];var first=patrimonioEvol[0],last=patrimonioEvol[5];for(var ti=0;ti<6;ti++)trendData.push(first+(last-first)*ti/5);var gc='rgba(148,163,184,0.06)';var segColor=function(ctx){var y0=ctx.p0.parsed.y,y1=ctx.p1.parsed.y;return y1>=y0?'#22C55E':'#EF4444';};charts[cid]=new Chart(can,{type:'line',data:{labels:patrimonioLabels,datasets:[{label:'Patrimonio',data:patrimonioEvol,borderWidth:2.5,tension:0.3,fill:true,backgroundColor:'rgba(34,197,94,0.08)',segment:{borderColor:segColor},pointRadius:[0,0,0,0,0,5],pointBackgroundColor:patrimonioVsAnterior>=0?'#22C55E':'#EF4444',pointBorderColor:'#0d1825',pointBorderWidth:2},{label:'Tendencia',data:trendData,borderWidth:1,borderDash:[6,4],borderColor:'rgba(148,163,184,0.5)',tension:0,pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false},plugins:{legend:{display:false}},scales:{y:{grid:{color:gc},ticks:{color:'#94a3b8'}},x:{grid:{color:gc},ticks:{color:'#94a3b8'}}}}})},150);
+}
 if(widgetId==='receitas-despesas'){
 setTimeout(function(){var cid='w_c3_'+widgetId.replace(/-/g,'_');var can=document.getElementById(cid);if(can&&typeof Chart!=='undefined'){if(charts[cid])charts[cid].destroy();var gc='rgba(148,163,184,0.06)';charts[cid]=new Chart(can,{type:'bar',data:{labels:['Receitas','Despesas'],datasets:[{label:'R$',data:[recM,despM],backgroundColor:['rgba(34,197,94,0.6)','rgba(239,68,68,0.6)']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:gc},ticks:{color:'#94a3b8'}},x:{grid:{color:gc},ticks:{color:'#94a3b8'}}}}})}},100);
+}
+if(widgetId==='evolucao-financeira'){
+setTimeout(function(){var cid='w_c3_evolucao_financeira';var can=document.getElementById(cid);if(!can||typeof Chart==='undefined')return;if(charts[cid])charts[cid].destroy();var labels=evolData.map(function(x){return x.month});charts[cid]=new Chart(can,{type:'line',data:{labels:labels,datasets:[{label:'Receita',data:evolData.map(function(x){return x.receita}),borderColor:'hsl(160, 64%, 43%)',backgroundColor:'rgba(34,197,94,0.15)',fill:true,tension:0.3},{label:'Despesa',data:evolData.map(function(x){return x.despesa}),borderColor:'hsl(0, 84%, 60%)',backgroundColor:'rgba(239,68,68,0.1)',fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top'}},scales:{y:{grid:{color:'rgba(148,163,184,0.06)'},ticks:{color:'#94a3b8'}},x:{grid:{color:'rgba(148,163,184,0.06)'},ticks:{color:'#94a3b8'}}}}})},100);
+}
+if(widgetId==='despesas-categoria'&&pieEntries&&pieEntries.length>0){
+var coresPieArr=['hsl(221, 83%, 53%)','hsl(160, 64%, 43%)','hsl(38, 92%, 50%)','hsl(262, 60%, 58%)','hsl(220, 9%, 46%)','hsl(0, 84%, 60%)'];
+setTimeout(function(){var cid='w_c3_despesas_categoria';var can=document.getElementById(cid);if(!can||typeof Chart==='undefined')return;if(charts[cid])charts[cid].destroy();charts[cid]=new Chart(can,{type:'doughnut',data:{labels:pieEntries.map(function(x){return x.name}),datasets:[{data:pieEntries.map(function(x){return x.value}),backgroundColor:pieEntries.map(function(_,i){return coresPieArr[i%6]}),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}})},100);
 }
 if(widgetId==='insight'&&typeof renderInsightDoDia==='function')setTimeout(renderInsightDoDia,200);
 }
@@ -1221,14 +1293,37 @@ grid.appendChild(div);
 });
 if(typeof window.refreshLucide==='function')window.refreshLucide();
 }
+function toggleDashHideValues(){
+try{window._dashHideValues=!window._dashHideValues;if(typeof localStorage!=='undefined')localStorage.setItem('sibanki_dash_hide_values',window._dashHideValues?'1':'0');}catch(e){}
+var toggleLbl=document.getElementById('dashToggleValuesLabel');
+if(toggleLbl)toggleLbl.textContent=window._dashHideValues?(typeof t==='function'?t('dash_mostrar_valores'):'Mostrar valores'):(typeof t==='function'?t('dash_ocultar_valores'):'Ocultar valores');
+var toggleIcon=document.querySelector('#dashToggleValuesBtn i');
+if(toggleIcon&&typeof toggleIcon.getAttribute==='function'){toggleIcon.setAttribute('data-lucide',window._dashHideValues?'eye':'eye-off');if(typeof lucide!=='undefined')lucide.createIcons();}
+if(typeof rKPI==='function')rKPI();
+if(typeof renderDashboardWidgets==='function')renderDashboardWidgets();
+}
+function initDashboardSortable(){
+var grid=document.getElementById('dashboardGrid');
+if(!grid||typeof Sortable==='undefined')return;
+if(window._dashSortable){window._dashSortable.destroy();window._dashSortable=null;}
+window._dashSortable=Sortable.create(grid,{
+animation:200,
+ghostClass:'widget-ghost',
+chosenClass:'widget-chosen',
+dragClass:'widget-dragging',
+placeholder:'widget-placeholder',
+filter:'.widget-remove-btn',
+preventOnFilter:true,
+onEnd:function(){salvarLayoutDashboard();}
+});
+}
 function toggleDashboardEdit(){
 var grid=document.getElementById('dashboardGrid');var panel=document.getElementById('dashEditPanel');var btn=document.getElementById('dashEditBtn');
 if(!grid)return;
 var isEdit=grid.classList.toggle('widget-edit-mode');
 panel.classList.toggle('show',isEdit);btn.textContent=isEdit?'Concluir Edição':'Editar Dashboard';
 if(isEdit){
-if(window._dashSortable){window._dashSortable.destroy();window._dashSortable=null;}
-if(typeof Sortable!=='undefined'){window._dashSortable=Sortable.create(grid,{animation:150,ghostClass:'widget-ghost',chosenClass:'widget-chosen',handle:'.widget-drag-handle',onEnd:function(){salvarLayoutDashboard();}});}
+initDashboardSortable();
 var picker=document.getElementById('dashWidgetPicker');var current=getDashboardLayout().map(function(x){return x.id});
 picker.innerHTML=DASHBOARD_WIDGETS.filter(function(w){return current.indexOf(w.id)<0}).map(function(w){return '<span onclick="adicionarWidgetDashboard(\''+w.id+'\')"><i data-lucide="'+(w.iconName||'circle')+'"></i> '+w.title+'</span>'}).join('');
 if(typeof window.refreshLucide==='function')window.refreshLucide();
@@ -1256,6 +1351,8 @@ async function salvarLayoutDashboard(){
 var grid=document.getElementById('dashboardGrid');if(!grid||!U||!U.uid)return;
 var widgets=[];grid.querySelectorAll('.widget').forEach(function(el,i){var id=el.dataset.widgetId;if(id)widgets.push({id:id,ordem:i,visivel:true});});
 dashboardLayout=widgets;
+renderDashboardWidgets();
+if(grid.classList.contains('widget-edit-mode'))initDashboardSortable();
 try{await db.collection('users').doc(U.uid).update({dashboardLayout:widgets,layoutAtualizadoEm:firebase.firestore.FieldValue.serverTimestamp()});toast(typeof t==='function'?t('toast_layout_salvo'):'Layout salvo!','ok');}catch(e){toast((typeof t==='function'?t('toast_erro_salvar'):'Erro ao salvar: ')+e.message,'err');}
 }
 function resetarLayoutDashboard(){
@@ -2515,13 +2612,23 @@ window._lastFinScore=nota*10;
 var scoreNum=nota*10;
 var scoreCor=scoreNum>=70?'#22C55E':scoreNum>=40?'#EAB308':'#EF4444';
 var userName=(U&&U.name)||'Usuário';
+var labelEl=document.getElementById('dashGreetLabel');
+if(labelEl)labelEl.textContent=saud;
 var el=document.getElementById('dashGreet');
-if(el)el.innerHTML='<span class="dash-greet-time">'+saud+'</span> <span class="dash-greet-name">'+escapeHtml(userName)+'</span>';
+if(el)el.innerHTML=escapeHtml(userName)+' \uD83D\uDC4B';
 var sub=document.getElementById('dashSubtitle');
 if(sub){
+var diasSemana=['Domingo','Segunda-feira','Ter\u00e7a-feira','Quarta-feira','Quinta-feira','Sexta-feira','S\u00e1bado'];
 var meses=['Janeiro','Fevereiro','Mar\u00e7o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-var dataStr=now.getDate()+' de '+meses[cm]+' de '+cy;
-sub.innerHTML=dataStr+' &bull; <span class="dash-score-wrap"><span class="dash-score-dot" style="background:'+scoreCor+'"></span> Score '+scoreNum+'</span>';
+var dataStr=diasSemana[now.getDay()]+', '+now.getDate()+' de '+meses[cm]+' de '+cy;
+sub.innerHTML=dataStr;
+}
+var toggleLbl=document.getElementById('dashToggleValuesLabel');
+if(toggleLbl)toggleLbl.textContent=window._dashHideValues?(typeof t==='function'?t('dash_mostrar_valores'):'Mostrar valores'):(typeof t==='function'?t('dash_ocultar_valores'):'Ocultar valores');
+var toggleIcon=document.querySelector('#dashToggleValuesBtn i');
+if(toggleIcon&&typeof toggleIcon.getAttribute==='function'){
+var iconName=window._dashHideValues?'eye':'eye-off';
+if(toggleIcon.getAttribute('data-lucide')!==iconName){toggleIcon.setAttribute('data-lucide',iconName);if(typeof lucide!=='undefined')lucide.createIcons();}
 }
 var previsaoEl=document.getElementById('dashPrevisaoFimMes');
 if(previsaoEl){
@@ -2984,7 +3091,10 @@ var tabEl=document.querySelector('.tab.on');
 var tabId=tabEl&&tabEl.id?tabEl.id:'dash';
 rKPI();
 popFilMes();popTfSels();
-if(tabId==='dash'){rKPI();renderDashPremium();renderDashboardWidgets();rDicas();checkAlerts();renderDashImportPromo();renderDashTelegramPromo();if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();}
+if(tabId==='dash'){
+if(window._dashHideValues===undefined){try{window._dashHideValues=localStorage.getItem('sibanki_dash_hide_values')==='1';}catch(e){window._dashHideValues=false;}}
+rKPI();renderDashPremium();renderDashboardWidgets();rDicas();checkAlerts();renderDashImportPromo();renderDashTelegramPromo();if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();
+}
 else if(tabId==='lanc'){rE();setLancFirstGuide();if(typeof window.refreshLucide==='function')window.refreshLucide();}
 else if(tabId==='invest'){rInv();try{renderPortfolio();}catch(e){}}
 else if(tabId==='metas'){metasIaTipLoaded=false;rMetas();if(typeof updateDashMetasBlock==='function')updateDashMetasBlock();}
@@ -3004,48 +3114,47 @@ if(typeof updateDrawerUser==='function')updateDrawerUser();
 if(typeof window.refreshLucide==='function')setTimeout(window.refreshLucide,50);
 }
 
-// KPI
+// KPI — 4 cards estilo Lovable (Saldo Total, Receitas, Despesas, Investimentos)
 function rKPI(){
 var td=0,tr=0,dc=0,rc=0;
-var now=new Date();var mesAtual=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-var despMes=0,recMes=0,pendMes=0;
+var now=new Date();var cm=now.getMonth(),cy=now.getFullYear();
+var mesAtual=cy+'-'+String(cm+1).padStart(2,'0');
+var mesAnt=cm===0?11:cm-1,anoAnt=cm===0?cy-1:cy;
+var mesAntStr=anoAnt+'-'+String(mesAnt+1).padStart(2,'0');
+var despMes=0,recMes=0,pendMes=0,recAnt=0,despAnt=0;
 entries.forEach(function(e){
 var isMes=e.date&&e.date.startsWith(mesAtual);
+var isAnt=e.date&&e.date.startsWith(mesAntStr);
 var isTf=e.isTransfer||e.category==='Transferencia';
-if(e.type==='despesa'){td+=e.value;dc++;if(isMes&&!isTf){despMes+=e.value;if(e.status==='pendente'||e.status==='agendado')pendMes+=e.value}}
-else{tr+=e.value;rc++;if(isMes&&!isTf)recMes+=e.value}
+if(e.type==='despesa'){td+=e.value;dc++;if(isMes&&!isTf){despMes+=e.value;if(e.status==='pendente'||e.status==='agendado')pendMes+=e.value}if(isAnt&&!isTf)despAnt+=e.value;}
+else{tr+=e.value;rc++;if(isMes&&!isTf)recMes+=e.value;if(isAnt&&!isTf)recAnt+=e.value;}
 });
-var totalIni=0;
-if(typeof accountBalances==='object'){for(var k in accountBalances){if(accountBalances.hasOwnProperty(k))totalIni+=accountBalances[k]||0}}
 var salMes=recMes-despMes;
-// Saldo geral: soma das contas (respeita modo caixa)
+var salMesAnt=recAnt-despAnt;
 var sal=0;
 for(var _ai=0;_ai<userAccs.length;_ai++){var _acc=userAccs[_ai];if(accountMeta[_acc]&&accountMeta[_acc].incluirNaSoma===false)continue;try{sal+=getAccBal(_acc).atual;}catch(x){}}
-var patrimônio=sal;
-var nm=new Set(entries.map(function(e){return e.date.substring(0,7)})).size||1;
-var totalInv=0,totalInvAtual=0;
-investments.forEach(function(i){totalInv+=invCostBasis(i);totalInvAtual+=i.atual||i.valor});
-patrimônio+=totalInvAtual;
-var custoFixo=0,recFixa=0;
-if(typeof recurrents!=='undefined'){recurrents.forEach(function(r){if(r.active){if(r.type==='despesa')custoFixo+=r.value;else recFixa+=r.value}})}
-var saldoCls=salMes>0?'saldo-pos':salMes<0?'saldo-neg':'saldo-zero';
-var saldoNegClass=salMes<0?' neg':'';
-var kRel=document.getElementById('kR');if(!kRel)return;kRel.innerHTML=
-'<div class="kpi-hero-row kpi-hero">'+
-'<div class="kpi kpi-saldo-wrap'+saldoNegClass+'" onclick="openKpiModal(\'saldo\')"><div class="kpi-saldo-left"><div class="kl"><i data-lucide="wallet" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;vertical-align:middle;margin-right:6px"></i>Saldo do M\u00eas</div><div class="kv '+saldoCls+'">'+fmt(salMes)+'</div><div class="ks '+(salMes>=0?'positive':'negative')+'">Geral: '+fmt(sal)+' \u25b8</div></div><canvas id="sparkline-saldo" width="80" height="44"></canvas></div>'+
-'<div class="kpi" onclick="showPatrimonio()"><div class="kl"><i data-lucide="trending-up" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;vertical-align:middle;margin-right:6px"></i>Patrim\u00f4nio Total</div><div class="kv">'+fmt(patrimônio)+'</div><div class="ks">Contas + Invest. \u25b8</div></div>'+
-'</div>'+
-'<div class="kpi-grid">'+
-'<div class="kpi kpi-receitas" onclick="openKpiModal(\'receitas\')"><div class="kl"><i data-lucide="arrow-up-circle" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;vertical-align:middle;margin-right:5px"></i>Receitas</div><div class="kv">'+fmt(recMes)+'</div><div class="ks">'+fmt(tr)+' total \u25b8</div></div>'+
-'<div class="kpi kpi-despesas" onclick="openKpiModal(\'despesas\')"><div class="kl"><i data-lucide="arrow-down-circle" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;vertical-align:middle;margin-right:5px"></i>Despesas</div><div class="kv">'+fmt(despMes)+'</div><div class="ks '+(pendMes>0?'negative':'')+'">'+(pendMes>0?fmt(pendMes)+' pendente':fmt(td)+' total')+' \u25b8</div></div>'+
-'<div class="kpi kpi-custos" onclick="openKpiModal(\'custos\')"><div class="kl"><i data-lucide="pin" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;vertical-align:middle;margin-right:5px"></i>Fixos</div><div class="kv">'+fmt(custoFixo)+'</div><div class="ks">'+fmt(recFixa)+' fixa \u25b8</div></div>'+
-'<div class="kpi kpi-investido" onclick="openKpiModal(\'investido\')"><div class="kl"><i data-lucide="bar-chart-2" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;vertical-align:middle;margin-right:5px"></i>Investido</div><div class="kv">'+fmt(totalInvAtual)+'</div><div class="ks">Detalhes \u25b8</div></div>'+
+var totalInvAtual=0;
+investments.forEach(function(i){totalInvAtual+=i.atual||i.valor||0});
+var patrimônio=sal+totalInvAtual;
+var hide=!!window._dashHideValues;
+var f=function(v){return hide?'••••••':fmt(v);};
+function pctChange(atual,ant){if(ant===0)return atual>0?'+0%':'0%';var p=((atual-ant)/Math.abs(ant))*100;var s=p>=0?'+':'';return s+p.toFixed(1).replace('.',',')+'%';}
+var chSaldoBadge=hide?'•••':'M\u00eas: '+fmt(salMes);
+var chRec=recAnt>0?pctChange(recMes,recAnt):(recMes>0?'+0%':'0%');
+var chDesp=despAnt>0?pctChange(despMes,despAnt):(despMes>0?'+0%':'0%');
+var chInv='—';
+var kRel=document.getElementById('kR');if(!kRel)return;
+kRel.innerHTML=
+'<div class="dash-stats-grid">'+
+'<div class="dash-stat-card dash-stat-saldo" onclick="openKpiModal(\'saldo\')"><div class="dash-stat-head"><div class="dash-stat-icon dash-stat-icon-primary"><i data-lucide="wallet"></i></div><span class="dash-stat-badge '+(salMes>=0?'dash-stat-badge-pos':'dash-stat-badge-neg')+'">'+chSaldoBadge+'</span></div><div class="dash-stat-label">Saldo Total</div><div class="dash-stat-value">'+f(sal)+'</div><div class="dash-stat-accent"></div></div>'+
+'<div class="dash-stat-card dash-stat-receitas" onclick="openKpiModal(\'receitas\')"><div class="dash-stat-head"><div class="dash-stat-icon dash-stat-icon-success"><i data-lucide="arrow-up-right"></i></div><span class="dash-stat-badge dash-stat-badge-pos">'+(hide?'•••':chRec)+'</span></div><div class="dash-stat-label">Receitas</div><div class="dash-stat-value">'+f(recMes)+'</div><div class="dash-stat-accent"></div></div>'+
+'<div class="dash-stat-card dash-stat-despesas" onclick="openKpiModal(\'despesas\')"><div class="dash-stat-head"><div class="dash-stat-icon dash-stat-icon-danger"><i data-lucide="arrow-down-left"></i></div><span class="dash-stat-badge dash-stat-badge-neg">'+(hide?'•••':chDesp)+'</span></div><div class="dash-stat-label">Despesas</div><div class="dash-stat-value">'+f(despMes)+'</div><div class="dash-stat-accent"></div></div>'+
+'<div class="dash-stat-card dash-stat-invest" onclick="openKpiModal(\'investido\')"><div class="dash-stat-head"><div class="dash-stat-icon dash-stat-icon-accent"><i data-lucide="trending-up"></i></div><span class="dash-stat-badge dash-stat-badge-pos">'+(hide?'•••':chInv)+'</span></div><div class="dash-stat-label">Investimentos</div><div class="dash-stat-value">'+f(totalInvAtual)+'</div><div class="dash-stat-accent"></div></div>'+
 '</div>';
 var tips=getSmartTips().filter(function(t){var s=(t.title||'')+(t.text||'');return !/importe|importar|extrato|nubank|inter|itaú|c6/i.test(s);});
 if(tips.length>0){var t=tips[0];
 var tb=document.getElementById('tipBanner');if(tb)tb.innerHTML='<div class="tip-card '+t.color+'" style="margin-bottom:16px"><b>'+t.title+'</b> - '+t.text+'</div>'}
 else{var tb=document.getElementById('tipBanner');if(tb)tb.innerHTML='';}
-setTimeout(drawSparklineSaldo,50);
 if(typeof window.refreshLucide==='function')window.refreshLucide();
 }
 function drawSparklineSaldo(){
@@ -15482,10 +15591,9 @@ function showFlash(msg, type, hint, tabDestino, durMs) {
 }
 
 function renderAlertBar() {
-  /* Substitui alertBar estático por flashes contextuais */
+  /* Injeta alertas financeiros como notificações (sino) — sem poluir o dashboard visualmente */
   var bar = document.getElementById('sibFlashBar');
-  if (!bar) return;
-  bar.innerHTML = '';
+  if (bar) bar.innerHTML = '';
 
   var now = new Date();
   var cm = now.getMonth();
@@ -15498,9 +15606,9 @@ function renderAlertBar() {
   var totalRec = entradasMes.filter(function(e) { return e.type === 'receita'; }).reduce(function(s, e) { return s + e.value; }, 0);
   var totalDesp = entradasMes.filter(function(e) { return e.type === 'despesa'; }).reduce(function(s, e) { return s + e.value; }, 0);
 
-  var flashes = [];
+  var notifs = [];
 
-  // Orçamento estourado por categoria
+  // Orçamento estourado → notificação
   if (typeof budgets === 'object') {
     Object.keys(budgets).forEach(function(cat) {
       var lim = budgets[cat];
@@ -15508,21 +15616,32 @@ function renderAlertBar() {
       var gasto = entradasMes.filter(function(e) { return e.type === 'despesa' && e.category === cat; }).reduce(function(s, e) { return s + e.value; }, 0);
       var pct = gasto / lim;
       if (pct >= 1) {
-        flashes.push({ type: 'bad', msg: cat + ': orçamento estourado (' + Math.round(pct * 100) + '%)', hint: 'Toque para ver lançamentos', tab: 'orçamento', delay: 0 });
+        notifs.push({ id: 'orc_over_' + cat, lucide: 'alert-circle', tp: 'danger', tit: cat + ': orçamento estourado', txt: Math.round(pct * 100) + '% do limite usado este mês', tab: 'orçamento' });
       } else if (pct >= 0.85) {
-        flashes.push({ type: 'warn', msg: cat + ': ' + Math.round(pct * 100) + '% do orçamento usado', hint: 'Faltam R$ ' + (lim - gasto).toFixed(2).replace('.', ','), tab: 'orçamento', delay: 0 });
+        notifs.push({ id: 'orc_warn_' + cat, lucide: 'alert-triangle', tp: 'warn', tit: cat + ': atenção ao orçamento', txt: Math.round(pct * 100) + '% usado — Faltam R$ ' + (lim - gasto).toFixed(2).replace('.', ','), tab: 'orçamento' });
       }
     });
   }
 
-  // Saldo negativo
+  // Saldo negativo → notificação
   if (totalRec > 0 && totalDesp > totalRec) {
-    flashes.push({ type: 'bad', msg: 'Despesas superam receitas este mês', hint: 'Revise seus gastos no dashboard', tab: 'lanc', delay: 500 });
+    notifs.push({ id: 'saldo_neg', lucide: 'trending-down', tp: 'danger', tit: 'Despesas superam receitas', txt: 'Revise seus gastos para equilibrar o mês', tab: 'lanc' });
   } else if (totalRec > 0 && totalDesp / totalRec > 0.8) {
-    flashes.push({ type: 'warn', msg: 'Você usou ' + Math.round(totalDesp / totalRec * 100) + '% da receita do mês', hint: 'Monitore para não estourar', tab: 'dash', delay: 500 });
+    notifs.push({ id: 'saldo_warn', lucide: 'trending-down', tp: 'warn', tit: Math.round(totalDesp / totalRec * 100) + '% da receita já comprometida', txt: 'Monitore seus gastos para não estourar', tab: 'dash' });
   }
 
-  // Cartões próximos
+  // Injetar notificações no sistema do sino
+  if (notifs.length && typeof nList !== 'undefined') {
+    notifs.forEach(function(n) {
+      if (!nList.find(function(x) { return x.id === n.id; })) {
+        nList.unshift(n);
+      }
+    });
+    renderNP();
+  }
+
+  // Cartões próximos → flash visual (ação imediata necessária)
+  var flashes = [];
   if (typeof cards !== 'undefined' && cards.length) {
     cards.forEach(function(c) {
       var dias = typeof getDiasParaFecha === 'function' ? getDiasParaFecha(c) : 99;
@@ -15531,13 +15650,10 @@ function renderAlertBar() {
       if (dias <= 3) {
         flashes.push({ type: 'bad', msg: c.name + ': fatura fecha em ' + dias + ' dia' + (dias > 1 ? 's' : ''), hint: 'Total: R$ ' + fat.toFixed(2).replace('.', ','), tab: 'cartões', delay: 800 });
       }
-      if (c.limit > 0 && fat / c.limit >= 0.9) {
-        flashes.push({ type: 'bad', msg: c.name + ': ' + Math.round(fat / c.limit * 100) + '% do limite usado', hint: 'Toque para ver a fatura', tab: 'cartões', delay: 1000 });
-      }
     });
   }
 
-  // Metas quase lá (positivo!)
+  // Metas quase concluídas → flash positivo
   if (typeof goals !== 'undefined' && goals.length) {
     goals.forEach(function(g) {
       if (!g || !g.alvo) return;
@@ -15663,11 +15779,7 @@ function checkProdutoInsight() {
    ═══════════════════════════════════════════════════════════ */
 
 function showBriefingModal() {
-  // ── Só para Pro e Família ──
-  var plano = (typeof userPlan !== 'undefined' ? userPlan : 'free') || 'free';
-  if (plano !== 'pro' && plano !== 'familia') return;
-
-  // ── 1x por dia: chave = sib_briefing_YYYY-MM-DD ──
+  // ── 1x por dia para todos os planos ──
   try {
     var hoje = new Date().toISOString().split('T')[0]; // "2026-03-10"
     var chave = 'sib_briefing_' + hoje;

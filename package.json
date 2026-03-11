@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "syntax-check": "node -e \"new Function(require('fs').readFileSync('public/app/app.js','utf8'))\"",
     "test": "playwright test",
     "test:smoke": "playwright test smoke",
     "test:fluxo": "playwright test fluxo-completo",

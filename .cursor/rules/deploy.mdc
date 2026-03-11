@@ -5,6 +5,7 @@ alwaysApply: true
 
 # Deploy (Firebase Hosting)
 
+- **Antes de qualquer deploy:** rodar sempre `npm run syntax-check` para validar a sintaxe de `public/app/app.js`. Se falhar, corrigir os erros antes de fazer o deploy.
 - **Deploy de teste / validação:** usar sempre `npm run deploy:staging`. O site de staging é outro (staging-13a0b), não o app principal.
 - **Deploy em produção (app principal):** usar `npm run deploy:app` apenas quando o usuário pedir explicitamente release/produção, nunca para "testar" ou "validar".
 - **Doc investidor:** `npm run deploy:doc-investidor` publica em doc-investidor.web.app.
