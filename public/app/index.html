@@ -297,30 +297,51 @@
 <span class="drawer-plan-badge gratuito" id="drawerPlanBadge">Gratuito</span>
 </div>
 <nav class="drawer-nav">
-<!-- GRUPO 1 — USO DIÁRIO -->
-<div class="drawer-nav-item active" data-go="dash"><div class="module-icon module-icon-dash"><i data-lucide="layout-dashboard"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_dashboard">Dashboard</span><span class="dni-desc">Visão geral das finanças</span></div></div>
-<div class="drawer-nav-item" data-go="contas"><div class="module-icon module-icon-contas"><i data-lucide="landmark"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_contas">Contas</span><span class="dni-desc">Saldos e movimentações</span></div></div>
-<div class="drawer-nav-item" data-go="cartões"><div class="module-icon module-icon-cartoes"><i data-lucide="credit-card"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_cartoes">Cartões</span><span class="dni-desc">Faturas e limites</span></div></div>
+<div class="drawer-nav-item active" data-go="dash"><div class="module-icon module-icon-dash"><i data-lucide="layout-dashboard"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_dashboard">Dashboard</span><span class="dni-desc">Visão geral</span></div></div>
+<div class="drawer-nav-item" data-go="contas"><div class="module-icon module-icon-contas"><i data-lucide="landmark"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_contas">Contas</span><span class="dni-desc">Saldos</span></div></div>
+<div class="drawer-nav-item" data-go="cartões"><div class="module-icon module-icon-cartoes"><i data-lucide="credit-card"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_cartoes">Cartões</span><span class="dni-desc">Faturas</span></div></div>
 <div class="drawer-nav-item" data-go="lanc"><div class="module-icon module-icon-lanc"><i data-lucide="arrow-left-right"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_lancamentos">Lançamentos</span><span class="dni-desc">Receitas e despesas</span></div></div>
-<div class="drawer-nav-sep" data-i18n="sep_planejamento">Planejamento</div>
-<div class="drawer-nav-item" data-go="orçamento"><div class="module-icon module-icon-orcamento"><i data-lucide="clipboard-list"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_orcamento">Orçamento</span><span class="dni-desc">Limites por categoria</span></div></div>
-<div class="drawer-nav-item" data-go="metas"><div class="module-icon module-icon-metas"><i data-lucide="target"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_metas">Metas</span><span class="dni-desc">Objetivos financeiros</span></div></div>
-<div class="drawer-nav-item" data-go="calendario"><div class="module-icon module-icon-cal"><i data-lucide="calendar"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_calendario">Calendário</span><span class="dni-desc">Contas e vencimentos</span></div></div>
-<div class="drawer-nav-sep" data-i18n="sep_crescimento">Crescimento</div>
-<div class="drawer-nav-item" data-go="invest"><div class="module-icon module-icon-invest"><i data-lucide="trending-up"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_investimentos">Investimentos</span><span class="dni-desc">Carteira e B3</span></div></div>
-<div class="drawer-nav-item" data-go="ia"><div class="module-icon module-icon-ia"><i data-lucide="bot"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_consultor_ia">Consultor IA</span><span class="dni-desc">Análise inteligente</span></div></div>
-<div class="drawer-nav-item" data-go="dicas"><div class="module-icon module-icon-dicas"><i data-lucide="graduation-cap"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_educacao">Educação</span><span class="dni-desc">Aprenda finanças</span></div></div>
-<div class="drawer-nav-sep" data-i18n="sep_social">Social</div>
-<div class="drawer-nav-item" data-go="casal"><div class="module-icon module-icon-familia"><i data-lucide="users"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_familia">Família</span><span class="dni-desc">Finanças em conjunto</span></div></div>
-<div class="drawer-nav-item" data-go="comunidade"><div class="module-icon module-icon-comunidade"><i data-lucide="globe"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_comunidade">Comunidade</span><span class="dni-desc">Dicas e desafios</span></div></div>
-<div class="drawer-nav-sep" data-i18n="sep_sistema">Sistema</div>
-<div class="drawer-nav-item" data-go="rel"><div class="module-icon module-icon-rel"><i data-lucide="file-bar-chart"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_relatorios">Relatórios</span><span class="dni-desc">Análise mensal</span></div></div>
-<div class="drawer-nav-item" data-go="conq"><div class="module-icon module-icon-conq"><i data-lucide="trophy"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_conquistas">Conquistas</span><span class="dni-desc">Badges e progresso</span></div></div>
-<div class="drawer-nav-item" data-go="config"><div class="module-icon module-icon-config"><i data-lucide="settings"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_configuracoes">Configurações</span><span class="dni-desc">Conta e preferências</span></div></div>
+
+<div class="drawer-nav-group" id="drawerGroupPlanejamento">
+<button type="button" class="drawer-nav-group-head" onclick="toggleDrawerGroup('planejamento')" aria-expanded="false" aria-controls="drawerGroupPlanejamentoBody">
+<div class="module-icon module-icon-orcamento"><i data-lucide="clipboard-list"></i></div>
+<div class="dni-text"><span class="dni-label" data-i18n="sep_planejamento">Planejamento</span></div>
+<i data-lucide="chevron-down" class="drawer-group-chevron"></i>
+</button>
+<div class="drawer-nav-group-body" id="drawerGroupPlanejamentoBody">
+<div class="drawer-nav-item" data-go="metas"><div class="module-icon module-icon-metas"><i data-lucide="target"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_metas">Metas</span></div></div>
+<div class="drawer-nav-item" data-go="orçamento"><div class="module-icon module-icon-orcamento"><i data-lucide="clipboard-list"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_orcamento">Orçamento</span></div></div>
+<div class="drawer-nav-item" data-go="calendario"><div class="module-icon module-icon-cal"><i data-lucide="calendar"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_calendario">Calendário</span></div></div>
+</div>
+</div>
+
+<div class="drawer-nav-group" id="drawerGroupCrescimento">
+<button type="button" class="drawer-nav-group-head" onclick="toggleDrawerGroup('crescimento')" aria-expanded="false" aria-controls="drawerGroupCrescimentoBody">
+<div class="module-icon module-icon-invest"><i data-lucide="trending-up"></i></div>
+<div class="dni-text"><span class="dni-label" data-i18n="sep_crescimento">Crescimento</span></div>
+<i data-lucide="chevron-down" class="drawer-group-chevron"></i>
+</button>
+<div class="drawer-nav-group-body" id="drawerGroupCrescimentoBody">
+<div class="drawer-nav-item" data-go="invest"><div class="module-icon module-icon-invest"><i data-lucide="trending-up"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_investimentos">Investimentos</span></div></div>
+<div class="drawer-nav-item" data-go="ia"><div class="module-icon module-icon-ia"><i data-lucide="bot"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_consultor_ia">Consultor IA</span></div></div>
+<div class="drawer-nav-item" data-go="dicas"><div class="module-icon module-icon-dicas"><i data-lucide="graduation-cap"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_educacao">Educação</span></div></div>
+</div>
+</div>
+
+<div class="drawer-nav-group" id="drawerGroupSocial">
+<button type="button" class="drawer-nav-group-head" onclick="toggleDrawerGroup('social')" aria-expanded="false" aria-controls="drawerGroupSocialBody">
+<div class="module-icon module-icon-familia"><i data-lucide="users"></i></div>
+<div class="dni-text"><span class="dni-label" data-i18n="sep_social">Social</span></div>
+<i data-lucide="chevron-down" class="drawer-group-chevron"></i>
+</button>
+<div class="drawer-nav-group-body" id="drawerGroupSocialBody">
+<div class="drawer-nav-item" data-go="casal"><div class="module-icon module-icon-familia"><i data-lucide="users"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_familia">Família</span></div></div>
+<div class="drawer-nav-item" data-go="comunidade"><div class="module-icon module-icon-comunidade"><i data-lucide="globe"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_comunidade">Comunidade</span></div></div>
+</div>
+</div>
 </nav>
 <div class="drawer-footer">
 <button class="drawer-upgrade-btn" id="drawerUpgradeBtn" onclick="closeDrawer();showPlansModal()" style="display:none" data-i18n="upgrade_pro">Upgrade para Pro</button>
-<button class="drawer-logout-btn" onclick="closeDrawer();doOut()"><i data-lucide="log-out" style="width:18px;height:18px"></i> <span data-i18n="menu_sair">Sair</span></button>
 </div>
 </aside>
 
@@ -346,10 +367,20 @@
 </div>
 </div>
 <div class="top-header-r">
-<button type="button" id="importBtn" class="top-header-icon-btn" onclick="go('cartões',null);setTimeout(function(){if(typeof impData==='function')impData();},400);" title="Importar extrato (Nubank, Inter, Itaú, C6)" aria-label="Importar extrato"><i data-lucide="upload" style="width:20px;height:20px"></i></button>
+<button type="button" id="importBtn" class="top-header-icon-btn" onclick="go('cartões',null);setTimeout(function(){if(typeof impData==='function')impData();},400);" title="Importar extrato (Nubank, Inter, Itaú, C6)" aria-label="Importar extrato"><i data-lucide="download" style="width:20px;height:20px"></i></button>
 <button onclick="toggleTheme()" id="themeBtn" class="top-header-icon-btn" style="display:inline-flex;align-items:center;justify-content:center" title="Alternar tema claro/escuro"><i data-lucide="sun" style="width:20px;height:20px"></i></button>
 <button class="notif-btn" onclick="toggleNP()" title="Notificações"><i data-lucide="bell"></i><span class="notif-badge" id="nBadge" style="display:none">0</span></button>
-<div class="top-header-avatar" id="topHeaderAvatar" onclick="go('perfil',null);closeDrawer()" role="button" tabindex="0" title="Abrir Perfil" style="cursor:pointer"><span id="topHeaderAvatarInicial">U</span></div>
+<div class="avatar-dropdown-wrap">
+<div class="top-header-avatar" id="topHeaderAvatar" onclick="toggleAvatarDropdown(event)" role="button" tabindex="0" title="Menu da conta" aria-haspopup="true" aria-expanded="false" style="cursor:pointer"><span id="topHeaderAvatarInicial">U</span></div>
+<div class="avatar-dropdown" id="avatarDropdown" role="menu">
+<button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('perfil',null)"><i data-lucide="user"></i><span data-i18n="menu_perfil">Perfil</span></button>
+<button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('config',null)"><i data-lucide="settings"></i><span data-i18n="menu_configuracoes">Configurações</span></button>
+<button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('rel',null)"><i data-lucide="file-bar-chart"></i><span data-i18n="menu_relatorios">Relatórios</span></button>
+<button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('conq',null)"><i data-lucide="trophy"></i><span data-i18n="menu_conquistas">Conquistas</span></button>
+<div class="avatar-dropdown-sep"></div>
+<button type="button" class="avatar-dropdown-item avatar-dropdown-item-sair" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();doOut()"><i data-lucide="log-out"></i><span data-i18n="menu_sair">Sair</span></button>
+</div>
+</div>
 </div>
 </div>
 
@@ -2012,6 +2043,22 @@
 </div>
 <p style="font-size:.78rem;color:var(--t3);margin-top:-8px;margin-bottom:14px">Toda segunda-feira você recebe um e-mail com receitas, despesas e principais categorias da semana.</p>
 </div>
+<div class="perfil-card" id="perfilFamiliaCard">
+<div style="font-size:.9rem;font-weight:700;color:var(--t1);margin-bottom:6px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="users" style="width:18px;height:18px;color:var(--vr)"></i> Família Sibanki</div>
+<p style="font-size:.8rem;color:var(--t2);margin-bottom:14px;line-height:1.5">Vincule com seu parceiro(a) e gerencie as finanças em conjunto. O convite é enviado por e-mail no Modo Família.</p>
+<div id="perfilFamiliaForm">
+<p style="font-size:.82em;color:var(--t2);margin-bottom:12px">Convide seu parceiro(a) na aba <strong>Modo Família</strong>.</p>
+<button type="button" class="btn btn-o" style="font-size:.82em" onclick="if(typeof go==='function')go('casal',null);if(typeof closeDrawer==='function')closeDrawer();"><i data-lucide="user-plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i> Ir para Modo Família e convidar</button>
+</div>
+<div id="perfilFamiliaPending" style="display:none">
+<p style="font-size:.82em;color:var(--t2);margin-bottom:10px">Convite enviado. Aguardando aceite.</p>
+<button type="button" class="btn btn-o" style="font-size:.82em" onclick="if(typeof go==='function')go('casal',null);if(typeof closeDrawer==='function')closeDrawer();"><i data-lucide="users" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i> Ver Modo Família</button>
+</div>
+<div id="perfilFamiliaLinked" style="display:none">
+<p style="font-size:.85em;color:var(--t2);margin-bottom:10px" id="perfilFamiliaLinkedText">Vinculado com seu parceiro(a).</p>
+<button type="button" class="btn btn-o" style="font-size:.82em" onclick="if(typeof go==='function')go('casal',null);if(typeof closeDrawer==='function')closeDrawer();"><i data-lucide="users" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i> Ver Modo Família</button>
+</div>
+</div>
 <div class="perfil-card perfil-dangercard">
 <div style="font-size:.88rem;font-weight:700;color:var(--danger);margin-bottom:6px">Zona de perigo</div>
 <div style="font-size:.82rem;color:var(--danger);margin-bottom:14px;line-height:1.6;opacity:.9"><span data-i18n="acoes_irreversiveis">Estas ações são irreversíveis. Proceda com cautela.</span></div>
@@ -2348,99 +2395,224 @@
 
 
 
-<!-- TAB: CONSULTOR IA -->
-<div id="ia" class="tab">
-<div class="fb" style="margin-bottom:12px">
-<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-<div class="module-icon module-icon-ia" style="width:44px;height:44px;flex-shrink:0"><i data-lucide="bot" style="width:24px;height:24px;color:#4C7BF4"></i></div>
+<!-- TAB: CONSULTOR IA (layout Lovable) -->
+<div id="ia" class="tab tab-ia-lovable">
+  <div class="ia-layout">
+    <!-- Sidebar esquerda: Ações rápidas + Insights -->
+    <aside class="ia-sidebar ia-sidebar-left" id="iaSidebarLeft">
+      <div class="ia-sidebar-card">
+        <div class="ia-sidebar-head">
+          <span class="ia-sidebar-icon ia-icon-zap"><i data-lucide="zap"></i></span>
+          <div>
+            <h3 class="ia-sidebar-title">Ações Rápidas</h3>
+            <p class="ia-sidebar-desc">Selecione para consultar</p>
+          </div>
+        </div>
+        <div class="ia-quick-actions">
+          <button type="button" class="ia-quick-action" onclick="iaAnalyze('geral')">
+            <span class="ia-quick-icon"><i data-lucide="bar-chart-2"></i></span>
+            <span class="ia-quick-text"><strong>Analisar gastos</strong><em>Análise detalhada dos seus gastos mensais</em></span>
+            <i data-lucide="chevron-right" class="ia-quick-arrow"></i>
+          </button>
+          <button type="button" class="ia-quick-action" onclick="iaAnalyze('economia')">
+            <span class="ia-quick-icon"><i data-lucide="piggy-bank"></i></span>
+            <span class="ia-quick-text"><strong>Dicas de economia</strong><em>Sugestões personalizadas para economizar</em></span>
+            <i data-lucide="chevron-right" class="ia-quick-arrow"></i>
+          </button>
+          <button type="button" class="ia-quick-action" onclick="iaAnalyze('investimentos')">
+            <span class="ia-quick-icon"><i data-lucide="trending-up"></i></span>
+            <span class="ia-quick-text"><strong>Onde investir</strong><em>Recomendações de investimento</em></span>
+            <i data-lucide="chevron-right" class="ia-quick-arrow"></i>
+          </button>
+          <button type="button" class="ia-quick-action" onclick="iaAnalyze('planejamento')">
+            <span class="ia-quick-icon"><i data-lucide="wallet"></i></span>
+            <span class="ia-quick-text"><strong>Revisar orçamento</strong><em>Análise do seu orçamento mensal</em></span>
+            <i data-lucide="chevron-right" class="ia-quick-arrow"></i>
+          </button>
+          <button type="button" class="ia-quick-action" onclick="iaAnalyze('metas')">
+            <span class="ia-quick-icon"><i data-lucide="target"></i></span>
+            <span class="ia-quick-text"><strong>Planejar metas</strong><em>Estratégias para alcançar objetivos</em></span>
+            <i data-lucide="chevron-right" class="ia-quick-arrow"></i>
+          </button>
+          <button type="button" class="ia-quick-action" onclick="iaAnalyze('hábitos')">
+            <span class="ia-quick-icon"><i data-lucide="calculator"></i></span>
+            <span class="ia-quick-text"><strong>Hábitos financeiros</strong><em>Análise de comportamento</em></span>
+            <i data-lucide="chevron-right" class="ia-quick-arrow"></i>
+          </button>
+        </div>
+      </div>
+      <div class="ia-sidebar-card">
+        <div class="ia-sidebar-head">
+          <span class="ia-sidebar-icon ia-icon-brain"><i data-lucide="brain"></i></span>
+          <div>
+            <h3 class="ia-sidebar-title">Insights</h3>
+            <p class="ia-sidebar-desc">Alertas proativos</p>
+          </div>
+        </div>
+        <div class="ia-insights" id="iaInsights">
+          <button type="button" class="ia-insight ia-insight-warning" onclick="iaAnalyze('geral')">
+            <span class="ia-insight-icon"><i data-lucide="trending-up"></i></span>
+            <span><strong>Gastos acima da média</strong><em>Verifique suas categorias deste mês.</em></span>
+          </button>
+          <button type="button" class="ia-insight ia-insight-success" onclick="iaAnalyze('economia')">
+            <span class="ia-insight-icon"><i data-lucide="piggy-bank"></i></span>
+            <span><strong>Oportunidade de economia</strong><em>Dicas para reduzir gastos fixos.</em></span>
+          </button>
+          <button type="button" class="ia-insight ia-insight-info" onclick="iaAnalyze('metas')">
+            <span class="ia-insight-icon"><i data-lucide="target"></i></span>
+            <span><strong>Meta próxima</strong><em>Acompanhe o progresso das suas metas.</em></span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Centro: Chat -->
+    <main class="ia-chat-area">
+      <div class="ia-chat-card">
+        <header class="ia-chat-header">
+          <div class="ia-chat-avatar">
+            <i data-lucide="bot"></i>
+            <span class="ia-chat-online"></span>
+          </div>
+          <div class="ia-chat-header-text">
+            <h2 class="ia-chat-title">Consultor IA Sibanki</h2>
+            <p class="ia-chat-status"><span class="ia-pulse"></span> Online — Analisando seus dados</p>
+          </div>
+          <span class="ia-badge ia-badge-shield"><i data-lucide="shield-check"></i> Dados protegidos</span>
+        </header>
+
+        <div class="ia-messages-wrap" id="iaMessagesWrap">
+          <div id="iaHistory" class="ia-messages"></div>
+          <div id="iaLoading" class="ia-typing" style="display:none">
+            <span class="ia-typing-avatar"><i data-lucide="bot"></i></span>
+            <div class="ia-typing-bubble">
+              <span class="ia-typing-dot"></span><span class="ia-typing-dot"></span><span class="ia-typing-dot"></span>
+            </div>
+          </div>
+          <div class="ia-suggested" id="iaSuggested">
+            <p class="ia-suggested-label"><i data-lucide="sparkles"></i> Perguntas sugeridas</p>
+            <div class="ia-suggested-grid">
+              <button type="button" class="ia-suggested-btn" onclick="iaSendSuggested('Quanto devo guardar por mês para minha reserva de emergência?')">Quanto devo guardar por mês para minha reserva de emergência?</button>
+              <button type="button" class="ia-suggested-btn" onclick="iaSendSuggested('Como reduzir meus gastos com alimentação?')">Como reduzir meus gastos com alimentação?</button>
+              <button type="button" class="ia-suggested-btn" onclick="iaSendSuggested('Qual o melhor investimento para minha reserva de emergência?')">Qual o melhor investimento para minha reserva de emergência?</button>
+              <button type="button" class="ia-suggested-btn" onclick="iaSendSuggested('Meu orçamento deste mês está saudável?')">Meu orçamento deste mês está saudável?</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ia-input-area">
+          <form class="ia-input-form" id="iaInputForm" onsubmit="event.preventDefault();iaChat();">
+            <input type="text" id="iaQ" class="ia-input" placeholder="Pergunte algo ao consultor..." onkeydown="if(event.key==='Enter'){event.preventDefault();iaChat();}" aria-label="Pergunta para o consultor IA">
+            <button type="submit" class="ia-send-btn" id="iaSendBtn" aria-label="Enviar"><i data-lucide="send"></i></button>
+          </form>
+          <p class="ia-input-hint">O Consultor IA analisa seus dados financeiros para oferecer recomendações personalizadas.</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Sidebar direita: Sessão + Saúde + CTA (visível em telas grandes) -->
+    <aside class="ia-sidebar ia-sidebar-right" id="iaSidebarRight">
+      <div class="ia-sidebar-card">
+        <h3 class="ia-panel-title"><i data-lucide="star"></i> Sua Sessão</h3>
+        <div class="ia-session-stats">
+          <div class="ia-session-row"><span class="ia-session-icon"><i data-lucide="message-square"></i></span><div><p>Consultas hoje</p><p class="ia-session-value" id="iaStatConsultas">0</p></div></div>
+          <div class="ia-session-row"><span class="ia-session-icon"><i data-lucide="piggy-bank"></i></span><div><p>Economia sugerida</p><p class="ia-session-value" id="iaStatEconomia">—</p></div></div>
+          <div class="ia-session-row"><span class="ia-session-icon"><i data-lucide="clock"></i></span><div><p>Tempo de conversa</p><p class="ia-session-value" id="iaStatTempo">—</p></div></div>
+        </div>
+      </div>
+      <div class="ia-sidebar-card">
+        <h3 class="ia-panel-title"><i data-lucide="shield-check"></i> Saúde Financeira</h3>
+        <div class="ia-health-wrap">
+          <div class="ia-health-circle" id="iaHealthCircle">
+            <svg class="ia-health-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="8" opacity="0.2"/><circle id="iaHealthFill" cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 264"/></svg>
+            <div class="ia-health-value"><span id="iaHealthScore">—</span><span class="ia-health-max">/ 100</span></div>
+          </div>
+          <div class="ia-health-details" id="iaHealthDetails"></div>
+        </div>
+      </div>
+      <div class="ia-sidebar-card ia-cta-card">
+        <div class="ia-cta-icon"><i data-lucide="sparkles"></i></div>
+        <h3 class="ia-cta-title">Consultor Premium</h3>
+        <p class="ia-cta-desc">Consultas ilimitadas, análises avançadas e alertas proativos.</p>
+        <button type="button" class="btn btn-r ia-cta-btn" onclick="go('config',null)">Conhecer plano <i data-lucide="arrow-right"></i></button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- TAB: EDUCAÇÃO (layout Lovable) -->
+<div id="dicas" class="tab tab-edu-lovable">
+
+<!-- Header estilo Lovable -->
+<div class="edu-page-header">
 <div>
-<h3 style="margin:0;font-size:1.05rem">Consultor Financeiro IA</h3>
-<p style="margin:4px 0 0;font-size:.82em;color:var(--t2)"><span data-i18n="ia_analiso">Analiso seus hábitos financeiros e sugiro melhorias personalizadas</span></p>
+<h1 class="edu-page-title"><i data-lucide="graduation-cap" style="width:24px;height:24px;vertical-align:middle;margin-right:8px;color:var(--vr)"></i> Educação Financeira</h1>
+<p class="edu-page-desc">Aprenda, pratique e conquiste sua independência financeira</p>
+</div>
+<div class="edu-header-badges">
+<div class="edu-badge edu-badge-streak"><i data-lucide="flame" style="width:16px;height:16px"></i> <span id="eduStreakVal">0</span> dias</div>
+<div class="edu-badge edu-badge-level"><i data-lucide="star" style="width:16px;height:16px"></i> Nível <span id="eduLevelVal">1</span></div>
 </div>
 </div>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-bottom:12px">
-<button class="btn btn-r" onclick="iaAnalyze('geral')" style="padding:8px 12px;font-size:.82em;display:inline-flex;align-items:center;gap:8px"><i data-lucide="bar-chart-2" style="width:14px;height:14px"></i> Análise Geral</button>
-<button class="btn btn-r" onclick="iaAnalyze('economia')" style="padding:8px 12px;font-size:.82em;background:var(--green);display:inline-flex;align-items:center;gap:6px"><i data-lucide="lightbulb" style="width:14px;height:14px"></i> Dicas de Economia</button>
-<button class="btn btn-r" onclick="iaAnalyze('hábitos')" style="padding:8px 12px;font-size:.82em;background:var(--blue);display:inline-flex;align-items:center;gap:6px"><i data-lucide="trending-up" style="width:14px;height:14px"></i> Hábitos Financeiros</button>
-<button class="btn btn-r" onclick="iaAnalyze('metas')" style="padding:8px 12px;font-size:.82em;background:var(--purple);display:inline-flex;align-items:center;gap:6px"><i data-lucide="target" style="width:14px;height:14px"></i> Análise de Metas</button>
-<button class="btn btn-r" onclick="iaAnalyze('investimentos')" style="padding:8px 12px;font-size:.82em;background:var(--cyan);display:inline-flex;align-items:center;gap:6px"><i data-lucide="trending-up" style="width:14px;height:14px"></i> Consultoria Investimentos</button>
-<button class="btn btn-r" onclick="iaAnalyze('planejamento')" style="padding:8px 12px;font-size:.82em;background:var(--orange);display:inline-flex;align-items:center;gap:6px"><i data-lucide="calendar" style="width:14px;height:14px"></i> Planejamento Mensal</button>
-<button class="btn btn-r" onclick="iaAnalyze('mercado')" style="padding:8px 12px;font-size:.82em;background:#6366F1;display:inline-flex;align-items:center;gap:6px"><i data-lucide="line-chart" style="width:14px;height:14px"></i> Análise de Mercado (B3)</button>
+<!-- Progresso e stats -->
+<div class="edu-stats-row">
+<div class="edu-card edu-card-progress">
+<div class="edu-card-progress-head">
+<div>
+<p class="edu-stat-label">Progresso do Nível</p>
+<p class="edu-stat-xp"><span id="eduXpCurrent">0</span><span class="edu-stat-xp-sub"> / <span id="eduXpNext">500</span> XP</span></p>
 </div>
-
-<div style="margin-bottom:12px">
-<label style="font-size:.85em;color:var(--t2);margin-bottom:6px;display:block"><span data-i18n="pergunta_personalizada">Ou faça uma pergunta personalizada:</span></label>
-<div style="display:flex;gap:8px">
-<input type="text" id="iaQ" class="fi" placeholder="Ex: Como posso economizar mais no mês?" style="flex:1" onkeydown="if(event.key==='Enter')iaChat()" aria-label="Pergunta para o consultor IA">
-<button class="btn btn-r" onclick="iaChat()" style="white-space:nowrap">Enviar &#9658;</button>
+<div class="edu-stat-icon-wrap"><i data-lucide="trophy" style="width:24px;height:24px;color:var(--vr)"></i></div>
 </div>
+<div class="edu-progress-bar"><div class="edu-progress-fill" id="finTrailFill" style="width:0%"></div></div>
+<p class="edu-progress-hint" id="eduProgressHint">Faltam 500 XP para o nível 2</p>
 </div>
-</div>
-
-<div id="iaLoading" style="display:none;text-align:center;padding:24px">
-<div style="display:inline-flex;align-items:center;justify-content:center;animation:pulse 1s infinite"><i data-lucide="bot" style="width:40px;height:40px;color:var(--vr)"></i></div>
-<p style="color:var(--t2);margin-top:8px;font-size:.9em">Analisando seus dados financeiros...</p>
-</div>
-
-<div id="iaHistory" style="display:flex;flex-direction:column;gap:10px"></div>
-</div>
-
-<!-- TAB: DICAS -->
-<div id="dicas" class="tab">
-
-<!-- HEADER -->
-<div class="fin-header">
-<div class="fin-header-text">
-<h2 style="margin:0;font-size:1.2em;display:inline-flex;align-items:center;gap:10px"><i data-lucide="brain-circuit" style="width:26px;height:26px;color:var(--vr)"></i> Central de Inteligência Financeira</h2>
-<p style="margin:4px 0 0;font-size:.82em;color:var(--t2)"><span data-i18n="central_ia_desc">Dicas personalizadas, educação e ferramentas para suas finanças</span></p>
+<div class="edu-card edu-card-stat">
+<div class="edu-stat-icon-wrap edu-stat-icon-accent"><i data-lucide="check-circle" style="width:20px;height:20px;color:var(--green)"></i></div>
+<div>
+<p class="edu-stat-label">Aulas Concluídas</p>
+<p class="edu-stat-value"><span id="eduCompletedCount">0</span> <span class="edu-stat-suffix">aulas</span></p>
 </div>
 </div>
-
-<!-- INSIGHT DO DIA (melhorado) -->
-<div class="fin-insight fin-insight-v2" id="finInsight">
-<div class="fin-insight-inner">
-<div class="fin-insight-icon" id="finInsightEmoji"><i data-lucide="lightbulb" style="width:32px;height:32px;color:var(--vr)"></i></div>
-<div class="fin-insight-body">
-<div class="fin-insight-label">Insight do Dia</div>
-<div class="fin-insight-text" id="finInsightText"><span data-i18n="adicione_lancamentos_insights">Adicione lançamentos para receber insights personalizados.</span></div>
-<div id="finInsightCategoria" class="fin-insight-cat" style="display:none"></div>
-<div class="fin-insight-actions">
-<button type="button" class="fin-insight-btn" id="finInsightBtn" style="display:none" onclick="openFinCalc('compostos')"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle"></i> Ver simulação</button>
-<button type="button" class="fin-insight-btn fin-insight-save" id="finInsightSaveBtn" style="display:none" onclick="salvarInsightDoDia()"><i data-lucide="bookmark" style="width:14px;height:14px;vertical-align:middle"></i> Salvar dica</button>
-<button type="button" class="fin-insight-btn fin-insight-new" id="finInsightNewBtn" onclick="novaInsightDoDia()"><i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle"></i> Nova dica</button>
-</div>
+<div class="edu-card edu-card-stat">
+<div class="edu-stat-icon-wrap edu-stat-icon-accent"><i data-lucide="clock" style="width:20px;height:20px;color:var(--vr)"></i></div>
+<div>
+<p class="edu-stat-label">Horas de Estudo</p>
+<p class="edu-stat-value"><span id="eduHoursVal">0</span> <span class="edu-stat-suffix">horas</span></p>
 </div>
 </div>
 </div>
 
-<!-- SUB-ABAS: 4 apenas -->
-<div class="fin-tabs">
-<button class="fin-tab active" onclick="goFinTab(0,this)"><i data-lucide="graduation-cap" style="width:16px;height:16px;vertical-align:middle"></i> Aprender</button>
-<button class="fin-tab" onclick="goFinTab(1,this)"><i data-lucide="lightbulb" style="width:16px;height:16px;vertical-align:middle"></i> Dica do Dia</button>
-<button class="fin-tab" onclick="goFinTab(2,this)"><i data-lucide="calculator" style="width:16px;height:16px;vertical-align:middle"></i> Calculadoras</button>
-<button class="fin-tab" onclick="goFinTab(3,this)"><i data-lucide="trophy" style="width:16px;height:16px;vertical-align:middle"></i> Desafios</button>
+<!-- Tabs + busca -->
+<div class="edu-tabs-row">
+<div class="fin-tabs edu-tabs">
+<button class="fin-tab active" onclick="goFinTab(0,this)"><i data-lucide="video" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Cursos</button>
+<button class="fin-tab" onclick="goFinTab(1,this)"><i data-lucide="lightbulb" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Dicas do Dia</button>
+<button class="fin-tab" onclick="goFinTab(2,this)"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Calculadoras</button>
+<button class="fin-tab" onclick="goFinTab(3,this)"><i data-lucide="trophy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Conquistas</button>
+</div>
+<div class="edu-search-wrap" id="eduSearchWrap">
+<input type="text" id="eduSearchInput" placeholder="Buscar cursos..." class="edu-search-input" oninput="filterEduCourses()">
+<i data-lucide="search" style="width:14px;height:14px;position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--t3)"></i>
+</div>
 </div>
 
-<!-- ============ ABA 0: APRENDER ============ -->
+<!-- ============ ABA 0: CURSOS ============ -->
 <div class="fin-section active" id="finSec0">
-<div class="fin-sec-header" style="flex-wrap:wrap;gap:8px">
-<h3 style="margin:0;font-size:1em;display:inline-flex;align-items:center;gap:8px"><i data-lucide="graduation-cap" style="width:18px;height:18px"></i> Trilhas de Aprendizado</h3>
-<span class="fin-badge" id="finEduProgress">0%</span>
-<span class="fin-trail-label" id="finEduXpLabel" style="margin-left:auto">0 XP</span>
+<div class="edu-cat-pills" id="eduCatPills"></div>
+<button type="button" class="btn btn-b btn-sm" id="finContinuarBtn" style="display:none;margin-bottom:12px;font-size:.85em" onclick="continuarUltimaLicao()"><i data-lucide="play" style="width:16px;height:16px;vertical-align:middle"></i> Continuar de onde parei</button>
+<div class="edu-course-grid" id="finTrailsList"></div>
+<div class="edu-trail-detail" id="eduTrailDetail" style="display:none">
+<div class="fin-sec-header" style="margin-bottom:8px"><button type="button" class="edu-back-btn" onclick="eduShowGrid()"><i data-lucide="chevron-left" style="width:16px;height:16px"></i> Voltar</button></div>
+<div id="finTrailsListDetail"></div>
 </div>
-<div class="fin-trail-progress">
-<div class="fin-trail-bar"><div class="fin-trail-fill" id="finTrailFill" style="width:0%"></div></div>
-<span class="fin-trail-label" id="finTrailLabel"><span data-i18n="licoes_concluidas_zero">0 de 25 lições concluídas</span></span>
-</div>
-<button type="button" class="btn btn-b" id="finContinuarBtn" style="display:none;margin-bottom:12px;font-size:.85em" onclick="continuarUltimaLicao()"><i data-lucide="play" style="width:16px;height:16px;vertical-align:middle"></i> Continuar de onde parei</button>
-<div id="finTrailsList"></div>
 </div>
 
 <!-- ============ ABA 1: DICA DO DIA ============ -->
 <div class="fin-section" id="finSec1">
 <div id="eduDicaCard" class="edu-dica-card"></div>
-<div class="fin-sec-header" style="margin-top:12px"><h3 style="margin:0;font-size:.95em;display:inline-flex;align-items:center;gap:8px"><i data-lucide="history" style="width:18px;height:18px"></i> Histórico de dicas</h3></div>
+<div class="fin-sec-header" style="margin-top:16px"><h3 style="margin:0;font-size:.95em;display:inline-flex;align-items:center;gap:8px"><i data-lucide="history" style="width:18px;height:18px"></i> Histórico de dicas</h3></div>
 <div id="eduDicaHistory" class="edu-dica-history"></div>
 </div>
 
@@ -2450,10 +2622,21 @@
 <div class="fin-calc-grid" id="eduCalcGrid"></div>
 </div>
 
-<!-- ============ ABA 3: DESAFIOS ============ -->
+<!-- ============ ABA 3: CONQUISTAS ============ -->
 <div class="fin-section" id="finSec3">
-<div class="fin-sec-header"><h3 style="margin:0;font-size:1em;display:inline-flex;align-items:center;gap:8px"><i data-lucide="trophy" style="width:18px;height:18px"></i> Desafios Financeiros</h3></div>
+<div class="edu-achievements-grid" id="eduAchievementsGrid"></div>
+<div class="fin-sec-header" style="margin-top:16px"><h3 style="margin:0;font-size:1em;display:inline-flex;align-items:center;gap:8px"><i data-lucide="target" style="width:18px;height:18px"></i> Desafios Financeiros</h3></div>
 <div id="eduDesafiosList"></div>
+</div>
+
+<!-- Card recomendação IA -->
+<div class="edu-ai-card">
+<div class="edu-ai-icon"><i data-lucide="sparkles" style="width:20px;height:20px;color:var(--vr)"></i></div>
+<div class="edu-ai-body">
+<h3 class="edu-ai-title">Recomendação da IA</h3>
+<p class="edu-ai-text" id="eduAiRecommendText">Conclua as lições das trilhas para receber recomendações personalizadas.</p>
+</div>
+<button type="button" class="btn btn-o btn-sm" onclick="if(typeof go==='function')go('ia',null)" style="font-size:.82em">Ir para IA <i data-lucide="chevron-right" style="width:14px;height:14px;vertical-align:middle"></i></button>
 </div>
 
 <!-- Modal de Lição (compartilhado) -->
@@ -2921,95 +3104,136 @@
 <div id="coupleNotLinked">
 <div class="couple-hero" style="margin-top:0">
 <div class="couple-hero-icon"><div class="module-icon module-icon-familia"><i data-lucide="users"></i></div></div>
-<h2 style="margin:0 0 6px;font-size:1.15em"><span data-i18n="familia_sibanki">Família Sibanki</span></h2>
-<p style="color:var(--t2);margin:0;font-size:.85em">Gerencie suas finanças a dois! Vincule com seu parceiro(a) e tenham visibilidade total das finanças do casal.</p>
+<h2 style="margin:0 0 6px;font-size:1.15em"><span data-i18n="familia_sibanki">Modo Família</span></h2>
+<p style="color:var(--t2);margin:0;font-size:.85em">Gerencie as finanças de toda a família em um só lugar. Envie um convite por e-mail para vincular com seu parceiro(a).</p>
 </div>
-
-<div class="couple-card">
-<h3 style="font-size:.95em;margin-bottom:10px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="mail-plus" style="width:18px;height:18px;color:var(--vr)"></i> Convidar Parceiro(a)</h3>
-<p style="font-size:.78em;color:var(--t2);margin-bottom:12px">Digite o email do parceiro(a). Pode ser quem ainda não tem conta — ao clicar no link, criará a conta e aceitará o convite.</p>
-<div style="display:flex;gap:8px">
-<input type="email" id="coupleEmail" placeholder="email@parceiro.com" style="flex:1;padding:10px 14px;background:rgba(255,255,255,.04);border:1px solid var(--brd);border-radius:var(--rs);color:var(--t1);font-family:Inter;font-size:.85em;outline:none" aria-label="Email do parceiro">
-<button class="btn btn-r" onclick="sendCoupleInvite()" style="white-space:nowrap;display:inline-flex;align-items:center;gap:6px"><i data-lucide="send" style="width:16px;height:16px"></i> Enviar</button>
+<div id="famCoupleFormWrap" class="couple-card">
+<h3 style="font-size:.95em;margin:0 0 14px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="user-plus" style="width:18px;height:18px;color:var(--vr)"></i> Convidado</h3>
+<label class="fl" style="font-size:.85em">Tipo</label>
+<select id="inviteGuestType" onchange="toggleInviteAgeField()" class="invite-select" style="width:100%;max-width:200px;margin-top:6px;padding:10px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;color:var(--t1);font-size:.85em;outline:none;cursor:pointer">
+<option value="adulto">Adulto</option>
+<option value="crianca">Criança</option>
+</select>
+<div id="inviteAgeWrap" style="display:none;margin-top:12px">
+<label class="fl" style="font-size:.85em">Idade</label>
+<select id="inviteAgeRange" class="invite-select" style="width:100%;max-width:200px;margin-top:6px;padding:10px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;color:var(--t1);font-size:.85em;outline:none;cursor:pointer">
+<option value="6-9">6-9 anos</option>
+<option value="10-15">10-15 anos</option>
+</select>
+</div>
+<label class="fl" style="font-size:.85em;margin-top:12px;display:block">E-mail</label>
+<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+<input type="email" id="coupleEmail" placeholder="email@convidado.com" style="flex:1;min-width:200px;padding:10px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;color:var(--t1);font-size:.85em;outline:none" aria-label="E-mail do convidado">
+<button class="btn btn-r" onclick="sendFamilyInvite()" style="white-space:nowrap;display:inline-flex;align-items:center;gap:6px;font-size:.85em"><i data-lucide="send" style="width:14px;height:14px"></i> Enviar convite</button>
 </div>
 <div id="coupleInviteStatus" style="margin-top:8px;font-size:.78em"></div>
 </div>
-
-<!-- CONVITES PENDENTES ENVIADOS -->
-<div id="couplePendingSent" style="display:none" class="couple-card">
-<h3 style="font-size:.95em;margin-bottom:8px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="clock" style="width:18px;height:18px;color:var(--yellow)"></i> Convite Enviado</h3>
+<div id="couplePendingSent" style="display:none" class="couple-card perfil-familia-pending">
+<h4 style="font-size:.88em;margin:0 0 8px;display:inline-flex;align-items:center;gap:6px;color:var(--yellow)"><i data-lucide="clock" style="width:16px;height:16px"></i> Convite enviado</h4>
 <div id="couplePendingSentList"></div>
-</div>
-
-<div class="couple-card" style="background:transparent;border:none">
-<div style="font-size:.8em;color:var(--t3);display:flex;flex-direction:column;gap:7px">
-<div style="font-weight:700;color:var(--t2);margin-bottom:2px">Como funciona:</div>
-<div style="display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(79,140,255,.15);color:var(--pri);font-size:.72em;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">1</span> Envie o convite pelo email</div>
-<div style="display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(79,140,255,.15);color:var(--pri);font-size:.72em;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">2</span> Seu parceiro(a) aceita o convite</div>
-<div style="display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(79,140,255,.15);color:var(--pri);font-size:.72em;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">3</span> As finanças dos dois ficam sincronizadas</div>
-<div style="display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(79,140,255,.15);color:var(--pri);font-size:.72em;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">4</span> Dashboard Familiar com visão conjunta</div>
-</div>
 </div>
 </div>
 
 <!-- ESTADO: VÍNCULO ATIVO -->
 <div id="coupleLinked" style="display:none">
+<div id="famMainWrap">
+<header class="fam-page-header">
+<div>
+<h1 class="fam-page-title">Modo Família</h1>
+<p class="fam-page-desc">Gerencie as finanças de toda a família em um só lugar</p>
+</div>
+<div class="fam-header-actions"></div>
+</header>
+
+<div class="fam-stats-bar">
+<div class="fam-stat-card"><div class="fam-stat-icon" style="background:rgba(59,130,246,.15);color:var(--vr)"><i data-lucide="users-round" style="width:18px;height:18px"></i></div><div><div class="fam-stat-label">Membros</div><div class="fam-stat-value" id="famStatMembros">2</div></div></div>
+<div class="fam-stat-card"><div class="fam-stat-icon" style="background:rgba(239,68,68,.15);color:#EF4444"><i data-lucide="wallet" style="width:18px;height:18px"></i></div><div><div class="fam-stat-label">Gasto total</div><div class="fam-stat-value" id="ckDespJ">R$ 0</div></div></div>
+<div class="fam-stat-card"><div class="fam-stat-icon" style="background:rgba(34,197,94,.15);color:#22C55E"><i data-lucide="trending-up" style="width:18px;height:18px"></i></div><div><div class="fam-stat-label">Saldo do mês</div><div class="fam-stat-value" id="ckSaldoJ">R$ 0</div></div></div>
+<div class="fam-stat-card"><div class="fam-stat-icon" style="background:rgba(168,85,247,.15);color:#A855F7"><i data-lucide="target" style="width:18px;height:18px"></i></div><div><div class="fam-stat-label">Metas</div><div class="fam-stat-value" id="famStatMetas">0</div></div></div>
+</div>
+
+<div class="fam-tabs-wrap">
+<div class="fam-tabs">
+<button type="button" class="fam-tab on" data-fam-tab="members" onclick="switchFamContentTab('members',this)"><i data-lucide="users-round" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Membros</button>
+<button type="button" class="fam-tab" data-fam-tab="goals" onclick="switchFamContentTab('goals',this)"><i data-lucide="target" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Metas</button>
+<button type="button" class="fam-tab" data-fam-tab="activity" onclick="switchFamContentTab('activity',this)"><i data-lucide="bell" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Atividade</button>
+</div>
+</div>
+
+<div id="famTabMembers" class="fam-tab-panel on">
+<div class="couple-card" style="margin-bottom:16px">
+<h3 style="font-size:.95em;margin:0 0 14px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="user-plus" style="width:18px;height:18px;color:var(--vr)"></i> Convidado</h3>
+<label class="fl" style="font-size:.85em">Tipo</label>
+<select id="famInviteGuestType" onchange="toggleFamInviteAgeField()" class="invite-select" style="width:100%;max-width:200px;margin-top:6px;padding:10px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;color:var(--t1);font-size:.85em;outline:none;cursor:pointer">
+<option value="adulto">Adulto</option>
+<option value="crianca">Criança</option>
+</select>
+<div id="famInviteAgeWrap" style="display:none;margin-top:12px">
+<label class="fl" style="font-size:.85em">Idade</label>
+<select id="famInviteAgeRange" class="invite-select" style="width:100%;max-width:200px;margin-top:6px;padding:10px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;color:var(--t1);font-size:.85em;outline:none;cursor:pointer">
+<option value="6-9">6-9 anos</option>
+<option value="10-15">10-15 anos</option>
+</select>
+</div>
+<label class="fl" style="font-size:.85em;margin-top:12px;display:block">E-mail</label>
+<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+<input type="email" id="famInviteEmail" placeholder="email@convidado.com" style="flex:1;min-width:200px;padding:10px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;color:var(--t1);font-size:.85em;outline:none" aria-label="E-mail do convidado">
+<button class="btn btn-r" onclick="sendFamilyInviteFromLinked()" style="white-space:nowrap;display:inline-flex;align-items:center;gap:6px;font-size:.85em"><i data-lucide="send" style="width:14px;height:14px"></i> Enviar convite</button>
+</div>
+<div id="famInviteStatus" style="margin-top:8px;font-size:.78em"></div>
+</div>
+<div class="fam-members-grid">
+<div class="fam-member-card">
+<div class="fam-member-head">
+<div class="fam-member-av" id="coupleAv1">👤</div>
+<div><h3 class="fam-member-name" id="famMyName">Eu</h3><span class="fam-member-role"><i data-lucide="crown" style="width:12px;height:12px;vertical-align:middle;margin-right:2px"></i> Administrador</span></div>
+</div>
+<div class="fam-member-kpi"><span class="fam-member-kpi-lbl">Receitas / Despesas no mês</span><div class="fam-member-bar-wrap"><div class="fam-member-bar rec" id="famMyRecBar" style="width:50%"></div><div class="fam-member-bar desp" id="famMyDespBar" style="width:50%"></div></div><div class="fam-member-kpi-vals" id="famMyVals">—</div></div>
+</div>
+<div class="fam-member-card">
+<div class="fam-member-head">
+<div class="fam-member-av" id="coupleAv2">👤</div>
+<div><h3 class="fam-member-name" id="famPartnerName">Parceiro(a)</h3><span class="fam-member-role"><i data-lucide="shield" style="width:12px;height:12px;vertical-align:middle;margin-right:2px"></i> Membro</span></div>
+</div>
+<div class="fam-member-kpi"><span class="fam-member-kpi-lbl">Receitas / Despesas no mês</span><div class="fam-member-bar-wrap"><div class="fam-member-bar rec" id="famPartnerRecBar" style="width:50%"></div><div class="fam-member-bar desp" id="famPartnerDespBar" style="width:50%"></div></div><div class="fam-member-kpi-vals" id="famPartnerVals">—</div></div>
+</div>
+</div>
+<div class="couple-card" style="margin-top:16px">
+<h3 style="font-size:.92em;margin-bottom:12px"><i data-lucide="trending-up" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i> Comparativo do mês</h3>
+<div id="coupleCompare"></div>
+</div>
+<div class="couple-card" style="margin-top:16px;background:linear-gradient(135deg,rgba(79,140,255,.06),rgba(124,92,252,.06));border:1px solid rgba(79,140,255,.2)">
+<h3 style="font-size:.92em;margin-bottom:8px;display:flex;align-items:center;gap:8px"><i data-lucide="sparkles" style="width:18px;height:18px;color:var(--pri)"></i> Insights da IA</h3>
+<p style="font-size:.82em;color:var(--t2);margin-bottom:12px;line-height:1.5">Metas juntos, dicas para objetivos comuns.</p>
+<button type="button" class="btn btn-b btn-sm" onclick="if(typeof go==='function')go('ia',null);if(typeof iaAnalyze==='function')setTimeout(function(){iaAnalyze('familia')},400)" style="font-size:.82em;display:inline-flex;align-items:center;gap:6px"><i data-lucide="bot" style="width:16px;height:16px"></i> Gerar insights</button>
+</div>
+</div>
+
+<div id="famTabGoals" class="fam-tab-panel">
+<div class="couple-card">
+<h3 style="font-size:.92em;margin-bottom:12px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="target" style="width:18px;height:18px;color:var(--pink)"></i> Metas da Família</h3>
+<div id="coupleGoals"></div>
+<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+<input type="text" id="coupleGoalName" placeholder="Nome da meta..." style="flex:1;min-width:140px;padding:8px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;color:var(--t1);font-size:.84em;outline:none">
+<input type="number" id="coupleGoalValue" placeholder="Valor" style="width:100px;padding:8px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;color:var(--t1);font-size:.84em;outline:none">
+<button class="btn btn-r btn-sm" onclick="addCoupleGoal()"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:2px"></i> Nova meta</button>
+</div>
+</div>
+</div>
+
+<div id="famTabActivity" class="fam-tab-panel">
+<div class="couple-card">
+<h3 style="font-size:.92em;margin-bottom:12px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="clipboard-list" style="width:18px;height:18px"></i> Lançamentos da Família</h3>
+<div id="coupleEntries" style="max-height:360px;overflow-y:auto"></div>
+</div>
+</div>
+</div>
+
 <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--brd);padding-bottom:8px">
 <button class="rel-tab on" id="famTabCouple" onclick="switchFamTab('couple')" style="font-size:.82em"><i data-lucide="users" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Parceiro(a)</button>
 <button class="rel-tab" id="famTabChild" onclick="switchFamTab('child')" style="font-size:.82em"><i data-lucide="baby" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Filhos</button>
 </div>
-
 <div id="coupleMainContent">
-<div class="couple-hero">
-<div class="couple-avatars">
-<div class="couple-avatar" id="coupleAv1">👤</div>
-<div class="couple-avatar" id="coupleAv2">👤</div>
-</div>
-<h2 style="margin:0 0 4px;font-size:1.1em" id="coupleTitle"><span data-i18n="familia_sibanki">Família Sibanki</span></h2>
-<div class="couple-status linked"><i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Vinculados</div>
-</div>
-
-<!-- KPIs DA FAMÍLIA -->
-<div class="couple-kpi-row">
-<div class="couple-kpi"><div class="ck-val" style="color:var(--green)" id="ckRecJ">R$ 0</div><div class="ck-lbl">Receitas Juntos</div></div>
-<div class="couple-kpi"><div class="ck-val" style="color:var(--vr)" id="ckDespJ">R$ 0</div><div class="ck-lbl">Despesas Juntos</div></div>
-<div class="couple-kpi"><div class="ck-val" style="color:var(--blue)" id="ckSaldoJ">R$ 0</div><div class="ck-lbl">Saldo do Casal</div></div>
-<div class="couple-kpi"><div class="ck-val" style="color:var(--purple)" id="ckInvJ">R$ 0</div><div class="ck-lbl">Investidos Juntos</div></div>
-</div>
-
-<!-- INSIGHTS IA FAMÍLIA -->
-<div class="couple-card" style="background:linear-gradient(135deg,rgba(79,140,255,.06),rgba(124,92,252,.06));border:1px solid rgba(79,140,255,.2)">
-<h3 style="font-size:.92em;margin-bottom:8px;display:flex;align-items:center;gap:8px"><i data-lucide="sparkles" style="width:18px;height:18px;color:var(--pri)"></i> Insights da IA para a Família</h3>
-<p style="font-size:.82em;color:var(--t2);margin-bottom:12px;line-height:1.5;overflow:visible">Como cada um pode ajudar o outro, metas juntos, dicas para conquistar objetivos comuns e individuais.</p>
-<button type="button" class="btn btn-b btn-sm" onclick="if(typeof go==='function')go('ia',null);if(typeof iaAnalyze==='function')setTimeout(function(){iaAnalyze('familia')},400)" style="font-size:.82em;display:inline-flex;align-items:center;gap:6px"><i data-lucide="bot" style="width:16px;height:16px"></i> Gerar insights da família</button>
-</div>
-
-<!-- QUEM GASTOU MAIS -->
-<div class="couple-card">
-<h3 style="font-size:.92em;margin-bottom:12px"><i data-lucide="trending-up" style="width:18px;height:18px;vertical-align:middle"></i> Comparativo do Mês</h3>
-<div id="coupleCompare"></div>
-</div>
-
-<!-- METAS DO CASAL -->
-<div class="couple-card">
-<h3 style="font-size:.92em;margin-bottom:12px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="target" style="width:18px;height:18px;color:var(--pink)"></i> Metas da Família</h3>
-<div id="coupleGoals"></div>
-<div style="display:flex;gap:8px;margin-top:10px">
-<input type="text" id="coupleGoalName" placeholder="Nome da meta..." style="flex:1;padding:8px 12px;background:rgba(255,255,255,.04);border:1px solid var(--brd);border-radius:var(--rs);color:var(--t1);font-family:Inter;font-size:.84em;outline:none">
-<input type="number" id="coupleGoalValue" placeholder="Valor" style="width:100px;padding:8px 12px;background:rgba(255,255,255,.04);border:1px solid var(--brd);border-radius:var(--rs);color:var(--t1);font-family:Inter;font-size:.84em;outline:none">
-<button class="btn btn-r btn-sm" onclick="addCoupleGoal()">+</button>
-</div>
-</div>
-
-<!-- LANÇAMENTOS COMPARTILHADOS -->
-<div class="couple-card">
-<h3 style="font-size:.92em;margin-bottom:12px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="clipboard-list" style="width:18px;height:18px"></i> Lançamentos da Família</h3>
-<div id="coupleEntries" style="max-height:300px;overflow-y:auto"></div>
-</div>
-
-
-
-</div><!-- end coupleMainContent -->
 <!-- ==================== MODO FILHOS ==================== -->
 <div id="familyChildSection" style="display:none">
 
@@ -3019,9 +3243,9 @@
 <div id="childrenList"></div>
 <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
 <input type="text" id="childName" placeholder="Nome do filho(a)" style="flex:1;min-width:120px;padding:8px 12px;background:rgba(255,255,255,.04);border:1px solid var(--brd);border-radius:var(--rs);color:var(--t1);font-family:Inter;font-size:.84em;outline:none">
-<select id="childAge" style="padding:8px;background:rgba(255,255,255,.04);border:1px solid var(--brd);border-radius:var(--rs);color:var(--t1);font-family:Inter;font-size:.84em">
+<select id="childAge" class="invite-select" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:var(--rs);color:var(--t1);font-family:Inter;font-size:.84em">
 <option value="6-9">6-9 anos</option>
-<option value="10-13">10-13 anos</option>
+<option value="10-15">10-15 anos</option>
 </select>
 <button class="btn btn-r btn-sm" onclick="addChild()" style="height:38px">+ Adicionar</button>
 </div>

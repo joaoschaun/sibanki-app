@@ -759,6 +759,20 @@ if(upgBtn)upgBtn.style.display=(typeof userPlan!=='undefined'&&(userPlan==='pro'
 }
 function syncDrawerActiveTab(id){
 var items=document.querySelectorAll('.drawer-nav-item');items.forEach(function(it){var goId=it.getAttribute('data-go');it.classList.toggle('active',goId===id);});
+// Abrir grupo que contém o item ativo
+document.querySelectorAll('.drawer-nav-group').forEach(function(g){
+if(g.querySelector('[data-go="'+id+'"]')){g.classList.add('open');var btn=g.querySelector('.drawer-nav-group-head');if(btn)btn.setAttribute('aria-expanded','true');}
+});
+}
+function toggleDrawerGroup(id){
+var key='drawerGroup'+id.charAt(0).toUpperCase()+id.slice(1);
+var g=document.getElementById(key);
+if(!g)return;
+var isOpen=g.classList.toggle('open');
+var btn=g.querySelector('.drawer-nav-group-head');
+if(btn)btn.setAttribute('aria-expanded',isOpen?'true':'false');
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},10);
+try{var keys=[];document.querySelectorAll('.drawer-nav-group.open').forEach(function(gr){if(gr.id&&gr.id.indexOf('drawerGroup')===0)keys.push(gr.id.replace('drawerGroup','').toLowerCase());});localStorage.setItem('sibanki_drawer_groups',JSON.stringify(keys));}catch(e){}
 }
 function initDrawerDesktop(){
 if(window.innerWidth>=1024){
@@ -768,7 +782,17 @@ document.body.classList.add('drawer-sidebar-mode');
 if(!expanded){document.body.classList.add('drawer-sidebar-collapsed');var btn=document.getElementById('drawerToggleBtn');if(btn)btn.setAttribute('aria-label','Expandir menu');}
 }
 }
-(function(){initDrawerDesktop();var nav=document.querySelector('.drawer-nav');if(nav&&!nav.querySelector('.drawer-nav-sep')){[{b:'orçamento',t:'Planejamento'},{b:'invest',t:'Crescimento'},{b:'casal',t:'Social'},{b:'rel',t:'Sistema'}].forEach(function(s){var item=nav.querySelector('[data-go="'+s.b+'"]');if(item){var d=document.createElement('div');d.className='drawer-nav-sep';d.textContent=s.t;nav.insertBefore(d,item);}});}document.querySelectorAll('.drawer-nav-item').forEach(function(it){it.addEventListener('click',function(){var id=it.getAttribute('data-go');if(id){go(id,null);if(window.innerWidth<768)closeDrawer();}});});})();
+(function(){
+initDrawerDesktop();
+// Restaurar grupos abertos
+try{var saved=localStorage.getItem('sibanki_drawer_groups');if(saved){JSON.parse(saved).forEach(function(id){var g=document.getElementById('drawerGroup'+id.charAt(0).toUpperCase()+id.slice(1));if(g){g.classList.add('open');var btn=g.querySelector('.drawer-nav-group-head');if(btn)btn.setAttribute('aria-expanded','true');}});}}catch(e){}
+// Separadores legados (se não houver grupos)
+var nav=document.querySelector('.drawer-nav');
+if(nav&&!nav.querySelector('.drawer-nav-sep')&&!nav.querySelector('.drawer-nav-group')){
+[{b:'orçamento',t:'Planejamento'},{b:'invest',t:'Crescimento'},{b:'casal',t:'Social'},{b:'rel',t:'Sistema'}].forEach(function(s){var item=nav.querySelector('[data-go="'+s.b+'"]');if(item){var d=document.createElement('div');d.className='drawer-nav-sep';d.textContent=s.t;nav.insertBefore(d,item);}});
+}
+document.querySelectorAll('.drawer-nav-item').forEach(function(it){it.addEventListener('click',function(){var id=it.getAttribute('data-go');if(id){go(id,null);if(window.innerWidth<768)closeDrawer();}});});
+})();
 window.addEventListener('resize',function(){
 if(window.innerWidth>=1024){
 document.getElementById('drawerOverlay').classList.remove('show');
