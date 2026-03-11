@@ -14,7 +14,14 @@ var authResolved=false;
 setTimeout(function(){
 if(authResolved)return;
 var lb=document.getElementById('loadBg');
-if(lb&&lb.style.display!=='none'){lb.style.display='none';}
+if(lb){lb.classList.add('hidden');lb.style.display='none';}
+var splash=document.getElementById('virtSplash');
+if(splash){splash.classList.add('gone');setTimeout(function(){if(splash.parentNode)splash.parentNode.removeChild(splash);},500);}
+var ab=document.getElementById('authBg');
+var appEl=document.getElementById('app');
+if(ab){ab.classList.remove('hidden');}
+if(appEl){appEl.classList.add('on');}
+if(typeof showLog==='function')showLog();
 },8000);
 
 /* ── next block ── */
@@ -4163,7 +4170,7 @@ wrap.style.display='block';
 var sub=document.getElementById('orcPieChartSub');
 if(sub){var mesNomes=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];var parts=orcamentoViewMonth.split('-');sub.textContent=mesNomes[parseInt(parts[1],10)-1]+' '+parts[0];}
 if(_orcPieChartInst){_orcPieChartInst.destroy();_orcPieChartInst=null;}
-_orcPieChartInst=new Chart(canvas,{type:'doughnut',data:{labels:pieLabels,datasets:[{data:pieData,backgroundColor:pieColors,borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.label+': '+fmt(ctx.parsed);}}}}}}));
+_orcPieChartInst=new Chart(canvas,{type:'doughnut',data:{labels:pieLabels,datasets:[{data:pieData,backgroundColor:pieColors,borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.label+': '+fmt(ctx.parsed);}}}}}});
 var legend=document.getElementById('orcPieLegend');
 if(legend){legend.innerHTML=pieLabels.map(function(l,i){return '<div class="orc-pie-legend-item"><span class="orc-pie-legend-dot" style="background:'+pieColors[i]+'"></span><span class="text-truncate">'+l+'</span></div>';}).join('');}
 }
