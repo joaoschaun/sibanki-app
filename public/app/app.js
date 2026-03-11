@@ -4059,12 +4059,51 @@ if(orc&&filledEl.style.display==='block'){
 var filledKpis=document.getElementById('orcamentoFilledKpis');
 var gastosReais=getGastosMes(orcamentoViewMonth);
 var rendaO=orc.rendaMensal||0;
+var totalPlan=orc.orcamentoTotal||0;
 var econReal=rendaO-gastosReais;
 var econPctReal=rendaO>0?Math.round(econReal/rendaO*100):0;
-filledKpis.innerHTML='<div class="orc-kpi rec"><div class="orc-kpi-label">Receitas</div><div class="orc-kpi-value">R$ '+(rendaO.toFixed(2).replace('.',','))+'</div></div>'+
-'<div class="orc-kpi desp"><div class="orc-kpi-label">Gastos planejados</div><div class="orc-kpi-value">R$ '+((orc.orcamentoTotal||0).toFixed(2).replace('.',','))+'</div></div>'+
-'<div class="orc-kpi desp"><div class="orc-kpi-label">Gastos reais</div><div class="orc-kpi-value">R$ '+(gastosReais.toFixed(2).replace('.',','))+'</div></div>'+
-'<div class="orc-kpi econ"><div class="orc-kpi-label">Economia real</div><div class="orc-kpi-value">'+econPctReal+'%</div></div>';
+// KPIs v2
+var kpiDefs=[
+{label:'Receitas do Mês',value:fmt(rendaO),icon:'trending-up',color:'#10b981',badge:null},
+{label:'Gastos Planejados',value:fmt(totalPlan),icon:'pie-chart',color:'#3b82f6',badge:null},
+{label:'Gastos Reais',value:fmt(gastosReais),icon:'trending-down',color:'#ef4444',badge:totalPlan>0?(gastosReais<=totalPlan?{txt:'Dentro',cls:'up'}:{txt:'Acima',cls:'down'}):null},
+{label:'Economia Real',value:econPctReal+'%',icon:'wallet',color:'#10b981',badge:econPctReal>0?{txt:'+'+econPctReal+'%',cls:'up'}:null},
+];
+filledKpis.className='orc-kpis-v2';
+filledKpis.innerHTML=kpiDefs.map(function(k){
+return '<div class="orc-kpi-v2">'+
+'<div class="orc-kpi-v2-top">'+
+'<div class="orc-kpi-v2-icon" style="background:'+k.color+'18"><i data-lucide="'+k.icon+'" style="width:18px;height:18px;color:'+k.color+'"></i></div>'+
+(k.badge?'<span class="orc-kpi-v2-badge '+k.badge.cls+'">'+k.badge.txt+'</span>':'<span></span>')+
+'</div>'+
+'<div class="orc-kpi-v2-label">'+k.label+'</div>'+
+'<div class="orc-kpi-v2-value">'+k.value+'</div>'+
+'</div>';
+}).join('');
+// Overview bar
+var overEl=document.getElementById('orcOverviewBar');
+if(overEl&&totalPlan>0){
+overEl.style.display='block';
+var usePct=Math.min(Math.round(gastosReais/totalPlan*100),100);
+var overAmt=gastosReais>totalPlan?gastosReais-totalPlan:0;
+var catSpentTemp=getCatSpentMes(orcamentoViewMonth);var catsTemp=orc.categorias||{};
+var overCount=ORC_CATEGORIAS.filter(function(c){return (catsTemp[c.nome]||0)>0&&(catSpentTemp[c.nome]||0)>(catsTemp[c.nome]||0);}).length;
+var fillColor=gastosReais>totalPlan?'#ef4444':'var(--vr)';
+overEl.innerHTML='<div class="orc-overview-bar-header">'+
+'<div class="orc-overview-bar-title">Uso do Orçamento Total</div>'+
+'<div class="orc-overview-bar-info">'+
+'<span>Gasto: <strong>'+fmt(gastosReais)+'</strong></span>'+
+'<span>Planejado: <strong>'+fmt(totalPlan)+'</strong></span>'+
+(overCount>0?'<span class="over">'+overCount+' categoria(s) acima</span>':'')+
+'</div></div>'+
+'<div class="orc-overview-track"><div class="orc-overview-fill" style="width:'+usePct+'%;background:'+fillColor+'"></div></div>'+
+'<div class="orc-overview-pct" style="color:'+fillColor+'">'+usePct+'% utilizado'+(overAmt>0?' — '+fmt(overAmt)+' acima':' — '+fmt(totalPlan-gastosReais)+' disponível')+'</div>';
+}
+// Bar chart (Planejado vs Real — últimos 6 meses)
+renderOrcBarChart();
+// Pie chart (Distribuição de gastos)
+renderOrcPieChart(orc);
+// Category cards v2
 var catSpent=getCatSpentMes(orcamentoViewMonth);
 var cats=orc.categorias||{};
 var listHtml='';
@@ -4074,20 +4113,116 @@ var lim=cats[c.nome]||0;
 if(lim<=0)continue;
 var spent=catSpent[c.nome]||0;
 var pct=lim>0?Math.min((spent/lim)*100,100):0;
-var barColor=pct>90?'#EF4444':pct>70?'#EAB308':'#22C55E';
-listHtml+='<div class="orc-filled-item"><div class="orc-filled-item-top"><div class="orc-filled-item-icon" style="background:'+c.cor+'20"><i data-lucide="'+c.lucide+'" style="color:'+c.cor+'"></i></div><span class="orc-filled-item-name">'+escapeHtml(c.nome)+'</span></div>'+
-'<div class="orc-filled-item-bar"><div class="orc-filled-item-bar-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>'+
-'<div class="orc-filled-item-vals">R$ '+(spent.toFixed(2).replace('.',','))+' gastos de R$ '+(lim.toFixed(2).replace('.',','))+' planejados · '+pct.toFixed(0)+'%</div></div>';
+var over=spent>lim;
+var warn=!over&&pct>=90;
+var badgeCls=over?'over':warn?'warn':'ok';
+var badgeTxt=over?'⚠ Acima':warn?'⚠ Atenção':'✓ OK';
+var barFill=over?'#ef4444':warn?'#f59e0b':c.cor;
+var pctTxt=pct.toFixed(0)+'%';
+var available=over?'−'+fmt(spent-lim)+' acima':fmt(lim-spent)+' disponível';
+listHtml+='<div class="orc-cat-v2">'+
+'<div class="orc-cat-v2-glow" style="background:'+c.cor+'"></div>'+
+'<div class="orc-cat-v2-head">'+
+'<div class="orc-cat-v2-icon" style="background:'+c.cor+'18"><i data-lucide="'+c.lucide+'" style="width:18px;height:18px;color:'+c.cor+'"></i></div>'+
+'<span class="orc-cat-v2-name">'+escapeHtml(c.nome)+'</span>'+
+'<span class="orc-cat-v2-badge '+badgeCls+'">'+badgeTxt+'</span>'+
+'<span class="orc-cat-v2-pct" style="color:'+barFill+'">'+pctTxt+'</span>'+
+'</div>'+
+'<div class="orc-cat-v2-bar"><div class="orc-cat-v2-fill" style="width:'+pct+'%;background:'+barFill+'"></div></div>'+
+'<div class="orc-cat-v2-vals"><span>'+fmt(spent)+' de '+fmt(lim)+' planejados</span><span>'+available+'</span></div>'+
+'</div>';
 }
-document.getElementById('orcamentoFilledList').innerHTML=listHtml||'<p style="color:var(--t2);font-size:.9rem">Nenhuma categoria com limite definido.</p>';
+document.getElementById('orcamentoFilledList').innerHTML=listHtml||'<p style="color:var(--t2);font-size:.9rem;padding:20px 0">Nenhuma categoria com limite definido.</p>';
+// IA Insight
+renderOrcIaTip(orc,cats,catSpent);
 }
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},60);
+}
+var _orcBarChartInst=null;
+var _orcPieChartInst=null;
+var _orcIaTipLoaded=false;
+var _orcIaTipMonth='';
+
+function renderOrcBarChart(){
+var wrap=document.getElementById('orcBarChartWrap');
+var canvas=document.getElementById('orcBarChart');
+if(!wrap||!canvas)return;
+var now=new Date();
+var labels=[],planData=[],realData=[];
+for(var i=5;i>=0;i--){var y=now.getFullYear(),m=now.getMonth()-i;if(m<0){m+=12;y--;}var ym=y+'-'+String(m+1).padStart(2,'0');var mn=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];labels.push(mn[m]);planData.push((orcamentosByMonth[ym]&&orcamentosByMonth[ym].orcamentoTotal)||0);realData.push(getGastosMes(ym));}
+var hasData=planData.some(function(v){return v>0;})||realData.some(function(v){return v>0;});
+if(!hasData){wrap.style.display='none';return;}
+wrap.style.display='block';
+if(_orcBarChartInst){_orcBarChartInst.destroy();_orcBarChartInst=null;}
+var isDark=!document.body.classList.contains('light');
+var gridColor=isDark?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)';
+var tickColor=isDark?'#6b8aaa':'#64748b';
+_orcBarChartInst=new Chart(canvas,{type:'bar',data:{labels:labels,datasets:[
+{label:'Planejado',data:planData,backgroundColor:'rgba(59,130,246,.25)',borderColor:'rgba(59,130,246,.6)',borderRadius:4,barPercentage:.6},
+{label:'Real',data:realData,backgroundColor:'#3b82f6',borderColor:'#3b82f6',borderRadius:4,barPercentage:.6}
+]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+fmt(ctx.parsed.y);}}}},scales:{x:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:11},callback:function(v){return 'R$'+Math.round(v/1000)+'k';}}}}}});
+}
+
+function renderOrcPieChart(orc){
+var wrap=document.getElementById('orcPieChartWrap');
+var canvas=document.getElementById('orcPieChart');
+if(!wrap||!canvas||!orc)return;
+var catSpent=getCatSpentMes(orcamentoViewMonth);
+var cats=orc.categorias||{};
+var pieLabels=[],pieData=[],pieColors=[];
+ORC_CATEGORIAS.forEach(function(c){var spent=catSpent[c.nome]||0;if(spent>0&&(cats[c.nome]||0)>0){pieLabels.push(c.nome);pieData.push(Math.round(spent));pieColors.push(c.cor);}});
+if(!pieData.length){wrap.style.display='none';return;}
+wrap.style.display='block';
+var sub=document.getElementById('orcPieChartSub');
+if(sub){var mesNomes=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];var parts=orcamentoViewMonth.split('-');sub.textContent=mesNomes[parseInt(parts[1],10)-1]+' '+parts[0];}
+if(_orcPieChartInst){_orcPieChartInst.destroy();_orcPieChartInst=null;}
+_orcPieChartInst=new Chart(canvas,{type:'doughnut',data:{labels:pieLabels,datasets:[{data:pieData,backgroundColor:pieColors,borderWidth:0,hoverOffset:4}]},options:{responsive:true,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.label+': '+fmt(ctx.parsed);}}}}}});
+var legend=document.getElementById('orcPieLegend');
+if(legend){legend.innerHTML=pieLabels.map(function(l,i){return '<div class="orc-pie-legend-item"><span class="orc-pie-legend-dot" style="background:'+pieColors[i]+'"></span><span class="text-truncate">'+l+'</span></div>';}).join('');}
+}
+
+function renderOrcIaTip(orc,cats,catSpent){
+var tipEl=document.getElementById('orcIaTip');
+if(!tipEl)return;
+if(_orcIaTipLoaded&&_orcIaTipMonth===orcamentoViewMonth)return;
+_orcIaTipMonth=orcamentoViewMonth;
+tipEl.style.display='flex';
+tipEl.innerHTML='<div class="metas-ia-tip-icon"><i data-lucide="sparkles" style="width:22px;height:22px;color:var(--vr)"></i></div>'+
+'<div class="metas-ia-tip-body"><div class="metas-ia-tip-title">Insight do Consultor IA</div>'+
+'<div class="metas-ia-tip-text" id="orcIaTipText" style="color:var(--t3)">Analisando seu orçamento...</div></div>';
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},50);
+try{
+var user=firebase.auth().currentUser;if(!user)return;
+var gastosReais=getGastosMes(orcamentoViewMonth);
+var totalPlan=orc.orcamentoTotal||0;
+var catSummary=ORC_CATEGORIAS.filter(function(c){return (cats[c.nome]||0)>0;}).map(function(c){var l=cats[c.nome]||0;var s=catSpent[c.nome]||0;var pct=l>0?Math.round(s/l*100):0;return c.nome+': '+pct+'% ('+fmt(s)+'/'+fmt(l)+')';}).join('; ');
+var prompt='Analise o orçamento do usuário e dê UMA observação prática e específica em no máximo 2 frases curtas. Seja direto. Gastos totais: '+fmt(gastosReais)+'/'+fmt(totalPlan)+' planejados. Categorias: '+catSummary+'. Destaque a categoria mais fora do limite ou um ponto positivo se tudo estiver ok.';
+var callIAFn=firebase.functions().httpsCallable('chatApi');
+callIAFn({message:prompt,context:''}).then(function(res){
+var data=res&&res.data?res.data:{};
+var reply=data.reply||'Continue monitorando seus gastos por categoria! 💪';
+reply=reply.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n+/g,' ').trim();
+var sentences=reply.match(/[^.!?]+[.!?]+/g);if(sentences&&sentences.length>2)reply=sentences.slice(0,2).join(' ');
+var textEl=document.getElementById('orcIaTipText');
+if(textEl){textEl.style.color='';textEl.innerHTML=reply;}
+var tipNow=document.getElementById('orcIaTip');
+if(tipNow){tipNow.insertAdjacentHTML('beforeend','<button class="metas-ia-tip-btn" onclick="go(\'ia\');setTimeout(function(){iaAnalyze(\'metas\');},350)">Ver análise →</button>');}
+_orcIaTipLoaded=true;
 if(typeof lucide!=='undefined')lucide.createIcons();
+}).catch(function(){
+var textEl=document.getElementById('orcIaTipText');
+if(textEl){textEl.style.color='';textEl.innerHTML='Continue monitorando seus limites por categoria para manter as finanças saudáveis! 💙';}
+_orcIaTipLoaded=true;
+});
+}catch(e){_orcIaTipLoaded=false;}
 }
+
 function orcamentoPrevMonth(){
 var parts=orcamentoViewMonth.split('-');
 var y=parseInt(parts[0],10),m=parseInt(parts[1],10);
 var d=new Date(y,m-2,1);
 orcamentoViewMonth=getOrcamentoMonthKey(d);
+_orcIaTipLoaded=false;
 rOrc();
 }
 function orcamentoNextMonth(){
@@ -4095,6 +4230,7 @@ var parts=orcamentoViewMonth.split('-');
 var y=parseInt(parts[0],10),m=parseInt(parts[1],10);
 var d=new Date(y,m,1);
 orcamentoViewMonth=getOrcamentoMonthKey(d);
+_orcIaTipLoaded=false;
 rOrc();
 }
 function orcamentoOpenWizard(edit){

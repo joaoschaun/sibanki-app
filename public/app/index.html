@@ -1588,12 +1588,38 @@
 <button type="button" id="orcamentoCopyPrevBtn" class="btn btn-o orc-btn-copy" onclick="orcamentoCopyFromPrev()" title="Não há mês anterior com orçamento"><i data-lucide="copy" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Copiar do mês anterior</button>
 </div>
 <div id="orcamentoFilled" class="orc-filled" style="display:none">
+<!-- Toolbar -->
 <div class="orc-filled-top">
-<button type="button" class="btn btn-b btn-sm" onclick="orcamentoOpenAddCategorias()"><i data-lucide="plus" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Adicionar categorias</button>
+<button type="button" class="btn btn-b btn-sm" onclick="orcamentoOpenAddCategorias()"><i data-lucide="plus" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Categorias</button>
 <button type="button" class="btn btn-o btn-sm" onclick="orcamentoOpenWizard(true)"><i data-lucide="pencil" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Editar</button>
 </div>
-<div id="orcamentoFilledKpis" class="orc-kpis"></div>
-<div id="orcamentoFilledList" class="orc-filled-list"></div>
+<!-- KPI cards v2 -->
+<div id="orcamentoFilledKpis" class="orc-kpis-v2"></div>
+<!-- Overview bar -->
+<div id="orcOverviewBar" class="orc-overview-bar" style="display:none"></div>
+<!-- Charts row -->
+<div class="orc-charts-row">
+<div class="orc-chart-card" id="orcBarChartWrap" style="display:none">
+<div class="orc-chart-header">
+<div><div class="orc-chart-title">Planejado vs Real</div><div class="orc-chart-sub">Últimos 6 meses</div></div>
+</div>
+<canvas id="orcBarChart" style="max-height:200px"></canvas>
+</div>
+<div class="orc-chart-card" id="orcPieChartWrap" style="display:none">
+<div class="orc-chart-header">
+<div><div class="orc-chart-title">Distribuição de Gastos</div><div class="orc-chart-sub" id="orcPieChartSub"></div></div>
+</div>
+<canvas id="orcPieChart" style="max-height:180px"></canvas>
+<div id="orcPieLegend" class="orc-pie-legend"></div>
+</div>
+</div>
+<!-- Categories grid -->
+<div class="orc-cats-section-header">
+<span class="orc-cats-section-title">Categorias</span>
+</div>
+<div id="orcamentoFilledList" class="orc-cats-grid"></div>
+<!-- IA Insight -->
+<div id="orcIaTip" class="metas-ia-tip" style="display:none"></div>
 </div>
 </div>
 </div>
