@@ -715,10 +715,14 @@ var d=document.getElementById('drawer');var o=document.getElementById('drawerOve
 if(!d||!o)return;
 var isDesktop=window.innerWidth>=1024;
 if(isDesktop){
-var body=document.body;var app=document.getElementById('appContent');var topH=document.getElementById('topHeader');
-var open=body.classList.contains('drawer-sidebar-mode');
-body.classList.toggle('drawer-sidebar-mode',!open);
-try{localStorage.setItem('sibanki_drawer_open',open?'0':'1');}catch(z){}
+var body=document.body;
+body.classList.add('drawer-sidebar-mode');
+var collapsed=body.classList.toggle('drawer-sidebar-collapsed');
+try{localStorage.setItem('sibanki_drawer_open',collapsed?'0':'1');}catch(z){}
+var expandEl=document.querySelector('.drawer-expand-icon');
+if(expandEl&&typeof lucide!=='undefined'&&lucide.createIcons){lucide.createIcons();}
+var btn=document.getElementById('drawerToggleBtn');
+if(btn)btn.setAttribute('aria-label',collapsed?'Expandir menu':'Recolher menu');
 }else{
 d.classList.toggle('open');o.classList.toggle('show',d.classList.contains('open'));o.setAttribute('aria-hidden',d.classList.contains('open')?'false':'true');
 }
@@ -727,8 +731,11 @@ function openDrawer(){var d=document.getElementById('drawer');var o=document.get
 function closeDrawer(){
 var d=document.getElementById('drawer');var o=document.getElementById('drawerOverlay');
 if(!d||!o)return;
-if(window.innerWidth>=1024){document.body.classList.remove('drawer-sidebar-mode');try{localStorage.setItem('sibanki_drawer_open','0');}catch(z){}}
-else{d.classList.remove('open');o.classList.remove('show');o.setAttribute('aria-hidden','true');}
+if(window.innerWidth>=1024){
+document.body.classList.add('drawer-sidebar-mode');
+document.body.classList.add('drawer-sidebar-collapsed');
+try{localStorage.setItem('sibanki_drawer_open','0');}catch(z){}
+}else{d.classList.remove('open');o.classList.remove('show');o.setAttribute('aria-hidden','true');}
 }
 function updateDrawerUser(){
 if(!U)return;
@@ -748,10 +755,10 @@ var items=document.querySelectorAll('.drawer-nav-item');items.forEach(function(i
 }
 function initDrawerDesktop(){
 if(window.innerWidth>=1024){
-// Desktop: sidebar aberta por padrão (a não ser que o usuário tenha fechado explicitamente)
 var pref=localStorage.getItem('sibanki_drawer_open');
-var shouldOpen=(pref===null)?true:(pref==='1');
-if(shouldOpen)document.body.classList.add('drawer-sidebar-mode');
+var expanded=(pref===null)?true:(pref==='1');
+document.body.classList.add('drawer-sidebar-mode');
+if(!expanded){document.body.classList.add('drawer-sidebar-collapsed');var btn=document.getElementById('drawerToggleBtn');if(btn)btn.setAttribute('aria-label','Expandir menu');}
 }
 }
 (function(){initDrawerDesktop();var nav=document.querySelector('.drawer-nav');if(nav&&!nav.querySelector('.drawer-nav-sep')){[{b:'orçamento',t:'Planejamento'},{b:'invest',t:'Crescimento'},{b:'casal',t:'Social'},{b:'rel',t:'Sistema'}].forEach(function(s){var item=nav.querySelector('[data-go="'+s.b+'"]');if(item){var d=document.createElement('div');d.className='drawer-nav-sep';d.textContent=s.t;nav.insertBefore(d,item);}});}document.querySelectorAll('.drawer-nav-item').forEach(function(it){it.addEventListener('click',function(){var id=it.getAttribute('data-go');if(id){go(id,null);if(window.innerWidth<768)closeDrawer();}});});})();
@@ -759,12 +766,13 @@ window.addEventListener('resize',function(){
 if(window.innerWidth>=1024){
 document.getElementById('drawerOverlay').classList.remove('show');
 document.getElementById('drawer').classList.remove('open');
-// Reaplica preferência de sidebar no desktop
 var pref=localStorage.getItem('sibanki_drawer_open');
-var shouldOpen=(pref===null)?true:(pref==='1');
-document.body.classList.toggle('drawer-sidebar-mode',shouldOpen);
+var expanded=(pref===null)?true:(pref==='1');
+document.body.classList.add('drawer-sidebar-mode');
+document.body.classList.toggle('drawer-sidebar-collapsed',!expanded);
 }else{
 document.body.classList.remove('drawer-sidebar-mode');
+document.body.classList.remove('drawer-sidebar-collapsed');
 }
 });
 
@@ -856,7 +864,7 @@ setTimeout(function(){startModuleTour('invest');},500);
 setTimeout(openInvestorProfilePopup,400);
 }
 }
-if(id==='metas'||id==='lanc'||id==='orçamento'||id==='cartões'||id==='contas'||id==='ia'||id==='config'){
+if(id==='metas'||id==='lanc'||id==='orçamento'||id==='cartões'||id==='contas'||id==='ia'||id==='config'||id==='casal'||id==='calendario'||id==='conq'){
 var mid=id;
 if(!tourModulos[mid]&&typeof startModuleTour==='function'&&typeof getModuleTourSteps==='function'&&getModuleTourSteps(mid).length>0){
 setTimeout(function(){startModuleTour(mid);},600);
@@ -1460,39 +1468,77 @@ sibTourStartPositionTick();
 function getModuleTourSteps(moduleId){
 var steps={
 invest:[
-{selector:'.inv-hero',title:'Módulo Investimentos',body:'Aqui você acompanha seu patrimônio, rentabilidade, proventos e usa simuladores. Tudo para tomar decisões mais conscientes.'},
-{selector:'#invNav',title:'Navegação',body:'Minha Carteira: registre e veja seus ativos. Análise B3: cotações e dados de ações e FIIs. Proventos: dividendos e JCP. Simuladores: projeções. Perfil: questionário do investidor.'},
-{selector:'#invTabCarteira',title:'Minha Carteira',body:'Cadastre cada investimento (CDB, ações, FIIs, Tesouro etc.) com valor e data. O Sibanki calcula o total e você acompanha a evolução do patrimônio.'},
-{selector:'#invTabPerfil',title:'Perfil do Investidor',body:'Na aba Perfil fica o questionário de adequação (suitability). Ele define se você é Conservador, Moderado, Arrojado ou Agressivo — e sugere a alocação ideal para o seu perfil de risco.'},
-{selector:'.inv-sub',title:'Questionário de Perfil do Investidor',body:'Responder ao questionário é muito importante: você descobre seu perfil de risco (Conservador a Agressivo), recebe uma alocação sugerida (quanto colocar em Renda Fixa, Ações, FIIs, Cripto), evita investimentos fora da sua tolerância e toma decisões alinhadas aos seus objetivos. Deseja fazer o questionário agora ou deixar para depois?',ctaQuestionario:true}
+{selector:'.inv-hero',title:'Módulo Investimentos 📈',body:'Aqui você acompanha todo seu patrimônio investido: rentabilidade, proventos recebidos e simuladores de juros compostos. Tudo para tomar decisões mais conscientes.'},
+{selector:'#invNav',title:'5 abas, tudo coberto',body:'▸ Minha Carteira: seus ativos cadastrados. ▸ Análise B3: cotações em tempo real de ações e FIIs. ▸ Proventos: dividendos e JCP. ▸ Simuladores: projeções de rentabilidade. ▸ Perfil: questionário do investidor.'},
+{selector:'#invTabCarteira',title:'Minha Carteira',body:'Cadastre cada investimento (CDB, ações, FIIs, Tesouro Direto, cripto) com valor e data de entrada. O Sibanki calcula o total investido e você acompanha a evolução do patrimônio ao longo do tempo.'},
+{selector:'#invTabProventos',title:'Proventos (Dividendos e JCP)',body:'Nesta aba ficam os dividendos e Juros sobre Capital Próprio recebidos dos seus ativos de renda variável. Registre cada provento para ter o histórico de renda passiva completo.'},
+{selector:'#invTabSim',title:'Simuladores Financeiros',body:'Projete quanto seu dinheiro vai render: calcule juros compostos, simule quanto precisaria guardar por mês para atingir uma meta ou compare diferentes opções de investimento.'},
+{selector:'#invTabPerfil',title:'Perfil do Investidor',body:'Responda ao questionário de suitability para descobrir seu perfil de risco (Conservador → Agressivo) e receber uma sugestão de alocação ideal entre Renda Fixa, Ações, FIIs e Cripto. Deseja responder agora?',ctaQuestionario:true}
 ],
 metas:[
-{selector:'#metasWrap',title:'Metas Financeiras',body:'Aqui você cria objetivos com valor e prazo: reserva de emergência, viagem, entrada do imóvel, carro. O Sibanki mostra quanto guardar por mês e acompanha o progresso.'},
-{selector:'.metas-header',title:'Suas metas',body:'Crie quantas metas quiser. Use os atalhos (Reserva, Viagem, Imóvel, Carro) ou defina uma meta personalizada. Cada meta mostra quanto falta e em quantos meses você atinge o objetivo.',last:true}
+{selector:'#metasWrap',title:'Metas Financeiras 🎯',body:'Aqui você transforma sonhos em planos concretos: reserva de emergência, viagem, entrada do imóvel, carro novo. O Sibanki calcula quanto guardar por mês para chegar lá no prazo que você definir.'},
+{selector:'.metas-header',title:'Criando sua primeira meta',body:'Clique em + Nova Meta e escolha um atalho rápido (Reserva, Viagem, Imóvel, Carro) ou defina um objetivo personalizado com nome, valor-alvo e prazo em meses.'},
+{selector:'#metasWrap',title:'Progresso visual',body:'Cada meta mostra uma barra de progresso, o valor acumulado, quanto falta e a estimativa de quando você vai atingir o objetivo. Conforme faz lançamentos, o progresso atualiza.'},
+{selector:'#metasWrap',title:'Aporte sugerido',body:'O Sibanki calcula automaticamente quanto você precisa guardar por mês para atingir cada meta no prazo. Se o prazo estiver curto, ele avisa e sugere aumentar o aporte ou estender o prazo.'},
+{selector:'#virtFab',title:'Aporte rápido via IA',body:'Você pode registrar um aporte em uma meta pelo Consultor IA. Experimente: toque no ícone e diga "adicionar R$200 na meta viagem". Ele vincula automaticamente.',last:true}
 ],
 lanc:[
-{selector:'#fD',title:'Lançamentos',body:'Registre aqui todas as receitas e despesas. Use a data, descrição, valor, categoria e conta. Você pode filtrar por mês e categoria para analisar seus gastos.'},
-{selector:'#virtFab',title:'Consultor Financeiro',body:'Seu assistente completo: lançamentos, contas, cartões, metas, orçamento e dúvidas. Toque no ícone para abrir o chat com a IA. Ex.: "almoço 45", "quanto gastei?", "excluir cartão X".',last:true}
+{selector:'#fD',title:'Lançamentos 📋',body:'Central de controle das suas finanças. Registre toda receita e despesa com data, descrição, valor, categoria, conta e tags. O histórico completo fica disponível para análise a qualquer momento.'},
+{selector:'#fD',title:'Formulário rápido',body:'Preencha: ① Tipo (Receita ou Despesa) ② Data ③ Descrição ④ Valor ⑤ Categoria ⑥ Conta. Os campos de Recorrente e Tag são opcionais. Clique em Salvar ou pressione Enter.'},
+{selector:'#rcList',title:'Lançamentos Recorrentes',body:'Aqui ficam as contas fixas: aluguel, streaming, salário, academia. Cadastre uma vez e o Sibanki lembra você no vencimento — e opcionalmente lança automaticamente todo mês.'},
+{selector:'#fC',title:'Filtros por categoria',body:'Use o filtro de categoria para analisar gastos específicos. Selecione "Alimentação" para ver quanto gastou em comida no mês, ou "Lazer" para checar se ficou dentro do orçamento.'},
+{selector:'#fD',title:'Importar extrato do banco',body:'Já usa outro app ou quer trazer lançamentos em lote? Use a função de importação (disponível na aba Cartões → Importar) para trazer CSV do Nubank, Inter, Itaú ou C6 em segundos.'},
+{selector:'#virtFab',title:'Lançamento por voz ou texto IA',body:'A forma mais rápida: toque no Consultor e diga "almoço 45 reais". A IA interpreta e registra automaticamente. Funciona com linguagem natural: "paguei o aluguel 1800 hoje".',last:true}
 ],
 'orçamento':[
-{selector:'.orc-header',title:'Orçamento',body:'Defina um limite de gastos por categoria para o mês. O Sibanki avisa quando você se aproximar ou estourar o orçamento, ajudando a controlar os gastos.'},
-{selector:'#orcamentoWrap',title:'Controle mensal',body:'Navegue entre os meses e veja quanto planejou e quanto gastou em cada categoria. Ajuste os valores conforme sua realidade.',last:true}
+{selector:'.orc-header',title:'Orçamento Mensal 💰',body:'Defina quanto quer gastar em cada categoria do mês. O Sibanki compara o planejado com o realizado e te avisa quando você está se aproximando ou estourou um limite.'},
+{selector:'#orcamentoStep1',title:'Passo 1 — Sua renda',body:'Informe sua renda mensal total. Com base nisso, o Sibanki sugere automaticamente limites por categoria seguindo a regra 50/30/20: 50% necessidades, 30% desejos, 20% poupança.'},
+{selector:'#orcamentoStep2',title:'Passo 2 — Categorias',body:'Ajuste os limites sugeridos para cada categoria conforme sua realidade. Você pode adicionar categorias personalizadas, remover as que não usa e copiar o orçamento do mês anterior.'},
+{selector:'#orcamentoFilledList',title:'Acompanhamento em tempo real',body:'Conforme você registra lançamentos, as barras de progresso de cada categoria atualizam automaticamente. Verde = ok, amarelo = atenção, vermelho = estourou.'},
+{selector:'#orcamentoWrap',title:'Histórico mensal',body:'Navegue pelos meses anteriores para comparar planejado vs. realizado. Identifique padrões de gasto e ajuste seu orçamento futuro baseado no histórico real.',last:true}
 ],
 cartões:[
-{selector:'#cartões',title:'Cartões de Crédito',body:'Gerencie seus cartões: limite, dia de fechamento e vencimento, compras parceladas e anuidade. Acompanhe a fatura e evite surpresas.'},
-{selector:'#cardsCarousel',title:'Seus cartões',body:'Adicione cada cartão com bandeira e limite. O carrossel mostra seus cartões. Use as abas para lançar compras, importar fatura ou ver resumo.',last:true}
+{selector:'#cardsCarousel',title:'Cartões de Crédito 💳',body:'Gerencie todos os seus cartões em um só lugar. Cadastre com limite, dia de fechamento e dia de vencimento. O Sibanki controla a fatura e avisa antes do vencimento.'},
+{selector:'#cardsCarousel',title:'Seu carrossel de cartões',body:'Cada cartão aparece como um card visual com o limite total e o limite disponível. Deslize para navegar entre os cartões. O card "+ Adicionar" fica sempre no final.'},
+{selector:'.card-pill',title:'Abas por cartão',body:'Com um cartão selecionado você tem 3 abas: ▸ Lançar: registrar compras e parcelamentos. ▸ Importar: trazer extrato CSV da operadora. ▸ Fatura: ver o resumo da fatura atual e histórico de faturas.'},
+{selector:'#virtFab',title:'Lançar compra via IA',body:'Toque no Consultor e diga "comprei no cartão Nubank 150 reais sapatos". A IA vincula automaticamente ao cartão correto, categoriza e registra a compra.',last:true}
 ],
 contas:[
-{selector:'.contas-header',title:'Contas e Carteira',body:'Aqui ficam suas contas bancárias e o saldo de cada uma. Registre o saldo inicial e os lançamentos passam a debitar/creditar automaticamente.'},
-{selector:'.contas-btn-add',title:'Adicionar conta',body:'Clique em + para adicionar contas (Nubank, Itaú, etc.). Suas entradas e saídas são vinculadas à conta escolhida em cada lançamento.',last:true}
+{selector:'.contas-header',title:'Contas e Carteira 🏦',body:'Aqui ficam suas contas bancárias, carteiras digitais e o caixa. Registre o saldo inicial de cada conta — a partir daí, todo lançamento vinculado a ela atualiza o saldo automaticamente.'},
+{selector:'.contas-header-actions',title:'Ações rápidas',body:'Use os botões no topo para: ① Adicionar nova conta. ② Ver a evolução do patrimônio ao longo do tempo em gráfico. ③ Acessar opções adicionais como transferência entre contas.'},
+{selector:'#contasSidebarAtual',title:'Saldo atual e previsto',body:'O painel lateral mostra o saldo atual da conta selecionada e o saldo previsto — calculado considerando os lançamentos agendados para os próximos dias.'},
+{selector:'#contas',title:'Lista de contas',body:'Cada conta mostra o banco, o nome e o saldo atual. Clique em uma conta para ver o extrato detalhado. Use a transferência para mover valores entre contas sem perder o histórico.',last:true}
 ],
 ia:[
-{selector:'#ia',title:'Consultor IA',body:'Converse com a IA financeira do Sibanki. Faça perguntas sobre seus gastos, peça análises ou sugestões. Quanto mais você usar, mais personalizadas ficam as respostas.'},
-{selector:'#iaQ',title:'Pergunte qualquer coisa',body:'Digite sua dúvida e clique em Enviar. Use também os atalhos acima: Análise Geral, Dicas de Economia, Investimentos ou Família.',last:true}
+{selector:'#ia',title:'Consultor IA Sibanki 🤖',body:'Seu assistente financeiro pessoal com inteligência artificial. Ele conhece seus dados: saldo, gastos, metas, investimentos. Faça perguntas, peça análises ou deixe ele sugerir ações.'},
+{selector:'#ia',title:'Atalhos inteligentes',body:'Use os botões de atalho para começar: "Análise Geral" traz um diagnóstico completo, "Dicas de Economia" sugere cortes baseados nos seus gastos reais, "Hábitos Financeiros" analisa seus padrões de consumo.'},
+{selector:'#iaQ',title:'Pergunte em linguagem natural',body:'Escreva como se estivesse conversando: "quanto gastei com restaurante em janeiro?", "estou no limite do orçamento de lazer?", "quais minhas maiores despesas este mês?". Sem comandos especiais.'},
+{selector:'#iaHistory',title:'Histórico da conversa',body:'O histórico fica salvo durante a sessão. Role para cima para rever análises anteriores. Para uma nova análise do zero, clique em Limpar conversa.'},
+{selector:'#virtFab',title:'IA em qualquer tela',body:'O Consultor IA está disponível em todas as abas pelo botão flutuante. Use para lançamentos rápidos ("almoço 45"), dúvidas ("o que é CDI?") ou comandos ("criar meta viagem 3000").',last:true}
 ],
 config:[
-{selector:'.config-hero',title:'Configurações',body:'Ajuste tema (claro/escuro), chave da API Gemini para a IA, token B3 para cotações, backup dos dados e outras preferências do app.'},
-{selector:'#planSection',title:'Plano e preferências',body:'Gerencie seu plano, modo caixa (saldos), backup JSON/CSV e categorias. Faça backup regularmente para não perder seus dados.',last:true}
+{selector:'.config-hero',title:'Configurações ⚙️',body:'Personalize sua experiência: tema claro ou escuro, chaves de API para cotações em tempo real, backup dos dados e preferências de notificação.'},
+{selector:'#planSection',title:'Seu plano',body:'Veja qual plano você está usando e os recursos disponíveis. Faça upgrade para Pro ou Família para desbloquear Briefing IA diário, relatórios PDF e finanças compartilhadas.'},
+{selector:'.cfg-sec-hd',title:'Preferências e integrações',body:'Cada seção tem um ícone e um título. Configure: ▸ Modo Caixa (como o saldo é calculado) ▸ Chave Gemini (sua IA) ▸ Token B3 Brapi (cotações em tempo real) ▸ Categorias personalizadas.'},
+{selector:'#planSection',title:'Backup dos seus dados',body:'Mais abaixo na aba você encontra o Backup. Exporte em JSON (completo) ou CSV (planilha). Seus dados ficam na nuvem Firebase, mas o backup local é uma camada extra de proteção.',last:true}
+],
+casal:[
+{selector:'#casal',title:'Finanças em Família 👨‍👩‍👧',body:'Gerencie as finanças do casal ou da família juntos. Cada pessoa mantém sua conta individual, mas vocês têm visibilidade total do consolidado — receitas, despesas, metas e investimentos de todos.'},
+{selector:'#coupleNotLinked',title:'Vincular parceiro(a)',body:'Para começar, envie um convite por email para seu parceiro(a). Quando ele(a) aceitar, as finanças de vocês serão vinculadas e você verá o painel consolidado do casal.'},
+{selector:'#coupleEmail',title:'Enviar convite',body:'Digite o email do parceiro(a) no campo e clique em Enviar. O email pode ser de alguém que ainda não tem conta no Sibanki — o convite cria a conta automaticamente.'},
+{selector:'#familyChildSection',title:'Finanças dos filhos',body:'No plano Família você também pode cadastrar perfis para os filhos, definir mesadas e acompanhar os gastos de cada um. Cada filho tem seu próprio dashboard simplificado.',last:true}
+],
+calendario:[
+{selector:'#calendario',title:'Calendário Financeiro 📅',body:'Visualize todas as suas movimentações financeiras em formato de calendário. Veja num relance quais dias do mês tiveram lançamentos, contas a vencer ou metas com aporte programado.'},
+{selector:'.cal-hd',title:'Navegando pelo calendário',body:'Use as setas ◀ ▶ para avançar ou voltar meses. O mês e ano atual ficam exibidos no centro. Clique em qualquer dia para ver o resumo dos lançamentos daquela data.'},
+{selector:'#calG',title:'Dias com eventos',body:'Dias com lançamentos aparecem marcados no calendário. Verde indica receita, vermelho indica despesa. Dias com vencimentos de contas ou cartões aparecem com destaque em amarelo.'},
+{selector:'#calSum',title:'Resumo do mês',body:'O resumo no topo mostra o total de receitas, despesas e o saldo do mês selecionado. Use para ter uma visão rápida de como foi o mês sem precisar abrir cada lançamento.',last:true}
+],
+conquistas:[
+{selector:'#conq',title:'Conquistas e Gamificação 🏆',body:'O Sibanki recompensa bons hábitos financeiros. Cada ação positiva — registrar lançamentos, cumprir orçamento, atingir metas — desbloqueia badges e acumula pontos XP.'},
+{selector:'.conq-hero',title:'Seu perfil de conquistas',body:'Aqui você vê suas conquistas desbloqueadas, quantas faltam e sua sequência de dias usando o app. Manter a sequência ativa é um dos critérios para subir de nível.'},
+{selector:'#cqCount',title:'KPIs de progresso',body:'▸ Conquistas: quantas você desbloqueou do total disponível. ▸ Sequência: dias consecutivos usando o app. ▸ Nível: Iniciante → Bronze → Prata → Ouro → Diamante. ▸ Score: sua pontuação financeira geral.'},
+{selector:'#badgesGrid',title:'Galeria de badges',body:'Cada badge tem um critério específico: "Primeiro lançamento", "Meta atingida", "30 dias sem estouro de orçamento", "Portfólio diversificado" e muitos outros. Passe o mouse sobre um badge para ver o que falta para desbloquear.',last:true}
 ]
 };
 return steps[moduleId]||[];
