@@ -3089,16 +3089,20 @@ ctx.stroke();
 // LANÇAMENTOS
 function onChangePgto(val){
 var row=document.getElementById('fPgtoCartaoRow');
-if(!row)return;
+var contaSel=document.getElementById('fA');
 if(val==='cartao'){
-// Popular select de cartões
+// Popula select de cartões
 var sel=document.getElementById('fPgtoCard');
 if(sel&&typeof cards!=='undefined'){
 sel.innerHTML=cards.length===0?'<option value="">Nenhum cartão cadastrado</option>':cards.map(function(c){return'<option value="'+c.id+'">'+escapeHtml(c.name)+'</option>';}).join('');
 }
-row.style.display='block';
+if(row)row.style.display='block';
+// Desabilita e limpa o campo Conta
+if(contaSel){contaSel.value='';contaSel.disabled=true;contaSel.style.opacity='.35';}
 }else{
-row.style.display='none';
+if(row)row.style.display='none';
+// Reabilita o campo Conta
+if(contaSel){contaSel.disabled=false;contaSel.style.opacity='';}
 }
 }
 
@@ -3151,6 +3155,7 @@ document.getElementById('fD').value=new Date().toISOString().split('T')[0];
 var fp=document.getElementById('fPgto');if(fp)fp.value='';
 var row=document.getElementById('fPgtoCartaoRow');if(row)row.style.display='none';
 var fp2=document.getElementById('fPgtoParc');if(fp2)fp2.value='1';
+var fA=document.getElementById('fA');if(fA){fA.disabled=false;fA.style.opacity='';}
 }
 
 var _rEPage=0,_rEPageSize=50;
