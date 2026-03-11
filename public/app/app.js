@@ -4145,9 +4145,9 @@ var isDark=!document.body.classList.contains('light');
 var gridColor=isDark?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)';
 var tickColor=isDark?'#6b8aaa':'#64748b';
 _orcBarChartInst=new Chart(canvas,{type:'bar',data:{labels:labels,datasets:[
-{label:'Planejado',data:planData,backgroundColor:'rgba(59,130,246,.25)',borderColor:'rgba(59,130,246,.6)',borderRadius:4,barPercentage:.6},
-{label:'Real',data:realData,backgroundColor:'#3b82f6',borderColor:'#3b82f6',borderRadius:4,barPercentage:.6}
-]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+fmt(ctx.parsed.y);}}}},scales:{x:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:11},callback:function(v){return 'R$'+Math.round(v/1000)+'k';}}}}}});
+{label:'Planejado',data:planData,backgroundColor:'rgba(59,130,246,.25)',borderColor:'rgba(59,130,246,.6)',borderRadius:4,barPercentage:.55},
+{label:'Real',data:realData,backgroundColor:'#3b82f6',borderColor:'#3b82f6',borderRadius:4,barPercentage:.55}
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+fmt(ctx.parsed.y);}}}},scales:{x:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:10}}},y:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:10},callback:function(v){return 'R$'+Math.round(v/1000)+'k';}}}}}});
 }
 
 function renderOrcPieChart(orc){
@@ -4163,7 +4163,7 @@ wrap.style.display='block';
 var sub=document.getElementById('orcPieChartSub');
 if(sub){var mesNomes=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];var parts=orcamentoViewMonth.split('-');sub.textContent=mesNomes[parseInt(parts[1],10)-1]+' '+parts[0];}
 if(_orcPieChartInst){_orcPieChartInst.destroy();_orcPieChartInst=null;}
-_orcPieChartInst=new Chart(canvas,{type:'doughnut',data:{labels:pieLabels,datasets:[{data:pieData,backgroundColor:pieColors,borderWidth:0,hoverOffset:4}]},options:{responsive:true,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.label+': '+fmt(ctx.parsed);}}}}}});
+_orcPieChartInst=new Chart(canvas,{type:'doughnut',data:{labels:pieLabels,datasets:[{data:pieData,backgroundColor:pieColors,borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.label+': '+fmt(ctx.parsed);}}}}}}));
 var legend=document.getElementById('orcPieLegend');
 if(legend){legend.innerHTML=pieLabels.map(function(l,i){return '<div class="orc-pie-legend-item"><span class="orc-pie-legend-dot" style="background:'+pieColors[i]+'"></span><span class="text-truncate">'+l+'</span></div>';}).join('');}
 }
@@ -14478,7 +14478,7 @@ return d.toLocaleDateString("pt-BR");
 function renderCommPosts(){
 var ct=document.getElementById("commPosts");if(!ct)return;
 var posts=commPosts||[];
-var searchTerm=(document.getElementById("commSearchInput")||{}).value||"";
+var searchTerm=(document.getElementById("commSearchInputTop")||{}).value||"";
 searchTerm=searchTerm.toLowerCase().trim();
 if(searchTerm){posts=posts.filter(function(p){return(p.text||"").toLowerCase().indexOf(searchTerm)>=0||(p.nickname||"").toLowerCase().indexOf(searchTerm)>=0;});}
 if(commCurrentCat!=="all"){posts=posts.filter(function(p){return p.cat===commCurrentCat;});}

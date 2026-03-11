@@ -1634,7 +1634,7 @@
             <div class="orc-chart-sub">Últimos 6 meses</div>
           </div>
         </div>
-        <canvas id="orcBarChart"></canvas>
+        <div class="orc-bar-canvas-wrap"><canvas id="orcBarChart"></canvas></div>
       </div>
       <div class="orc-chart-card" id="orcPieChartWrap" style="display:none">
         <div class="orc-chart-header">
@@ -1643,7 +1643,7 @@
             <div class="orc-chart-sub" id="orcPieChartSub"></div>
           </div>
         </div>
-        <canvas id="orcPieChart"></canvas>
+        <div class="orc-pie-canvas-wrap"><canvas id="orcPieChart"></canvas></div>
         <div id="orcPieLegend" class="orc-pie-legend"></div>
       </div>
     </div>
@@ -2556,7 +2556,7 @@
 </div>
 
 <!-- TAB: COMUNIDADE -->
-<div id="comunidade" class="tab">
+<div id="comunidade" class="tab tab-comunidade">
 <div id="commSetup" class="comm-setup comm-aceite" style="display:none">
 <div class="comm-aceite-box">
 <div class="comm-aceite-icon"><i data-lucide="globe" style="width:40px;height:40px;stroke:currentColor;stroke-width:2"></i></div>
@@ -2569,13 +2569,13 @@
 <header class="comm-page-header">
 <div>
 <p class="comm-page-sub">Rede Social</p>
-<h1 class="comm-page-title">Comunidade</h1>
+<h1 class="comm-page-title">Comunidade 🌐</h1>
 <p class="comm-page-desc">Conecte-se, aprenda e compartilhe com outros usuários</p>
 </div>
 <div class="comm-header-actions">
 <div class="comm-search-wrap">
 <i data-lucide="search" style="width:16px;height:16px;position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--t3);pointer-events:none"></i>
-<input type="text" id="commSearchInputTop" placeholder="Buscar na comunidade..." oninput="var e=document.getElementById('commSearchInput');if(e)e.value=this.value;searchCommPosts();">
+<input type="text" id="commSearchInputTop" placeholder="Buscar na comunidade..." oninput="searchCommPosts()">
 </div>
 <button id="commNotifBtn" onclick="toggleCommNotifs()" style="background:none;border:none;cursor:pointer;position:relative;padding:6px;display:flex;align-items:center;color:var(--t2)"><i data-lucide="bell" style="width:22px;height:22px"></i>
 <span id="commNotifBadge" style="display:none;position:absolute;top:2px;right:2px;width:16px;height:16px;background:#EF4444;border-radius:50%;font-size:.55em;color:#fff;font-weight:700;align-items:center;justify-content:center">0</span>
@@ -2611,9 +2611,6 @@
 </div>
 <div class="comm-profile-stats" id="commProfileStats"></div>
 </div>
-<div class="comm-search-bar">
-<input type="text" id="commSearchInput" placeholder="Buscar na comunidade..." oninput="var t=document.getElementById('commSearchInputTop');if(t)t.value=this.value;searchCommPosts();">
-</div>
 <div id="commTrendingSection" class="comm-trending-section" style="display:none">
 <div class="comm-trending-title"><i data-lucide="flame" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i>Em Alta</div>
 <div class="comm-trending-list" id="commTrendingList"></div>
@@ -2624,8 +2621,10 @@
 <div class="comm-post-avatar" id="commMyAvatar" style="width:36px;height:36px;font-size:.9em"></div>
 <span style="font-size:.85em;color:var(--t2)">O que voce esta pensando?</span>
 </div>
-<textarea id="commPostText" placeholder="Compartilhe uma dica, analise, conquista ou duvida..." maxlength="500"></textarea>
+<textarea id="commPostText" placeholder="Compartilhe uma dica, conquista ou pergunta..." maxlength="500"></textarea>
 <div class="comm-compose-bar">
+<div class="comm-compose-left">
+<button type="button" class="comm-btn-imagem" onclick="document.getElementById('commPostText').focus()" title="Adicionar imagem (em breve)"><i data-lucide="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Imagem</button>
 <div class="comm-tags">
 <div class="comm-tag on" data-cat="dica" onclick="toggleCommCat(this)"><i data-lucide="lightbulb" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Dica</div>
 <div class="comm-tag" data-cat="analise" onclick="toggleCommCat(this)"><i data-lucide="bar-chart-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Analise</div>
@@ -2633,7 +2632,8 @@
 <div class="comm-tag" data-cat="conquista" onclick="toggleCommCat(this)"><i data-lucide="trophy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Conquista</div>
 <div class="comm-tag" data-cat="discussao" onclick="toggleCommCat(this)"><i data-lucide="message-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Discussao</div>
 </div>
-<button class="btn btn-p" onclick="publishCommPost()" style="padding:8px 20px;font-size:.85em">Publicar</button>
+</div>
+<button class="btn btn-p" onclick="publishCommPost()" style="padding:8px 20px;font-size:.85em"><i data-lucide="send" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Publicar</button>
 </div>
 <div class="comm-compose-toolbar">
 <div class="comm-char-counter" id="commCharCounter">0/500</div>
@@ -2655,7 +2655,7 @@
 <button class="comm-sort-btn" onclick="sortCommFeed('discussed',this)"><i data-lucide="message-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Mais comentados</button>
 </div>
 <div id="commNewPostsBanner" class="comm-new-posts-banner" onclick="scrollToTopComm()">&#8593; Novas publicacoes disponiveis</div>
-<div id="commPosts"><div class="comm-empty"><div class="comm-empty-icon"><i data-lucide="message-circle" style="width:48px;height:48px;color:var(--t3)"></i></div><p>Nenhuma publicacao ainda.<br>Seja o primeiro a compartilhar!</p></div></div>
+<div id="commPosts" class="comm-posts-grid"><div class="comm-empty"><div class="comm-empty-icon"><i data-lucide="message-circle" style="width:48px;height:48px;color:var(--t3)"></i></div><p>Nenhuma publicacao ainda.<br>Seja o primeiro a compartilhar!</p></div></div>
 </div>
 <div id="commGrupos" style="display:none" class="comm-grupos-wrap">
 <div class="comm-grupos-grid" id="commGruposGrid">
