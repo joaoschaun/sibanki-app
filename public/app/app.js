@@ -735,6 +735,14 @@ if(!dd)return;
 var isOpen=dd.classList.toggle('open');
 if(av)av.setAttribute('aria-expanded',isOpen?'true':'false');
 if(isOpen){
+// Posicionamento fixo baseado na posição real do avatar no viewport
+var rect=av.getBoundingClientRect();
+var dropW=224; // min-width
+var leftPos=rect.right-dropW;
+if(leftPos<8)leftPos=8;
+dd.style.top=(rect.bottom+8)+'px';
+dd.style.left=leftPos+'px';
+dd.style.right='auto';
 setTimeout(function(){
 document.addEventListener('click',function _cad(ev){
 if(!dd.contains(ev.target)&&ev.target!==av){closeAvatarDropdown();}
@@ -3417,7 +3425,10 @@ return;
 
 var newEntry={id:Date.now(),date:date,type:type,desc:desc||cat,category:cat,value:Math.round(val*100)/100,account:acc,tags:tags,status:status,formaPgto:pgto};
 entries.push(newEntry);
-saveData();clrF();renderAll();toast(typeof t==='function'?t('toast_lancamento_salvo'):'Lançamento salvo!','ok');
+saveData();clrF();renderAll();
+var _lancFb=document.getElementById('lancFormBox');if(_lancFb)_lancFb.style.display='none';
+var _lancBtnL=document.getElementById('lancBtnLancar');if(_lancBtnL)_lancBtnL.classList.remove('lp-on');
+toast(typeof t==='function'?t('toast_lancamento_salvo'):'Lançamento salvo!','ok');
 if(entries.length===1&&typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();
 setTimeout(function(){checkProactiveConsultor(newEntry);},500);
 }
@@ -4942,6 +4953,31 @@ function lancSub(id, el){
   var target = document.getElementById('lancSub_'+id);
   if(target) target.classList.add('lanc-sub-on');
   if(el) el.classList.add('lp-on');
+  // Se trocou para outra aba, ocultar form de lançamento
+  if(id !== 'novo'){
+    var fb = document.getElementById('lancFormBox');
+    if(fb) fb.style.display = 'none';
+    var btn = document.getElementById('lancBtnLancar');
+    if(btn) btn.classList.remove('lp-on');
+  }
+}
+
+function toggleLancForm(btn){
+  var fb = document.getElementById('lancFormBox');
+  if(!fb) return;
+  // Desativar outras pills
+  var pills = document.querySelectorAll('.lp-btn');
+  for(var j=0;j<pills.length;j++) pills[j].classList.remove('lp-on');
+  // Ativar sub_novo
+  var subs = document.querySelectorAll('.lanc-sub');
+  for(var i=0;i<subs.length;i++) subs[i].classList.remove('lanc-sub-on');
+  var novo = document.getElementById('lancSub_novo');
+  if(novo) novo.classList.add('lanc-sub-on');
+  // Toggle form
+  var isOpen = fb.style.display !== 'none';
+  fb.style.display = isOpen ? 'none' : 'block';
+  if(btn) btn.classList.toggle('lp-on', !isOpen);
+  if(!isOpen && typeof window.refreshLucide === 'function') window.refreshLucide();
 }
 
 /* ===== TIPO TOGGLE (Despesa/Receita) ===== */
@@ -6268,9 +6304,16 @@ if(existing){existing.remove();return;}
 var esc=String(acc).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
 var menu=document.createElement('div');
 menu.id='contasCardMenuDropdown';
-menu.style.cssText='position:fixed;background:var(--card);border:1px solid var(--brd);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:6px 0;z-index:9999;min-width:160px';
+menu.style.cssText='position:fixed;background:var(--card);border:1px solid var(--brd);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:6px 0;z-index:9999;min-width:180px';
 var r=btn.getBoundingClientRect();
-menu.style.left=(r.right+4)+'px';menu.style.top=r.top+'px';
+// Posicionar à esquerda do botão para não sair da tela
+var menuLeft=r.left-180;
+if(menuLeft<8)menuLeft=r.right+4;
+if(menuLeft+180>window.innerWidth-8)menuLeft=window.innerWidth-188;
+menu.style.left=menuLeft+'px';
+var menuTop=r.top;
+if(menuTop+220>window.innerHeight-8)menuTop=r.bottom-220;
+menu.style.top=Math.max(8,menuTop)+'px';
 menu.innerHTML='<button type="button" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;color:var(--t1);font-size:.85rem;cursor:pointer" onclick="document.getElementById(\'contasCardMenuDropdown\')?.remove();openDetalhesConta(\''+esc+'\')">Detalhes da conta</button>'+
 '<button type="button" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;color:var(--t1);font-size:.85rem;cursor:pointer" onclick="document.getElementById(\'contasCardMenuDropdown\')?.remove();openWltAjuste(\''+esc+'\')">Reajuste de saldo</button>'+
 '<button type="button" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;color:var(--t1);font-size:.85rem;cursor:pointer" onclick="document.getElementById(\'contasCardMenuDropdown\')?.remove();openEditarConta(\''+esc+'\')">Editar conta</button>'+

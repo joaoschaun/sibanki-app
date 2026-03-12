@@ -338,7 +338,8 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 .perfil-hero-text h1{font-size:1.35rem;font-weight:800;color:var(--t1);margin:0 0 4px;letter-spacing:-.4px}
 .perfil-hero-text p{margin:0;font-size:.85rem;color:var(--t2)}
 .perfil-plan-badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:rgba(255,255,255,.12);color:var(--t2);margin-left:8px}
-.perfil-tabs{display:flex;gap:4px;background:var(--bg2);border-radius:14px;padding:5px;margin-bottom:20px;overflow-x:auto;flex-wrap:wrap}
+.perfil-tabs{display:flex;gap:4px;background:var(--bg2);border-radius:14px;padding:5px;margin-bottom:20px;overflow-x:auto;flex-wrap:wrap;scrollbar-width:none;-ms-overflow-style:none}
+.perfil-tabs::-webkit-scrollbar{display:none}
 .perfil-tab{background:none;border:none;cursor:pointer;font-family:var(--font-body);font-size:.8rem;font-weight:500;color:var(--t3);padding:9px 16px;border-radius:10px;transition:all .18s;white-space:nowrap}
 .perfil-tab:hover{color:var(--t2);background:rgba(255,255,255,.04)}
 .perfil-tab.on{color:var(--t1);background:var(--card);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.2);border:1px solid var(--brd)}
@@ -401,7 +402,7 @@ body.light .lang-dropdown button:hover{background:rgba(79,140,255,.08)}
 .top-header-avatar:hover{transform:scale(1.05);box-shadow:0 0 12px rgba(79,140,255,.35)}
 .top-header-avatar img{width:100%;height:100%;object-fit:cover}
 .avatar-dropdown-wrap{position:relative;z-index:10100}
-.avatar-dropdown{position:absolute;top:100%;right:0;margin-top:8px;min-width:200px;background:#0d1825;border:1px solid rgba(255,255,255,.1);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none;z-index:10200;overflow:hidden}
+.avatar-dropdown{position:fixed;min-width:220px;background:#0d1825;border:1px solid rgba(255,255,255,.1);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none;z-index:10200;overflow:hidden}
 .avatar-dropdown.open{display:block}
 .avatar-dropdown-inner{max-height:min(70vh,320px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:6px 0;overscroll-behavior:contain;touch-action:pan-y}
 .avatar-dropdown-item{display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;border:none;background:transparent;color:var(--t1);font-size:.875rem;cursor:pointer;text-align:left;transition:background .15s}
@@ -522,7 +523,7 @@ body.light .avatar-dropdown-item-sair:hover{background:rgba(239,68,68,.08)}
 .dash-widget-picker span{padding:6px 12px;background:var(--bg2);border-radius:8px;font-size:.78rem;cursor:pointer;border:1px solid var(--brd)}
 .dash-widget-picker span:hover{background:rgba(76,123,244,.1);border-color:var(--vr)}
 /* CARDS & KPI */
-.tab{display:none;animation:fadeIn .4s;margin-top:0;padding-top:0}
+.tab{display:none;animation:fadeIn .4s;margin-top:0;padding-top:0;background:var(--bg)}
 .tab.on{display:block}
 .tab>.cg:first-child,.tab>.fb:first-child,.tab>.fin-header:first-child,.tab>.kpi-row:first-child,.tab>div:first-child{margin-top:0}
 .app-content .wrap>.tab{margin-bottom:0}
@@ -1797,21 +1798,19 @@ body.light .sib-onb-btn.secondary{color:var(--t2);border-color:var(--brd)}
 body.light .sib-onb-btn.secondary:hover{background:rgba(15,23,42,.06);color:var(--t1)}
 body.light .sib-onb-spinner{border-color:rgba(15,23,42,.15);border-top-color:var(--vr)}
 
-/* Scrollbar tema escuro (harmonizado ao layout) */
-::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-track{background:rgba(255,255,255,.02);border-radius:4px}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px}
-::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.18)}
-::-webkit-scrollbar-thumb:active{background:rgba(255,255,255,.25)}
-/* Firefox */
-*{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) rgba(255,255,255,.03)}
-
-/* Scrollbar no modo claro */
-body.light ::-webkit-scrollbar{width:6px;height:6px}
-body.light ::-webkit-scrollbar-track{background:rgba(15,23,42,.04)}
-body.light ::-webkit-scrollbar-thumb{background:rgba(15,23,42,.15);border-radius:3px}
-body.light ::-webkit-scrollbar-thumb:hover{background:rgba(15,23,42,.22)}
-body.light *{scrollbar-color:rgba(15,23,42,.2) rgba(15,23,42,.04)}
+/* ── Scrollbar: fino e na identidade visual (#4F8CFF) ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(79,140,255,.3);border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:rgba(79,140,255,.5)}
+::-webkit-scrollbar-thumb:active{background:rgba(79,140,255,.7)}
+*{scrollbar-width:thin;scrollbar-color:rgba(79,140,255,.3) transparent}
+/* Modo claro */
+body.light ::-webkit-scrollbar{width:4px;height:4px}
+body.light ::-webkit-scrollbar-track{background:transparent}
+body.light ::-webkit-scrollbar-thumb{background:rgba(79,140,255,.22);border-radius:99px}
+body.light ::-webkit-scrollbar-thumb:hover{background:rgba(79,140,255,.4)}
+body.light *{scrollbar-color:rgba(79,140,255,.22) transparent}
 
 /* Remover barrinhas/scrollbar de inputs, selects e textareas */
 input,select{overflow:hidden}
@@ -2465,6 +2464,12 @@ body.light [style*="background:#07"],[style*="background: #07"]{background:var(-
 body.light [style*="background:#13"],[style*="background: #13"]{background:var(--bg2)!important}
 body.light .lanc-periodo-btn.on{background:var(--vr)!important;color:#fff!important}
 body.light .lanc-periodo-toggle{background:var(--bg2)!important;border-color:var(--brd)!important}
+/* ── Investimentos: garantir fundo sólido ── */
+body.light .inv-sub{background:var(--bg)!important}
+body.light .inv-nav{background:var(--bg2)!important;border-color:var(--brd)!important}
+body.light .inv-sub .cb,body.light .inv-sub .fb,body.light .inv-sub .tb{background:#FFFFFF!important;border-color:rgba(15,23,42,.08)!important}
+body.light .inv-sub-section{background:var(--bg)!important}
+body.light [id^="inv"]{background:var(--bg);}
 .carteira-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 @media(max-width:640px){.carteira-detail-grid{grid-template-columns:1fr}}
 .carteira-detail-field{margin-bottom:16px}
@@ -2958,7 +2963,7 @@ html,body{overflow-x:hidden;width:100%;max-width:100vw}
 .comm-page-desc{font-size:.85em;color:var(--t2);margin:8px 0 0}
 .comm-header-actions{display:flex;align-items:center;gap:10px;position:relative}
 .comm-header-actions #commNotifBtn{position:relative}
-.comm-search-wrap{position:relative}
+.comm-search-wrap{position:relative;z-index:10}
 .comm-search-wrap input{max-width:220px;padding:8px 12px 8px 36px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;color:var(--t1);font-size:.85em;outline:none}
 .comm-search-wrap input:focus{border-color:var(--pri)}
 .comm-stats-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;flex-shrink:0}

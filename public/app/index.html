@@ -449,14 +449,14 @@
 
 <!-- SUB-TABS PILLS -->
 <div class="lanc-pills" id="lancPills">
-<button class="lp-btn lp-on" onclick="lancSub('novo',this)"><i data-lucide="pen-line" style="width:16px;height:16px;vertical-align:middle"></i> Lançar</button>
+<button class="lp-btn" id="lancBtnLancar" onclick="toggleLancForm(this)"><i data-lucide="pen-line" style="width:16px;height:16px;vertical-align:middle"></i> Lançar</button>
 <button class="lp-btn" onclick="lancSub('transf',this)"><i data-lucide="arrow-left-right" style="width:16px;height:16px;vertical-align:middle"></i> Transferir</button>
 <button class="lp-btn" onclick="lancSub('recorr',this)"><i data-lucide="pin" style="width:16px;height:16px;vertical-align:middle"></i> Fixos</button>
 </div>
 
 <!-- ========== SUB: NOVO LANÇAMENTO ========== -->
 <div class="lanc-sub lanc-sub-on" id="lancSub_novo">
-<div class="fb" id="lancFormBox" style="padding:16px;position:relative">
+<div class="fb" id="lancFormBox" style="padding:16px;position:relative;display:none">
 <div id="lancFirstGuideHint" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(79,140,255,.12);border:1px solid var(--brd2);border-radius:10px;font-size:.85em;color:var(--t1);display:flex;align-items:center;gap:8px"><i data-lucide="lightbulb" style="width:18px;height:18px;flex-shrink:0"></i><span>Adicione seu primeiro gasto aqui. Preencha valor e descrição e clique em Adicionar.</span></div>
 
 <!-- Tipo toggle pills -->
