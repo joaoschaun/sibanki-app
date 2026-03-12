@@ -6,6 +6,26 @@ if(!cur&&old1){localStorage.setItem('vrt_b3token',old1);}
 if(!cur&&!old1&&old2){localStorage.setItem('vrt_b3token',old2);}
 })();
 
+/* ── Performance: Lucide Icons Optimizer ── */
+(function(){
+var _lucidePending=false;
+var _originalCreateIcons=null;
+function initLucideOptimizer(){
+if(typeof lucide==='undefined'||!lucide.createIcons)return setTimeout(initLucideOptimizer,100);
+if(_originalCreateIcons)return;
+_originalCreateIcons=lucide.createIcons.bind(lucide);
+lucide.createIcons=function(){
+if(_lucidePending)return;
+_lucidePending=true;
+requestAnimationFrame(function(){
+_lucidePending=false;
+try{_originalCreateIcons();}catch(e){}
+});
+};
+}
+initLucideOptimizer();
+})();
+
 /* ── next block ── */
 
 function pf(id){var v=document.getElementById(id);if(!v)return 0;return parseFloat(String(v.value).replace(/\./g,'').replace(',','.'))||0;}
@@ -4156,7 +4176,7 @@ tips.push('Enquanto junta, estude o mercado e as regiões de interesse.');
 tips.push('Quanto antes começar, menor o aporte mensal necessário.');
 tips.push('Diversifique: previdência privada, Tesouro, FIIs e ações no longo prazo.');
 tips.push('Use a regra dos 4%: patrimônio = gasto anual desejado x 25.');
-}else if(/estudo|estudos|faculdade|curso|graduação|graduacao|universidade|pós|pos|mba/.test(nome)){
+}else if(/estudo|estudos|faculdade|curso|graduação|graduacao|universidade|p��s|pos|mba/.test(nome)){
 tips.push('Verifique programas de bolsa, ProUni e financiamento estudantil (FIES).');
 tips.push('Inclua no orçamento: mensalidade, livros, transporte e material.');
 tips.push('Comece a guardar antes do início do curso para ter folga no primeiro ano.');
@@ -12711,7 +12731,7 @@ if(typeof entries!=='undefined'&&entries.length>0){
 var sorted=entries.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'')}).slice(0,20);
 recentList='ÚLTIMOS LANÇAMENTOS (use entryId para excluir ou editar): '+sorted.map(function(e){return 'id '+e.id+' | '+e.date+' | '+(e.desc||'').substring(0,30)+' | '+e.type+' R$ '+parseFloat(e.value).toFixed(2);}).join('; ')+'.\n\n';
 }
-var prompt='Você é o assistente do Sibanki, um app de controle financeiro. O usuário escreveu: "'+txt.replace(/"/g,'\\"')+'".\n\n'+
+var prompt='Você é o assistente do Sibanki, um app de controle financeiro. O usu��rio escreveu: "'+txt.replace(/"/g,'\\"')+'".\n\n'+
 recentList+
 'O sistema permite: Lançar, editar e excluir lançamentos; adicionar/editar/excluir conta; adicionar/editar/excluir cartão; adicionar/editar/excluir meta; definir ou remover orçamento por categoria.\n\n'+
 'Regras: Se for UM lançamento (só adicionar), responda: {"type":"despesa" ou "receita", "value": número, "desc": "descrição", "category": "categoria"}. Categorias: Alimentação, Transporte, Salário, Lazer, Saúde, Mercado, Moradia, Educação, Imprevisto, Outros. Valor sempre positivo.\n'+
