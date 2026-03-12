@@ -748,10 +748,12 @@ if(upgBtn)upgBtn.style.display=(typeof userPlan!=='undefined'&&(userPlan==='pro'
 }
 /* ── Avatar dropdown ── */
 function toggleAvatarDropdown(e){
+console.log('[v0] toggleAvatarDropdown called');
 if(e)e.stopPropagation();
 var dd=document.getElementById('avatarDropdown');
 var av=document.getElementById('topHeaderAvatar');
-if(!dd)return;
+console.log('[v0] dropdown element:', dd, 'avatar element:', av);
+if(!dd){console.log('[v0] dropdown not found');return;}
 var isOpen=dd.classList.toggle('open');
 if(av)av.setAttribute('aria-expanded',isOpen?'true':'false');
 if(isOpen){
