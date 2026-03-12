@@ -6206,6 +6206,8 @@ var oldWC=document.getElementById('walletCards');
 var total=0;
 var h='';
 var accsOrder=userAccs.length?[].concat(userAccs.filter(function(a){return(a||'').toLowerCase().replace(/\s+/g,' ')==='carteira física';}),userAccs.filter(function(a){return(a||'').toLowerCase().replace(/\s+/g,' ')!=='carteira física';})):[];
+// Aplicar ordem salva pelo drag
+try{var _savedOrd=JSON.parse(localStorage.getItem('sib_contas_order')||'null');if(_savedOrd&&Array.isArray(_savedOrd)&&_savedOrd.length>0){accsOrder.sort(function(a,b){var ia=_savedOrd.indexOf(a);var ib=_savedOrd.indexOf(b);if(ia<0)ia=9999;if(ib<0)ib=9999;return ia-ib;});}}catch(e){}
 
 if(grid){
 var novaCard='<div class="contas-card contas-card-nova" onclick="openWltModal()" role="button" tabindex="0"><div class="contas-card-nova-icon">+</div><span>Nova conta</span></div>';
@@ -6247,6 +6249,7 @@ if(sidebarPrevisto){sidebarPrevisto.textContent='R$ '+total.toFixed(2).replace("
 if(typeof lucide!=='undefined')lucide.createIcons();
 renderBalAccSelect();
 popTfSels();
+setTimeout(function(){initContasSortable(grid);},60);
 return;
 }
 
@@ -6344,6 +6347,36 @@ menu.innerHTML=
 document.body.appendChild(menu);
 if(typeof lucide!=='undefined')lucide.createIcons();
 document.addEventListener('click',function closeHMenu(ev){if(!menu.contains(ev.target)&&ev.target!==btn){menu.remove();document.removeEventListener('click',closeHMenu);}});
+}
+
+/* ── Drag-to-reorder Contas ── */
+function initContasSortable(grid){
+if(!grid||typeof Sortable==='undefined')return;
+if(window._contasSortable){window._contasSortable.destroy();window._contasSortable=null;}
+// Aplicar ordem salva
+var saved=null;
+try{saved=JSON.parse(localStorage.getItem('sib_contas_order')||'null');}catch(e){}
+if(saved&&Array.isArray(saved)&&saved.length>0){
+var brands=Array.from(grid.querySelectorAll('.contas-card-brand'));
+var sorted=[];
+saved.forEach(function(name){var c=brands.find(function(b){var n=b.querySelector('.contas-card-name');return n&&n.textContent.trim()===name;});if(c)sorted.push(c);});
+brands.forEach(function(c){if(sorted.indexOf(c)<0)sorted.push(c);});
+sorted.forEach(function(c){grid.appendChild(c);});
+}
+window._contasSortable=Sortable.create(grid,{
+animation:180,
+draggable:'.contas-card-brand',
+filter:'.contas-card-nova',
+ghostClass:'sortable-ghost',
+chosenClass:'sortable-chosen',
+delay:120,
+delayOnTouchOnly:true,
+onEnd:function(){
+var names=Array.from(grid.querySelectorAll('.contas-card-brand .contas-card-name')).map(function(e){return e.textContent.trim();});
+localStorage.setItem('sib_contas_order',JSON.stringify(names));
+toast('Ordem das contas salva!','ok');
+}
+});
 }
 
 function openAjustarSaldoGlobal(){
@@ -12911,12 +12944,12 @@ if(box)box.style.display='none';
 });
 }
 
-/* --- ABAS DO MODO FAMÍLIA (Visão geral / Membros / Metas / Atividade) --- */
+/* --- ABAS DO MODO FAMÍLIA (Membros / Metas / Atividade) --- */
 function switchFamContentTab(tabId, btn){
 var tabs=document.querySelectorAll('.fam-tab');
 var panels=document.querySelectorAll('.fam-tab-panel');
 tabs.forEach(function(t){t.classList.remove('on');if(t.getAttribute('data-fam-tab')===tabId)t.classList.add('on');});
-panels.forEach(function(p){p.classList.remove('on');if((p.id==='famTabOverview'&&tabId==='overview')||(p.id==='famTabMembers'&&tabId==='members')||(p.id==='famTabGoals'&&tabId==='goals')||(p.id==='famTabActivity'&&tabId==='activity'))p.classList.add('on');});
+panels.forEach(function(p){p.classList.remove('on');if((p.id==='famTabMembers'&&tabId==='members')||(p.id==='famTabGoals'&&tabId==='goals')||(p.id==='famTabActivity'&&tabId==='activity'))p.classList.add('on');});
 if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
@@ -12968,7 +13001,6 @@ renderCoupleKPIs(entries,partnerEntries,investments,partnerInvest,myName,partner
 renderCoupleCompare(entries,partnerEntries,myName,partnerName);
 renderCoupleEntries(entries,partnerEntries,myName,partnerName);
 renderCoupleGoals();
-renderFamOverview(myName,partnerName,entries,partnerEntries,investments,partnerInvest);
 if(typeof lucide!=='undefined')lucide.createIcons();
 });
 }
@@ -12991,11 +13023,9 @@ var invJ=0;
 myInv.concat(partInv).forEach(function(i){invJ+=(i.atual||i.currentValue||i.valor||i.value||0)});
 
 var fmt=function(v){return'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})};
-document.getElementById('ckRecJ').textContent=fmt(recJ);
-document.getElementById('ckDespJ').textContent=fmt(despJ);
-document.getElementById('ckSaldoJ').textContent=fmt(saldoJ);
-document.getElementById('ckSaldoJ').style.color=saldoJ>=0?'var(--green)':'var(--vr)';
-document.getElementById('ckInvJ').textContent=fmt(invJ);
+var elDesp=document.getElementById('ckDespJ');if(elDesp)elDesp.textContent=fmt(despJ);
+var elSaldo=document.getElementById('ckSaldoJ');if(elSaldo){elSaldo.textContent=fmt(saldoJ);elSaldo.style.color=saldoJ>=0?'var(--green)':'var(--vr)';}
+var elMetas=document.getElementById('famStatMetas');if(elMetas&&coupleData&&coupleData.goals)elMetas.textContent=coupleData.goals.length;
 }
 
 /* --- COMPARATIVO --- */
@@ -13053,56 +13083,6 @@ h+='<div style="font-size:.85em;font-weight:700;color:'+cor+'">'+sinal+' R$ '+((
 h+='</div>';
 });
 el.innerHTML=h;
-}
-
-/* --- VISÃO GERAL FAMÍLIA (dashboard estilo v0) --- */
-function renderFamOverview(myName,partnerName,myE,partE,myInv,partInv){
-var greetingEl=document.getElementById('famGreeting');
-var budgetBarEl=document.getElementById('famBudgetBar');
-var budgetCatEl=document.getElementById('famBudgetCategories');
-var reserveNameEl=document.getElementById('famReserveGoalName');
-var reserveBarEl=document.getElementById('famReserveBar');
-var reserveValsEl=document.getElementById('famReserveVals');
-var membersPreviewEl=document.getElementById('famMembersPreview');
-if(greetingEl)greetingEl.textContent='Olá, Família '+(myName.split(' ')[0]||'')+'!';
-var allE=myE.concat(partE);
-var now=new Date();
-var mesAtual=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-var recJ=0,despJ=0;
-var byCat={};
-allE.forEach(function(e){
-if(e.date&&e.date.startsWith(mesAtual)){
-var v=e.value||e.valor||0;
-if(e.type==='receita')recJ+=v;
-else{ despJ+=v; var c=e.category||e.desc||'Outros'; byCat[c]=(byCat[c]||0)+v; }
-}
-});
-var saldoJ=recJ-despJ;
-var invJ=0;
-(myInv||[]).concat(partInv||[]).forEach(function(i){invJ+=(i.atual||i.currentValue||i.valor||i.value||0);});
-var fmt=function(v){return'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2});};
-if(budgetBarEl){
-var pct=recJ>0?Math.min(100,Math.round(despJ/recJ*100)):0;
-budgetBarEl.style.width=pct+'%';
-}
-if(budgetCatEl){
-var cats=Object.keys(byCat).sort(function(a,b){return byCat[b]-byCat[a]}).slice(0,5);
-if(cats.length===0)budgetCatEl.textContent='Nenhuma despesa por categoria este mês.';
-else budgetCatEl.textContent=cats.map(function(c){return c+': '+fmt(byCat[c]);}).join(' • ');
-}
-var goals=coupleData&&coupleData.goals?coupleData.goals:[];
-var reserveGoal=goals.length>0?goals[0]:null;
-for(var g=0;g<goals.length;g++){if(goals[g].name&&(goals[g].name.toLowerCase().indexOf('reserva')>=0||goals[g].name.toLowerCase().indexOf('emergência')>=0)){reserveGoal=goals[g];break;}}
-if(reserveNameEl)reserveNameEl.textContent=reserveGoal?reserveGoal.name:'Nenhuma meta de reserva';
-if(reserveBarEl){
-var rPct=reserveGoal&&reserveGoal.target>0?Math.min(100,Math.round((reserveGoal.current||0)/reserveGoal.target*100)):0;
-reserveBarEl.style.width=rPct+'%';
-}
-if(reserveValsEl)reserveValsEl.textContent=reserveGoal?fmt(reserveGoal.current||0)+' / '+fmt(reserveGoal.target):'R$ 0,00 / R$ 0,00';
-var memberNames=[myName.split(' ')[0],partnerName.split(' ')[0]];
-if(typeof familyChildren==='undefined'||!familyChildren)familyChildren=[];
-familyChildren.forEach(function(ch){if(ch.name)memberNames.push(ch.name);});
-if(membersPreviewEl)membersPreviewEl.textContent=memberNames.length>0?memberNames.join(', '):'—';
 }
 
 /* --- METAS DO CASAL --- */

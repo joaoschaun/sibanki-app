@@ -3203,51 +3203,21 @@
 </header>
 
 <div class="fam-stats-bar">
-<div class="fam-stat-card"><div class="fam-stat-icon" style="background:rgba(59,130,246,.15);color:#3B82F6"><i data-lucide="wallet" style="width:18px;height:18px"></i></div><div><div class="fam-stat-label">Renda total</div><div class="fam-stat-value" id="ckRecJ">R$ 0</div></div></div>
-<div class="fam-stat-card"><div class="fam-stat-icon" style="background:rgba(239,68,68,.15);color:#EF4444"><i data-lucide="trending-down" style="width:18px;height:18px"></i></div><div><div class="fam-stat-label">Despesas</div><div class="fam-stat-value" id="ckDespJ">R$ 0</div></div></div>
-<div class="fam-stat-card"><div class="fam-stat-icon" style="background:rgba(34,197,94,.15);color:#22C55E"><i data-lucide="trending-up" style="width:18px;height:18px"></i></div><div><div class="fam-stat-label">Economizado</div><div class="fam-stat-value" id="ckSaldoJ">R$ 0</div></div></div>
-<div class="fam-stat-card"><div class="fam-stat-icon" style="background:rgba(168,85,247,.15);color:#A855F7"><i data-lucide="piggy-bank" style="width:18px;height:18px"></i></div><div><div class="fam-stat-label">Reserva</div><div class="fam-stat-value" id="ckInvJ">R$ 0</div></div></div>
+<div class="fam-stat-card"><div class="fam-stat-icon" style="background:rgba(59,130,246,.15);color:var(--vr)"><i data-lucide="users-round" style="width:18px;height:18px"></i></div><div><div class="fam-stat-label">Membros</div><div class="fam-stat-value" id="famStatMembros">2</div></div></div>
+<div class="fam-stat-card"><div class="fam-stat-icon" style="background:rgba(239,68,68,.15);color:#EF4444"><i data-lucide="wallet" style="width:18px;height:18px"></i></div><div><div class="fam-stat-label">Gasto total</div><div class="fam-stat-value" id="ckDespJ">R$ 0</div></div></div>
+<div class="fam-stat-card"><div class="fam-stat-icon" style="background:rgba(34,197,94,.15);color:#22C55E"><i data-lucide="trending-up" style="width:18px;height:18px"></i></div><div><div class="fam-stat-label">Saldo do mês</div><div class="fam-stat-value" id="ckSaldoJ">R$ 0</div></div></div>
+<div class="fam-stat-card"><div class="fam-stat-icon" style="background:rgba(168,85,247,.15);color:#A855F7"><i data-lucide="target" style="width:18px;height:18px"></i></div><div><div class="fam-stat-label">Metas</div><div class="fam-stat-value" id="famStatMetas">0</div></div></div>
 </div>
 
 <div class="fam-tabs-wrap">
 <div class="fam-tabs">
-<button type="button" class="fam-tab on" data-fam-tab="overview" onclick="switchFamContentTab('overview',this)"><i data-lucide="layout-dashboard" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Visão geral</button>
-<button type="button" class="fam-tab" data-fam-tab="members" onclick="switchFamContentTab('members',this)"><i data-lucide="users-round" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Membros</button>
+<button type="button" class="fam-tab on" data-fam-tab="members" onclick="switchFamContentTab('members',this)"><i data-lucide="users-round" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Membros</button>
 <button type="button" class="fam-tab" data-fam-tab="goals" onclick="switchFamContentTab('goals',this)"><i data-lucide="target" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Metas</button>
 <button type="button" class="fam-tab" data-fam-tab="activity" onclick="switchFamContentTab('activity',this)"><i data-lucide="bell" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Atividade</button>
 </div>
 </div>
 
-<div id="famTabOverview" class="fam-tab-panel on">
-<p class="fam-greeting" id="famGreeting">Olá, Família!</p>
-<div class="fam-dashboard-grid">
-<div class="couple-card fam-card-budget">
-<h3 style="font-size:.92em;margin:0 0 10px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="pie-chart" style="width:18px;height:18px;color:var(--vr)"></i> Orçamento mensal</h3>
-<div class="fam-budget-bar-wrap" style="height:10px;background:var(--bg2);border-radius:50px;overflow:hidden;margin-bottom:10px"><div id="famBudgetBar" class="fam-budget-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--vr),var(--pink));border-radius:50px;transition:width .5s"></div></div>
-<div id="famBudgetCategories" style="font-size:.8em;color:var(--t2);margin-bottom:8px">Carregando…</div>
-<button type="button" class="btn btn-b btn-sm" onclick="switchFamContentTab('goals',document.querySelector('[data-fam-tab=goals]'))" style="font-size:.82em;margin-top:4px"><i data-lucide="external-link" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Ver detalhes</button>
-</div>
-<div class="couple-card fam-card-reserve">
-<h3 style="font-size:.92em;margin:0 0 10px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="target" style="width:18px;height:18px;color:var(--pink)"></i> Meta de reserva</h3>
-<div id="famReserveGoalName" style="font-size:.85em;font-weight:600;margin-bottom:6px">—</div>
-<div class="fam-budget-bar-wrap" style="height:10px;background:var(--bg2);border-radius:50px;overflow:hidden;margin-bottom:6px"><div id="famReserveBar" class="fam-budget-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--vr),var(--pink));border-radius:50px;transition:width .5s"></div></div>
-<div id="famReserveVals" style="font-size:.78em;color:var(--t3)">R$ 0 / R$ 0</div>
-<button type="button" class="btn btn-b btn-sm" onclick="switchFamContentTab('goals',document.querySelector('[data-fam-tab=goals]'))" style="font-size:.82em;margin-top:8px"><i data-lucide="target" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Ver metas</button>
-</div>
-<div class="couple-card fam-card-members-preview">
-<h3 style="font-size:.92em;margin:0 0 10px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="users-round" style="width:18px;height:18px;color:var(--vr)"></i> Membros da Família</h3>
-<div id="famMembersPreview" style="margin-bottom:10px;font-size:.88em;color:var(--t2)">—</div>
-<button type="button" class="btn btn-b btn-sm" onclick="switchFamContentTab('members',document.querySelector('[data-fam-tab=members]'))" style="font-size:.82em"><i data-lucide="users" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i> Ver todos</button>
-</div>
-<div class="couple-card fam-card-kids-cta">
-<h3 style="font-size:.92em;margin:0 0 8px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="baby" style="width:18px;height:18px;color:var(--cyan)"></i> Área Kids</h3>
-<p style="font-size:.82em;color:var(--t2);margin:0 0 12px;line-height:1.4">Cofrinhos, missões e conquistas para as crianças.</p>
-<button type="button" class="btn btn-r" onclick="switchFamTab('child')" style="font-size:.85em;display:inline-flex;align-items:center;gap:6px"><i data-lucide="sparkles" style="width:16px;height:16px"></i> Acessar Área Kids</button>
-</div>
-</div>
-</div>
-
-<div id="famTabMembers" class="fam-tab-panel">
+<div id="famTabMembers" class="fam-tab-panel on">
 <div class="couple-card" style="margin-bottom:16px">
 <h3 style="font-size:.95em;margin:0 0 14px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="user-plus" style="width:18px;height:18px;color:var(--vr)"></i> Convidado</h3>
 <label class="fl" style="font-size:.85em">Tipo</label>
