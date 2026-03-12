@@ -849,6 +849,9 @@ if(tmp&&el)el.style.display='none';
 return window._lastFinScore||0;
 }
 function loadPerfilData(){
+console.log('[v0] loadPerfilData chamada');
+console.log('[v0] perfilSegurancaList:', document.getElementById('perfilSegurancaList'));
+console.log('[v0] perfilPrivacidadeList:', document.getElementById('perfilPrivacidadeList'));
 if(typeof window._lastFinScore!=='number')calcFinScore();
 var score=typeof window._lastFinScore==='number'?window._lastFinScore:0;
 var offset=408-(408*score/100);
@@ -1958,7 +1961,7 @@ if(U&&U.uid){
 db.collection('users').doc(U.uid).set({tourCompleto:true},{merge:true}).then(function(){
 if(typeof toast==='function')toast(typeof t==='function'?t('toast_tour_concluido'):'Tour concluído! Você ganhou +50 XP 🎉','ok');
 }).catch(function(e){console.error('tourCompleto save',e);});
-}else{if(typeof toast==='function')toast(typeof t==='function'?t('toast_tour_concluido'):'Tour concluído! Você ganhou +50 XP 🎉','ok');}
+}else{if(typeof toast==='function')toast(typeof t==='function'?t('toast_tour_concluido'):'Tour concluído! Você ganhou +50 XP ��','ok');}
 }
 _sibTourState=null;
 }
