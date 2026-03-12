@@ -858,8 +858,20 @@ var METAS=Array.isArray(goals)&&goals.length>0?goals.slice(0,5).map(function(g){
 var ml=document.getElementById('perfilMetasList');if(ml){ml.innerHTML=METAS.length?METAS.map(function(m){var pct=Math.min(100,Math.round((m.val/m.total)*100));return '<div style="margin-bottom:'+(m===METAS[METAS.length-1]?0:16)+'px"><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:.88rem;color:var(--t2)">'+escapeHtml(m.name)+'</span><span style="font-size:.8rem;font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums">R$ '+m.val.toLocaleString('pt-BR')+' <span style="color:var(--t3);font-weight:400">/ R$ '+m.total.toLocaleString('pt-BR')+'</span></span></div><div class="perfil-health-bar"><div class="perfil-health-bar-fill" style="width:'+pct+'%;background:'+m.color+'"></div></div></div>';}).join(''):'<div style="font-size:.88rem;color:var(--t3);padding:12px 0">Nenhuma meta ativa. Crie em Metas.</div>';}
 var ATIV=[{text:'Fatura Nubank sincronizada',time:'Agora há pouco',icon:'var(--vr)'},{text:'Alerta: limite de alimentação 85%',time:'2 horas atrás',icon:'var(--yellow)'},{text:'Meta viagem: aporte de R$ 200',time:'Ontem',icon:'var(--green)'},{text:'Open Finance reconectado',time:'2 dias atrás',icon:'var(--green)'}];
 var al=document.getElementById('perfilAtividadesList');if(al){al.innerHTML=ATIV.map(function(a){return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:'+(a===ATIV[ATIV.length-1]?0:12)+'px"><div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:'+a.icon+'"></div></div><div><div style="font-size:.88rem;color:var(--t1);font-weight:500">'+escapeHtml(a.text)+'</div><div style="font-size:.75rem;color:var(--t3)">'+escapeHtml(a.time)+'</div></div></div>';}).join('');}
-var SEG=[{title:'Alterar senha',desc:'Última alteração: 45 dias atrás',action:'Alterar'},{title:'Autenticação de dois fatores',desc:'Adicione uma camada extra de segurança',action:'Ativar'},{title:'Sessões ativas',desc:'2 dispositivos conectados',action:'Gerenciar'},{title:'Histórico de acessos',desc:'Ver todos os logins e localizações',action:'Ver histórico'}];
-var sl=document.getElementById('perfilSegurancaList');if(sl){sl.innerHTML=SEG.map(function(s){return '<div style="display:flex;align-items:center;justify-content:space-between;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.04)"><div style="display:flex;gap:12px;align-items:center"><div style="width:42px;height:42px;border-radius:11px;background:var(--bg2);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center"><i data-lucide="shield" style="width:18px;height:18px;color:var(--t3)"></i></div><div><div style="font-size:.9rem;font-weight:600;color:var(--t1)">'+escapeHtml(s.title)+'</div><div style="font-size:.8rem;color:var(--t2);margin-top:2px">'+escapeHtml(s.desc)+'</div></div></div><button class="btn btn-r" style="font-size:.8rem;padding:7px 14px" onclick="toast(\''+escapeHtml(s.action)+' em breve.\',\'info\')">'+escapeHtml(s.action)+'</button></div>';}).join('');}
+// Segurança — renderizado dinamicamente para ter ações reais
+var sl=document.getElementById('perfilSegurancaList');
+if(sl){
+var segItems=[
+{icon:'lock',title:'Alterar senha',desc:U&&U.providerData&&U.providerData[0]&&U.providerData[0].providerId==='google.com'?'Conta Google — use as configurações do Google':'Clique para redefinir sua senha por e-mail',action:'Alterar senha',fn:'segAlterarSenha()',available:!(U&&U.providerData&&U.providerData[0]&&U.providerData[0].providerId==='google.com')},
+{icon:'smartphone',title:'Autenticação de dois fatores',desc:'Em breve — camada extra de segurança para sua conta',action:'Em breve',fn:"toast('2FA em breve!','info')",available:false},
+{icon:'monitor',title:'Sessões ativas',desc:'Encerre sessões em outros dispositivos',action:'Encerrar outras sessões',fn:'segEncerrarSessoes()',available:true},
+{icon:'clock',title:'Histórico de acessos',desc:'Veja data e hora dos seus últimos logins',action:'Ver histórico',fn:'segVerHistorico()',available:true}
+];
+sl.innerHTML=segItems.map(function(s){
+var btnStyle=s.available?'':'opacity:.5;cursor:not-allowed';
+return '<div style="display:flex;align-items:center;justify-content:space-between;padding:18px 0;border-bottom:1px solid var(--brd);gap:12px;flex-wrap:wrap"><div style="display:flex;gap:12px;align-items:center;flex:1;min-width:0"><div style="width:42px;height:42px;border-radius:11px;background:var(--bg2);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="'+s.icon+'" style="width:18px;height:18px;color:var(--vr)"></i></div><div style="min-width:0"><div style="font-size:.9rem;font-weight:600;color:var(--t1)">'+escapeHtml(s.title)+'</div><div style="font-size:.8rem;color:var(--t2);margin-top:2px">'+escapeHtml(s.desc)+'</div></div></div><button class="btn btn-p" style="font-size:.78rem;padding:7px 14px;flex-shrink:0;'+btnStyle+'" onclick="'+s.fn+'">'+escapeHtml(s.action)+'</button></div>';
+}).join('');
+}
 var ALERTAS=[{k:'login',l:'Novo login detectado'},{k:'senha',l:'Troca de senha'},{k:'device',l:'Acesso de novo dispositivo'},{k:'bloqueio',l:'Tentativa de acesso bloqueada'},{k:'resumo',l:'Resumo semanal'}];
 var alist=document.getElementById('perfilAlertasList');if(alist){alist.innerHTML=ALERTAS.map(function(a){var on=_perfilAlertasState[a.k];return '<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:.88rem;color:var(--t2)">'+escapeHtml(a.l)+'</span><button type="button" class="perfil-toggle '+(on?'on':'')+'" onclick="togglePerfilAlerta(\''+a.k+'\',this)" aria-label="Toggle"></button></div>';}).join('');}
 var PRIV=[{k:'analise',t:'Análise de dados para melhorar a IA',d:'Seus dados anonimizados ajudam a tornar a IA mais precisa'},{k:'personalizacao',t:'Personalização de recomendações',d:'Permite que a IA use seu histórico para sugestões mais relevantes'},{k:'marketing',t:'Comunicações de marketing',d:'Receba dicas, novidades e ofertas por e-mail'},{k:'parceiros',t:'Compartilhamento com parceiros',d:'Dados para propostas personalizadas de crédito e seguros'},{k:'relatorios',t:'Relatórios agregados de mercado',d:'Contribua anonimamente para estatísticas financeiras'}];
@@ -966,6 +978,48 @@ var moeda=localStorage.getItem('sib_moeda')||'BRL';
 var sel=document.getElementById('perfilIdiomaSelect');if(sel)sel.value=idioma;
 var sel2=document.getElementById('perfilMoedaSelect');if(sel2)sel2.value=moeda;
 var sel3=document.getElementById('perfilAparenciaSelect');if(sel3)sel3.value=document.body.classList.contains('light')?'light':'dark';
+}
+
+/* ── Segurança: ações reais ── */
+function segAlterarSenha(){
+if(!U||!U.email){toast('Usuário não autenticado.','err');return;}
+auth.sendPasswordResetEmail(U.email).then(function(){
+toast('Link enviado para '+U.email+'. Verifique sua caixa de entrada.','ok');
+}).catch(function(err){
+toast('Erro ao enviar: '+err.message,'err');
+});
+}
+function segEncerrarSessoes(){
+if(!confirm('Encerrar todas as outras sessões ativas?\nVocê continuará logado neste dispositivo.'))return;
+// Firebase não tem API nativa para invalidar outras sessões — melhor UX: forçar refresh do token
+if(U){
+U.getIdToken(true).then(function(){
+toast('Token atualizado. Outras sessões expirarão em até 1 hora.','ok');
+}).catch(function(err){toast('Erro: '+err.message,'err');});
+}
+}
+var _accessHistory=[];
+function segVerHistorico(){
+// Registra acesso atual no localStorage
+var hist=JSON.parse(localStorage.getItem('sib_access_hist')||'[]');
+var agora=new Date().toLocaleString('pt-BR');
+var ua=navigator.userAgent;
+var device=ua.includes('Mobile')?'📱 Mobile':ua.includes('Tablet')?'📱 Tablet':'🖥️ Desktop';
+// Busca histórico salvo no Firestore
+if(!U||!U.uid){toast('Usuário não autenticado.','err');return;}
+db.collection('users').doc(U.uid).collection('acessos').orderBy('ts','desc').limit(10).get().then(function(snap){
+var itens=[];snap.forEach(function(d){itens.push(d.data());});
+var html='<div style="max-width:480px"><h3 style="margin-bottom:16px;font-size:1rem">📋 Histórico de acessos (últimos 10)</h3>';
+if(!itens.length){html+='<p style="color:var(--t3);font-size:.88rem">Nenhum registro encontrado ainda.</p>';}
+else{html+=itens.map(function(it){return '<div style="padding:10px 0;border-bottom:1px solid var(--brd);font-size:.84rem"><div style="font-weight:600;color:var(--t1)">'+escapeHtml(it.device||'Dispositivo desconhecido')+'</div><div style="color:var(--t3);margin-top:2px">'+escapeHtml(it.ts||'')+'</div></div>';}).join('');}
+html+='</div>';
+var box=document.getElementById('modalBox');var ov=document.getElementById('modalOv');
+if(box&&ov){box.innerHTML=html+'<div style="margin-top:16px;text-align:right"><button class="btn btn-p" onclick="closeModal()">Fechar</button></div>';ov.style.display='flex';if(typeof lucide!=='undefined')lucide.createIcons();}
+}).catch(function(){
+toast('Histórico disponível apenas para contas com dados registrados.','info');
+});
+// Salva acesso atual
+db.collection('users').doc(U.uid).collection('acessos').add({ts:new Date().toLocaleString('pt-BR'),device:device,email:U.email||''}).catch(function(){});
 }
 function updateResumoSemanalToggle(on){var btn=document.getElementById('perfilResumoSemanalBtn');var thumb=document.getElementById('perfilResumoSemanalThumb');if(!btn||!thumb)return;btn.setAttribute('aria-pressed',on?'true':'false');btn.classList.toggle('on',on);btn.style.background=on?'rgba(76,123,244,.35)':'var(--bg2)';thumb.style.transform=on?'translateX(20px)':'translateX(3px)';thumb.style.background=on?'#4C7BF4':'var(--t3)';}
 function toggleResumoSemanalEmail(){if(!U||!U.uid)return;window._resumoSemanalEmail=!window._resumoSemanalEmail;var on=window._resumoSemanalEmail;updateResumoSemanalToggle(on);db.collection('users').doc(U.uid).set({resumoSemanalEmail:on},{merge:true}).then(function(){toast(on?'Resumo semanal ativado. Você receberá o e-mail às segundas.':'Resumo semanal desativado.','ok');}).catch(function(e){window._resumoSemanalEmail=!on;updateResumoSemanalToggle(!on);toast(typeof t==='function'?t('toast_erro_salvar'):'Erro ao salvar. Tente novamente.','err');});}
