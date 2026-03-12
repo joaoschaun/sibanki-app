@@ -866,19 +866,107 @@ var PRIV=[{k:'analise',t:'Análise de dados para melhorar a IA',d:'Seus dados an
 var pl=document.getElementById('perfilPrivacidadeList');if(pl){pl.innerHTML=PRIV.map(function(p){var on=_perfilPrivState[p.k];return '<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:20px"><div><div style="font-size:.9rem;font-weight:600;color:var(--t1);margin-bottom:3px">'+escapeHtml(p.t)+'</div><div style="font-size:.8rem;color:var(--t2);line-height:1.6">'+escapeHtml(p.d)+'</div></div><button type="button" class="perfil-toggle '+(on?'on':'')+'" onclick="togglePerfilPriv(\''+p.k+'\',this)"></button></div>';}).join('');}
 if(U){var iniciais=(U.name||'U').split(' ').map(function(x){return x[0]}).join('').substring(0,2).toUpperCase()||'U';var av=document.getElementById('perfilAvatar');var avI=document.getElementById('perfilAvatarInicial');if(avI)avI.textContent=iniciais;if(av&&U.photoURL){av.innerHTML='<img src="'+escapeHtml(U.photoURL)+'" alt="">';}
 document.getElementById('perfilNome').textContent=U.name||'Usuário';document.getElementById('perfilEmail').textContent=U.email||'—';
-document.getElementById('perfilNomeInput').value=U.name||'';document.getElementById('perfilTelInput').value=localStorage.getItem('perfil_tel')||'';document.getElementById('perfilObjInput').value=localStorage.getItem('perfil_obj')||'Sair das dívidas e construir reserva';document.getElementById('perfilEmailInput').value=U.email||'';
+document.getElementById('perfilNomeInput').value=U.name||'';document.getElementById('perfilTelInput').value=localStorage.getItem('perfil_tel')||'';
+var objVal=localStorage.getItem('perfil_obj')||'';
+document.getElementById('perfilObjInput').value=objVal||'Sair das dívidas e construir reserva';
+document.getElementById('perfilEmailInput').value=U.email||'';
 var plan=(typeof userPlan!=='undefined'?userPlan:'free')||'free';document.getElementById('perfilPlanBadge').textContent=plan==='pro'?'Pro':plan==='familia'?'Família':'Gratuito';
 var saldo=userAccs.reduce(function(s,a){return s+getAccBal(a).atual;},0);
 document.getElementById('perfilSaldo').textContent=fmt(saldo);document.getElementById('perfilContas').textContent=userAccs.length;document.getElementById('perfilScore').textContent=score;
 document.getElementById('perfilAparencia').textContent=document.body.classList.contains('theme-light')?'Modo claro':'Modo escuro';}
 if(typeof updateResumoSemanalToggle==='function')updateResumoSemanalToggle(!!window._resumoSemanalEmail);
 if(typeof perfilAtualizarStatusNotif==='function')perfilAtualizarStatusNotif();
+if(typeof carregarPreferencias==='function')carregarPreferencias();
 if(typeof lucide!=='undefined')lucide.createIcons();
 }
 function togglePerfilAlerta(k,el){_perfilAlertasState[k]=!_perfilAlertasState[k];el.classList.toggle('on',_perfilAlertasState[k]);}
 function togglePerfilPriv(k,el){_perfilPrivState[k]=!_perfilPrivState[k];el.classList.toggle('on',_perfilPrivState[k]);}
-function togglePerfilEdit(){var ed=document.getElementById('perfilEditBtn');var acts=document.getElementById('perfilEditActions');var inputs=['perfilNomeInput','perfilTelInput','perfilObjInput'];var editing=ed.textContent.indexOf('Cancelar')>=0;ed.textContent=editing?'Editar dados':'Cancelar';acts.style.display=editing?'none':'flex';inputs.forEach(function(id){var inp=document.getElementById(id);if(inp)inp.disabled=editing;});}
-function savePerfilDados(){var n=document.getElementById('perfilNomeInput').value.trim();var t=document.getElementById('perfilTelInput').value.trim();var o=document.getElementById('perfilObjInput').value.trim();if(U&&U.uid){try{U.updateProfile({displayName:n}).catch(function(){});}catch(e){}localStorage.setItem('perfil_tel',t);localStorage.setItem('perfil_obj',o);}document.getElementById('perfilNome').textContent=n||(typeof t==='function'?t('usuario'):'Usuário');togglePerfilEdit();updateDrawerUser();toast(typeof t==='function'?t('toast_alteracoes_salvas'):'Alterações salvas!','ok');}
+function togglePerfilEdit(){
+var ed=document.getElementById('perfilEditBtn');
+var acts=document.getElementById('perfilEditActions');
+var inputs=['perfilNomeInput','perfilTelInput','perfilObjInput'];
+var editing=ed.textContent.indexOf('Cancelar')>=0;
+ed.textContent=editing?'Editar dados':'Cancelar';
+acts.style.display=editing?'none':'flex';
+inputs.forEach(function(id){var inp=document.getElementById(id);if(inp)inp.disabled=editing;});
+// fechar form de e-mail ao cancelar
+if(editing)cancelarPerfilEmailEdit();
+}
+
+function savePerfilDados(){
+var n=document.getElementById('perfilNomeInput').value.trim();
+var tel=document.getElementById('perfilTelInput').value.trim();
+var o=document.getElementById('perfilObjInput').value.trim();
+if(U&&U.uid){
+try{U.updateProfile({displayName:n}).catch(function(){});}catch(e){}
+localStorage.setItem('perfil_tel',tel);
+localStorage.setItem('perfil_obj',o);
+// Salva objetivo também no Firestore
+db.collection('users').doc(U.uid).set({objetivoFinanceiro:o,telefone:tel},{merge:true}).catch(function(){});
+}
+var nameEl=document.getElementById('perfilNome');if(nameEl)nameEl.textContent=n||(typeof t==='function'?t('usuario'):'Usuário');
+togglePerfilEdit();
+if(typeof updateDrawerUser==='function')updateDrawerUser();
+toast(typeof t==='function'?t('toast_alteracoes_salvas'):'Alterações salvas!','ok');
+}
+
+/* ── Alterar e-mail ── */
+function showPerfilEmailEdit(){
+var form=document.getElementById('perfilEmailEditForm');
+if(form){form.style.display='block';}
+}
+function cancelarPerfilEmailEdit(){
+var form=document.getElementById('perfilEmailEditForm');
+if(form){form.style.display='none';}
+var ni=document.getElementById('perfilEmailNovoInput');var si=document.getElementById('perfilEmailSenhaInput');
+if(ni)ni.value='';if(si)si.value='';
+}
+function salvarPerfilEmail(){
+var novoEmail=(document.getElementById('perfilEmailNovoInput')||{}).value.trim();
+var senha=(document.getElementById('perfilEmailSenhaInput')||{}).value;
+if(!novoEmail||!novoEmail.includes('@')){toast('E-mail inválido.','err');return;}
+if(!senha){toast('Informe sua senha atual para confirmar.','err');return;}
+if(!U||!U.email){toast('Usuário não autenticado.','err');return;}
+var btn=document.querySelector('#perfilEmailEditForm .btn-r');
+if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Aguarde...';}
+// Re-autenticar e depois atualizar e-mail
+var cred=firebase.auth.EmailAuthProvider.credential(U.email,senha);
+U.reauthenticateWithCredential(cred).then(function(){
+return U.updateEmail(novoEmail);
+}).then(function(){
+toast('E-mail alterado para '+novoEmail+'! Verifique sua caixa de entrada.','ok');
+var ei=document.getElementById('perfilEmailInput');if(ei)ei.value=novoEmail;
+var edisp=document.getElementById('perfilEmail');if(edisp)edisp.textContent=novoEmail;
+cancelarPerfilEmailEdit();
+}).catch(function(err){
+if(btn){btn.disabled=false;btn.innerHTML='<i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Confirmar alteração';if(typeof lucide!=='undefined')lucide.createIcons();}
+if(err.code==='auth/wrong-password'){toast('Senha incorreta. Tente novamente.','err');}
+else if(err.code==='auth/email-already-in-use'){toast('Este e-mail já está em uso.','err');}
+else{toast('Erro: '+err.message,'err');}
+});
+}
+
+/* ── Preferências ── */
+function salvarPreferencias(){
+var idioma=(document.getElementById('perfilIdiomaSelect')||{}).value||'pt';
+var moeda=(document.getElementById('perfilMoedaSelect')||{}).value||'BRL';
+localStorage.setItem('sib_idioma',idioma);
+localStorage.setItem('sib_moeda',moeda);
+if(U&&U.uid)db.collection('users').doc(U.uid).set({idioma:idioma,moeda:moeda},{merge:true}).catch(function(){});
+toast('Preferências salvas!','ok');
+}
+function salvarAparenciaSelect(){
+var val=(document.getElementById('perfilAparenciaSelect')||{}).value||'dark';
+if(val==='light'&&!document.body.classList.contains('light')){toggleTheme();}
+else if(val==='dark'&&document.body.classList.contains('light')){toggleTheme();}
+}
+function carregarPreferencias(){
+var idioma=localStorage.getItem('sib_idioma')||'pt';
+var moeda=localStorage.getItem('sib_moeda')||'BRL';
+var sel=document.getElementById('perfilIdiomaSelect');if(sel)sel.value=idioma;
+var sel2=document.getElementById('perfilMoedaSelect');if(sel2)sel2.value=moeda;
+var sel3=document.getElementById('perfilAparenciaSelect');if(sel3)sel3.value=document.body.classList.contains('light')?'light':'dark';
+}
 function updateResumoSemanalToggle(on){var btn=document.getElementById('perfilResumoSemanalBtn');var thumb=document.getElementById('perfilResumoSemanalThumb');if(!btn||!thumb)return;btn.setAttribute('aria-pressed',on?'true':'false');btn.classList.toggle('on',on);btn.style.background=on?'rgba(76,123,244,.35)':'var(--bg2)';thumb.style.transform=on?'translateX(20px)':'translateX(3px)';thumb.style.background=on?'#4C7BF4':'var(--t3)';}
 function toggleResumoSemanalEmail(){if(!U||!U.uid)return;window._resumoSemanalEmail=!window._resumoSemanalEmail;var on=window._resumoSemanalEmail;updateResumoSemanalToggle(on);db.collection('users').doc(U.uid).set({resumoSemanalEmail:on},{merge:true}).then(function(){toast(on?'Resumo semanal ativado. Você receberá o e-mail às segundas.':'Resumo semanal desativado.','ok');}).catch(function(e){window._resumoSemanalEmail=!on;updateResumoSemanalToggle(!on);toast(typeof t==='function'?t('toast_erro_salvar'):'Erro ao salvar. Tente novamente.','err');});}
 

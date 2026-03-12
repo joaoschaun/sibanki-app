@@ -2037,8 +2037,24 @@
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
 <div><label class="fl">Nome completo</label><input type="text" id="perfilNomeInput" class="perfil-inp" disabled value=""></div>
 <div><label class="fl">Telefone</label><input type="text" id="perfilTelInput" class="perfil-inp" disabled value=""></div>
-<div style="grid-column:1/-1"><label class="fl">Objetivo financeiro</label><input type="text" id="perfilObjInput" class="perfil-inp" disabled value=""></div>
-<div style="grid-column:1/-1"><label class="fl">E-mail</label><input type="text" id="perfilEmailInput" class="perfil-inp" disabled value="" style="opacity:.7"></div>
+<div style="grid-column:1/-1"><label class="fl">Objetivo financeiro</label><input type="text" id="perfilObjInput" class="perfil-inp" disabled value="" placeholder="Ex: Sair das dívidas, viajar em 2026..."></div>
+<div style="grid-column:1/-1">
+  <label class="fl">E-mail</label>
+  <div style="display:flex;gap:8px;align-items:center">
+    <input type="text" id="perfilEmailInput" class="perfil-inp" disabled value="" style="flex:1">
+    <button type="button" class="btn btn-p" id="perfilEmailEditBtn" onclick="showPerfilEmailEdit()" style="font-size:.78rem;padding:8px 14px;white-space:nowrap;flex-shrink:0"><i data-lucide="pencil" style="width:13px;height:13px;vertical-align:middle;margin-right:4px"></i>Alterar</button>
+  </div>
+  <div id="perfilEmailEditForm" style="display:none;margin-top:12px;padding:14px;background:var(--bg2);border-radius:12px;border:1px solid var(--brd)">
+    <label class="fl" style="margin-bottom:6px">Novo e-mail</label>
+    <input type="email" id="perfilEmailNovoInput" class="perfil-inp" placeholder="novo@email.com" style="margin-bottom:10px">
+    <label class="fl" style="margin-bottom:6px">Senha atual (para confirmar)</label>
+    <input type="password" id="perfilEmailSenhaInput" class="perfil-inp" placeholder="Sua senha atual" style="margin-bottom:12px">
+    <div style="display:flex;gap:8px">
+      <button type="button" class="btn btn-r" onclick="salvarPerfilEmail()" style="font-size:.82rem"><i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Confirmar alteração</button>
+      <button type="button" class="btn" onclick="cancelarPerfilEmailEdit()" style="font-size:.82rem">Cancelar</button>
+    </div>
+  </div>
+</div>
 </div>
 <div id="perfilEditActions" style="display:none;gap:10px;margin-top:20px;flex-wrap:wrap"><button class="btn btn-p" onclick="savePerfilDados()"><span data-i18n="salvar_alteracoes">Salvar alterações</span></button><button class="btn btn-r" onclick="togglePerfilEdit()">Cancelar</button></div>
 </div>
@@ -2061,9 +2077,23 @@
 <div style="display:flex;flex-direction:column;gap:20px">
 <div class="perfil-card">
 <div style="font-size:.9rem;font-weight:700;color:var(--t1);margin-bottom:16px"><span data-i18n="preferencias">Preferências</span></div>
-<div style="margin-bottom:14px"><label class="fl">Idioma</label><div style="padding:11px 14px;background:var(--bg2);border-radius:10px;border:1px solid var(--brd);font-size:.88rem;color:var(--t1)">Português (Brasil)</div></div>
-<div style="margin-bottom:14px"><label class="fl">Moeda</label><div style="padding:11px 14px;background:var(--bg2);border-radius:10px;border:1px solid var(--brd);font-size:.88rem;color:var(--t1)">BRL — Real Brasileiro</div></div>
-<div><label class="fl"><span data-i18n="aparencia">Aparência</span></label><div style="padding:11px 14px;background:var(--bg2);border-radius:10px;border:1px solid var(--brd);font-size:.88rem;color:var(--t1)" id="perfilAparencia">Modo escuro</div></div>
+<div style="margin-bottom:14px"><label class="fl">Idioma</label>
+<select id="perfilIdiomaSelect" class="fi" style="width:100%" onchange="salvarPreferencias()">
+  <option value="pt">Português (Brasil)</option>
+  <option value="en">English</option>
+</select></div>
+<div style="margin-bottom:14px"><label class="fl">Moeda</label>
+<select id="perfilMoedaSelect" class="fi" style="width:100%" onchange="salvarPreferencias()">
+  <option value="BRL">BRL — Real Brasileiro</option>
+  <option value="USD">USD — Dólar Americano</option>
+  <option value="EUR">EUR — Euro</option>
+  <option value="GBP">GBP — Libra Esterlina</option>
+</select></div>
+<div style="margin-bottom:14px"><label class="fl"><span data-i18n="aparencia">Aparência</span></label>
+<select id="perfilAparenciaSelect" class="fi" style="width:100%" onchange="salvarAparenciaSelect()">
+  <option value="dark">Modo escuro</option>
+  <option value="light">Modo claro</option>
+</select></div>
 <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
 <label class="fl" style="margin-bottom:0">Resumo semanal por e-mail</label>
 <button type="button" id="perfilResumoSemanalBtn" class="perfil-toggle-btn" onclick="toggleResumoSemanalEmail()" aria-pressed="false" style="width:44px;height:24px;border-radius:12px;border:none;background:var(--bg2);cursor:pointer;position:relative;transition:background .2s"><span style="position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:var(--t3);transition:transform .2s" id="perfilResumoSemanalThumb"></span></button>
