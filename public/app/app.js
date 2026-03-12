@@ -358,7 +358,7 @@ div.innerHTML='<span class="sib-onb-opt-icon">'+iconHtml+'</span><span>'+o.label
 div.onclick=function(){sibOnbSelectOption(q.key,o.value);};
 opts.appendChild(div);
 });
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 function sibOnbSelectOption(key,value){
@@ -450,17 +450,17 @@ function isValidCPF(cpf){var v=(cpf||'').replace(/\D/g,'');if(v.length!==11)retu
 function lookupCEP(cep,cb){var v=(cep||'').replace(/\D/g,'');if(v.length!==8)return cb(null);fetch('https://viacep.com.br/ws/'+v+'/json/').then(function(r){return r.json();}).then(function(d){if(d&&d.erro)return cb(null);cb(d);}).catch(function(){cb(null);});}
 var sibCadStep=0;
 var sibCadFromOnb=false;
-function sibCadShow(fromOnb){sibCadFromOnb=!!fromOnb;var ov=document.getElementById('sibCadastroWizard');if(ov){ov.classList.add('show');ov.setAttribute('aria-hidden','false');}var f=document.getElementById('sibCadForm');var s=document.getElementById('sibCadSuccess');if(f)f.style.display='block';if(s)s.style.display='none';sibCadStep=0;function doRender(){sibCadRender();if(typeof lucide!=='undefined')window.refreshLucide();}if(U&&U.uid){db.collection('users').doc(U.uid).get().then(function(doc){if(doc&&doc.exists){var c=doc.data().cadastroCompleto;if(c&&typeof c==='object'){sibCadForm={nome:c.nome||'',apelido:c.apelido||'',cpf:c.cpf||'',nasc:c.nasc||'',sexo:c.sexo||'',tel:c.tel||'',cep:c.cep||'',estado:c.estado||'',cidade:c.cidade||'',perfil:c.perfil||'',renda:c.renda||'',obj:Array.isArray(c.obj)?c.obj:[],pesq:!!c.pesq};}}doRender();}).catch(doRender);}else{doRender();}}
+function sibCadShow(fromOnb){sibCadFromOnb=!!fromOnb;var ov=document.getElementById('sibCadastroWizard');if(ov){ov.classList.add('show');ov.setAttribute('aria-hidden','false');}var f=document.getElementById('sibCadForm');var s=document.getElementById('sibCadSuccess');if(f)f.style.display='block';if(s)s.style.display='none';sibCadStep=0;function doRender(){sibCadRender();if(typeof lucide!=='undefined')lucide.createIcons();}if(U&&U.uid){db.collection('users').doc(U.uid).get().then(function(doc){if(doc&&doc.exists){var c=doc.data().cadastroCompleto;if(c&&typeof c==='object'){sibCadForm={nome:c.nome||'',apelido:c.apelido||'',cpf:c.cpf||'',nasc:c.nasc||'',sexo:c.sexo||'',tel:c.tel||'',cep:c.cep||'',estado:c.estado||'',cidade:c.cidade||'',perfil:c.perfil||'',renda:c.renda||'',obj:Array.isArray(c.obj)?c.obj:[],pesq:!!c.pesq};}}doRender();}).catch(doRender);}else{doRender();}}
 function sibCadHide(){var ov=document.getElementById('sibCadastroWizard');if(ov){ov.classList.remove('show');ov.setAttribute('aria-hidden','true');}}
 function sibCadDesistir(){sibCadHide();if(sibCadFromOnb){sibOnbShowScreen('welcome');}else{toast(typeof t==='function'?t('toast_cadastro_depois'):'Cadastro pode ser completado depois em Perfil.','info');}}
 function sibCadUpdateNextState(){var n=document.getElementById('sibCadNext');if(n)n.disabled=!sibCadValid();}
 function sibCadValid(){var f=sibCadForm;if(sibCadStep===0)return f.nome.trim().length>2&&f.cpf.replace(/\D/g,'').length===11&&isValidCPF(f.cpf);if(sibCadStep===1)return f.tel.replace(/\D/g,'').length>=10;if(sibCadStep===2)return f.perfil&&f.renda;if(sibCadStep===3)return f.obj.length>0;return true;}
-function sibCadNext(){if(!sibCadValid())return;if(sibCadStep<sibCadSteps.length-1){sibCadStep++;sibCadRender();}else{sibCadSave();document.getElementById('sibCadForm').style.display='none';document.getElementById('sibCadSuccess').style.display='block';document.getElementById('sibCadPills').innerHTML='';document.getElementById('sibCadMsgs').innerHTML='';if(typeof lucide!=='undefined')window.refreshLucide();}}
+function sibCadNext(){if(!sibCadValid())return;if(sibCadStep<sibCadSteps.length-1){sibCadStep++;sibCadRender();}else{sibCadSave();document.getElementById('sibCadForm').style.display='none';document.getElementById('sibCadSuccess').style.display='block';document.getElementById('sibCadPills').innerHTML='';document.getElementById('sibCadMsgs').innerHTML='';if(typeof lucide!=='undefined')lucide.createIcons();}}
 function sibCadPrev(){if(sibCadStep>0){sibCadStep--;sibCadRender();}}
 function sibCadFinishAndGo(){sibCadHide();if(sibCadFromOnb){sibOnbShowConfig();}else{go('contas',null);toast(typeof t==='function'?t('toast_cadastro_salvo'):'Cadastro salvo! Adicione sua primeira conta.','ok');}}
 function sibCadSave(){if(U&&U.uid){db.collection('users').doc(U.uid).set({cadastroCompleto:sibCadForm,cadastroCompletoEm:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});}if(U&&U.displayName!==sibCadForm.nome){try{U.updateProfile({displayName:sibCadForm.nome}).catch(function(){});}catch(e){}}if(typeof updateDrawerUser==='function')updateDrawerUser();}
 function sibCadRender(){var pct=((sibCadStep+1)/sibCadSteps.length)*100;document.getElementById('sibCadStepNum').textContent=sibCadStep+1;document.getElementById('sibCadProgressFill').style.width=pct+'%';document.getElementById('sibCadBack').style.visibility=sibCadStep===0?'hidden':'visible';document.getElementById('sibCadNext').textContent=sibCadStep===sibCadSteps.length-1?(typeof t==='function'?t('concluir'):'Concluir'):(typeof t==='function'?t('continuar'):'Continuar');document.getElementById('sibCadNext').disabled=!sibCadValid();var rest=sibCadSteps.length-sibCadStep-1;document.getElementById('sibCadRestante').textContent=rest>0?(rest+' etapa'+(rest>1?'s':'')+' restante'+(rest>1?'s':'')):'Última etapa';var pills=document.getElementById('sibCadPills');pills.innerHTML=sibCadSteps.map(function(s,i){var d=i<sibCadStep,a=i===sibCadStep;return '<div class="sib-cadastro-pill '+(d?'done':a?'active':'')+'">'+(d?'<i data-lucide="check" style="width:12px;height:12px"></i>':'<i data-lucide="circle" style="width:12px;height:12px"></i>')+s.label+'</div>';}).join('');var msgs=document.getElementById('sibCadMsgs');msgs.innerHTML='<div class="sib-cadastro-msg"><div class="sib-cadastro-msg-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 15v.01M16 15v.01"/></svg></div><div class="sib-cadastro-msg-text">'+sibCadMsgs[sibCadStep]+'</div></div>';var content=document.getElementById('sibCadStepContent');content.innerHTML='';if(sibCadStep===0){content.innerHTML='<h2>Sua identidade</h2><p class="sub">Dados básicos de identificação</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:18px"><div style="grid-column:1/-1"><label class="fl">Nome completo</label><input type="text" id="sibCadNome" class="sib-cadastro-inp" placeholder="Ex: João Silva Martins" value="'+escapeHtml(sibCadForm.nome)+'"><p style="font-size:.7rem;color:var(--t3);margin-top:4px">Como consta no CPF</p></div><div><label class="fl">Como prefere ser chamado?</label><input type="text" id="sibCadApelido" class="sib-cadastro-inp" placeholder="Ex: João" value="'+escapeHtml(sibCadForm.apelido)+'"></div><div><label class="fl">Data de nascimento</label><input type="date" id="sibCadNasc" class="sib-cadastro-inp" value="'+escapeHtml(sibCadForm.nasc)+'"></div><div style="grid-column:1/-1"><label class="fl">CPF</label><input type="text" id="sibCadCpf" class="sib-cadastro-inp" placeholder="000.000.000-00" maxlength="14" value="'+escapeHtml(sibCadForm.cpf)+'"><p style="font-size:.7rem;color:var(--t3);margin-top:4px">Nunca compartilhado com terceiros</p><span id="sibCadCpfErr" style="font-size:.7rem;color:var(--danger);margin-top:4px;display:none">CPF inválido. Verifique os números.</span></div><div style="grid-column:1/-1"><label class="fl">Gênero <span style="font-weight:400;color:var(--t3)">— opcional</span></label><div style="display:flex;gap:8px;flex-wrap:wrap">'+sibCadGeneros.map(function(g){return '<button type="button" class="sib-cadastro-chip'+(sibCadForm.sexo===g?' selected':'')+'" onclick="sibCadSet(\'sexo\',\''+escapeHtml(g).replace(/'/g,"\\'")+'\')">'+(sibCadForm.sexo===g?'<i data-lucide="check" style="width:11px;height:11px"></i>':'')+escapeHtml(g)+'</button>';}).join('')+'</div></div></div>';content.querySelector('#sibCadNome').oninput=function(){sibCadForm.nome=this.value;sibCadUpdateNextState();};content.querySelector('#sibCadApelido').oninput=function(){sibCadForm.apelido=this.value;};content.querySelector('#sibCadNasc').oninput=function(){sibCadForm.nasc=this.value;sibCadUpdateNextState();};content.querySelector('#sibCadCpf').oninput=function(){var v=this.value.replace(/\D/g,'');if(v.length>3)v=v.slice(0,3)+'.'+v.slice(3);if(v.length>7)v=v.slice(0,7)+'.'+v.slice(7);if(v.length>11)v=v.slice(0,11)+'-'+v.slice(11);sibCadForm.cpf=v.slice(0,14);this.value=sibCadForm.cpf;var err=document.getElementById('sibCadCpfErr');if(err)err.style.display=(v.length===11&&!isValidCPF(sibCadForm.cpf))?'block':'none';sibCadUpdateNextState();};}else if(sibCadStep===1){content.innerHTML='<h2>Contato & localização</h2><p class="sub">Para alertas e recomendações regionais</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:18px"><div style="grid-column:1/-1"><label class="fl">Telefone / WhatsApp</label><div style="position:relative"><span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:.78rem;color:var(--t3);font-weight:700">+55</span><input type="text" id="sibCadTel" class="sib-cadastro-inp" placeholder="(51) 99999-9999" value="'+escapeHtml(sibCadForm.tel)+'" style="padding-left:44px"></div></div><div><label class="fl">CEP</label><input type="text" id="sibCadCep" class="sib-cadastro-inp" placeholder="00000-000" maxlength="9" value="'+escapeHtml(sibCadForm.cep)+'"></div><div><label class="fl">Estado</label><select id="sibCadEstado" class="sib-cadastro-inp"><option value="">Selecione</option>'+sibCadEstados.map(function(e){return '<option value="'+e+'"'+(sibCadForm.estado===e?' selected':'')+'>'+e+'</option>';}).join('')+'</select></div><div style="grid-column:1/-1"><label class="fl">Cidade</label><input type="text" id="sibCadCidade" class="sib-cadastro-inp" placeholder="Ex: Porto Alegre" value="'+escapeHtml(sibCadForm.cidade)+'"></div></div><div style="margin-top:18px;padding:12px 15px;background:var(--bg2);border-radius:10px;border:1px solid var(--brd);display:flex;gap:9px;align-items:flex-start"><i data-lucide="shield-check" style="width:14px;height:14px;color:var(--t3);flex-shrink:0;margin-top:1px"></i><p style="font-size:.78rem;color:var(--t2);line-height:1.6;margin:0">Seu telefone é usado exclusivamente para alertas financeiros. Nunca compartilhamos com parceiros.</p></div>';content.querySelector('#sibCadTel').oninput=function(){sibCadForm.tel=this.value;sibCadUpdateNextState();};var cepInp=content.querySelector('#sibCadCep');cepInp.oninput=function(){var v=this.value.replace(/\D/g,'');if(v.length>5)v=v.slice(0,5)+'-'+v.slice(5);sibCadForm.cep=v.slice(0,9);this.value=sibCadForm.cep;};cepInp.onblur=function(){var v=sibCadForm.cep.replace(/\D/g,'');if(v.length===8){lookupCEP(v,function(d){if(d){sibCadForm.estado=d.uf||'';sibCadForm.cidade=d.localidade||'';var sel=content.querySelector('#sibCadEstado');var city=content.querySelector('#sibCadCidade');if(sel)sel.value=sibCadForm.estado;if(city)city.value=sibCadForm.cidade;if(typeof toast==='function')toast('Endereço preenchido automaticamente','ok');}else if(typeof toast==='function')toast('CEP não encontrado. Verifique o número.','err');});}};content.querySelector('#sibCadEstado').onchange=function(){sibCadForm.estado=this.value;};content.querySelector('#sibCadCidade').oninput=function(){sibCadForm.cidade=this.value;};}else if(sibCadStep===2){content.innerHTML='<h2>Perfil financeiro</h2><p class="sub">Para a IA calibrar recomendações ao seu contexto real</p><div style="margin-bottom:26px"><label class="fl">Situação profissional</label><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px">'+sibCadPerfis.map(function(p){var sel=sibCadForm.perfil===p.id;return '<button type="button" class="sib-cadastro-oc'+(sel?' selected':'')+'" onclick="sibCadSet(\'perfil\',\''+p.id+'\')"><div style="width:38px;height:38px;border-radius:9px;background:'+(sel?'rgba(59,130,246,.15)':'var(--bg2)')+';display:flex;align-items:center;justify-content:center;margin-bottom:9px"><i data-lucide="briefcase" style="width:17px;height:17px;color:'+(sel?'var(--vr)':'var(--t3)')+'"></i></div><span style="font-size:.78rem;font-weight:'+(sel?'700':'500')+';color:'+(sel?'var(--t1)':'var(--t2)')+';text-align:center;line-height:1.3">'+escapeHtml(p.label)+'</span></button>';}).join('')+'</div></div><div><label class="fl">Faixa de renda mensal <span style="font-weight:400;color:var(--t3)">— opcional</span></label><div style="display:flex;flex-direction:column;gap:8">'+sibCadRenda.map(function(r){var sel=sibCadForm.renda===r.id;return '<button type="button" class="sib-cadastro-chip'+(sel?' selected':'')+'" style="justify-content:space-between;padding:12px 15px" onclick="sibCadSet(\'renda\',\''+r.id+'\')"><span>'+escapeHtml(r.label)+'</span>'+(sel?'<div style="width:19px;height:19px;border-radius:50%;background:var(--vr);display:flex;align-items:center;justify-content:center"><i data-lucide="check" style="width:10px;height:10px;stroke:#fff"></i></div>':'')+'</button>';}).join('')+'</div></div>';}else if(sibCadStep===3){content.innerHTML='<h2>Seus objetivos</h2><p class="sub">Pode escolher mais de um — define o foco da Siba para você</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px">'+sibCadObjetivos.map(function(o){var sel=sibCadForm.obj.indexOf(o.id)>=0;return '<button type="button" class="sib-cadastro-oc'+(sel?' selected':'')+'" onclick="sibCadTogObj(\''+o.id+'\')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div style="width:34px;height:34px;border-radius:9px;background:'+(sel?'rgba(59,130,246,.15)':'var(--bg2)')+';display:flex;align-items:center;justify-content:center"><i data-lucide="target" style="width:15px;height:15px;color:'+(sel?'var(--vr)':'var(--t3)')+'"></i></div><div style="width:19px;height:19px;border-radius:50%;border:'+(sel?'none':'1.5px solid var(--brd)')+';background:'+(sel?'var(--vr)':'transparent')+';display:flex;align-items:center;justify-content:center">'+(sel?'<i data-lucide="check" style="width:10px;height:10px;stroke:#fff"></i>':'')+'</div></div><div style="font-size:.88rem;font-weight:700;color:'+(sel?'var(--t1)':'var(--t2)')+';margin-bottom:2px">'+escapeHtml(o.title)+'</div><div style="font-size:.78rem;color:var(--t3);line-height:1.5">'+escapeHtml(o.desc)+'</div></button>';}).join('')+'</div>'+(sibCadForm.obj.length>0?'<div style="padding:11px 15px;background:rgba(59,130,246,.08);border-radius:10px;border:1.5px solid rgba(59,130,246,.2);display:flex;gap:9px;align-items:center;margin-bottom:13px"><i data-lucide="bot" style="width:14px;height:14px;color:var(--vr);flex-shrink:0"></i><p style="font-size:.82rem;color:var(--t1);font-weight:500;margin:0">A Siba vai priorizar esses objetivos nas recomendações do seu dashboard.</p></div>':'')+'<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 15px;background:var(--bg2);border-radius:10px;border:1px solid var(--brd)"><div><div style="font-size:.88rem;font-weight:600;color:var(--t1);margin-bottom:2px">Participar de pesquisas e ganhar benefícios</div><div style="font-size:.7rem;color:var(--t3)">Pesquisas anônimas ocasionais em troca de funcionalidades extras</div></div><button type="button" class="perfil-toggle'+(sibCadForm.pesq?' on':'')+'" onclick="sibCadForm.pesq=!sibCadForm.pesq;this.classList.toggle(\'on\',sibCadForm.pesq)"></button></div>';}
-document.getElementById('sibCadNext').disabled=!sibCadValid();if(typeof lucide!=='undefined')window.refreshLucide();}
+document.getElementById('sibCadNext').disabled=!sibCadValid();if(typeof lucide!=='undefined')lucide.createIcons();}
 function sibCadSet(k,v){sibCadForm[k]=v;sibCadRender();}
 function sibCadTogObj(id){var i=sibCadForm.obj.indexOf(id);if(i>=0)sibCadForm.obj.splice(i,1);else sibCadForm.obj.push(id);sibCadRender();}
 
@@ -680,7 +680,7 @@ var sel=document.getElementById('fC');if(sel)sel.innerHTML=opts;
 var dd=document.getElementById('fCDropdown');if(!dd)return;
 var items=userCats.map(function(c){var ic=_gCILucide(c);var cls='cat-'+_rmAc(c);return '<button type="button" class="cat-picker-item" role="option" data-value="'+escapeHtml(c)+'" onclick="selectCatPicker(\''+escapeHtml(c).replace(/'/g,"\\'")+'\')"><span class="categoria-icon '+cls+'"><i data-lucide="'+ic+'"></i></span><span>'+escapeHtml(c)+'</span></button>'}).join('');
 dd.innerHTML=items;
-if(typeof window.refreshLucide==='function')window.refreshLucide();
+if(typeof window.refreshLucide==='function')lucide.createIcons();
 syncCatPickerTrigger();
 }
 function syncCatPickerTrigger(){
@@ -690,7 +690,7 @@ var v=sel.value;
 lab.textContent=v||'Selecione';
 var ic=v?_gCILucide(v):'package';var cls=v?'cat-'+_rmAc(v):'cat-outros';
 ico.className='cat-picker-icon '+cls;ico.innerHTML='<i data-lucide="'+ic+'"></i>';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 function toggleCatPicker(){
 var dd=document.getElementById('fCDropdown');var tr=document.getElementById('fCTrigger');
@@ -729,7 +729,7 @@ body.classList.add('drawer-sidebar-mode');
 var collapsed=body.classList.toggle('drawer-sidebar-collapsed');
 try{localStorage.setItem('sibanki_drawer_open',collapsed?'0':'1');}catch(z){}
 var expandEl=document.querySelector('.drawer-expand-icon');
-if(expandEl&&typeof lucide!=='undefined'&&lucide.createIcons){window.refreshLucide();}
+if(expandEl&&typeof lucide!=='undefined'&&lucide.createIcons){lucide.createIcons();}
 var btn=document.getElementById('drawerToggleBtn');
 if(btn)btn.setAttribute('aria-label',collapsed?'Expandir menu':'Recolher menu');
 }else{
@@ -782,7 +782,7 @@ if(!dd.contains(ev.target)&&ev.target!==av){closeAvatarDropdown();}
 document.removeEventListener('click',_cad);
 });
 },10);
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 }
 function closeAvatarDropdown(){
@@ -815,7 +815,7 @@ if(ob)ob.setAttribute('aria-expanded','false');
 }
 });
 }
-if(typeof lucide!=='undefined')setTimeout(function(){window.refreshLucide();},10);
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},10);
 try{var keys=[];document.querySelectorAll('.drawer-nav-group.open').forEach(function(gr){if(gr.id&&gr.id.indexOf('drawerGroup')===0)keys.push(gr.id.replace('drawerGroup','').toLowerCase());});localStorage.setItem('sibanki_drawer_groups',JSON.stringify(keys));}catch(e){}
 }
 function initDrawerDesktop(){
@@ -852,7 +852,7 @@ document.body.classList.remove('drawer-sidebar-collapsed');
 });
 
 // PERFIL
-(function(){document.querySelectorAll('.perfil-tab').forEach(function(btn){btn.addEventListener('click',function(){var id=btn.getAttribute('data-perfil-tab');if(!id)return;document.querySelectorAll('.perfil-tab').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-perfil-tab')===id);});document.querySelectorAll('.perfil-tab-content').forEach(function(c){c.classList.toggle('on',c.id==='perfil'+id.charAt(0).toUpperCase()+id.slice(1));});if(typeof lucide!=='undefined')window.refreshLucide();});});})();
+(function(){document.querySelectorAll('.perfil-tab').forEach(function(btn){btn.addEventListener('click',function(){var id=btn.getAttribute('data-perfil-tab');if(!id)return;document.querySelectorAll('.perfil-tab').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-perfil-tab')===id);});document.querySelectorAll('.perfil-tab-content').forEach(function(c){c.classList.toggle('on',c.id==='perfil'+id.charAt(0).toUpperCase()+id.slice(1));});if(typeof lucide!=='undefined')lucide.createIcons();});});})();
 var _perfilPrivState={analise:true,personalizacao:true,marketing:false,parceiros:false,relatorios:true};
 var _perfilAlertasState={login:true,senha:true,device:true,bloqueio:true,resumo:false};
 function calcFinScore(){
@@ -930,7 +930,7 @@ document.getElementById('perfilAparencia').textContent=document.body.classList.c
 if(typeof updateResumoSemanalToggle==='function')updateResumoSemanalToggle(!!window._resumoSemanalEmail);
 if(typeof perfilAtualizarStatusNotif==='function')perfilAtualizarStatusNotif();
 if(typeof carregarPreferencias==='function')carregarPreferencias();
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 function togglePerfilAlerta(k,el){_perfilAlertasState[k]=!_perfilAlertasState[k];el.classList.toggle('on',_perfilAlertasState[k]);}
 function togglePerfilPriv(k,el){_perfilPrivState[k]=!_perfilPrivState[k];el.classList.toggle('on',_perfilPrivState[k]);}
@@ -992,7 +992,7 @@ var ei=document.getElementById('perfilEmailInput');if(ei)ei.value=novoEmail;
 var edisp=document.getElementById('perfilEmail');if(edisp)edisp.textContent=novoEmail;
 cancelarPerfilEmailEdit();
 }).catch(function(err){
-if(btn){btn.disabled=false;btn.innerHTML='<i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Confirmar alteração';if(typeof lucide!=='undefined')window.refreshLucide();}
+if(btn){btn.disabled=false;btn.innerHTML='<i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Confirmar alteração';if(typeof lucide!=='undefined')lucide.createIcons();}
 if(err.code==='auth/wrong-password'){toast('Senha incorreta. Tente novamente.','err');}
 else if(err.code==='auth/email-already-in-use'){toast('Este e-mail já está em uso.','err');}
 else{toast('Erro: '+err.message,'err');}
@@ -1055,7 +1055,7 @@ if(!itens.length){html+='<p style="color:var(--t3);font-size:.88rem">Nenhum regi
 else{html+=itens.map(function(it){return '<div style="padding:10px 0;border-bottom:1px solid var(--brd);font-size:.84rem"><div style="font-weight:600;color:var(--t1)">'+escapeHtml(it.device||'Dispositivo desconhecido')+'</div><div style="color:var(--t3);margin-top:2px">'+escapeHtml(it.ts||'')+'</div></div>';}).join('');}
 html+='</div>';
 var box=document.getElementById('modalBox');var ov=document.getElementById('modalOv');
-if(box&&ov){box.innerHTML=html+'<div style="margin-top:16px;text-align:right"><button class="btn btn-p" onclick="closeModal()">Fechar</button></div>';ov.style.display='flex';if(typeof lucide!=='undefined')window.refreshLucide();}
+if(box&&ov){box.innerHTML=html+'<div style="margin-top:16px;text-align:right"><button class="btn btn-p" onclick="closeModal()">Fechar</button></div>';ov.style.display='flex';if(typeof lucide!=='undefined')lucide.createIcons();}
 }).catch(function(){
 toast('Histórico disponível apenas para contas com dados registrados.','info');
 });
@@ -1078,7 +1078,7 @@ var waStatus=document.getElementById('waStatusPerfil');
 var waBtn=document.getElementById('waBtnPerfil');
 if(waStatus)waStatus.textContent=waNum?'Configurado: '+waNum:'Não configurado';
 if(waBtn){waBtn.innerHTML=waNum?'<i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Editar':'<i data-lucide="link" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Configurar';}
-if(typeof lucide!=='undefined')setTimeout(function(){window.refreshLucide();},20);
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);
 }
 function perfilVincularTelegram(){go('config',null);setTimeout(function(){var s=document.getElementById('configSectionTelegram');if(s)s.scrollIntoView({behavior:'smooth'});},400);}
 function perfilDesvincularTelegram(){if(!confirm('Desvincular o Telegram?'))return;if(U&&U.uid)db.collection('users').doc(U.uid).set({telegramId:null,telegramNick:null},{merge:true});window._tgLinked=false;window._tgNick='';perfilAtualizarStatusNotif();toast('Telegram desvinculado','ok');}
@@ -1115,7 +1115,7 @@ setTimeout(function(){startModuleTour(mid);},600);
 }
 if(id==='casal'){
 if(typeof loadCoupleStatus==='function')loadCoupleStatus();
-setTimeout(function(){if(typeof lucide!=='undefined')window.refreshLucide();},50);
+setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons();},50);
 if(typeof loadFamilyChildren==='function'){
 setTimeout(function(){
 var sec=document.getElementById('familyChildSection');
@@ -1234,8 +1234,8 @@ else{setTimeout(runNextTask,50);}
 }
 setTimeout(runNextTask,100);
 // Garantir ícones Lucide após renderização
-setTimeout(function(){if(typeof window.refreshLucide==='function')window.refreshLucide();},200);
-setTimeout(function(){if(typeof window.refreshLucide==='function')window.refreshLucide();},800);
+setTimeout(function(){if(typeof window.refreshLucide==='function')lucide.createIcons();},200);
+setTimeout(function(){if(typeof window.refreshLucide==='function')lucide.createIcons();},800);
 // Features secundárias com delay maior
 setTimeout(function(){if(typeof requireFeature==='function'){requireFeature('ia_insights_produto',function(){if(typeof checkProdutoInsight==='function')checkProdutoInsight();});requireFeature('briefing_ia',function(){if(typeof showBriefingModal==='function')showBriefingModal();});}},3000);
 }
@@ -1457,13 +1457,13 @@ var content=div.querySelector('.widget-content');
 try{renderWidgetContent(item.id,content);}catch(e){console.warn('Widget '+item.id+' render error:',e);if(content)content.innerHTML='<p style="color:var(--t2);font-size:.85em">Erro ao carregar widget</p>'}
 grid.appendChild(div);
 });
-if(typeof window.refreshLucide==='function')window.refreshLucide();
+if(typeof window.refreshLucide==='function')lucide.createIcons();
 }
 function toggleDashHideValues(){
 try{window._dashHideValues=!window._dashHideValues;if(typeof localStorage!=='undefined')localStorage.setItem('sibanki_dash_hide_values',window._dashHideValues?'1':'0');}catch(e){}
 // Sincroniza ícone no header
 var headerIcon=document.getElementById('dashHideValuesIcon');
-if(headerIcon){headerIcon.setAttribute('data-lucide',window._dashHideValues?'eye-off':'eye');if(typeof lucide!=='undefined')window.refreshLucide();}
+if(headerIcon){headerIcon.setAttribute('data-lucide',window._dashHideValues?'eye-off':'eye');if(typeof lucide!=='undefined')lucide.createIcons();}
 if(typeof rKPI==='function')rKPI();
 if(typeof renderDashboardWidgets==='function')renderDashboardWidgets();
 }
@@ -1491,7 +1491,7 @@ if(isEdit){
 initDashboardSortable();
 var picker=document.getElementById('dashWidgetPicker');var current=getDashboardLayout().map(function(x){return x.id});
 picker.innerHTML=DASHBOARD_WIDGETS.filter(function(w){return current.indexOf(w.id)<0}).map(function(w){return '<span onclick="adicionarWidgetDashboard(\''+w.id+'\')"><i data-lucide="'+(w.iconName||'circle')+'"></i> '+w.title+'</span>'}).join('');
-if(typeof window.refreshLucide==='function')window.refreshLucide();
+if(typeof window.refreshLucide==='function')lucide.createIcons();
 }else{
 var pickerEl=document.getElementById('dashWidgetPicker');var closeEl=document.getElementById('dashWidgetPickerClose');
 if(pickerEl)pickerEl.style.display='none';if(closeEl)closeEl.style.display='none';
@@ -1552,7 +1552,7 @@ if(fMes&&fMes.value==='all')fMes.value='all';
 var bar=document.getElementById('lancFilterChipBar');
 if(!bar){bar=document.createElement('div');bar.id='lancFilterChipBar';bar.style.cssText='display:flex;align-items:center;gap:8px;margin:4px 0 8px;flex-wrap:wrap';var filtrosBar=document.querySelector('.lanc-filtros-bar');if(filtrosBar)filtrosBar.insertAdjacentElement('afterend',bar);}
 bar.innerHTML='<span style="font-size:.78rem;color:var(--t3)">Mostrando:</span><span style="display:inline-flex;align-items:center;gap:6px;background:rgba(79,140,255,.12);border:1px solid rgba(79,140,255,.25);border-radius:20px;padding:3px 10px;font-size:.78rem;color:var(--pri);font-weight:600"><i data-lucide="calendar" style="width:12px;height:12px"></i>Hoje</span><button type="button" style="font-size:.75rem;color:var(--t3);background:none;border:none;cursor:pointer;text-decoration:underline" onclick="lancClearTodayFilter()">Ver todos</button>';
-if(typeof window.refreshLucide==='function')setTimeout(function(){window.refreshLucide();},20);
+if(typeof window.refreshLucide==='function')setTimeout(function(){lucide.createIcons();},20);
 }
 }
 function lancClearTodayFilter(){
@@ -2041,7 +2041,7 @@ div.innerHTML='<span class="sib-pp-item-check">'+(done?'✅':'□')+'</span><spa
 if(!done){div.onclick=function(){it.action();};}
 listEl.appendChild(div);
 });
-if(typeof window.refreshLucide==='function')window.refreshLucide();
+if(typeof window.refreshLucide==='function')lucide.createIcons();
 }
 function markPrimeiroPassoIa(){window._primeirosPassosIa=true;if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();}
 
@@ -2063,7 +2063,7 @@ var b=document.body;
 var isLight=b.classList.toggle('light');
 localStorage.setItem('vrt_theme',isLight?'light':'dark');
 document.getElementById('themeBtn').innerHTML=isLight?'<i data-lucide="sun" style="width:20px;height:20px;stroke:currentColor;stroke-width:2"></i>':'<i data-lucide="moon" style="width:20px;height:20px;stroke:currentColor;stroke-width:2"></i>';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 Chart.defaults.color=isLight?'#475569':'#94a3b8';
 Object.keys(charts).forEach(function(k){if(charts[k]&&charts[k].update)charts[k].update()});
 }
@@ -2072,7 +2072,7 @@ var t=localStorage.getItem('vrt_theme');
 if(t==='light'){
 document.body.classList.add('light');
 document.getElementById('themeBtn').innerHTML='<i data-lucide="sun" style="width:20px;height:20px;stroke:currentColor;stroke-width:2"></i>';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 }
 function toggleLangDropdown(){
@@ -2115,7 +2115,7 @@ p.innerHTML='<i data-lucide="'+icons[Math.floor(Math.random()*icons.length)]+'" 
 ov.appendChild(p);
 }
 document.body.appendChild(ov);
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 setTimeout(function(){if(ov.parentNode)ov.parentNode.removeChild(ov);},2500);
 }
 
@@ -2811,7 +2811,7 @@ var dataStr=diasSemana[now.getDay()]+', '+now.getDate()+' de '+meses[cm]+' de '+
 sub.innerHTML=dataStr;
 }
 var headerIcon=document.getElementById('dashHideValuesIcon');
-if(headerIcon){var iconName=window._dashHideValues?'eye-off':'eye';if(headerIcon.getAttribute('data-lucide')!==iconName){headerIcon.setAttribute('data-lucide',iconName);if(typeof lucide!=='undefined')window.refreshLucide();}}
+if(headerIcon){var iconName=window._dashHideValues?'eye-off':'eye';if(headerIcon.getAttribute('data-lucide')!==iconName){headerIcon.setAttribute('data-lucide',iconName);if(typeof lucide!=='undefined')lucide.createIcons();}}
 var previsaoEl=document.getElementById('dashPrevisaoFimMes');
 if(previsaoEl){
 var sal=0;for(var _i=0;_i<userAccs.length;_i++){var _acc2=userAccs[_i];if(accountMeta[_acc2]&&accountMeta[_acc2].incluirNaSoma===false)continue;try{sal+=getAccBal(_acc2).atual;}catch(x){}}
@@ -2903,7 +2903,7 @@ var pct=despM>0?Math.round(e.value/despM*100):0;
 var medals=['<i data-lucide="trophy" style="width:20px;height:20px;stroke:currentColor;stroke-width:2;color:#FFD700"></i>','<i data-lucide="medal" style="width:20px;height:20px;stroke:currentColor;stroke-width:2;color:#C0C0C0"></i>','<i data-lucide="award" style="width:20px;height:20px;stroke:currentColor;stroke-width:2;color:#CD7F32"></i>','4.','5.'];
 return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;'+(i<topE.length-1?'border-bottom:1px solid var(--brd)':'')+'"><div style="font-size:1.2em;width:28px;text-align:center">'+medals[i]+'</div><div style="flex:1"><div style="font-weight:600;font-size:.9em">'+(e.desc||e.category)+'</div><div style="font-size:.75em;color:var(--t2)">'+e.category+' &bull; '+new Date(e.date+'T12:00:00').toLocaleDateString('pt-BR')+'</div></div><div style="text-align:right"><div style="font-weight:700;color:var(--vr)">'+fmt(e.value)+'</div><div style="font-size:.7em;color:var(--t3)">'+pct+'% do total</div></div></div>';
 }).join('');
-if(topE.length>0&&typeof lucide!=='undefined')window.refreshLucide();
+if(topE.length>0&&typeof lucide!=='undefined')lucide.createIcons();
 }else{tg.innerHTML='<p style="color:var(--t2);text-align:center;padding:16px">Sem despesas este mês</p>';}
 }
 }
@@ -3286,7 +3286,7 @@ if(tabId==='dash'){
 if(window._dashHideValues===undefined){try{window._dashHideValues=localStorage.getItem('sibanki_dash_hide_values')==='1';}catch(e){window._dashHideValues=false;}}
 rKPI();renderDashPremium();renderDashboardWidgets();rDicas();checkAlerts();renderDashImportPromo();renderDashTelegramPromo();if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();
 }
-else if(tabId==='lanc'){if(typeof setLancPeriodo==='function')setLancPeriodo(_lancPeriodo||'hoje');rE();setLancFirstGuide();if(typeof window.refreshLucide==='function')window.refreshLucide();}
+else if(tabId==='lanc'){if(typeof setLancPeriodo==='function')setLancPeriodo(_lancPeriodo||'hoje');rE();setLancFirstGuide();if(typeof window.refreshLucide==='function')lucide.createIcons();}
 else if(tabId==='invest'){rInv();try{renderPortfolio();}catch(e){}}
 else if(tabId==='metas'){metasIaTipLoaded=false;rMetas();if(typeof updateDashMetasBlock==='function')updateDashMetasBlock();}
 else if(tabId==='orçamento'){rOrc();}
@@ -3302,7 +3302,7 @@ else{/* Fallback: renderiza apenas o essencial para evitar travamento */console.
 rnRc();
 try{bldN();}catch(x){}
 if(typeof updateDrawerUser==='function')updateDrawerUser();
-if(typeof window.refreshLucide==='function')window.refreshLucide();
+if(typeof window.refreshLucide==='function')lucide.createIcons();
 }
 
 // KPI — 4 cards estilo Lovable (Saldo Total, Receitas, Despesas, Investimentos)
@@ -3346,7 +3346,7 @@ var tips=getSmartTips().filter(function(t){var s=(t.title||'')+(t.text||'');retu
 if(tips.length>0){var t=tips[0];
 var tb=document.getElementById('tipBanner');if(tb)tb.innerHTML='<div class="tip-card '+t.color+'" style="margin-bottom:16px"><b>'+t.title+'</b> - '+t.text+'</div>'}
 else{var tb=document.getElementById('tipBanner');if(tb)tb.innerHTML='';}
-if(typeof window.refreshLucide==='function')window.refreshLucide();
+if(typeof window.refreshLucide==='function')lucide.createIcons();
 }
 function drawSparklineSaldo(){
 var can=document.getElementById('sparkline-saldo');
@@ -3566,7 +3566,7 @@ var from=_rEPage*_rEPageSize+1,to=Math.min((_rEPage+1)*_rEPageSize,total);
 pagEl.innerHTML='<span>Mostrando '+from+'-'+to+' de '+total+'</span><div style="display:flex;gap:6px"><button type="button" class="btn btn-o btn-sm" '+(_rEPage<=0?'disabled':'')+' onclick="setREPage('+(_rEPage-1)+')">← Anterior</button><button type="button" class="btn btn-o btn-sm" '+(_rEPage>=maxPage?'disabled':'')+' onclick="setREPage('+(_rEPage+1)+')">Próxima →</button></div>';
 }
 }
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 // INVESTIMENTOS
@@ -3749,7 +3749,7 @@ statusEl.innerHTML='<span style="color:#EF4444;display:inline-flex;align-items:c
 _lastInvTickerValid=false;
 statusEl.innerHTML='<span style="color:var(--t3);display:inline-flex;align-items:center;gap:6px"><i data-lucide="alert-triangle" style="width:14px;height:14px;stroke:currentColor;stroke-width:2"></i> Erro ao buscar cotação</span>';
 }
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 // ============================================
@@ -3889,7 +3889,7 @@ ratesInfo.innerHTML=
 '<span style="color:var(--pri);font-weight:700">CDI '+_rfRates.cdi.toFixed(2)+'%</span>'+
 '<span style="color:#EAB308;font-weight:700">IPCA '+_rfRates.ipca.toFixed(1)+'% (12m)</span>'+
 '<span style="color:var(--t2)">Poup. '+_rfRates.poupanca.toFixed(2)+'%</span>';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 }
 
@@ -4020,7 +4020,7 @@ function setMetasFilter(type,btn){
   document.querySelectorAll('.mf-tab').forEach(function(t){t.classList.remove('active');});
   if(btn)btn.classList.add('active');
   renderMetasCards();
-  if(typeof lucide!=='undefined')setTimeout(function(){window.refreshLucide();},60);
+  if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},60);
 }
 
 function showMetaMenu(id,btn){
@@ -4101,7 +4101,7 @@ function renderMetasIaTip(){
       '<div class="metas-ia-tip-title">Dica do Consultor IA</div>'+
       '<div class="metas-ia-tip-text" id="metasIaTipText" style="color:var(--t3)">Analisando suas metas...</div>'+
     '</div>';
-  if(typeof lucide!=='undefined')setTimeout(function(){window.refreshLucide();},50);
+  if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},50);
   try{
     var user=firebase.auth().currentUser;
     if(!user)return;
@@ -4129,7 +4129,7 @@ function renderMetasIaTip(){
         tipElNow.insertAdjacentHTML('beforeend','<button class="metas-ia-tip-btn" onclick="go(\'ia\');setTimeout(function(){iaAnalyze(\'metas\');},350)">Ver análise →</button>');
       }
       metasIaTipLoaded=true;
-      if(typeof lucide!=='undefined')window.refreshLucide();
+      if(typeof lucide!=='undefined')lucide.createIcons();
     }).catch(function(){
       var textEl=document.getElementById('metasIaTipText');
       if(textEl){textEl.style.color='';textEl.innerHTML='Continue contribuindo regularmente para alcançar seus objetivos! 💪';}
@@ -4155,7 +4155,7 @@ return true;
 }
 function openMetaModal(){
 var ov=document.getElementById('metaModalOv');if(ov)ov.classList.add('show');
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 function closeMetaModal(){
 var ov=document.getElementById('metaModalOv');if(ov)ov.classList.remove('show');
@@ -4302,7 +4302,7 @@ function rMetas(){
 var emptyEl=document.getElementById('metasEmpty');
 var filledEl=document.getElementById('metasFilled');
 if(emptyEl&&filledEl){emptyEl.style.display=goals.length===0?'block':'none';filledEl.style.display=goals.length>0?'block':'none';}
-if(goals.length===0){if(typeof lucide!=='undefined')window.refreshLucide();return;}
+if(goals.length===0){if(typeof lucide!=='undefined')lucide.createIcons();return;}
 
 // KPI cards
 var ativas=goals.filter(function(g){return getMetaPct(g)<100;});
@@ -4343,7 +4343,7 @@ if(pgEl&&ativas.length>0){
 // Cards + IA tip
 renderMetasCards();
 renderMetasIaTip();
-if(typeof lucide!=='undefined')setTimeout(function(){window.refreshLucide();},60);
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},60);
 }
 
 // ORÇAMENTO (redesenhado)
@@ -4382,7 +4382,7 @@ var prevMonth=getOrcamentoMonthKey(new Date(parseInt(parts[0],10),parseInt(parts
 var hasPrev=!!orcamentosByMonth[prevMonth];
 copyBtn.disabled=!hasPrev;
 copyBtn.title=hasPrev?'Copiar orçamento de '+prevMonth:'Não há planejamento no mês anterior';
-if(hasPrev){copyBtn.removeAttribute('data-state');copyBtn.innerHTML='<i data-lucide="copy" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Copiar do mês anterior';if(typeof lucide!=='undefined')window.refreshLucide();}
+if(hasPrev){copyBtn.removeAttribute('data-state');copyBtn.innerHTML='<i data-lucide="copy" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Copiar do mês anterior';if(typeof lucide!=='undefined')lucide.createIcons();}
 else{copyBtn.setAttribute('data-state','no-prev');copyBtn.textContent=typeof t==='function'?t('sem_planejamento_anterior'):'Sem planejamento anterior';}
 }
 }
@@ -4467,7 +4467,7 @@ document.getElementById('orcamentoFilledList').innerHTML=listHtml||'<p style="co
 // IA Insight
 renderOrcIaTip(orc,cats,catSpent);
 }
-if(typeof lucide!=='undefined')setTimeout(function(){window.refreshLucide();},60);
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},60);
 }
 var _orcBarChartInst=null;
 var _orcPieChartInst=null;
@@ -4521,7 +4521,7 @@ tipEl.style.display='flex';
 tipEl.innerHTML='<div class="metas-ia-tip-icon"><i data-lucide="sparkles" style="width:22px;height:22px;color:var(--vr)"></i></div>'+
 '<div class="metas-ia-tip-body"><div class="metas-ia-tip-title">Insight do Consultor IA</div>'+
 '<div class="metas-ia-tip-text" id="orcIaTipText" style="color:var(--t3)">Analisando seu orçamento...</div></div>';
-if(typeof lucide!=='undefined')setTimeout(function(){window.refreshLucide();},50);
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},50);
 try{
 var user=firebase.auth().currentUser;if(!user)return;
 var gastosReais=getGastosMes(orcamentoViewMonth);
@@ -4539,7 +4539,7 @@ if(textEl){textEl.style.color='';textEl.innerHTML=reply;}
 var tipNow=document.getElementById('orcIaTip');
 if(tipNow){tipNow.insertAdjacentHTML('beforeend','<button class="metas-ia-tip-btn" onclick="go(\'ia\');setTimeout(function(){iaAnalyze(\'metas\');},350)">Ver análise →</button>');}
 _orcIaTipLoaded=true;
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }).catch(function(){
 var textEl=document.getElementById('orcIaTipText');
 if(textEl){textEl.style.color='';textEl.innerHTML='Continue monitorando seus limites por categoria para manter as finanças saudáveis! 💙';}
@@ -4580,7 +4580,7 @@ if(rendaNum<=0)rendaInput.value='';
 else{var reais=Math.floor(rendaNum);var cent=Math.round((rendaNum%1)*100);rendaInput.value='R$ '+reais.toLocaleString('pt-BR').replace(/\s/g,'')+','+String(cent).padStart(2,'0');}
 document.getElementById('orcEconomiaPct').value=orc&&orc.metaEconomia!=null?orc.metaEconomia:20;
 orcamentoCalcRenda();
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 function orcamentoOpenAddCategorias(){
 var orc=orcamentosByMonth[orcamentoViewMonth];
@@ -4614,7 +4614,7 @@ window._orcamentoRenda=renda;
 window._orcamentoEconomiaPct=pct;
 window._orcamentoTotalDisponivel=orcamentoTotal;
 orcamentoUpdateSidebar();
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 function closeOrcamentoModal(){
 var modalOv=document.getElementById('orcamentoModalOv');
@@ -4671,7 +4671,7 @@ window._orcamentoRenda=renda;
 window._orcamentoEconomiaPct=pct;
 window._orcamentoTotalDisponivel=orcamentoTotal;
 orcamentoUpdateSidebar();
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 function orcamentoUpdateSidebar(){
 var totalDisponivel=window._orcamentoTotalDisponivel||0;
@@ -4698,7 +4698,7 @@ if(summaryDist)summaryDist.textContent='R$ '+(soma.toFixed(2).replace('.',','));
 if(summaryDisp)summaryDisp.textContent='R$ '+(disp.toFixed(2).replace('.',','));
 if(summaryBar){summaryBar.style.width=pctBar+'%';summaryBar.className='orc-step2-summary-bar-fill'+(pctBar>100?' danger':pctBar>=90?' warn':'');}
 document.getElementById('orcamentoSaveBtn').disabled=disp<0;
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 function orcamentoSavePlan(){
 var renda=window._orcamentoRenda||0;
@@ -4845,7 +4845,7 @@ document.getElementById('cqEmoji').innerHTML='<i data-lucide="'+iconName+'" styl
 document.getElementById('cqTitle').textContent=b.name;
 document.getElementById('cqDesc').textContent=b.desc;
 document.getElementById('cqModal').classList.add('show');
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 if(typeof celebrateLucide==='function')celebrateLucide();
 }
 function closeCq(){document.getElementById('cqModal').classList.remove('show')}
@@ -4863,7 +4863,7 @@ var iconName=b.lucide||'award';
 var iconHtml='<i data-lucide="'+iconName+'" style="width:36px;height:36px;stroke:currentColor;stroke-width:2"></i>';
 return '<div class="badge-item '+cls+'"><div class="badge-emoji">'+iconHtml+'</div><div class="badge-name">'+b.name+'</div><div class="badge-desc">'+b.desc+'</div>'+(dt?'<div class="badge-date">'+dt+'</div>':'')+'</div>';
 }).join('');
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 // CHARTS
@@ -5037,7 +5037,7 @@ function toggleLancForm(btn){
   var isOpen = fb.style.display !== 'none';
   fb.style.display = isOpen ? 'none' : 'block';
   if(btn) btn.classList.toggle('lp-on', !isOpen);
-  if(!isOpen && typeof window.refreshLucide === 'function') window.refreshLucide();
+  if(!isOpen && typeof window.refreshLucide === 'function') lucide.createIcons();
 }
 
 /* ===== TIPO TOGGLE (Despesa/Receita) ===== */
@@ -5050,11 +5050,11 @@ function setTipoLanc(tipo){
   if(tipo === 'despesa'){
     if(btnD){btnD.classList.add('tipo-desp-on');btnD.classList.remove('tipo-rec-on')}
     if(btnR){btnR.classList.remove('tipo-rec-on');btnR.classList.remove('tipo-desp-on')}
-    if(btnSave){btnSave.innerHTML='<i data-lucide="trending-down" style="width:18px;height:18px;vertical-align:middle"></i> Salvar Despesa';btnSave.classList.remove('receita-mode');if(typeof window.refreshLucide==='function')window.refreshLucide()}
+    if(btnSave){btnSave.innerHTML='<i data-lucide="trending-down" style="width:18px;height:18px;vertical-align:middle"></i> Salvar Despesa';btnSave.classList.remove('receita-mode');if(typeof window.refreshLucide==='function')lucide.createIcons()}
   } else {
     if(btnR){btnR.classList.add('tipo-rec-on');btnR.classList.remove('tipo-desp-on')}
     if(btnD){btnD.classList.remove('tipo-desp-on');btnD.classList.remove('tipo-rec-on')}
-    if(btnSave){btnSave.innerHTML='<i data-lucide="trending-up" style="width:18px;height:18px;vertical-align:middle"></i> Salvar Receita';btnSave.classList.add('receita-mode');if(typeof window.refreshLucide==='function')window.refreshLucide()}
+    if(btnSave){btnSave.innerHTML='<i data-lucide="trending-up" style="width:18px;height:18px;vertical-align:middle"></i> Salvar Receita';btnSave.classList.add('receita-mode');if(typeof window.refreshLucide==='function')lucide.createIcons()}
   }
 }
 
@@ -5387,7 +5387,7 @@ saveData();renderAll();
 _impItems=[];_impMode='card';
 document.getElementById('impPreview').style.display='none';
 var st=document.getElementById('impStatus');
-if(st){st.style.display='block';st.innerHTML='<div class="imp-status-ok" style="display:inline-flex;align-items:center;gap:8px"><i data-lucide="check" style="width:20px;height:20px;stroke:currentColor;stroke-width:2"></i> <strong>'+imported+' lançamentos importados!</strong></div>';if(typeof lucide!=='undefined')window.refreshLucide();setTimeout(function(){st.style.display='none'},5000);}
+if(st){st.style.display='block';st.innerHTML='<div class="imp-status-ok" style="display:inline-flex;align-items:center;gap:8px"><i data-lucide="check" style="width:20px;height:20px;stroke:currentColor;stroke-width:2"></i> <strong>'+imported+' lançamentos importados!</strong></div>';if(typeof lucide!=='undefined')lucide.createIcons();setTimeout(function(){st.style.display='none'},5000);}
 toast(imported+' lançamentos importados!','ok');
 }
 
@@ -5443,7 +5443,7 @@ document.getElementById('impPreview').style.display='none';
 var st=document.getElementById('impStatus');
 st.style.display='block';
 st.innerHTML='<div class="imp-status-ok" style="display:inline-flex;align-items:flex-start;gap:8px"><i data-lucide="check" style="width:20px;height:20px;stroke:currentColor;stroke-width:2;flex-shrink:0;margin-top:2px"></i> <div><strong>'+imported+' lançamentos importados com sucesso!</strong><br><span style="font-size:.9em;opacity:.9">No cartão '+card.name+'. Revise em Lançar ou na Fatura do cartão.</span></div></div>';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 setTimeout(function(){st.style.display='none'},6000);
 toast(imported+' lançamentos importados!','ok');
 }
@@ -5567,7 +5567,7 @@ btn.textContent=typeof t==='function'?t('btn_adicionar'):'Adicionar';
 renderCardBankGrid();
 updateCardPreview();
 m.classList.add('show');
-if(typeof window.refreshLucide==='function')window.refreshLucide();
+if(typeof window.refreshLucide==='function')lucide.createIcons();
 setTimeout(function(){document.getElementById('cardName').focus()},200);
 }
 
@@ -5631,7 +5631,7 @@ return;
 }
 if(cards.length===0){
 carousel.innerHTML='<div style="text-align:center;color:var(--t2);padding:24px;min-width:200px">Nenhum cartão cadastrado.</div><div class="card-novo-cartao" onclick="openCardModal()" role="button" tabindex="0"><div class="card-novo-cartao-icon"><i data-lucide="plus" style="width:24px;height:24px;color:#4C7BF4"></i></div><div class="card-novo-cartao-txt">Adicionar cartão</div><div class="card-novo-cartao-sub">Crédito, débito ou pré-pago</div></div>';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 updateCardSelects();
 if(typeof popImpCardSel==='function')popImpCardSel();
 return;
@@ -5677,7 +5677,7 @@ h+='</div>';
 });
 h+='<div class="card-novo-cartao" onclick="openCardModal()" role="button" tabindex="0"><div class="card-novo-cartao-icon"><i data-lucide="plus" style="width:24px;height:24px;color:#4C7BF4"></i></div><div class="card-novo-cartao-txt">Adicionar cartão</div><div class="card-novo-cartao-sub">Crédito, débito ou pré-pago</div></div>';
 carousel.innerHTML=h;
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 if(cl)cl.style.display='none';
 updateCardSelects();
 renderCardsResumo();
@@ -5728,7 +5728,7 @@ h+='</tbody></table>';
 content.innerHTML=h;
 }
 modal.classList.add('show');
-setTimeout(function(){if(typeof lucide!=='undefined')window.refreshLucide();},80);
+setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons();},80);
 }
 function closeCardFaturaModal(){
 var modal=document.getElementById('cardFaturaModal');
@@ -5959,7 +5959,7 @@ document.getElementById('wCestaDay').value='';
 toggleWltCesta();
 renderWltBankList('');
 m.classList.add('show');
-setTimeout(function(){if(searchEl)searchEl.focus();if(typeof lucide!=='undefined')window.refreshLucide()},200);
+setTimeout(function(){if(searchEl)searchEl.focus();if(typeof lucide!=='undefined')lucide.createIcons()},200);
 }
 
 function closeWltModal(){
@@ -5970,7 +5970,7 @@ function openWltTransfer(){
 var ov=document.getElementById('wltTransferModalOv');
 var aOv=document.getElementById('wltAjusteModalOv');
 if(aOv)aOv.classList.remove('show');
-if(ov){ov.classList.add('show');popTfSels();setTimeout(function(){if(typeof lucide!=='undefined')window.refreshLucide()},100)}
+if(ov){ov.classList.add('show');popTfSels();setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons()},100)}
 }
 
 function openWltAjuste(preSelectAcc){
@@ -5993,7 +5993,7 @@ var curAcc=document.getElementById('balAcc').value;
 var curBal=curAcc&&typeof getAccBal==='function'?getAccBal(curAcc).atual:0;
 document.getElementById('balVal').value=curBal.toFixed(2).replace('.',',');
 updateReajusteSaldoInicial();
-setTimeout(function(){if(typeof lucide!=='undefined')window.refreshLucide()},100);
+setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons()},100);
 }
 }
 function updateReajusteSaldoInicial(){
@@ -6065,7 +6065,7 @@ h+='<div class="wlt-ext-row"><span class="wlt-ext-date">'+(e.date||'').split('-'
 movList.innerHTML=h||'<div style="padding:24px;text-align:center;color:var(--t3)">Nenhuma movimentação</div>';
 }
 setCarteiraTab('visao');
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 function closeCarteiraDetail(){
 var w=document.getElementById('carteiraDetailWrap');
@@ -6108,7 +6108,7 @@ document.getElementById('detalhesContaReceitas').textContent=String(entries.filt
 document.getElementById('detalhesContaTransf').textContent=String(entries.filter(function(e){return e.account===_detalhesContaAcc&&e.isTransfer}).length);
 document.getElementById('detalhesContaIncluir').checked=incluir;
 ov.classList.add('show');
-setTimeout(function(){if(typeof lucide!=='undefined')window.refreshLucide()},100);
+setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons()},100);
 }
 function closeDetalhesConta(){
 var ov=document.getElementById('detalhesContaModalOv');
@@ -6146,7 +6146,7 @@ var coresList=ACC_CORES.indexOf(corAtual)>=0?ACC_CORES:ACC_CORES.concat([corAtua
 coresEl.innerHTML=coresList.map(function(c){return '<div class="editar-conta-cor'+(c===corAtual?' selected':'')+'" style="background:'+c+'" data-cor="'+c+'" onclick="selectEditarContaCor(this)"></div>'}).join('');
 document.getElementById('editarContaIncluir').checked=meta.incluirNaSoma!==false;
 ov.classList.add('show');
-setTimeout(function(){if(typeof lucide!=='undefined')window.refreshLucide()},100);
+setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons()},100);
 }
 function selectEditarContaCor(el){
 document.querySelectorAll('#editarContaCores .editar-conta-cor').forEach(function(c){c.classList.remove('selected')});
@@ -6246,7 +6246,7 @@ if(filtered.length>30)h+='<div style="text-align:center;padding:10px;font-size:.
 list.innerHTML=h;
 }
 modal.classList.add('show');
-setTimeout(function(){if(typeof lucide!=='undefined')window.refreshLucide();},80);
+setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons();},80);
 }
 function closeBankExtratoModal(){
 var modal=document.getElementById('bankExtratoModal');
@@ -6306,7 +6306,7 @@ h+='</div>';
 grid.innerHTML=novaCard+h;
 if(sidebarAtual){sidebarAtual.textContent='R$ '+total.toFixed(2).replace(".",",");sidebarAtual.className='contas-sidebar-value '+(total>=0?'positive':'negative');}
 if(sidebarPrevisto){sidebarPrevisto.textContent='R$ '+total.toFixed(2).replace(".",",");sidebarPrevisto.className='contas-sidebar-value '+(total>=0?'positive':'negative');}
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 renderBalAccSelect();
 popTfSels();
 setTimeout(function(){initContasSortable(grid);},60);
@@ -6405,7 +6405,7 @@ menu.innerHTML=
 '<button type="button" style="'+itemStyle+'" onclick="document.getElementById(\'contasHeaderMenuDropdown\')?.remove();typeof showPatrimonio===\'function\'&&showPatrimonio()"><i data-lucide="bar-chart-2" style="width:16px;height:16px;opacity:.7"></i> Resumo do patrimônio</button>'+
 '<button type="button" style="'+itemStyle+'" onclick="document.getElementById(\'contasHeaderMenuDropdown\')?.remove();expCSV&&expCSV()"><i data-lucide="download" style="width:16px;height:16px;opacity:.7"></i> Exportar extrato CSV</button>';
 document.body.appendChild(menu);
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 document.addEventListener('click',function closeHMenu(ev){if(!menu.contains(ev.target)&&ev.target!==btn){menu.remove();document.removeEventListener('click',closeHMenu);}});
 }
 
@@ -6456,7 +6456,7 @@ ov.setAttribute('data-ov','1');
 ov.appendChild(box);
 ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
 document.body.appendChild(ov);
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 
@@ -6593,7 +6593,7 @@ var emojiEl=document.getElementById('finInsightEmoji');
 var saveBtn=document.getElementById('finInsightSaveBtn');
 var newBtn=document.getElementById('finInsightNewBtn');
 if(catEl){var catLucide={'Economia':'wallet','Investimento':'trending-up','Alerta':'alert-triangle','Meta':'target'};var ci=catLucide[pick.cat]||'lightbulb';catEl.innerHTML='<i data-lucide="'+ci+'" style="width:12px;height:12px;stroke:currentColor;stroke-width:2;vertical-align:middle;display:inline-block"></i> '+(pick.cat||'Dica');catEl.style.display='inline-flex';catEl.style.alignItems='center';catEl.style.gap='4px';}
-if(emojiEl){emojiEl.innerHTML='<i data-lucide="lightbulb" style="width:32px;height:32px;color:var(--vr)"></i>';if(typeof window.refreshLucide==='function')window.refreshLucide();}
+if(emojiEl){emojiEl.innerHTML='<i data-lucide="lightbulb" style="width:32px;height:32px;color:var(--vr)"></i>';if(typeof window.refreshLucide==='function')lucide.createIcons();}
 if(btn)btn.style.display=pick.btn?'inline-block':'none';
 if(saveBtn)saveBtn.style.display='inline-block';
 if(newBtn)updateNovaDicaBtn();
@@ -6613,7 +6613,7 @@ catch(e){var count=0;}
 var newBtn=document.getElementById('finInsightNewBtn');if(!newBtn)return;
 newBtn.innerHTML='<i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle"></i> Nova dica'+(count<3?' ('+(3-count)+' hoje)':'');
 newBtn.disabled=count>=3;
-if(typeof window.refreshLucide==='function')window.refreshLucide();
+if(typeof window.refreshLucide==='function')lucide.createIcons();
 }
 function salvarInsightDoDia(){
 var insight=window._currentInsight;
@@ -6746,7 +6746,7 @@ alerts.sort(function(a,b){return a.priority-b.priority});
 
 if(alerts.length===0){
 list.innerHTML='<div style="text-align:center;padding:30px;color:var(--t2)"><div style="font-size:2.5em;margin-bottom:8px;display:flex;justify-content:center"><i data-lucide="check-circle" style="width:48px;height:48px;stroke:currentColor;stroke-width:2"></i></div><p style="font-size:.88em">Tudo certo! Nenhum alerta no momento.</p><p style="font-size:.78em;color:var(--t3)">Continue lançando suas finanças para receber alertas personalizados.</p></div>';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }else{
 var h='';
 alerts.forEach(function(a){
@@ -6760,7 +6760,7 @@ h+='<span class="fin-alert-tag '+a.tag+'">'+(a.tag==='critical'?'Critico':a.tag=
 h+='</div></div>';
 });
 list.innerHTML=h;
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 if(badge)badge.textContent=alerts.filter(function(a){return a.tag==='critical'||a.tag==='warning'}).length;
@@ -6920,7 +6920,7 @@ var items=[
 {lucide:'wallet',name:'Quitar minha dívida',desc:'Meses e total a pagar',type:'divida'}
 ];
 grid.innerHTML=items.map(function(c){return '<div class="fin-calc-card" onclick="openFinCalc(\''+c.type+'\')"><span class="fin-calc-icon"><i data-lucide="'+(c.lucide||'calculator')+'" style="width:28px;height:28px;stroke:currentColor;stroke-width:2"></i></span><span class="fin-calc-name">'+c.name+'</span><span class="fin-calc-desc">'+c.desc+'</span></div>'}).join('');
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 function renderEduDicaCard(){
@@ -6938,7 +6938,7 @@ card.innerHTML='<div class="edu-dica-emoji"><i data-lucide="lightbulb" style="wi
 }
 var saved=loadEduDicasSalvas();
 if(hist){hist.innerHTML=saved.length?'<h4 style="font-size:.9em;margin-bottom:8px;display:flex;align-items:center;gap:6px"><i data-lucide="star" style="width:14px;height:14px;stroke:currentColor;stroke-width:2"></i> Favoritas / Histórico</h4>'+saved.slice(0,10).map(function(d){var t=(d.titulo||d.text||'').substring(0,40);return '<div class="edu-dica-hist-item"><i data-lucide="lightbulb" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;flex-shrink:0"></i> '+t+(d.saved?' ★':'')+'</div>'}).join(''):'<p style="font-size:.85em;color:var(--t3)">Nenhuma dica salva ainda.</p>';}
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 function loadEduDicasSalvas(){try{var s=localStorage.getItem('virtus_edu_dicas');return s?JSON.parse(s):[]}catch(e){return []}}
@@ -6963,7 +6963,7 @@ var catClr=({economia:'#22C55E',investimento:'#4F8CFF',habito:'#A855F7',meta:'#F
 window._lastEduDica=d;
 var eduIcon=({economia:'wallet',investimento:'trending-up',habito:'target',meta:'target',alerta:'alert-triangle'})[d.categoria]||'lightbulb';
 card.innerHTML='<div class="edu-dica-emoji"><i data-lucide="'+eduIcon+'" style="width:32px;height:32px;stroke:currentColor;stroke-width:2"></i></div><div class="edu-dica-titulo">'+(d.titulo||'Dica')+'</div><div class="edu-dica-conteudo">'+(d.conteudo||'')+'</div><div class="edu-dica-acao"><i data-lucide="check" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;vertical-align:middle;display:inline-block"></i> Ação para hoje: '+(d.acaoPratica||'')+'</div><span class="edu-dica-cat" style="background:'+catClr+'22;color:'+catClr+'">'+(d.categoria||'')+'</span><div style="margin-top:12px"><button class="calc-btn" onclick="if(window._lastEduDica)salvarEduDica(window._lastEduDica.titulo,window._lastEduDica.emoji)">Salvar dica</button></div>';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }).catch(function(){card.innerHTML='<div class="edu-dica-conteudo">Erro ao gerar dica. Verifique sua conexão.</div><button class="calc-btn" onclick="fetchEduDicaDoDia()">Tentar de novo</button>';});
 }catch(e){card.innerHTML='<div class="edu-dica-conteudo">Erro ao gerar dica.</div><button class="calc-btn" onclick="fetchEduDicaDoDia()">Tentar de novo</button>';}
 }
@@ -6987,7 +6987,7 @@ var arr=loadEduDicasSalvas();
 arr.unshift({titulo:String(titulo),emoji:emoji||'💡',date:new Date().toISOString()});
 if(arr.length>20)arr.pop();
 saveEduDicasSalvas(arr);
-if(document.getElementById('eduDicaHistory')){var saved=loadEduDicasSalvas();document.getElementById('eduDicaHistory').innerHTML='<h4 style="font-size:.9em;margin-bottom:8px;display:flex;align-items:center;gap:6px"><i data-lucide="star" style="width:14px;height:14px;stroke:currentColor;stroke-width:2"></i> Dicas salvas</h4>'+saved.slice(0,7).map(function(d){return '<div class="edu-dica-hist-item"><i data-lucide="lightbulb" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;flex-shrink:0"></i> '+d.titulo+'</div>'}).join('');if(typeof lucide!=='undefined')window.refreshLucide();}
+if(document.getElementById('eduDicaHistory')){var saved=loadEduDicasSalvas();document.getElementById('eduDicaHistory').innerHTML='<h4 style="font-size:.9em;margin-bottom:8px;display:flex;align-items:center;gap:6px"><i data-lucide="star" style="width:14px;height:14px;stroke:currentColor;stroke-width:2"></i> Dicas salvas</h4>'+saved.slice(0,7).map(function(d){return '<div class="edu-dica-hist-item"><i data-lucide="lightbulb" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;flex-shrink:0"></i> '+d.titulo+'</div>'}).join('');if(typeof lucide!=='undefined')lucide.createIcons();}
 toast(typeof t==='function'?t('toast_dica_salva'):'Dica salva!','ok');
 }
 
@@ -7040,7 +7040,7 @@ else{h+='<button class="calc-btn" style="font-size:.85em;padding:8px 16px" oncli
 h+='</div>';
 });
 list.innerHTML=h||'<p style="color:var(--t2)">Nenhum desafio disponível.</p>';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 function aceitarEduDesafio(id){
@@ -7096,7 +7096,7 @@ h+='</div>';
 h+='</div></div>';
 });
 container.innerHTML=h;
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 function toggleFinTrail(idx){
@@ -7123,7 +7123,7 @@ var dicaBox=lesson.dicaPratica?'<div class="edu-lesson-dica"><strong><i data-luc
 document.getElementById('finArticleTitle').textContent=lesson.title;
 document.getElementById('finArticleContent').innerHTML='<p style="font-size:.85em;color:var(--t3);margin:0 0 12px">'+lesson.time+'</p>'+lesson.content+dicaBox+'<div style="margin-top:16px">'+btnHtml+'</div>';
 document.getElementById('finArticleOv').classList.add('show');
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 var eduQuizAnswered=[];
@@ -7272,7 +7272,7 @@ document.getElementById('finCalcBody').innerHTML=body;
 document.getElementById('finCalcResult').style.display='none';
 document.getElementById('finCalcResult').innerHTML='';
 document.getElementById('finCalcOv').classList.add('show');
-if(typeof window.refreshLucide==='function')window.refreshLucide();
+if(typeof window.refreshLucide==='function')lucide.createIcons();
 }
 
 function closeFinCalc(){document.getElementById('finCalcOv').classList.remove('show')}
@@ -7617,7 +7617,7 @@ var bd=document.getElementById('nBody');if(!bd)return;
 var _snoozeHoje2=new Date().toISOString().split('T')[0];
 var _snoozed2={};try{var _sn2=JSON.parse(localStorage.getItem('sib_notif_snooze')||'{}');Object.keys(_sn2).forEach(function(k){if(_sn2[k]===_snoozeHoje2)_snoozed2[k]=true;});}catch(z){}
 var visible=nList.filter(function(n){return !(_snoozed2[n.id]&&n.rd);});
-if(visible.length===0){bd.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--t2)"><div style="font-size:3em;margin-bottom:12px;display:flex;justify-content:center"><i data-lucide="bell" style="width:48px;height:48px"></i></div><div style="font-weight:600;margin-bottom:6px">Tudo em dia!</div><div style="font-size:.85em">Nenhuma notificação.</div></div>';if(typeof window.refreshLucide==='function')window.refreshLucide();return}
+if(visible.length===0){bd.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--t2)"><div style="font-size:3em;margin-bottom:12px;display:flex;justify-content:center"><i data-lucide="bell" style="width:48px;height:48px"></i></div><div style="font-weight:600;margin-bottom:6px">Tudo em dia!</div><div style="font-size:.85em">Nenhuma notificação.</div></div>';if(typeof window.refreshLucide==='function')lucide.createIcons();return}
 var cs={danger:'rgba(239,68,68,.08)',warn:'rgba(234,179,8,.08)',success:'rgba(34,197,94,.08)',info:'rgba(79,140,255,.08)'};
 var bs={danger:'rgba(239,68,68,.25)',warn:'rgba(234,179,8,.25)',success:'rgba(34,197,94,.25)',info:'rgba(79,140,255,.25)'};
 var h='';
@@ -7627,7 +7627,7 @@ h+='<div style="display:flex;align-items:start;gap:12px"><div class="notif-iw"><
 h+='<div class="notif-tt">'+n.tit+'</div><div class="notif-tx">'+n.txt+'</div>';
 h+='<div class="notif-tm"><i data-lucide="clock" style="width:12px;height:12px;vertical-align:middle;margin-right:4px"></i>Agora</div></div></div></div>';}
 bd.innerHTML=h;
-if(typeof window.refreshLucide==='function')window.refreshLucide();
+if(typeof window.refreshLucide==='function')lucide.createIcons();
 }
 
 function mNR(i){
@@ -8269,7 +8269,7 @@ modal.innerHTML='<div style="background:var(--c1);border:1px solid var(--brd);bo
 '</div>'+
 '</div>';
 document.body.appendChild(modal);
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 modal.addEventListener('click',function(e){if(e.target===modal)modal.remove()});
 }
 
@@ -8336,7 +8336,7 @@ el.innerHTML='<div style="text-align:center;padding:20px">'+
 '</div></div>'+
 '<button onclick="showPlansModal()" class="btn btn-r" style="padding:14px 32px;font-size:1em"><i data-lucide="star" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Fazer Upgrade</button>'+
 '</div>';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }else{
 var planName=userPlan==='pro'?'Pro':'Família';
 var statusText=isTrialing?'<span style="color:var(--orange);display:inline-flex;align-items:center;gap:6px"><i data-lucide="flask-conical" style="width:18px;height:18px;stroke:currentColor;stroke-width:2"></i> Trial gratuito até '+trialEnd+'</span>':
@@ -8360,7 +8360,7 @@ el.innerHTML='<div style="text-align:center;padding:20px">'+
 '</div></div>'+
 '<button onclick="openCustomerPortal()" class="btn btn-r" style="padding:12px 28px;font-size:.9em"><i data-lucide="settings" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Gerenciar Assinatura</button>'+
 '</div>';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 }
 
@@ -8988,7 +8988,7 @@ h+='<div class="'+colorClass+'" style="font-size:.9em;font-weight:700">'+arrow+'
 h+='<button onclick="toggleB3QuickAdd()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:linear-gradient(135deg,#10B981,#059669);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:.85em;cursor:pointer;white-space:nowrap" title="Adicionar à carteira"><i data-lucide="plus-circle" style="width:18px;height:18px"></i> Adicionar à carteira</button>';
 var headerEl=_b3('b3Header');if(headerEl)headerEl.innerHTML=h;
 var qaEl=_b3('b3QuickAdd');if(qaEl){qaEl.style.display='none';}
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 
 // KPIs
 var kpis=[
@@ -9578,7 +9578,7 @@ var price=cached&&cached.stock?cached.stock.regularMarketPrice:0;
 var hint=document.getElementById('b3QuickAddHint');
 if(hint)hint.textContent=price>0?'Preço atual: R$ '+price.toFixed(2)+' — qtd será calculada automaticamente':'';
 document.getElementById('b3QuickValor').value='';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 }
 
@@ -10533,7 +10533,7 @@ h+='</div>';
 
 h+='</div>';
 el.innerHTML=h;
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 function sortRanking(){
@@ -10922,7 +10922,7 @@ h+='<td><div style="display:flex;align-items:center;gap:4px"><div style="width:4
 h+='<td><div style="display:flex;align-items:center;gap:6px"><button onclick="quickB3(\''+item.nome.toUpperCase().replace(/'/g,"\\'")+'\')" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--pri);display:inline-flex;align-items:center;justify-content:center" title="Analisar na B3"><i data-lucide="search" style="width:18px;height:18px;stroke:currentColor;stroke-width:2"></i></button><button onclick="delInv('+item.id+')" style="background:none;border:none;cursor:pointer;padding:4px;color:#EF4444;display:inline-flex;align-items:center;justify-content:center" title="Excluir"><i data-lucide="trash-2" style="width:18px;height:18px;stroke:currentColor;stroke-width:2"></i></button></div></td></tr>';
 });
 h+='</tbody></table>';el.innerHTML=h;
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 function renderPortfolioEvolution(){
@@ -11208,7 +11208,7 @@ window._profileQuizInModal=true;
 profileStep=0;profileAnswers=[];
 var ov=document.getElementById('investorProfileModalOv');
 if(ov){ov.classList.add('show');}
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 renderProfileStepModal();
 }
 
@@ -11241,7 +11241,7 @@ if(profileStep>0)nh+='<button class="btn btn-r btn-sm" onclick="profileStep--;re
 else nh+='<div></div>';
 nh+='<button class="btn btn-b btn-sm" onclick="nextProfileStepModal()" style="font-size:.78em">'+(profileStep===profileQuestions.length-1?'Ver Resultado &#10003;':'Próximo &#9654;')+'</button>';
 nav.innerHTML=nh;
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 function selectProfileAnswerModal(val){profileAnswers[profileStep]=val;renderProfileStepModal();}
@@ -11940,7 +11940,7 @@ var el=document.createElement('div');
 el.className='push-notif';
 el.innerHTML='<div style="font-size:1.5em;display:flex;align-items:center;justify-content:center;width:36px;height:36px"><i data-lucide="'+ic+'" style="width:28px;height:28px"></i></div><div style="flex:1"><div style="font-weight:700;font-size:.88em">'+n.title+'</div><div style="font-size:.78em;color:rgba(255,255,255,.7);margin-top:2px">'+n.body+'</div></div><button onclick="this.parentElement.remove();showNextNotif()" style="background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;padding:0 4px;display:flex;align-items:center"><i data-lucide="x" style="width:18px;height:18px"></i></button>';
 document.body.appendChild(el);
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 setTimeout(function(){el.classList.add('push-notif-show')},50);
 setTimeout(function(){
 el.classList.remove('push-notif-show');
@@ -12323,7 +12323,7 @@ else if(type==='patrimônio'){content='<p>Carregando...</p>';}
 
 document.getElementById('kpiModalContent').innerHTML=content;
 document.getElementById('kpiModalOverlay').classList.add('active');
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 
@@ -12441,7 +12441,7 @@ h+='<div class="km-tip warn"><b><i data-lucide="trending-down" style="width:16px
 
 document.getElementById('kmC').innerHTML=h;
 document.getElementById('kmOv').classList.add('on');
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 // ============================================================
@@ -12483,7 +12483,7 @@ h+='<button onclick="cCD()" style="width:100%;margin-top:16px;padding:10px;backg
 document.getElementById('cdmC').innerHTML=h;
 document.getElementById('cdmOv').classList.add('on');
 document.getElementById('cdmBox').classList.add('on');
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 function cCD(){document.getElementById('cdmOv').classList.remove('on');document.getElementById('cdmBox').classList.remove('on')}
 
@@ -12525,7 +12525,7 @@ var html='<div class="fab-consultor-modal"><div class="fab-consultor-header"><di
 openModal(html);
 var ov=document.getElementById('modalOverlay');var box=document.getElementById('modalBox');
 if(ov)ov.classList.add('modal-ia-lanc');if(box)box.classList.add('modal-ia-lanc');
-setTimeout(function(){var el=document.getElementById('fabConsultorInput');if(el)el.focus();if(typeof window.refreshLucide==='function')window.refreshLucide();},150);
+setTimeout(function(){var el=document.getElementById('fabConsultorInput');if(el)el.focus();if(typeof window.refreshLucide==='function')lucide.createIcons();},150);
 }catch(e){console.error('openModalConsultorFAB error:',e);if(typeof toast==='function')toast(typeof t==='function'?t('toast_erro_abrir_consultor'):'Erro ao abrir consultor.','err');}
 }
 var _fabConsultorRecognition=null;
@@ -12541,7 +12541,7 @@ _fabConsultorRecognition.lang='pt-BR';
 _fabConsultorRecognition.continuous=false;
 _fabConsultorRecognition.interimResults=false;
 _fabConsultorRecognition.onstart=function(){if(btn){btn.classList.add('listening');btn.setAttribute('aria-label','Ouvindo...');}if(typeof toast==='function')toast(typeof t==='function'?t('toast_fale_agora'):'Fale agora...','ok');};
-_fabConsultorRecognition.onend=function(){if(btn){btn.classList.remove('listening');btn.setAttribute('aria-label','Falar');}if(typeof window.refreshLucide==='function')window.refreshLucide();};
+_fabConsultorRecognition.onend=function(){if(btn){btn.classList.remove('listening');btn.setAttribute('aria-label','Falar');}if(typeof window.refreshLucide==='function')lucide.createIcons();};
 _fabConsultorRecognition.onerror=function(e){if(btn)btn.classList.remove('listening');if(e.error!=='aborted'&&typeof toast==='function')toast(typeof t==='function'?t('toast_nao_consegui_ouvir'):'Não consegui ouvir. Tente de novo.','err');};
 _fabConsultorRecognition.onresult=function(e){var t=e.results[0][0].transcript||'';if(t.trim()){inp.value=(inp.value?inp.value+' ':'')+t;inp.focus();}if(btn)btn.classList.remove('listening');};
 _fabConsultorRecognition.start();
@@ -12931,7 +12931,7 @@ var alertBar=document.getElementById('alertBar');
 if(alertBar){
 alertBar.style.display='block';
 alertBar.innerHTML='<div class="invite-notification"><div style="font-size:1.2em;margin-bottom:8px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="mail-plus" style="width:22px;height:22px;color:var(--pink)"></i> Convite para Família Sibanki!</div><div style="font-size:.85em;margin-bottom:12px"><b>'+inv.fromName+'</b> ('+inv.fromEmail+') quer vincular as finan\u00e7as com voc\u00ea!</div><div style="display:flex;gap:8px;justify-content:center"><button class="btn btn-r" onclick="acceptCoupleInvite(\''+invDoc.id+'\')"><i data-lucide="check" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Aceitar</button><button class="btn" style="background:rgba(255,255,255,.06);color:var(--t2)" onclick="rejectCoupleInvite(\''+invDoc.id+'\')"><i data-lucide="x" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Recusar</button></div></div>';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 }
 
@@ -12946,7 +12946,7 @@ var path=window.location.pathname||'/app/';
 var baseUrl=window.location.origin+(path.indexOf('/app')>=0?path.replace(/\/+$/,'')||'/app':'/app');
 var link=baseUrl+'#invite='+invDoc.id;
 list.innerHTML='<div style="font-size:.85em"><span style="display:inline-flex;align-items:center;gap:4px;color:var(--yellow)"><i data-lucide="clock" style="width:14px;height:14px"></i></span> Aguardando aceite de <b>'+inv.toEmail+'</b><br><span style="font-size:.8em;color:var(--t2)">Envie este link para aceitar:</span><div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input type="text" readonly id="couplePendingLinkInput" value="'+String(link).replace(/"/g,'&quot;')+'" style="flex:1;min-width:0;padding:6px 8px;font-size:.72em;background:var(--bg2);border:1px solid var(--brd);border-radius:6px;color:var(--t1)"><button type="button" class="btn btn-sm" style="font-size:.72em;padding:4px 10px" onclick="var i=document.getElementById(\'couplePendingLinkInput\');if(i)navigator.clipboard.writeText(i.value).then(function(){toast(\'Link copiado!\',\'ok\')});">Copiar</button></div><button class="btn btn-sm" style="margin-top:10px;background:rgba(255,255,255,.06);color:var(--t2);font-size:.75em" onclick="cancelCoupleInvite(\''+invDoc.id+'\')">Cancelar convite</button></div>';
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 }
 
@@ -13010,7 +13010,7 @@ var tabs=document.querySelectorAll('.fam-tab');
 var panels=document.querySelectorAll('.fam-tab-panel');
 tabs.forEach(function(t){t.classList.remove('on');if(t.getAttribute('data-fam-tab')===tabId)t.classList.add('on');});
 panels.forEach(function(p){p.classList.remove('on');if((p.id==='famTabMembers'&&tabId==='members')||(p.id==='famTabGoals'&&tabId==='goals')||(p.id==='famTabActivity'&&tabId==='activity'))p.classList.add('on');});
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 /* --- ALTERNAR PARCEIRO / FILHOS --- */
@@ -13032,7 +13032,7 @@ childSec.style.display='none';
 if(tabCouple)tabCouple.classList.add('on');
 if(tabChild)tabChild.classList.remove('on');
 }
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 /* --- MOSTRAR DASHBOARD DO CASAL --- */
@@ -13061,7 +13061,7 @@ renderCoupleKPIs(entries,partnerEntries,investments,partnerInvest,myName,partner
 renderCoupleCompare(entries,partnerEntries,myName,partnerName);
 renderCoupleEntries(entries,partnerEntries,myName,partnerName);
 renderCoupleGoals();
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 });
 }
 
@@ -13114,7 +13114,7 @@ h+='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:
 h+='</div>';
 
 el.innerHTML=h;
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 /* --- LANÇAMENTOS RECENTES DO CASAL --- */
@@ -13161,7 +13161,7 @@ h+='<div style="display:flex;justify-content:space-between;font-size:.7em;color:
 h+='</div>';
 });
 el.innerHTML=h;
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 /* --- ADICIONAR META DO CASAL --- */
@@ -13212,7 +13212,7 @@ if(_invitePollInterval){clearInterval(_invitePollInterval);_invitePollInterval=n
 loadCoupleStatus();
 if(typeof go==='function')go('casal',null);
 toast(typeof t==='function'?t('toast_convite_aceito'):'🎉 Convite aceito! Dashboard familiar disponível.','ok');
-setTimeout(function(){if(typeof lucide!=='undefined')window.refreshLucide();},300);
+setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons();},300);
 }
 _inviteListenerUnsub=db.collection('invites').doc(invDoc.id).onSnapshot(function(doc){
 if(!doc.exists)return;
@@ -13870,7 +13870,7 @@ renderFamilyRanking();
 /* Auto-check missions */
 checkMissions(c);
 checkBadges(c);
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 /* ADICIONAR AO COFRINHO */
@@ -14331,7 +14331,7 @@ c+='<div class="kpi-tip warn"><div class="kpi-tip-title"><i data-lucide="alert-t
 }
 ct.innerHTML=c;
 ov.classList.add('active');
-if(typeof lucide!=='undefined')window.refreshLucide();
+if(typeof lucide!=='undefined')lucide.createIcons();
 // Renderiza o gráfico de evolução
 setTimeout(function(){
 var canvas=document.getElementById('patrimonioEvoChart');
@@ -14801,7 +14801,7 @@ if(main)main.style.display="block";
 updateCommAvatar();
 loadCommPosts();
 toast("Bem-vindo à Comunidade!","ok");
-if(typeof window.refreshLucide==='function')window.refreshLucide();
+if(typeof window.refreshLucide==='function')lucide.createIcons();
 }
 
 function renderColorPicker(){
@@ -14865,7 +14865,7 @@ if(target)target.style.display="block";
 if(tab==="news")loadCommNews();
 if(tab==="ranking")loadCommRanking();
 if(tab==="profile")renderCommProfileTab();
-if(typeof lucide!="undefined"&&lucide.createIcons)window.refreshLucide();
+if(typeof lucide!="undefined"&&lucide.createIcons)lucide.createIcons();
 }
 
 function toggleCommCat(el){
@@ -15855,7 +15855,7 @@ commNotifOpen=false;var dd=document.getElementById("commNotifDropdown");if(dd)dd
 
 (function(){
   if(typeof lucide==='undefined')return;
-  window.refreshLucide=function(){ window.refreshLucide(); };
+  window.refreshLucide=function(){ lucide.createIcons(); };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refreshLucide);
   else refreshLucide();
 })();
@@ -16151,7 +16151,7 @@ function showBriefingModal() {
     var hoje = new Date().toISOString().split('T')[0];
     localStorage.setItem('sib_briefing_' + hoje, '1');
   } catch(z) {}
-  if (typeof lucide !== 'undefined') window.refreshLucide();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 
   // ── Insight IA: chama briefingIa Cloud Function ──
   (function() {
