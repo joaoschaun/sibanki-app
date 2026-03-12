@@ -18,14 +18,15 @@ if(_throttleTimers[key])return;
 fn();
 _throttleTimers[key]=setTimeout(function(){_throttleTimers[key]=null;},limit||200);
 }
-var _lucideQueued=false;
+var _lucideDebounce=null;
 window.refreshLucide=function(){
-if(_lucideQueued)return;
-_lucideQueued=true;
-requestAnimationFrame(function(){
-_lucideQueued=false;
-if(typeof lucide!=='undefined'&&lucide.createIcons)lucide.createIcons();
-});
+if(_lucideDebounce)clearTimeout(_lucideDebounce);
+_lucideDebounce=setTimeout(function(){
+_lucideDebounce=null;
+if(typeof lucide!=='undefined'&&lucide.createIcons){
+try{lucide.createIcons();}catch(e){console.warn('[Lucide] createIcons error:',e);}
+}
+},10);
 };
 var _renderInProgress=false;
 function safeRender(fn){
@@ -1232,6 +1233,9 @@ if(typeof requestIdleCallback!=='undefined'){requestIdleCallback(runNextTask,{ti
 else{setTimeout(runNextTask,50);}
 }
 setTimeout(runNextTask,100);
+// Garantir ícones Lucide após renderização
+setTimeout(function(){if(typeof window.refreshLucide==='function')window.refreshLucide();},200);
+setTimeout(function(){if(typeof window.refreshLucide==='function')window.refreshLucide();},800);
 // Features secundárias com delay maior
 setTimeout(function(){if(typeof requireFeature==='function'){requireFeature('ia_insights_produto',function(){if(typeof checkProdutoInsight==='function')checkProdutoInsight();});requireFeature('briefing_ia',function(){if(typeof showBriefingModal==='function')showBriefingModal();});}},3000);
 }
@@ -6779,7 +6783,7 @@ var FIN_INV_DATA=[
 {title:'Dividendos: renda passiva com acoes',body:'<h4>O que são dividendos?</h4><p>Dividendos sao parte do lucro que a empresa distribui aos acionistas. No Brasil, sao <b>isentos de IR</b>.</p><h4>Como montar uma carteira de dividendos</h4><p>1. Busque empresas com histórico consistente de pagamento<br>2. Analise o Dividend Yield (DY) — idealmente acima de 5-6%<br>3. Diversifique entre setores (energia, bancos, saneamento)<br>4. Reinvista os dividendos para acelerar o crescimento</p><div class="example-box"><b>&#128200; Simulação:</b><br>Carteira de R$ 100.000 com DY medio de 8%/ano:<br>• Renda passiva: ~R$ 667/mês<br>• Reinvestindo por 10 anos (DY 8% + valorização 5%): patrimônio ~R$ 340.000</div><div class="risk-meter"><span style="font-size:.82em;font-weight:600">Risco:</span><div class="risk-bar"><div class="risk-fill" style="width:50%;background:#EAB308"></div></div><span style="font-size:.78em;color:#EAB308">Medio</span></div>'}
 ]},
 {id:'fii',cls:'fii',icon:'&#127970;',name:'FIIs',risk:3,articles:[
-{title:'Fundos Imobiliários (FIIs)',body:'<h4>O que são?</h4><p>FIIs são fundos que investem em imóveis ou títulos imobiliários. Você compra cotas na bolsa e recebe alugueis mensais (dividendos) <b>isentos de IR</b>.</p><h4>Tipos de FIIs</h4><p><b>Tijolo:</b> investem em imóveis físicos (shoppings, galpoes, lajes corporativas)<br><b>Papel:</b> investem em títulos como CRI e LCI<br><b>Hibrido:</b> misturam ambos</p><div class="pros-cons"><div class="pro-box"><b>&#128994; Pros</b><br>• Renda mensal isenta de IR<br>• Investimento mínimo baixo (~R$ 10)<br>• Diversificação imobiliária<br>• Liquidez (compra/vende na bolsa)</div><div class="con-box"><b>&#128308; Contras</b><br>• Cota pode desvalorizar<br>• Vacância dos imóveis<br>• Risco de mercado<br>• Gestão do fundo pode ser ruim</div></div><div class="example-box"><b>&#128200; Exemplo:</b><br>100 cotas de um FII a R$ 100 = R$ 10.000 investidos<br>DY de 0,80%/mês = R$ 80/mês de rendimento isento<br>= R$ 960/ano sem pagar IR</div><div class="risk-meter"><span style="font-size:.82em;font-weight:600">Risco:</span><div class="risk-bar"><div class="risk-fill" style="width:40%;background:#EAB308"></div></div><span style="font-size:.78em;color:#EAB308">Medio</span></div>'}
+{title:'Fundos Imobiliários (FIIs)',body:'<h4>O que são?</h4><p>FIIs são fundos que investem em imóveis ou títulos imobiliários. Você compra cotas na bolsa e recebe alugueis mensais (dividendos) <b>isentos de IR</b>.</p><h4>Tipos de FIIs</h4><p><b>Tijolo:</b> investem em imóveis físicos (shoppings, galpoes, lajes corporativas)<br><b>Papel:</b> investem em títulos como CRI e LCI<br><b>Hibrido:</b> misturam ambos</p><div class="pros-cons"><div class="pro-box"><b>&#128994; Pros</b><br>• Renda mensal isenta de IR<br>• Investimento mínimo baixo (~R$ 10)<br>• Diversificação imobiliária<br>• Liquidez (compra/vende na bolsa)</div><div class="con-box"><b>&#128308; Contras</b><br>• Cota pode desvalorizar<br>• Vacância dos imóveis<br>• Risco de mercado<br>�� Gestão do fundo pode ser ruim</div></div><div class="example-box"><b>&#128200; Exemplo:</b><br>100 cotas de um FII a R$ 100 = R$ 10.000 investidos<br>DY de 0,80%/mês = R$ 80/mês de rendimento isento<br>= R$ 960/ano sem pagar IR</div><div class="risk-meter"><span style="font-size:.82em;font-weight:600">Risco:</span><div class="risk-bar"><div class="risk-fill" style="width:40%;background:#EAB308"></div></div><span style="font-size:.78em;color:#EAB308">Medio</span></div>'}
 ]},
 {id:'cripto',cls:'cripto',icon:'&#129689;',name:'Cripto',risk:5,articles:[
 {title:'Criptomoedas: Bitcoin e alem',body:'<h4>O que são criptomoedas?</h4><p>Moedas digitais descentralizadas baseadas em tecnologia blockchain. Bitcoin foi a primeira (2009) e permanece a maior em valor de mercado.</p><h4>Principais criptos</h4><p><b>Bitcoin (BTC):</b> "ouro digital", reserva de valor<br><b>Ethereum (ETH):</b> plataforma de contratos inteligentes<br><b>Stablecoins (USDT/USDC):</b> pareadas ao dolar</p><div class="pros-cons"><div class="pro-box"><b>&#128994; Pros</b><br>• Potencial de valorização extrema<br>• Descentralização<br>• Mercado 24/7<br>• Diversificação global</div><div class="con-box"><b>&#128308; Contras</b><br>• Volatilidade extrema<br>• Risco de perda total<br>• Regulação incerta<br>• Golpes e fraudes comuns</div></div><div class="example-box"><b>&#128308; REGRA DE OURO:</b><br>Nunca invista mais do que pode perder totalmente.<br>Sugestao: máximo 5-10% do patrimônio em cripto.</div><div class="risk-meter"><span style="font-size:.82em;font-weight:600">Risco:</span><div class="risk-bar"><div class="risk-fill" style="width:90%;background:linear-gradient(135deg,#4F8CFF,#7C5CFC)"></div></div><span style="font-size:.78em;color:#EF4444">Muito Alto</span></div>'}
