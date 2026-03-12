@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;600;700&family=Outfit:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
 /* Responsivo global */
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;transition:color .15s ease,background .15s ease,opacity .15s ease}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* Transições apenas para elementos interativos */
+a,button,.btn,.card,.tab,.nav-item,.menu-item,[role="button"]{transition:color .15s ease,background .15s ease,opacity .15s ease}
 html,body{overflow-x:hidden;max-width:100vw}
 button,.btn{transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
 button:hover,.btn:hover{transform:translateY(-1px)}
