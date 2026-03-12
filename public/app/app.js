@@ -3241,7 +3241,17 @@ textEl.textContent=msg;
 card.style.display='block';
 }
 
+var _renderAllDebounce=null;
+var _renderAllLastRun=0;
 function renderAll(){
+var now=Date.now();
+/* Permite execução imediata se passou 100ms, senão agrupa */
+if(now-_renderAllLastRun<100){
+if(_renderAllDebounce)return;
+_renderAllDebounce=setTimeout(function(){_renderAllDebounce=null;renderAll();},100);
+return;
+}
+_renderAllLastRun=now;
 var tabEl=document.querySelector('.tab.on');
 var tabId=tabEl&&tabEl.id?tabEl.id:'dash';
 rKPI();
@@ -3468,7 +3478,13 @@ var fA=document.getElementById('fA');if(fA){fA.disabled=false;fA.style.opacity='
 
 var _rEPage=0,_rEPageSize=50;
 function setREPage(p){_rEPage=p;rE();}
+var _rEDebounce=null;
 function rE(){
+if(_rEDebounce){clearTimeout(_rEDebounce);}
+_rEDebounce=setTimeout(_rECore,50);
+}
+function _rECore(){
+_rEDebounce=null;
 var f=getFilteredEntries().slice();
 f.sort(function(a,b){return b.date.localeCompare(a.date)});
 var total=f.length;
@@ -4833,7 +4849,14 @@ if(typeof lucide!=='undefined')lucide.createIcons();
 // CHARTS
 function dC(){var k=Object.keys(charts);for(var i=0;i<k.length;i++){try{charts[k[i]].destroy()}catch(e){}}charts={}}
 
+var _rChartsDebounce=null;
 function rCharts(){
+/* Debounce para evitar recriação excessiva de gráficos */
+if(_rChartsDebounce){clearTimeout(_rChartsDebounce);}
+_rChartsDebounce=setTimeout(_rChartsCore,150);
+}
+function _rChartsCore(){
+_rChartsDebounce=null;
 dC();Chart.defaults.color=document.body.classList.contains('light')?'#475569':'#94a3b8';Chart.defaults.font.family='Inter';
 var gc='rgba(148,163,184,0.06)';
 var m=getMD();var mk=Object.keys(m).sort();
