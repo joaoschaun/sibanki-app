@@ -24,7 +24,7 @@ if(_lucideQueued)return;
 _lucideQueued=true;
 requestAnimationFrame(function(){
 _lucideQueued=false;
-if(typeof lucide!=='undefined'&&lucide.createIcons)window.refreshLucide();
+if(typeof lucide!=='undefined'&&lucide.createIcons)lucide.createIcons();
 });
 };
 var _renderInProgress=false;
