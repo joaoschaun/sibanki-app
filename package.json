@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "dev": "npx serve public -l 3000",
     "syntax-check": "node -e \"new Function(require('fs').readFileSync('public/app/app.js','utf8'))\"",
     "test": "playwright test",
     "test:smoke": "playwright test smoke",
