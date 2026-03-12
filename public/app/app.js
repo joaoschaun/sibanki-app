@@ -835,7 +835,7 @@ document.body.classList.remove('drawer-sidebar-collapsed');
 });
 
 // PERFIL
-(function(){document.querySelectorAll('.perfil-tab').forEach(function(btn){btn.addEventListener('click',function(){var id=btn.getAttribute('data-perfil-tab');if(!id)return;document.querySelectorAll('.perfil-tab').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-perfil-tab')===id);});document.querySelectorAll('.perfil-tab-content').forEach(function(c){c.classList.toggle('on',c.id==='perfil'+id.charAt(0).toUpperCase()+id.slice(1));});if(typeof lucide!=='undefined')lucide.createIcons();});});})();
+(function(){document.querySelectorAll('.perfil-tab').forEach(function(btn){btn.addEventListener('click',function(){var id=btn.getAttribute('data-perfil-tab');if(!id)return;document.querySelectorAll('.perfil-tab').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-perfil-tab')===id);});document.querySelectorAll('.perfil-tab-content').forEach(function(c){c.classList.toggle('on',c.id==='perfil'+id.charAt(0).toUpperCase()+id.slice(1));});if(typeof loadPerfilData==='function')loadPerfilData();if(typeof lucide!=='undefined')lucide.createIcons();});});})();
 var _perfilPrivState={analise:true,personalizacao:true,marketing:false,parceiros:false,relatorios:true};
 var _perfilAlertasState={login:true,senha:true,device:true,bloqueio:true,resumo:false};
 function calcFinScore(){
