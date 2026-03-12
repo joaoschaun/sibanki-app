@@ -6,36 +6,6 @@ if(!cur&&old1){localStorage.setItem('vrt_b3token',old1);}
 if(!cur&&!old1&&old2){localStorage.setItem('vrt_b3token',old2);}
 })();
 
-/* ── Performance Utilities ── */
-var _debounceTimers={};
-function debounce(key,fn,delay){
-if(_debounceTimers[key])clearTimeout(_debounceTimers[key]);
-_debounceTimers[key]=setTimeout(fn,delay||100);
-}
-var _throttleTimers={};
-function throttle(key,fn,limit){
-if(_throttleTimers[key])return;
-fn();
-_throttleTimers[key]=setTimeout(function(){_throttleTimers[key]=null;},limit||200);
-}
-var _lucideDebounce=null;
-window.refreshLucide=function(){
-if(_lucideDebounce)clearTimeout(_lucideDebounce);
-_lucideDebounce=setTimeout(function(){
-_lucideDebounce=null;
-if(typeof lucide!=='undefined'&&lucide.createIcons){
-try{lucide.createIcons();}catch(e){console.warn('[Lucide] createIcons error:',e);}
-}
-},10);
-};
-var _renderInProgress=false;
-function safeRender(fn){
-if(_renderInProgress)return;
-_renderInProgress=true;
-try{fn();}catch(e){console.error('[Performance] Render error:',e);}
-finally{setTimeout(function(){_renderInProgress=false;},50);}
-}
-
 /* ── next block ── */
 
 function pf(id){var v=document.getElementById(id);if(!v)return 0;return parseFloat(String(v.value).replace(/\./g,'').replace(',','.'))||0;}
@@ -508,14 +478,11 @@ accountBalances={};accountCesta={};accountMeta={};recurrents=[];cards=[];
 dashboardLayout=null;onboardingDone=false;
 }
 initUI();
-/* Navegação e tour agrupados para evitar sobrecarga de setTimeout */
-requestAnimationFrame(function(){
-if(typeof go==='function')go('dash',null);
+setTimeout(function(){if(typeof go==='function')go('dash',null);},50);
+setTimeout(function(){if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();},400);
 setTimeout(function(){
-if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();
-if(onboardingDone&&window._tourCompleto!==true){setTimeout(function(){if(typeof startSibankiTour==='function')startSibankiTour();},1000);}
-},300);
-});
+if(onboardingDone&&window._tourCompleto!==true){if(typeof startSibankiTour==='function')startSibankiTour();}
+},1400);
 }catch(e){console.error('applyDocFromServer error:',e);toast(typeof t==='function'?t('toast_erro_preparar'):'Erro ao preparar a tela. Recarregue a página.','err');}
 if(typeof updateResumoSemanalToggle==='function')updateResumoSemanalToggle(!!window._resumoSemanalEmail);
 if(lb){lb.classList.add('hidden');lb.style.display='none'}
@@ -1138,7 +1105,7 @@ if(id==='ia'&&window._proactiveConsultorQuestion){setTimeout(function(){var q=do
 /* Calendar hook - render calendar when tab is selected */
 if(id==='calendario'&&typeof rCal==='function'){try{rCal()}catch(e){console.warn('rCal error:',e)}}
 /* Sempre re-renderizar o conteúdo da aba ao trocar (metas, dashboard, etc.) */
-if(typeof renderAll==='function'){debounce('go_renderAll',renderAll,50);}
+if(typeof renderAll==='function'){setTimeout(renderAll,0);}
 }
 
 function escapeHtml(s){
@@ -1202,42 +1169,28 @@ var n=Object.keys(achievements).length;
 if(n>=12)return'Mestre';if(n>=9)return'Expert';if(n>=6)return'Avançado';if(n>=3)return'Intermediário';if(n>=1)return'Iniciante';return'Novato';
 }
 
-// INIT UI - Otimizado para performance
+// INIT UI
 function initUI(){
 var anyTabOn=document.querySelector('.tab.on');
 if(!anyTabOn){if(typeof go==='function')go('dash',null);}
-var fD=document.getElementById('fD');if(fD)fD.value=new Date().toISOString().split('T')[0];
-var invD=document.getElementById('invDate');if(invD)invD.value=new Date().toISOString().split('T')[0];
-// Renderização inicial com proteção
-safeRender(function(){
-renderCatTags();renderAccTags();
-try{renderAll();}catch(e){console.error('renderAll error:',e);}
-});
-// Inicializações agrupadas via requestIdleCallback para não bloquear
-var initTasks=[
-function(){popTfSels();if(typeof popImpCardSel==="function")popImpCardSel();popRcSels();},
-function(){procRc();popFilCat();loadGeminiKey();loadBrapiToken();},
-function(){loadCashMode();loadTheme();popFilMes();},
-function(){var _imp=document.getElementById('dashImportPromoCard');if(_imp)_imp.style.display='none';var _tel=document.getElementById('dashTelegramPromoCard');if(_tel)_tel.style.display='none';},
-function(){if(typeof chkOnb==='function')chkOnb();},
-function(){if(typeof renderAlertBar==='function')renderAlertBar();},
-function(){if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();},
-function(){if(typeof initCouple==="function")initCouple();checkInviteHash();checkVoiceParam();}
-];
-var taskIdx=0;
-function runNextTask(){
-if(taskIdx>=initTasks.length)return;
-try{initTasks[taskIdx]();}catch(e){console.warn('[initUI] task error:',e);}
-taskIdx++;
-if(typeof requestIdleCallback!=='undefined'){requestIdleCallback(runNextTask,{timeout:300});}
-else{setTimeout(runNextTask,50);}
-}
-setTimeout(runNextTask,100);
-// Garantir ícones Lucide após renderização
-setTimeout(function(){if(typeof window.refreshLucide==='function')lucide.createIcons();},200);
-setTimeout(function(){if(typeof window.refreshLucide==='function')lucide.createIcons();},800);
-// Features secundárias com delay maior
-setTimeout(function(){if(typeof requireFeature==='function'){requireFeature('ia_insights_produto',function(){if(typeof checkProdutoInsight==='function')checkProdutoInsight();});requireFeature('briefing_ia',function(){if(typeof showBriefingModal==='function')showBriefingModal();});}},3000);
+document.getElementById('fD').value=new Date().toISOString().split('T')[0];
+document.getElementById('invDate').value=new Date().toISOString().split('T')[0];
+renderCatTags();renderAccTags();try{renderAll();}catch(e){console.error('renderAll error:',e);toast(typeof t==='function'?t('toast_erro_renderizar'):'Erro ao renderizar. Recarregue a página.','err')}
+popTfSels();if(typeof popImpCardSel==="function")popImpCardSel();popRcSels();procRc();popFilCat();loadGeminiKey();loadBrapiToken();loadCashMode();loadTheme();popFilMes();popTfSels();setTimeout(chkOnb,800);
+// Ocultar banners fixos legados
+var _imp=document.getElementById('dashImportPromoCard');if(_imp)_imp.style.display='none';
+var _tel=document.getElementById('dashTelegramPromoCard');if(_tel)_tel.style.display='none';
+// Flash banners contextuais
+setTimeout(function(){if(typeof renderAlertBar==='function')renderAlertBar();},1200);
+// Produto insight contextual (IA de vendas)
+setTimeout(function(){if(typeof requireFeature==='function')requireFeature('ia_insights_produto',function(){if(typeof checkProdutoInsight==='function')checkProdutoInsight();});},2000);
+// Briefing pós-login — controlado por feature flag
+setTimeout(function(){if(typeof requireFeature==='function')requireFeature('briefing_ia',function(){if(typeof showBriefingModal==='function')showBriefingModal();});},1800);
+setTimeout(function(){if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();},600);
+setTimeout(function(){if(!window.matchMedia("(display-mode:standalone)").matches){}},3000);
+if(typeof initCouple==="function")initCouple();
+setTimeout(checkInviteHash,600);
+setTimeout(checkVoiceParam,800);
 }
 function checkVoiceParam(){
 var params=new URLSearchParams(window.location.search);
@@ -3268,16 +3221,7 @@ textEl.textContent=msg;
 card.style.display='block';
 }
 
-var _renderAllPending=false;
 function renderAll(){
-if(_renderAllPending){return;}
-_renderAllPending=true;
-requestAnimationFrame(function(){
-_renderAllPending=false;
-_renderAllCore();
-});
-}
-function _renderAllCore(){
 var tabEl=document.querySelector('.tab.on');
 var tabId=tabEl&&tabEl.id?tabEl.id:'dash';
 rKPI();
@@ -3298,7 +3242,7 @@ else if(tabId==='dicas'){rDicas();}
 else if(tabId==='calendario'){if(typeof renderCalendario==='function')renderCalendario();else if(typeof rCal==='function')rCal();}
 else if(tabId==='casal'||tabId==='familia'){/* família: sem re-render pesado, dados carregados por listeners próprios */}
 else if(tabId==='ia'||tabId==='config'||tabId==='comunidade'){if(tabId==='ia'&&typeof markPrimeiroPassoIa==='function')markPrimeiroPassoIa();}
-else{/* Fallback: renderiza apenas o essencial para evitar travamento */console.warn('[Performance] renderAll fallback - tab desconhecida:',tabId);rKPI();}
+else{rE();rCharts();rDicas();rBadges();rRel();rInv();try{renderPortfolio();}catch(e){}rMetas();rOrc();checkAch();renderCarteira();renderDashW();renderInsightDoDia();rnRc();checkAlerts();renderDashPremium();renderNewCharts();renderCards();renderFatura();}
 rnRc();
 try{bldN();}catch(x){}
 if(typeof updateDrawerUser==='function')updateDrawerUser();
@@ -4870,10 +4814,6 @@ if(typeof lucide!=='undefined')lucide.createIcons();
 function dC(){var k=Object.keys(charts);for(var i=0;i<k.length;i++){try{charts[k[i]].destroy()}catch(e){}}charts={}}
 
 function rCharts(){
-/* Performance: só renderiza charts se a tab relevante estiver visível */
-var tabEl=document.querySelector('.tab.on');
-var tabId=tabEl&&tabEl.id?tabEl.id:'';
-if(tabId!=='rel'&&tabId!=='dash'){return;}
 dC();Chart.defaults.color=document.body.classList.contains('light')?'#475569':'#94a3b8';Chart.defaults.font.family='Inter';
 var gc='rgba(148,163,184,0.06)';
 var m=getMD();var mk=Object.keys(m).sort();
@@ -16049,7 +15989,7 @@ function checkProdutoInsight() {
   el.style.display = 'block';
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ═════════════════════════════════════════════════════════��═
    SISTEMA 2: BRIEFING MODAL DE LOGIN
    - Aparece 1x por sessão após login
    - Resumo financeiro inteligente e objetivo
