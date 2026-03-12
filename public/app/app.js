@@ -761,7 +761,9 @@ dd.style.left=leftPos+'px';
 dd.style.right='auto';
 setTimeout(function(){
 document.addEventListener('click',function _cad(ev){
-if(!dd.contains(ev.target)&&ev.target!==av){closeAvatarDropdown();}
+if(dd.contains(ev.target)||ev.target===av)return;
+if(ev.target.closest&&(ev.target.closest('#drawerToggleBtn')||ev.target.closest('#drawer')||ev.target.closest('.drawer-overlay')))return;
+closeAvatarDropdown();
 document.removeEventListener('click',_cad);
 });
 },10);
@@ -834,8 +836,44 @@ document.body.classList.remove('drawer-sidebar-collapsed');
 }
 });
 
-// PERFIL
-(function(){document.querySelectorAll('.perfil-tab').forEach(function(btn){btn.addEventListener('click',function(){var id=btn.getAttribute('data-perfil-tab');if(!id)return;document.querySelectorAll('.perfil-tab').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-perfil-tab')===id);});document.querySelectorAll('.perfil-tab-content').forEach(function(c){c.classList.toggle('on',c.id==='perfil'+id.charAt(0).toUpperCase()+id.slice(1));});if(typeof loadPerfilData==='function')loadPerfilData();if(typeof lucide!=='undefined')lucide.createIcons();});});})();
+// PERFIL — bind tabs (robusto: sem visibility, apenas display, try/catch)
+function bindPerfilTabs(){
+var perfilEl=document.getElementById('perfil');if(!perfilEl)return;
+var tabs=perfilEl.querySelectorAll('.perfil-tab');
+if(!tabs.length)return;
+Array.from(tabs).forEach(function(btn){
+var novo=btn.cloneNode(true);
+btn.parentNode.replaceChild(novo,btn);
+novo.addEventListener('click',function(){
+var id=novo.getAttribute('data-perfil-tab');if(!id)return;
+var targetId='perfil'+(id.charAt(0).toUpperCase()+id.slice(1));
+perfilEl.querySelectorAll('.perfil-tab').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-perfil-tab')===id);});
+perfilEl.querySelectorAll('.perfil-tab-content').forEach(function(c){
+var isActive=c.id===targetId;
+c.classList.toggle('on',isActive);
+c.style.setProperty('display',isActive?'block':'none','important');
+c.style.removeProperty('visibility');
+});
+try{if(typeof renderPerfilSegurancaPrivacidade==='function')renderPerfilSegurancaPrivacidade();}catch(e){}
+try{if(typeof loadPerfilData==='function')loadPerfilData();}catch(e){}
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);
+});
+});
+ensurePerfilTabVisible();
+}
+function ensurePerfilTabVisible(){
+var perfilEl=document.getElementById('perfil');if(!perfilEl)return;
+var activeBtn=perfilEl.querySelector('.perfil-tab.on');
+var contents=perfilEl.querySelectorAll('.perfil-tab-content');
+var targetId=activeBtn?('perfil'+(activeBtn.getAttribute('data-perfil-tab').charAt(0).toUpperCase()+activeBtn.getAttribute('data-perfil-tab').slice(1))):'perfilVisao';
+contents.forEach(function(c){
+var isActive=c.id===targetId;
+c.classList.toggle('on',isActive);
+c.style.setProperty('display',isActive?'block':'none','important');
+c.style.removeProperty('visibility');
+});
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',bindPerfilTabs);}else{bindPerfilTabs();}
 var _perfilPrivState={analise:true,personalizacao:true,marketing:false,parceiros:false,relatorios:true};
 var _perfilAlertasState={login:true,senha:true,device:true,bloqueio:true,resumo:false};
 function calcFinScore(){
@@ -848,26 +886,45 @@ if(tmp&&el)el.style.display='none';
 }
 return window._lastFinScore||0;
 }
+function renderPerfilSegurancaPrivacidade(){
+var perfilRoot=document.getElementById('perfil');
+var sl=document.getElementById('perfilSegurancaList')||(perfilRoot&&perfilRoot.querySelector('#perfilSegurancaList'));
+if(!sl){console.warn('[Perfil] perfilSegurancaList não encontrado no DOM — aba Segurança pode ficar vazia');}
+if(sl){try{
+var segItems=[
+{icon:'lock',title:'Alterar senha',desc:typeof U!=='undefined'&&U&&U.providerData&&U.providerData[0]&&U.providerData[0].providerId==='google.com'?'Conta Google — use as configurações do Google':'Clique para redefinir sua senha por e-mail',action:'Alterar senha',fn:'segAlterarSenha()',available:!(typeof U!=='undefined'&&U&&U.providerData&&U.providerData[0]&&U.providerData[0].providerId==='google.com')},
+{icon:'smartphone',title:'Autenticação de dois fatores',desc:'Em breve — camada extra de segurança para sua conta',action:'Em breve',fn:"toast('2FA em breve!','info')",available:false},
+{icon:'monitor',title:'Sessões ativas',desc:'Encerre sessões em outros dispositivos',action:'Encerrar outras sessões',fn:'segEncerrarSessoes()',available:true},
+{icon:'clock',title:'Histórico de acessos',desc:'Veja data e hora dos seus últimos logins',action:'Ver histórico',fn:'segVerHistorico()',available:true}
+];
+sl.innerHTML=segItems.map(function(s){var btnStyle=s.available?'':'opacity:.5;cursor:not-allowed';return '<div style="display:flex;align-items:center;justify-content:space-between;padding:18px 0;border-bottom:1px solid var(--brd);gap:12px;flex-wrap:wrap"><div style="display:flex;gap:12px;align-items:center;flex:1;min-width:0"><div style="width:42px;height:42px;border-radius:11px;background:var(--bg2);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="'+s.icon+'" style="width:18px;height:18px;color:var(--vr)"></i></div><div style="min-width:0"><div style="font-size:.9rem;font-weight:600;color:var(--t1)">'+escapeHtml(s.title)+'</div><div style="font-size:.8rem;color:var(--t2);margin-top:2px">'+escapeHtml(s.desc)+'</div></div></div><button class="btn btn-p" style="font-size:.78rem;padding:7px 14px;flex-shrink:0;'+btnStyle+'" onclick="'+s.fn+'">'+escapeHtml(s.action)+'</button></div>';}).join('');
+}catch(e){console.warn('[Perfil] Erro ao preencher Segurança:',e);}
+}
+var ALERTAS=[{k:'login',l:'Novo login detectado'},{k:'senha',l:'Troca de senha'},{k:'device',l:'Acesso de novo dispositivo'},{k:'bloqueio',l:'Tentativa de acesso bloqueada'},{k:'resumo',l:'Resumo semanal'}];
+var alist=document.getElementById('perfilAlertasList')||(perfilRoot&&perfilRoot.querySelector('#perfilAlertasList'));if(!alist){console.warn('[Perfil] perfilAlertasList não encontrado no DOM');}if(alist){alist.innerHTML=ALERTAS.map(function(a){var on=_perfilAlertasState[a.k];return '<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:.88rem;color:var(--t2)">'+escapeHtml(a.l)+'</span><button type="button" class="perfil-toggle '+(on?'on':'')+'" onclick="togglePerfilAlerta(\''+a.k+'\',this)" aria-label="Toggle"></button></div>';}).join('');}
+var PRIV=[{k:'analise',t:'Análise de dados para melhorar a IA',d:'Seus dados anonimizados ajudam a tornar a IA mais precisa'},{k:'personalizacao',t:'Personalização de recomendações',d:'Permite que a IA use seu histórico para sugestões mais relevantes'},{k:'marketing',t:'Comunicações de marketing',d:'Receba dicas, novidades e ofertas por e-mail'},{k:'parceiros',t:'Compartilhamento com parceiros',d:'Dados para propostas personalizadas de crédito e seguros'},{k:'relatorios',t:'Relatórios agregados de mercado',d:'Contribua anonimamente para estatísticas financeiras'}];
+var pl=document.getElementById('perfilPrivacidadeList')||(perfilRoot&&perfilRoot.querySelector('#perfilPrivacidadeList'));if(!pl){console.warn('[Perfil] perfilPrivacidadeList não encontrado no DOM — aba Privacidade pode ficar vazia');}if(pl){try{pl.innerHTML=PRIV.map(function(p){var on=_perfilPrivState[p.k];return '<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:20px"><div><div style="font-size:.9rem;font-weight:600;color:var(--t1);margin-bottom:3px">'+escapeHtml(p.t)+'</div><div style="font-size:.8rem;color:var(--t2);line-height:1.6">'+escapeHtml(p.d)+'</div></div><button type="button" class="perfil-toggle '+(on?'on':'')+'" onclick="togglePerfilPriv(\''+p.k+'\',this)"></button></div>';}).join('');}catch(e){console.warn('[Perfil] Erro ao preencher Privacidade:',e);}}
+if(typeof lucide!=='undefined')lucide.createIcons();
+}
 function loadPerfilData(){
-console.log('[v0] loadPerfilData chamada');
-console.log('[v0] perfilSegurancaList:', document.getElementById('perfilSegurancaList'));
-console.log('[v0] perfilPrivacidadeList:', document.getElementById('perfilPrivacidadeList'));
+var score=0;var saldo=0;
+try{
 if(typeof window._lastFinScore!=='number')calcFinScore();
-var score=typeof window._lastFinScore==='number'?window._lastFinScore:0;
+score=typeof window._lastFinScore==='number'?window._lastFinScore:0;
 var offset=408-(408*score/100);
 var arc=document.getElementById('perfilScoreArc');if(arc){arc.style.strokeDashoffset=offset;arc.style.stroke=score>=80?'var(--green)':score>=60?'var(--yellow)':'var(--danger)';}
 var num=document.getElementById('perfilScoreNum');if(num)num.textContent=score;
 var label=document.getElementById('perfilSaudeLabel');if(label)label.textContent=score>=80?'Saúde Excelente':score>=60?'Saúde Moderada':'Saúde Crítica';
-var saldo=userAccs.reduce(function(s,a){return s+getAccBal(a).atual;},0);
+if(typeof userAccs!=='undefined'&&Array.isArray(userAccs)){saldo=userAccs.reduce(function(s,a){return s+(typeof getAccBal==='function'?getAccBal(a).atual:0);},0);}
 var mesAtual=new Date().toISOString().substring(0,7);
-var entradasMes=entries.filter(function(e){return e.date&&e.date.startsWith(mesAtual)&&!e.isTransfer&&e.category!=='Transferencia'&&e.status!=='pendente'&&e.status!=='agendado';});
+var entradasMes=typeof entries!=='undefined'&&Array.isArray(entries)?entries.filter(function(e){return e.date&&e.date.startsWith(mesAtual)&&!e.isTransfer&&e.category!=='Transferencia'&&e.status!=='pendente'&&e.status!=='agendado';}):[];
 var recReal=entradasMes.filter(function(e){return e.type==='receita';}).reduce(function(s,e){return s+e.value;},0);
 var despReal=entradasMes.filter(function(e){return e.type==='despesa';}).reduce(function(s,e){return s+e.value;},0);
 var endivPct=recReal>0?Math.round(despReal/recReal*100):0;
 var endivStatus=endivPct>80?'bad':endivPct>60?'warn':'ok';
-var invAtual=entries.filter(function(e){return e.category==='Investimentos'&&e.date&&e.date.startsWith(mesAtual);}).reduce(function(s,e){return s+e.value;},0);
-var mdObj=getMD();var mks=Object.keys(mdObj);
-var avgGasto=mks.length>0?mks.reduce(function(s,k){return s+mdObj[k].d;},0)/mks.length:despReal;
+var invAtual=entradasMes.filter(function(e){return e.category==='Investimentos';}).reduce(function(s,e){return s+e.value;},0);
+var mdObj=typeof getMD==='function'?getMD():{};var mks=Object.keys(mdObj);
+var avgGasto=mks.length>0?mks.reduce(function(s,k){return s+mdObj[k].d;},0)/mks.length:despReal||1;
 var reservaIdeal=avgGasto*6;
 var reservaPct=reservaIdeal>0?Math.min(100,Math.round(saldo/reservaIdeal*100)):0;
 var reservaMeses=reservaIdeal>0?Math.min(6,saldo/avgGasto).toFixed(1):0;
@@ -876,7 +933,7 @@ var HEALTH=[
 {label:'Reserva de emergência',status:reservaStatus,text:reservaMeses+' de 6 meses',pct:reservaPct},
 {label:'Score de crédito',status:'ok',text:'Não disponível',pct:0},
 {label:'Endividamento',status:endivStatus,text:endivPct+'% da renda',pct:endivPct},
-{label:'Investimentos ativos',status:invAtual>0?'ok':'warn',text:'R$ '+invAtual.toFixed(2).replace('.',','),pct:Math.min(100,invAtual/500*100)},
+{label:'Investimentos ativos',status:invAtual>0?'ok':'warn',text:'R$ '+(invAtual||0).toFixed(2).replace('.',','),pct:Math.min(100,invAtual/500*100)},
 {label:'Orçamento controlado',status:endivPct<=100?'ok':'bad',text:endivPct<=100?'Dentro do orçamento':'Acima do orçamento',pct:endivPct<=100?100:0}
 ];
 var SC={ok:'var(--green)',warn:'var(--yellow)',bad:'var(--danger)'};
@@ -885,34 +942,20 @@ var METAS=Array.isArray(goals)&&goals.length>0?goals.slice(0,5).map(function(g){
 var ml=document.getElementById('perfilMetasList');if(ml){ml.innerHTML=METAS.length?METAS.map(function(m){var pct=Math.min(100,Math.round((m.val/m.total)*100));return '<div style="margin-bottom:'+(m===METAS[METAS.length-1]?0:16)+'px"><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:.88rem;color:var(--t2)">'+escapeHtml(m.name)+'</span><span style="font-size:.8rem;font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums">R$ '+m.val.toLocaleString('pt-BR')+' <span style="color:var(--t3);font-weight:400">/ R$ '+m.total.toLocaleString('pt-BR')+'</span></span></div><div class="perfil-health-bar"><div class="perfil-health-bar-fill" style="width:'+pct+'%;background:'+m.color+'"></div></div></div>';}).join(''):'<div style="font-size:.88rem;color:var(--t3);padding:12px 0">Nenhuma meta ativa. Crie em Metas.</div>';}
 var ATIV=[{text:'Fatura Nubank sincronizada',time:'Agora há pouco',icon:'var(--vr)'},{text:'Alerta: limite de alimentação 85%',time:'2 horas atrás',icon:'var(--yellow)'},{text:'Meta viagem: aporte de R$ 200',time:'Ontem',icon:'var(--green)'},{text:'Open Finance reconectado',time:'2 dias atrás',icon:'var(--green)'}];
 var al=document.getElementById('perfilAtividadesList');if(al){al.innerHTML=ATIV.map(function(a){return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:'+(a===ATIV[ATIV.length-1]?0:12)+'px"><div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:'+a.icon+'"></div></div><div><div style="font-size:.88rem;color:var(--t1);font-weight:500">'+escapeHtml(a.text)+'</div><div style="font-size:.75rem;color:var(--t3)">'+escapeHtml(a.time)+'</div></div></div>';}).join('');}
-// Segurança — renderizado dinamicamente para ter ações reais
-var sl=document.getElementById('perfilSegurancaList');
-if(sl){
-var segItems=[
-{icon:'lock',title:'Alterar senha',desc:U&&U.providerData&&U.providerData[0]&&U.providerData[0].providerId==='google.com'?'Conta Google — use as configurações do Google':'Clique para redefinir sua senha por e-mail',action:'Alterar senha',fn:'segAlterarSenha()',available:!(U&&U.providerData&&U.providerData[0]&&U.providerData[0].providerId==='google.com')},
-{icon:'smartphone',title:'Autenticação de dois fatores',desc:'Em breve — camada extra de segurança para sua conta',action:'Em breve',fn:"toast('2FA em breve!','info')",available:false},
-{icon:'monitor',title:'Sessões ativas',desc:'Encerre sessões em outros dispositivos',action:'Encerrar outras sessões',fn:'segEncerrarSessoes()',available:true},
-{icon:'clock',title:'Histórico de acessos',desc:'Veja data e hora dos seus últimos logins',action:'Ver histórico',fn:'segVerHistorico()',available:true}
-];
-sl.innerHTML=segItems.map(function(s){
-var btnStyle=s.available?'':'opacity:.5;cursor:not-allowed';
-return '<div style="display:flex;align-items:center;justify-content:space-between;padding:18px 0;border-bottom:1px solid var(--brd);gap:12px;flex-wrap:wrap"><div style="display:flex;gap:12px;align-items:center;flex:1;min-width:0"><div style="width:42px;height:42px;border-radius:11px;background:var(--bg2);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="'+s.icon+'" style="width:18px;height:18px;color:var(--vr)"></i></div><div style="min-width:0"><div style="font-size:.9rem;font-weight:600;color:var(--t1)">'+escapeHtml(s.title)+'</div><div style="font-size:.8rem;color:var(--t2);margin-top:2px">'+escapeHtml(s.desc)+'</div></div></div><button class="btn btn-p" style="font-size:.78rem;padding:7px 14px;flex-shrink:0;'+btnStyle+'" onclick="'+s.fn+'">'+escapeHtml(s.action)+'</button></div>';
-}).join('');
-}
-var ALERTAS=[{k:'login',l:'Novo login detectado'},{k:'senha',l:'Troca de senha'},{k:'device',l:'Acesso de novo dispositivo'},{k:'bloqueio',l:'Tentativa de acesso bloqueada'},{k:'resumo',l:'Resumo semanal'}];
-var alist=document.getElementById('perfilAlertasList');if(alist){alist.innerHTML=ALERTAS.map(function(a){var on=_perfilAlertasState[a.k];return '<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:.88rem;color:var(--t2)">'+escapeHtml(a.l)+'</span><button type="button" class="perfil-toggle '+(on?'on':'')+'" onclick="togglePerfilAlerta(\''+a.k+'\',this)" aria-label="Toggle"></button></div>';}).join('');}
-var PRIV=[{k:'analise',t:'Análise de dados para melhorar a IA',d:'Seus dados anonimizados ajudam a tornar a IA mais precisa'},{k:'personalizacao',t:'Personalização de recomendações',d:'Permite que a IA use seu histórico para sugestões mais relevantes'},{k:'marketing',t:'Comunicações de marketing',d:'Receba dicas, novidades e ofertas por e-mail'},{k:'parceiros',t:'Compartilhamento com parceiros',d:'Dados para propostas personalizadas de crédito e seguros'},{k:'relatorios',t:'Relatórios agregados de mercado',d:'Contribua anonimamente para estatísticas financeiras'}];
-var pl=document.getElementById('perfilPrivacidadeList');if(pl){pl.innerHTML=PRIV.map(function(p){var on=_perfilPrivState[p.k];return '<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:20px"><div><div style="font-size:.9rem;font-weight:600;color:var(--t1);margin-bottom:3px">'+escapeHtml(p.t)+'</div><div style="font-size:.8rem;color:var(--t2);line-height:1.6">'+escapeHtml(p.d)+'</div></div><button type="button" class="perfil-toggle '+(on?'on':'')+'" onclick="togglePerfilPriv(\''+p.k+'\',this)"></button></div>';}).join('');}
+}catch(e){}
+renderPerfilSegurancaPrivacidade();
 if(U){var iniciais=(U.name||'U').split(' ').map(function(x){return x[0]}).join('').substring(0,2).toUpperCase()||'U';var av=document.getElementById('perfilAvatar');var avI=document.getElementById('perfilAvatarInicial');if(avI)avI.textContent=iniciais;if(av&&U.photoURL){av.innerHTML='<img src="'+escapeHtml(U.photoURL)+'" alt="">';}
-document.getElementById('perfilNome').textContent=U.name||'Usuário';document.getElementById('perfilEmail').textContent=U.email||'—';
-document.getElementById('perfilNomeInput').value=U.name||'';document.getElementById('perfilTelInput').value=localStorage.getItem('perfil_tel')||'';
+var nomeEl=document.getElementById('perfilNome');if(nomeEl)nomeEl.textContent=U.name||'Usuário';var emailEl=document.getElementById('perfilEmail');if(emailEl)emailEl.textContent=U.email||'—';
+var ni=document.getElementById('perfilNomeInput');if(ni)ni.value=U.name||'';var ti=document.getElementById('perfilTelInput');if(ti)ti.value=localStorage.getItem('perfil_tel')||'';
 var objVal=localStorage.getItem('perfil_obj')||'';
-document.getElementById('perfilObjInput').value=objVal||'Sair das dívidas e construir reserva';
-document.getElementById('perfilEmailInput').value=U.email||'';
-var plan=(typeof userPlan!=='undefined'?userPlan:'free')||'free';document.getElementById('perfilPlanBadge').textContent=plan==='pro'?'Pro':plan==='familia'?'Família':'Gratuito';
-var saldo=userAccs.reduce(function(s,a){return s+getAccBal(a).atual;},0);
-document.getElementById('perfilSaldo').textContent=fmt(saldo);document.getElementById('perfilContas').textContent=userAccs.length;document.getElementById('perfilScore').textContent=score;
-document.getElementById('perfilAparencia').textContent=document.body.classList.contains('theme-light')?'Modo claro':'Modo escuro';}
+var oi=document.getElementById('perfilObjInput');if(oi)oi.value=objVal||'Sair das dívidas e construir reserva';
+var ei=document.getElementById('perfilEmailInput');if(ei)ei.value=U.email||'';
+var plan=(typeof userPlan!=='undefined'?userPlan:'free')||'free';var planBadge=document.getElementById('perfilPlanBadge');if(planBadge)planBadge.textContent=plan==='pro'?'Pro':plan==='familia'?'Família':'Gratuito';
+if(typeof userAccs==='undefined'||!Array.isArray(userAccs)){saldo=0;}else{saldo=userAccs.reduce(function(s,a){return s+(typeof getAccBal==='function'?getAccBal(a).atual:0);},0);}
+var saldoEl=document.getElementById('perfilSaldo');if(saldoEl)saldoEl.textContent=typeof fmt==='function'?fmt(saldo):String(saldo);
+var contasEl=document.getElementById('perfilContas');if(contasEl)contasEl.textContent=typeof userAccs!=='undefined'&&Array.isArray(userAccs)?userAccs.length:0;
+var scoreEl=document.getElementById('perfilScore');if(scoreEl)scoreEl.textContent=score;
+var apEl=document.getElementById('perfilAparencia');if(apEl)apEl.textContent=document.body.classList.contains('theme-light')?'Modo claro':'Modo escuro';}
 if(typeof updateResumoSemanalToggle==='function')updateResumoSemanalToggle(!!window._resumoSemanalEmail);
 if(typeof perfilAtualizarStatusNotif==='function')perfilAtualizarStatusNotif();
 if(typeof carregarPreferencias==='function')carregarPreferencias();
@@ -1083,7 +1126,7 @@ if(id==='comunidade'&&typeof initCommunity==='function'){setTimeout(initCommunit
 if(id==='config'&&typeof loadIAUsage==='function'){setTimeout(loadIAUsage,300);}
 if(id==='config'&&typeof checkTelegramLink==='function'){setTimeout(checkTelegramLink,300);}
 if(id==='config'&&typeof checkWhatsAppLink==='function'){setTimeout(checkWhatsAppLink,300);}
-if(id==='perfil'&&typeof loadPerfilData==='function'){setTimeout(loadPerfilData,420);}
+if(id==='perfil'){setTimeout(function(){if(typeof bindPerfilTabs==='function')bindPerfilTabs();},50);if(typeof loadPerfilData==='function'){setTimeout(loadPerfilData,420);}if(typeof renderPerfilSegurancaPrivacidade==='function'){setTimeout(renderPerfilSegurancaPrivacidade,500);}}
 if(id==='invest'){
 var hasProfile=localStorage.getItem('vrt_investorProfile')||(typeof investorProfileData==='object'&&investorProfileData);
 var hasSeenInvestTour=typeof tourModulos==='object'&&tourModulos.invest;
