@@ -6,26 +6,6 @@ if(!cur&&old1){localStorage.setItem('vrt_b3token',old1);}
 if(!cur&&!old1&&old2){localStorage.setItem('vrt_b3token',old2);}
 })();
 
-/* ── Performance: Lucide Icons Optimizer ── */
-(function(){
-var _lucidePending=false;
-var _originalCreateIcons=null;
-function initLucideOptimizer(){
-if(typeof lucide==='undefined'||!lucide.createIcons)return setTimeout(initLucideOptimizer,100);
-if(_originalCreateIcons)return;
-_originalCreateIcons=lucide.createIcons.bind(lucide);
-lucide.createIcons=function(){
-if(_lucidePending)return;
-_lucidePending=true;
-requestAnimationFrame(function(){
-_lucidePending=false;
-try{_originalCreateIcons();}catch(e){}
-});
-};
-}
-initLucideOptimizer();
-})();
-
 /* ── next block ── */
 
 function pf(id){var v=document.getElementById(id);if(!v)return 0;return parseFloat(String(v.value).replace(/\./g,'').replace(',','.'))||0;}
@@ -3241,17 +3221,7 @@ textEl.textContent=msg;
 card.style.display='block';
 }
 
-var _renderAllDebounce=null;
-var _renderAllLastRun=0;
 function renderAll(){
-var now=Date.now();
-/* Permite execu��ão imediata se passou 100ms, senão agrupa */
-if(now-_renderAllLastRun<100){
-if(_renderAllDebounce)return;
-_renderAllDebounce=setTimeout(function(){_renderAllDebounce=null;renderAll();},100);
-return;
-}
-_renderAllLastRun=now;
 var tabEl=document.querySelector('.tab.on');
 var tabId=tabEl&&tabEl.id?tabEl.id:'dash';
 rKPI();
@@ -3478,13 +3448,7 @@ var fA=document.getElementById('fA');if(fA){fA.disabled=false;fA.style.opacity='
 
 var _rEPage=0,_rEPageSize=50;
 function setREPage(p){_rEPage=p;rE();}
-var _rEDebounce=null;
 function rE(){
-if(_rEDebounce){clearTimeout(_rEDebounce);}
-_rEDebounce=setTimeout(_rECore,50);
-}
-function _rECore(){
-_rEDebounce=null;
 var f=getFilteredEntries().slice();
 f.sort(function(a,b){return b.date.localeCompare(a.date)});
 var total=f.length;
@@ -4849,14 +4813,7 @@ if(typeof lucide!=='undefined')lucide.createIcons();
 // CHARTS
 function dC(){var k=Object.keys(charts);for(var i=0;i<k.length;i++){try{charts[k[i]].destroy()}catch(e){}}charts={}}
 
-var _rChartsDebounce=null;
 function rCharts(){
-/* Debounce para evitar recriação excessiva de gráficos */
-if(_rChartsDebounce){clearTimeout(_rChartsDebounce);}
-_rChartsDebounce=setTimeout(_rChartsCore,150);
-}
-function _rChartsCore(){
-_rChartsDebounce=null;
 dC();Chart.defaults.color=document.body.classList.contains('light')?'#475569':'#94a3b8';Chart.defaults.font.family='Inter';
 var gc='rgba(148,163,184,0.06)';
 var m=getMD();var mk=Object.keys(m).sort();
