@@ -748,12 +748,10 @@ if(upgBtn)upgBtn.style.display=(typeof userPlan!=='undefined'&&(userPlan==='pro'
 }
 /* ── Avatar dropdown ── */
 function toggleAvatarDropdown(e){
-console.log('[v0] toggleAvatarDropdown called');
 if(e)e.stopPropagation();
 var dd=document.getElementById('avatarDropdown');
 var av=document.getElementById('topHeaderAvatar');
-console.log('[v0] dropdown element:', dd, 'avatar element:', av);
-if(!dd){console.log('[v0] dropdown not found');return;}
+if(!dd)return;
 var isOpen=dd.classList.toggle('open');
 if(av)av.setAttribute('aria-expanded',isOpen?'true':'false');
 if(isOpen){
@@ -3247,7 +3245,7 @@ var _renderAllDebounce=null;
 var _renderAllLastRun=0;
 function renderAll(){
 var now=Date.now();
-/* Permite execução imediata se passou 100ms, senão agrupa */
+/* Permite execu��ão imediata se passou 100ms, senão agrupa */
 if(now-_renderAllLastRun<100){
 if(_renderAllDebounce)return;
 _renderAllDebounce=setTimeout(function(){_renderAllDebounce=null;renderAll();},100);
@@ -5780,7 +5778,7 @@ var _bankIcons={
 var LOGOS_BANCOS={
 nubank:{nome:'Nubank',cor:'#8A05BE',dominio:'nubank.com.br',logo:'/assets/bancos/nubank.png'},
 inter:{nome:'Inter',cor:'#FF7A00',dominio:'inter.co',logo:'/assets/bancos/inter.png'},
-itau:{nome:'Itaú',cor:'#003399',dominio:'itau.com.br',logo:'/assets/bancos/itau.png'},
+itau:{nome:'Ita��',cor:'#003399',dominio:'itau.com.br',logo:'/assets/bancos/itau.png'},
 bradesco:{nome:'Bradesco',cor:'#CC092F',dominio:'bradesco.com.br',logo:'/assets/bancos/bradesco.png'},
 santander:{nome:'Santander',cor:'#EC0000',dominio:'santander.com.br',logo:'/assets/bancos/santander.png'},
 bb:{nome:'Banco do Brasil',cor:'#FFCC00',fundo:'#003399',dominio:'bb.com.br',logo:'/assets/bancos/bb.png'},
