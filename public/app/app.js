@@ -6,6 +6,22 @@ if(!cur&&old1){localStorage.setItem('vrt_b3token',old1);}
 if(!cur&&!old1&&old2){localStorage.setItem('vrt_b3token',old2);}
 })();
 
+/* ── Performance: Debounce Lucide (não bloqueia, apenas agrupa chamadas rápidas) ── */
+(function(){
+var _timer=null;
+var _orig=null;
+function init(){
+if(typeof lucide==='undefined'||!lucide.createIcons){setTimeout(init,200);return;}
+if(_orig)return;
+_orig=lucide.createIcons.bind(lucide);
+lucide.createIcons=function(){
+clearTimeout(_timer);
+_timer=setTimeout(function(){try{_orig();}catch(e){}},15);
+};
+}
+setTimeout(init,100);
+})();
+
 /* ── next block ── */
 
 function pf(id){var v=document.getElementById(id);if(!v)return 0;return parseFloat(String(v.value).replace(/\./g,'').replace(',','.'))||0;}
@@ -3221,7 +3237,11 @@ textEl.textContent=msg;
 card.style.display='block';
 }
 
+var _raLast=0,_raTimer=null;
 function renderAll(){
+var now=Date.now();
+if(now-_raLast<80){clearTimeout(_raTimer);_raTimer=setTimeout(renderAll,80);return;}
+_raLast=now;
 var tabEl=document.querySelector('.tab.on');
 var tabId=tabEl&&tabEl.id?tabEl.id:'dash';
 rKPI();
@@ -4813,7 +4833,9 @@ if(typeof lucide!=='undefined')lucide.createIcons();
 // CHARTS
 function dC(){var k=Object.keys(charts);for(var i=0;i<k.length;i++){try{charts[k[i]].destroy()}catch(e){}}charts={}}
 
-function rCharts(){
+var _rcTimer=null;
+function rCharts(){clearTimeout(_rcTimer);_rcTimer=setTimeout(_rChartsCore,120);}
+function _rChartsCore(){
 dC();Chart.defaults.color=document.body.classList.contains('light')?'#475569':'#94a3b8';Chart.defaults.font.family='Inter';
 var gc='rgba(148,163,184,0.06)';
 var m=getMD();var mk=Object.keys(m).sort();
@@ -14083,7 +14105,7 @@ if(ap)ap.style.display='block';
 setTimeout(hookFamily,3000);
 })();
 
-/* ── next block ── */
+/* ���─ next block ── */
 
 function wBankChg(){
 var s=document.getElementById('wBankSel');
