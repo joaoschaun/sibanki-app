@@ -373,16 +373,6 @@
 <button class="notif-btn" onclick="toggleNP()" title="Notificações"><i data-lucide="bell"></i><span class="notif-badge" id="nBadge" style="display:none">0</span></button>
 <div class="avatar-dropdown-wrap">
 <div class="top-header-avatar" id="topHeaderAvatar" onclick="toggleAvatarDropdown(event)" role="button" tabindex="0" title="Menu da conta" aria-haspopup="true" aria-expanded="false" style="cursor:pointer"><span id="topHeaderAvatarInicial">U</span></div>
-<div class="avatar-dropdown" id="avatarDropdown" role="menu">
-<div class="avatar-dropdown-inner">
-<button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('perfil',null)"><i data-lucide="user"></i><span data-i18n="menu_perfil">Perfil</span></button>
-<button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('config',null)"><i data-lucide="settings"></i><span data-i18n="menu_configuracoes">Configurações</span></button>
-<button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('rel',null)"><i data-lucide="file-bar-chart"></i><span data-i18n="menu_relatorios">Relatórios</span></button>
-<button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('conq',null)"><i data-lucide="trophy"></i><span data-i18n="menu_conquistas">Conquistas</span></button>
-<div class="avatar-dropdown-sep"></div>
-<button type="button" class="avatar-dropdown-item avatar-dropdown-item-sair" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();doOut()"><i data-lucide="log-out"></i><span data-i18n="menu_sair">Sair</span></button>
-</div>
-</div>
 </div>
 </div>
 </div>
@@ -3465,7 +3455,7 @@
 </div></div>
 
 
-<script src="app.js?v=20260313-v12"></script>
+<script src="app.js?v=20260313-v13"></script>
 <!-- BRIEFING MODAL (pós-login) -->
 <div id="sibBriefingModal" class="sib-bf-ov" onclick="if(event.target===this)closeBriefing()" role="dialog" aria-modal="true" aria-labelledby="sibBriefTitle" style="display:none">
   <div class="sib-bf-box">
@@ -3488,6 +3478,17 @@
       <button class="sib-bf-ok" onclick="closeBriefing()">Entendido</button>
     </div>
   </div>
+</div>
+<!-- Avatar dropdown movido para body para escapar do backdrop-filter do top-header -->
+<div class="avatar-dropdown" id="avatarDropdown" role="menu">
+<div class="avatar-dropdown-inner">
+<button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('perfil',null)"><i data-lucide="user"></i><span data-i18n="menu_perfil">Perfil</span></button>
+<button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('config',null)"><i data-lucide="settings"></i><span data-i18n="menu_configuracoes">Configurações</span></button>
+<button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('rel',null)"><i data-lucide="file-bar-chart"></i><span data-i18n="menu_relatorios">Relatórios</span></button>
+<button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('conq',null)"><i data-lucide="trophy"></i><span data-i18n="menu_conquistas">Conquistas</span></button>
+<div class="avatar-dropdown-sep"></div>
+<button type="button" class="avatar-dropdown-item avatar-dropdown-item-sair" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();doOut()"><i data-lucide="log-out"></i><span data-i18n="menu_sair">Sair</span></button>
+</div>
 </div>
 </body>
 </html>
