@@ -854,7 +854,6 @@ c.classList.toggle('on',isActive);
 c.style.removeProperty('display');
 c.style.removeProperty('visibility');
 });
-try{if(typeof renderPerfilSegurancaPrivacidade==='function')renderPerfilSegurancaPrivacidade();}catch(e){}
 try{if(typeof loadPerfilData==='function')loadPerfilData();}catch(e){}
 if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);
 });
@@ -886,7 +885,8 @@ if(tmp&&el)el.style.display='none';
 }
 return window._lastFinScore||0;
 }
-function renderPerfilSegurancaPrivacidade(){
+function renderPerfilSegurancaPrivacidade(){return;// removida: abas usam HTML estático
+
 var perfilRoot=document.getElementById('perfil');
 var sl=document.getElementById('perfilSegurancaList')||(perfilRoot&&perfilRoot.querySelector('#perfilSegurancaList'));
 if(!sl){console.warn('[Perfil] perfilSegurancaList não encontrado no DOM — aba Segurança pode ficar vazia');}
@@ -1126,7 +1126,7 @@ if(id==='comunidade'&&typeof initCommunity==='function'){setTimeout(initCommunit
 if(id==='config'&&typeof loadIAUsage==='function'){setTimeout(loadIAUsage,300);}
 if(id==='config'&&typeof checkTelegramLink==='function'){setTimeout(checkTelegramLink,300);}
 if(id==='config'&&typeof checkWhatsAppLink==='function'){setTimeout(checkWhatsAppLink,300);}
-if(id==='perfil'){setTimeout(function(){if(typeof bindPerfilTabs==='function')bindPerfilTabs();},50);if(typeof loadPerfilData==='function'){setTimeout(loadPerfilData,420);}if(typeof renderPerfilSegurancaPrivacidade==='function'){setTimeout(renderPerfilSegurancaPrivacidade,500);}}
+if(id==='perfil'){setTimeout(function(){if(typeof bindPerfilTabs==='function')bindPerfilTabs();},50);if(typeof loadPerfilData==='function'){setTimeout(loadPerfilData,420);}}
 if(id==='invest'){
 var hasProfile=localStorage.getItem('vrt_investorProfile')||(typeof investorProfileData==='object'&&investorProfileData);
 var hasSeenInvestTour=typeof tourModulos==='object'&&tourModulos.invest;
