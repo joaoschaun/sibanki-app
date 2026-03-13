@@ -716,10 +716,11 @@ if(expandEl&&typeof lucide!=='undefined'&&lucide.createIcons){lucide.createIcons
 var btn=document.getElementById('drawerToggleBtn');
 if(btn)btn.setAttribute('aria-label',collapsed?'Expandir menu':'Recolher menu');
 }else{
-d.classList.toggle('open');o.classList.toggle('show',d.classList.contains('open'));o.setAttribute('aria-hidden',d.classList.contains('open')?'false':'true');
+d.classList.toggle('open');var nowOpen=d.classList.contains('open');o.classList.toggle('show',nowOpen);o.setAttribute('aria-hidden',nowOpen?'false':'true');
+if(nowOpen){var hdr=document.getElementById('topHeader');if(hdr)o.style.top=hdr.getBoundingClientRect().bottom+'px';}
 }
 }
-function openDrawer(){var d=document.getElementById('drawer');var o=document.getElementById('drawerOverlay');if(d&&o&&window.innerWidth<1024){d.classList.add('open');o.classList.add('show');o.setAttribute('aria-hidden','false');}}
+function openDrawer(){var d=document.getElementById('drawer');var o=document.getElementById('drawerOverlay');if(d&&o&&window.innerWidth<1024){d.classList.add('open');var hdr=document.getElementById('topHeader');if(hdr)o.style.top=hdr.getBoundingClientRect().bottom+'px';o.classList.add('show');o.setAttribute('aria-hidden','false');}}
 function closeDrawer(){
 var d=document.getElementById('drawer');var o=document.getElementById('drawerOverlay');
 if(!d||!o)return;
@@ -787,6 +788,12 @@ function toggleDrawerGroup(id){
 var key='drawerGroup'+id.charAt(0).toUpperCase()+id.slice(1);
 var g=document.getElementById(key);
 if(!g)return;
+// Se sidebar está colapsado, expandir antes de abrir o grupo
+if(document.body.classList.contains('drawer-sidebar-collapsed')){
+document.body.classList.remove('drawer-sidebar-collapsed');
+try{localStorage.setItem('sibanki_drawer_open','1');}catch(z){}
+var tBtn=document.getElementById('drawerToggleBtn');if(tBtn)tBtn.setAttribute('aria-label','Recolher menu');
+}
 var isOpen=g.classList.toggle('open');
 var btn=g.querySelector('.drawer-nav-group-head');
 if(btn)btn.setAttribute('aria-expanded',isOpen?'true':'false');
