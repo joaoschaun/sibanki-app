@@ -48,7 +48,7 @@
 
 
 
-<link rel="stylesheet" href="app.css?v=20260312-b5">
+<link rel="stylesheet" href="app.css?v=20260312-b6">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
@@ -2126,30 +2126,31 @@
 </div>
 
 <div id="perfilSeguranca" class="perfil-tab-content">
-<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start" class="perfil-grid-resp">
-<div class="perfil-card">
-<div style="font-size:1.05rem;font-weight:800;color:var(--t1);margin-bottom:4px"><span data-i18n="seguranca_conta">Segurança da Conta</span></div>
-<div style="font-size:.82rem;color:var(--t2);margin-bottom:24px">Mantenha sua conta protegida</div>
-<div id="perfilSegurancaList"><div style="padding:18px 0;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div style="display:flex;gap:12px;align-items:center;flex:1;min-width:0"><div style="width:42px;height:42px;border-radius:11px;background:var(--bg2);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center"><i data-lucide="lock" style="width:18px;height:18px;color:var(--vr)"></i></div><div><div style="font-size:.9rem;font-weight:600;color:var(--t1)">Alterar senha</div><div style="font-size:.8rem;color:var(--t2);margin-top:2px">Redefina sua senha por e-mail</div></div></div><button class="btn btn-p" style="font-size:.78rem;padding:7px 14px" onclick="typeof segAlterarSenha==='function'&&segAlterarSenha()">Alterar senha</button></div><div style="padding:18px 0;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;gap:12px"><div style="display:flex;gap:12px;align-items:center"><div style="width:42px;height:42px;border-radius:11px;background:var(--bg2);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center"><i data-lucide="smartphone" style="width:18px;height:18px;color:var(--vr)"></i></div><div><div style="font-size:.9rem;font-weight:600;color:var(--t1)">Autenticação de dois fatores</div><div style="font-size:.8rem;color:var(--t2);margin-top:2px">Em breve</div></div></div><button class="btn btn-p" style="font-size:.78rem;padding:7px 14px;opacity:.5;cursor:not-allowed">Em breve</button></div><div style="padding:18px 0;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;gap:12px"><div style="display:flex;gap:12px;align-items:center"><div style="width:42px;height:42px;border-radius:11px;background:var(--bg2);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center"><i data-lucide="monitor" style="width:18px;height:18px;color:var(--vr)"></i></div><div><div style="font-size:.9rem;font-weight:600;color:var(--t1)">Sessões ativas</div><div style="font-size:.8rem;color:var(--t2);margin-top:2px">Encerre sessões em outros dispositivos</div></div></div><button class="btn btn-p" style="font-size:.78rem;padding:7px 14px" onclick="typeof segEncerrarSessoes==='function'&&segEncerrarSessoes()">Encerrar outras sessões</button></div><div style="padding:18px 0;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;gap:12px"><div style="display:flex;gap:12px;align-items:center"><div style="width:42px;height:42px;border-radius:11px;background:var(--bg2);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center"><i data-lucide="clock" style="width:18px;height:18px;color:var(--vr)"></i></div><div><div style="font-size:.9rem;font-weight:600;color:var(--t1)">Histórico de acessos</div><div style="font-size:.8rem;color:var(--t2);margin-top:2px">Veja seus últimos logins</div></div></div><button class="btn btn-p" style="font-size:.78rem;padding:7px 14px" onclick="typeof segVerHistorico==='function'&&segVerHistorico()">Ver histórico</button></div></div>
-</div>
-<div class="perfil-card">
-<div style="font-size:.9rem;font-weight:700;color:var(--t1);margin-bottom:18px">Alertas de segurança</div>
-<div id="perfilAlertasList"><div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:.88rem;color:var(--t2)">Novo login detectado</span><button type="button" class="perfil-toggle on" aria-label="Toggle"></button></div><div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:.88rem;color:var(--t2)">Troca de senha</span><button type="button" class="perfil-toggle on" aria-label="Toggle"></button></div><div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:.88rem;color:var(--t2)">Acesso de novo dispositivo</span><button type="button" class="perfil-toggle on" aria-label="Toggle"></button></div><div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:.88rem;color:var(--t2)">Tentativa de acesso bloqueada</span><button type="button" class="perfil-toggle on" aria-label="Toggle"></button></div><div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0"><span style="font-size:.88rem;color:var(--t2)">Resumo semanal</span><button type="button" class="perfil-toggle" aria-label="Toggle"></button></div></div>
-</div>
-</div>
+  <div style="padding:24px">
+    <h3 style="color:var(--t1);margin-bottom:16px">Alterar Senha</h3>
+    <div style="margin-bottom:12px">
+      <label style="color:var(--t2);font-size:.88rem">Senha atual</label>
+      <input type="password" class="perfil-inp" placeholder="••••••••" style="margin-top:4px">
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="color:var(--t2);font-size:.88rem">Nova senha</label>
+      <input type="password" class="perfil-inp" placeholder="••••••••" style="margin-top:4px">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="color:var(--t2);font-size:.88rem">Confirmar nova senha</label>
+      <input type="password" class="perfil-inp" placeholder="••••••••" style="margin-top:4px">
+    </div>
+    <button class="btn btn-p" onclick="typeof segAlterarSenha==='function'&&segAlterarSenha()">Salvar nova senha</button>
+  </div>
 </div>
 
 <div id="perfilPrivacidade" class="perfil-tab-content">
-<div class="perfil-card" style="max-width:700px">
-<div style="font-size:1.05rem;font-weight:800;color:var(--t1);margin-bottom:4px">Privacidade e Dados</div>
-<div style="font-size:.82rem;color:var(--t2);margin-bottom:24px"><span data-i18n="controle_dados">Controle como seus dados são usados no Sibanki</span></div>
-<div id="perfilPrivacidadeList"><div style="display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:20px"><div><div style="font-size:.9rem;font-weight:600;color:var(--t1);margin-bottom:3px">Análise de dados para melhorar a IA</div><div style="font-size:.8rem;color:var(--t2);line-height:1.6">Seus dados anonimizados ajudam a tornar a IA mais precisa</div></div><button type="button" class="perfil-toggle on" aria-label="Ligar/desligar"></button></div><div style="display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:20px"><div><div style="font-size:.9rem;font-weight:600;color:var(--t1);margin-bottom:3px">Personalização de recomendações</div><div style="font-size:.8rem;color:var(--t2);line-height:1.6">Permite que a IA use seu histórico para sugestões mais relevantes</div></div><button type="button" class="perfil-toggle on" aria-label="Ligar/desligar"></button></div><div style="display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:20px"><div><div style="font-size:.9rem;font-weight:600;color:var(--t1);margin-bottom:3px">Comunicações de marketing</div><div style="font-size:.8rem;color:var(--t2);line-height:1.6">Receba dicas, novidades e ofertas por e-mail</div></div><button type="button" class="perfil-toggle" aria-label="Ligar/desligar"></button></div><div style="display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:20px"><div><div style="font-size:.9rem;font-weight:600;color:var(--t1);margin-bottom:3px">Compartilhamento com parceiros</div><div style="font-size:.8rem;color:var(--t2);line-height:1.6">Dados para propostas personalizadas de crédito e seguros</div></div><button type="button" class="perfil-toggle" aria-label="Ligar/desligar"></button></div><div style="display:flex;justify-content:space-between;align-items:center;padding:18px 0;gap:20px"><div><div style="font-size:.9rem;font-weight:600;color:var(--t1);margin-bottom:3px">Relatórios agregados de mercado</div><div style="font-size:.8rem;color:var(--t2);line-height:1.6">Contribua anonimamente para estatísticas financeiras</div></div><button type="button" class="perfil-toggle on" aria-label="Ligar/desligar"></button></div></div>
-<div style="margin-top:24px;padding:18px;background:var(--bg2);border-radius:12px;border:1px solid var(--brd)">
-<div style="font-size:.88rem;font-weight:700;color:var(--t1);margin-bottom:12px">Seus direitos — LGPD</div>
-<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-r" style="font-size:.8rem;padding:7px 14px" onclick="expJSON();toast('Backup JSON iniciado.','ok')">Baixar meus dados</button><button class="btn btn-r" style="font-size:.8rem;padding:7px 14px" onclick="toast('Em breve.','info')">Ver o que coletamos</button><button class="btn btn-r" style="font-size:.8rem;padding:7px 14px" onclick="toast('Solicite em Configurações.','info')"><span data-i18n="solicitar_exclusao">Solicitar exclusão</span></button></div>
-</div>
-</div>
-</div>
+  <div style="padding:24px">
+    <h3 style="color:var(--t1);margin-bottom:16px">Privacidade</h3>
+    <p style="color:var(--t2);margin-bottom:20px">Gerencie suas preferências de privacidade e dados.</p>
+    <button class="btn btn-p" style="margin-right:8px" onclick="expJSON();toast('Backup JSON iniciado.','ok')">Exportar meus dados</button>
+    <button class="btn" style="color:var(--danger);border-color:var(--danger)" onclick="toast('Solicite em Configurações.','info')">Excluir conta</button>
+  </div>
 </div>
 </div><!-- fecha #perfil -->
 
@@ -3463,7 +3464,7 @@
 </div></div>
 
 
-<script src="app.js?v=20260312-v7"></script>
+<script src="app.js?v=20260312-v8"></script>
 <!-- BRIEFING MODAL (pós-login) -->
 <div id="sibBriefingModal" class="sib-bf-ov" onclick="if(event.target===this)closeBriefing()" role="dialog" aria-modal="true" aria-labelledby="sibBriefTitle" style="display:none">
   <div class="sib-bf-box">
