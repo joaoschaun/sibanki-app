@@ -851,7 +851,7 @@ perfilEl.querySelectorAll('.perfil-tab').forEach(function(b){b.classList.toggle(
 perfilEl.querySelectorAll('.perfil-tab-content').forEach(function(c){
 var isActive=c.id===targetId;
 c.classList.toggle('on',isActive);
-c.style.setProperty('display',isActive?'block':'none','important');
+c.style.removeProperty('display');
 c.style.removeProperty('visibility');
 });
 try{if(typeof renderPerfilSegurancaPrivacidade==='function')renderPerfilSegurancaPrivacidade();}catch(e){}
@@ -869,7 +869,7 @@ var targetId=activeBtn?('perfil'+(activeBtn.getAttribute('data-perfil-tab').char
 contents.forEach(function(c){
 var isActive=c.id===targetId;
 c.classList.toggle('on',isActive);
-c.style.setProperty('display',isActive?'block':'none','important');
+c.style.removeProperty('display');
 c.style.removeProperty('visibility');
 });
 }
