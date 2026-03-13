@@ -530,6 +530,7 @@ body.light .avatar-dropdown-item-sair:hover{background:rgba(239,68,68,.08)}
 /* CARDS & KPI */
 .tab{display:none;animation:fadeIn .4s;margin-top:0;padding-top:0;background:var(--bg)}
 .tab.on{display:block}
+#perfil.tab,#perfil{height:auto!important;min-height:300px!important}
 .tab>.cg:first-child,.tab>.fb:first-child,.tab>.fin-header:first-child,.tab>.kpi-row:first-child,.tab>div:first-child{margin-top:0}
 .app-content .wrap>.tab{margin-bottom:0}
 section.tab{max-width:1440px;margin-left:auto;margin-right:auto;padding:0 clamp(10px,3vw,20px);padding-top:0;margin-top:0;box-sizing:border-box}
