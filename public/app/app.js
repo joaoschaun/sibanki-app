@@ -862,11 +862,10 @@ ensurePerfilTabVisible();
 }
 function ensurePerfilTabVisible(){
 var perfilEl=document.getElementById('perfil');if(!perfilEl)return;
-var activeBtn=perfilEl.querySelector('.perfil-tab.on');
-var contents=perfilEl.querySelectorAll('.perfil-tab-content');
-var targetId=activeBtn?('perfil'+(activeBtn.getAttribute('data-perfil-tab').charAt(0).toUpperCase()+activeBtn.getAttribute('data-perfil-tab').slice(1))):'perfilVisao';
-contents.forEach(function(c){
-var isActive=c.id===targetId;
+// Sempre resetar para Visão Geral ao entrar no perfil
+perfilEl.querySelectorAll('.perfil-tab').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-perfil-tab')==='visao');});
+perfilEl.querySelectorAll('.perfil-tab-content').forEach(function(c){
+var isActive=c.id==='perfilVisao';
 c.classList.toggle('on',isActive);
 c.style.removeProperty('display');
 c.style.removeProperty('visibility');

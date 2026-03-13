@@ -272,7 +272,7 @@
 <div class="app" id="app" role="main">
 
 <!-- DRAWER OVERLAY -->
-<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()" aria-hidden="true"></div>
+<div class="drawer-overlay" id="drawerOverlay" onclick="if(!event.target.closest('.top-header'))closeDrawer()" aria-hidden="true"></div>
 
 <!-- Modal Calculadoras (fora das tabs para funcionar em Metas, etc.) -->
 <div class="fin-calc-overlay" id="finCalcOv" onclick="if(event.target===this)closeFinCalc()">
@@ -3465,7 +3465,7 @@
 </div></div>
 
 
-<script src="app.js?v=20260313-v10"></script>
+<script src="app.js?v=20260313-v11"></script>
 <!-- BRIEFING MODAL (pós-login) -->
 <div id="sibBriefingModal" class="sib-bf-ov" onclick="if(event.target===this)closeBriefing()" role="dialog" aria-modal="true" aria-labelledby="sibBriefTitle" style="display:none">
   <div class="sib-bf-box">
