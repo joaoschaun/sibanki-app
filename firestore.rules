@@ -6,6 +6,10 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+    // Feedback do consultor IA (para treino futuro) - so o dono grava/lê
+    match /users/{userId}/aiFeedback/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
 
     // Casais - membros autenticados podem ler/escrever
     match /couples/{coupleId} {

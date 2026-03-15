@@ -22,7 +22,7 @@ const brapiService = require("./services/market/brapiService");
 const newsService = require("./services/news/newsService");
 const stripeService = require("./services/billing/stripeService");
 const whatsappService = require("./services/whatsapp/whatsappService");
-const { generateAnalysis } = require("./services/llm/llmService");
+const { generateAnalysis, generateProactiveInsight } = require("./services/llm/llmService");
 
 // Load .env for local development (mantido por compatibilidade)
 try { require("dotenv").config(); } catch(e) {}
@@ -450,6 +450,25 @@ exports.chatApi = functions.runWith(chatApiOptions).https.onCall(async (data, co
     if (e instanceof functions.https.HttpsError) throw e;
     logError("chatApi", e);
     throw new functions.https.HttpsError("internal", e.message || "Erro ao processar. Tente novamente.");
+  }
+});
+
+/** Insight proativo (consultor invisível): recebe snapshot em markdown, retorna JSON do insight ou { status: "OK" }. */
+exports.proactiveInsightApi = functions.runWith(chatApiOptions).https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Faça login para usar a IA.");
+  }
+  const snapshot = (data && data.snapshot) ? String(data.snapshot).trim() : "";
+  if (!snapshot) {
+    throw new functions.https.HttpsError("invalid-argument", "Snapshot vazio.");
+  }
+  try {
+    const result = await generateProactiveInsight(snapshot);
+    logEvent("proactiveInsightApi", { hasInsight: !result.status, uid: context.auth.uid });
+    return result;
+  } catch (e) {
+    logError("proactiveInsightApi", e);
+    throw new functions.https.HttpsError("internal", e.message || "Erro ao gerar insight. Tente novamente.");
   }
 });
 

@@ -1,0 +1,18 @@
+---
+description: Tarefa para segunda-feira — configurar DEEPSEEK_KEY em produção (Cloud Functions)
+alwaysApply: false
+---
+
+# Configuração para segunda-feira
+
+**Quando for segunda-feira** (ou quando o usuário pedir "configuração da segunda" / "tarefa da segunda"):
+
+1. **Configurar DEEPSEEK_KEY em produção**
+   - A chave do DeepSeek já está em `functions/.env` para desenvolvimento local.
+   - Em **produção**, o `.env` não é enviado no deploy. É necessário definir a variável no Firebase/Google Cloud:
+     - **Firebase Console** → projeto **virtus-financeiro-cd7bd** → **Functions** → **Environment variables** (ou Configurações), **ou**
+     - **Google Cloud Console** → **Cloud Functions** → selecionar a função (ex.: chatApi) → **Edit** → **Variables, networking and advanced settings** → **Environment variables**
+   - Adicionar: **Nome** `DEEPSEEK_KEY`, **Valor** (a mesma chave usada no `.env`).
+   - Após salvar, as próximas invocações das Cloud Functions passarão a usar o DeepSeek como fallback quando Gemini/Groq falharem.
+
+2. **Lembrete:** Não commitar o valor da chave no repositório; usar apenas variáveis de ambiente no Console.

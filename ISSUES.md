@@ -1,7 +1,7 @@
 # Issues Pendentes - Sibanki App
 
 ## 1. Dropdown do Avatar não funciona
-**Status:** Pendente  
+**Status:** Resolvido  
 **Prioridade:** Alta  
 **Arquivo:** `public/app/app.js` (linha ~750) e `public/app/index.html` (linha ~375)
 
@@ -62,8 +62,9 @@ A página trava frequentemente, especialmente no carregamento inicial e ao naveg
 
 ## Histórico de alterações (12/03/2026)
 
-1. CSS: Removida transição global `*{transition:...}` - **OK**
-2. JS: Otimizador Lucide com debounce - **Pode afetar dropdown**
-3. JS: Throttle no renderAll - **Pode afetar dropdown**
-4. JS: Debounce no rCharts - **OK**
-5. HTML: Corrigido nome dos ícones circle-dollar - **OK**
+1. **Dropdown do avatar:** usuário confirmou que não há mais problema – marcado como Resolvido.
+2. CSS: Removida transição global `*{transition:...}` - **OK**
+3. JS: Otimizador Lucide com debounce - **Pode afetar dropdown**
+4. JS: Throttle no renderAll - **Pode afetar dropdown**
+5. JS: Debounce no rCharts - **OK**
+6. HTML: Corrigido nome dos ícones circle-dollar - **OK**

@@ -8,11 +8,12 @@ const { GEMINI_KEY } = require("../../config");
 
 const OPENAI_KEY = process.env.OPENAI_KEY || "";
 const CLAUDE_KEY = process.env.CLAUDE_KEY || "";
-const GROQ_KEY   = process.env.GROQ_KEY   || ""; // Gratuito: 14.400 req/dia
+const GROQ_KEY   = process.env.GROQ_KEY   || "";
+const DEEPSEEK_KEY = process.env.DEEPSEEK_KEY || ""; // Excelente custo-benefício e raciocínio financeiro
 
-const errorCount = { gemini: 0, openai: 0, claude: 0, groq: 0 };
+const errorCount = { gemini: 0, openai: 0, claude: 0, groq: 0, deepseek: 0 };
 const MAX_ERR = 3;
-setInterval(() => { errorCount.gemini = 0; errorCount.openai = 0; errorCount.claude = 0; errorCount.groq = 0; }, 3600000);
+setInterval(() => { errorCount.gemini = 0; errorCount.openai = 0; errorCount.claude = 0; errorCount.groq = 0; errorCount.deepseek = 0; }, 3600000);
 
 const _cache = new Map();
 const CACHE_TTL = 3600000;
@@ -157,6 +158,37 @@ async function _callGroq(prompt, maxTokens) {
   }
 }
 
+// ─── Provedor DeepSeek (OpenAI-compatible; ótimo para raciocínio/matemática) ───
+async function _callDeepSeek(prompt, maxTokens) {
+  if (!DEEPSEEK_KEY || errorCount.deepseek >= MAX_ERR) return null;
+  try {
+    const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${DEEPSEEK_KEY}`
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: maxTokens || 512,
+        temperature: 0.3
+      }),
+      signal: AbortSignal.timeout(15000)
+    });
+    if (res.status === 429 || res.status === 503) { errorCount.deepseek++; return null; }
+    const json = await res.json();
+    const text = json.choices?.[0]?.message?.content;
+    if (!text) { errorCount.deepseek++; return null; }
+    errorCount.deepseek = 0;
+    return text.trim();
+  } catch (e) {
+    errorCount.deepseek++;
+    logError("llm:deepseek", e);
+    return null;
+  }
+}
+
 // ─── Roteador principal ───────────────────────────────────────────────────────
 
 /**
@@ -180,15 +212,13 @@ async function callLLM(prompt, options = {}) {
     if (cached) return { text: cached, provider: "cache", cached: true };
   }
 
-  // Ordem de provedores por tipo de task
-  // "fast" → Gemini primeiro (mais barato), depois OpenAI mini, depois Claude Haiku
-  // "smart" → OpenAI primeiro (melhor qualidade), depois Gemini, depois Claude
-  const fastOrder  = [_callGemini, _callGroq, _callOpenAI, _callClaude]; // Gemini+Groq = gratuitos
-  const smartOrder = [_callGroq, _callOpenAI, _callGemini, _callClaude]; // Groq 70B = qualidade alta
+  // Ordem de provedores por tipo de task (DeepSeek = fallback extra, bom para raciocínio financeiro)
+  const fastOrder  = [_callGemini, _callGroq, _callDeepSeek, _callOpenAI, _callClaude];
+  const smartOrder = [_callGroq, _callOpenAI, _callDeepSeek, _callGemini, _callClaude];
   const providers  = task === "smart" ? smartOrder : fastOrder;
   const names      = task === "smart"
-    ? ["groq", "openai", "gemini", "claude"]
-    : ["gemini", "groq", "openai", "claude"];
+    ? ["groq", "openai", "deepseek", "gemini", "claude"]
+    : ["gemini", "groq", "deepseek", "openai", "claude"];
 
   for (let i = 0; i < providers.length; i++) {
     const text = await providers[i](prompt, maxTokens);
@@ -265,6 +295,56 @@ async function generateAnalysis(context, question) {
   });
 }
 
+/** System prompt do consultor proativo (insight acionável, anti-poluição). */
+const PROACTIVE_CONSULTANT_SYSTEM = `Você é o consultor financeiro do Sibanki. Sua tarefa é gerar UM insight curto e acionável a partir do snapshot do usuário.
+
+REGRAS:
+- Objetividade: vá direto ao ponto, sem "Olá" ou rodeios.
+- Use a regra 50-30-20 (essenciais, desejos, prioridades) como base.
+- Nunca sugerir investimento de risco sem mencionar reserva de emergência.
+- Se os dados não mostrarem nada relevante ou fora do padrão, responda APENAS: {"status":"OK"}.
+
+FORMATO DE SAÍDA (JSON obrigatório, sem markdown):
+{"insight_curto":"Frase de impacto (máx 60 caracteres)","detalhe":"Explicação lógica (máx 140 caracteres)","acao_sugerida":"O que fazer agora","deep_link":"/metas ou /lanc ou /cartões ou /orçamento ou /invest","relevancia_score":1 a 10}
+Se não houver relevância, responda só: {"status":"OK"}.`;
+
+/**
+ * Gera insight proativo a partir de um snapshot em markdown (gatilhos já detectados no front).
+ * Retorna objeto com insight_curto, detalhe, acao_sugerida, deep_link, relevancia_score ou { status: "OK" }.
+ */
+async function generateProactiveInsight(snapshotMarkdown) {
+  const prompt = `${PROACTIVE_CONSULTANT_SYSTEM}\n\n---\n\nSNAPSHOT DO USUÁRIO:\n${(snapshotMarkdown || "").substring(0, 2500)}\n\n---\n\nGere o JSON do insight (ou {"status":"OK"} se não houver ação relevante). Resposta APENAS JSON, sem texto antes ou depois.`;
+
+  const result = await callLLM(prompt, {
+    task: "fast",
+    maxTokens: 400,
+    cache: false,
+    fallback: null
+  });
+
+  if (!result || !result.text) return { status: "OK" };
+
+  try {
+    const raw = result.text.replace(/```\w*\n?/g, "").trim();
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) return { status: "OK" };
+    const obj = JSON.parse(match[0]);
+    if (obj.status === "OK" || obj.status === "ignore") return { status: "OK" };
+    if (obj.insight_curto && typeof obj.relevancia_score === "number") {
+      return {
+        insight_curto: String(obj.insight_curto).substring(0, 80),
+        detalhe: String(obj.detalhe || "").substring(0, 200),
+        acao_sugerida: String(obj.acao_sugerida || "").substring(0, 120),
+        deep_link: String(obj.deep_link || "/metas").replace(/[^a-zA-Z0-9/_\u00E7\u00E3\u00E1\u00E0\u00E2\u00E9\u00EA\u00ED\u00F3\u00F4\u00F5\u00FA\-]/g, ""),
+        relevancia_score: Math.min(10, Math.max(1, Number(obj.relevancia_score)))
+      };
+    }
+  } catch (e) {
+    logError("llm:proactiveInsight:parse", e);
+  }
+  return { status: "OK" };
+}
+
 /**
  * Status dos provedores (útil para dashboard de admin).
  */
@@ -274,6 +354,7 @@ function getProviderStatus() {
     openai: { available: !!OPENAI_KEY, errors: errorCount.openai, healthy: errorCount.openai < MAX_ERR },
     claude: { available: !!CLAUDE_KEY, errors: errorCount.claude, healthy: errorCount.claude < MAX_ERR },
     groq:   { available: !!GROQ_KEY,   errors: errorCount.groq,   healthy: errorCount.groq < MAX_ERR },
+    deepseek: { available: !!DEEPSEEK_KEY, errors: errorCount.deepseek, healthy: errorCount.deepseek < MAX_ERR },
     cacheSize: _cache.size,
   };
 }
@@ -283,5 +364,6 @@ module.exports = {
   extractEntry,
   generateInsight,
   generateAnalysis,
+  generateProactiveInsight,
   getProviderStatus,
 };

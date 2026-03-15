@@ -42,6 +42,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-functions-compat.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script src="i18n.js"></script>
@@ -336,6 +337,8 @@
 </button>
 <div class="drawer-nav-group-body" id="drawerGroupSocialBody">
 <div class="drawer-nav-item" data-go="casal"><div class="module-icon module-icon-familia"><i data-lucide="users"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_familia">Família</span></div></div>
+<div class="drawer-nav-item" data-go="crediamigo"><div class="module-icon module-icon-crediamigo"><i data-lucide="handshake"></i></div><div class="dni-text"><span class="dni-label">Credi Amigo</span><span class="dni-desc">Empréstimos entre amigos</span></div></div>
+<div class="drawer-nav-item" data-go="consorcioamigos"><div class="module-icon module-icon-consorcio"><i data-lucide="piggy-bank"></i></div><div class="dni-text"><span class="dni-label">Consórcio Amigos</span><span class="dni-desc">Poupança coletiva</span></div></div>
 <div class="drawer-nav-item" data-go="comunidade"><div class="module-icon module-icon-comunidade"><i data-lucide="globe"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_comunidade">Comunidade</span></div></div>
 </div>
 </div>
@@ -396,7 +399,10 @@
 <div class="dash-widget-header dash-header-lovable" style="margin-bottom:16px">
 <div class="dash-header-left">
 <p class="dash-greet-label" id="dashGreetLabel">Bom dia</p>
+<div class="dash-greet-row">
 <h1 class="dash-greet-title" id="dashGreet" style="margin:0"></h1>
+<span id="dashScoreBadge" class="dash-score-badge" title="Score de saúde financeira" aria-label="Score: 0"></span>
+</div>
 <p class="dash-subtitle" id="dashSubtitle"></p>
 </div>
 <div class="dash-header-actions">
@@ -621,18 +627,32 @@
 <button class="card-pill" onclick="cardSubTab('cst-fatura',this)"><i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle"></i> Fatura</button>
 </div>
 
-<!-- SUB: LANCAR -->
+<!-- SUB: LANCAR (formulário no pop-up) -->
 <div id="cst-lançar" class="card-sub on">
+<button type="button" class="btn-card-action" onclick="openLancarFaturaModal()" style="width:100%;max-width:320px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:8px"><i data-lucide="pen-line" style="width:18px;height:18px"></i> <span data-i18n="lancar_fatura">Lançar na Fatura</span></button>
+<p style="font-size:.82em;color:var(--t3);margin-top:12px;text-align:center">Registre compras e parcelamentos no cartão em um pop-up.</p>
+</div>
+
+<!-- MODAL: Lançar na Fatura -->
+<div id="lancarFaturaModalOv" class="card-modal-ov" style="display:none" onclick="if(event.target===this)closeLancarFaturaModal()">
+<div class="card-modal-box" onclick="event.stopPropagation()" style="max-width:420px;width:100%">
+<div class="card-modal-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+<h3 style="margin:0;font-size:1.05em;display:inline-flex;align-items:center;gap:8px"><i data-lucide="credit-card" style="width:20px;height:20px"></i> <span data-i18n="lancar_fatura">Lançar na Fatura</span></h3>
+<button type="button" onclick="closeLancarFaturaModal()" style="background:none;border:none;cursor:pointer;color:var(--t2);padding:4px" aria-label="Fechar"><i data-lucide="x" style="width:22px;height:22px"></i></button>
+</div>
+<div class="card-modal-body">
 <div class="cst-form-grid">
-<div class="fg"><label class="fl">Cartao</label><select id="fatCard" class="fi"></select></div>
+<div class="fg"><label class="fl">Cartão</label><select id="fatCard" class="fi"></select></div>
 <div class="fg"><label class="fl"><span data-i18n="descricao">Descrição</span></label><input id="fatDesc" class="fi" placeholder="Ex: TV Samsung"></div>
 <div class="fg"><label class="fl">Categoria</label><select id="fatCat" class="fi"></select></div>
 <div class="fg"><label class="fl">Valor Total (R$)</label><input type="text" inputmode="decimal" id="fatVal" class="fi" placeholder="2400"></div>
 <div class="fg"><label class="fl">Parcelas</label><input type="number" id="fatParc" class="fi" min="1" max="48" value="1"></div>
 <div class="fg"><label class="fl">Data da Compra</label><input type="date" id="fatDate" class="fi"></div>
 </div>
-<button class="btn-card-action" onclick="addFatura()"><i data-lucide="credit-card" style="width:16px;height:16px;vertical-align:middle"></i> Lançar na Fatura</button>
+<button type="button" class="btn-card-action" onclick="addFatura()" style="width:100%;margin-top:12px"><i data-lucide="credit-card" style="width:16px;height:16px;vertical-align:middle"></i> Lançar na Fatura</button>
 <div id="faturaInfo" style="font-size:.8em;color:var(--t3);margin-top:8px;text-align:center"></div>
+</div>
+</div>
 </div>
 
 <!-- SUB: IMPORTAR -->
@@ -1966,7 +1986,26 @@
 
 <div id="perfil" class="tab">
 <div class="perfil-hero">
-<div class="perfil-avatar" id="perfilAvatar"><span id="perfilAvatarInicial">U</span></div>
+<div class="perfil-avatar-wrap">
+<div class="perfil-avatar" id="perfilAvatar" onclick="openPerfilAvatarModal()" role="button" title="Alterar foto do perfil" tabindex="0"><span id="perfilAvatarInicial">U</span></div>
+<input type="file" id="perfilAvatarInputCamera" accept="image/*" capture="user" style="display:none" aria-label="Tirar foto" onchange="if(this.files&&this.files[0]){uploadAvatarFromFile(this.files[0]);this.value='';closePerfilAvatarModal();}">
+<input type="file" id="perfilAvatarInputFiles" accept="image/*" style="display:none" aria-label="Buscar nos arquivos" onchange="if(this.files&&this.files[0]){uploadAvatarFromFile(this.files[0]);this.value='';closePerfilAvatarModal();}">
+</div>
+<!-- Modal: como adicionar foto do perfil -->
+<div id="perfilAvatarModalOv" class="card-modal-ov" style="display:none" onclick="if(event.target===this)closePerfilAvatarModal()">
+<div class="card-modal-box" onclick="event.stopPropagation()" style="max-width:360px;width:100%">
+<div class="card-modal-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+<h3 style="margin:0;font-size:1.05em;display:inline-flex;align-items:center;gap:8px"><i data-lucide="camera" style="width:20px;height:20px"></i> Alterar foto do perfil</h3>
+<button type="button" onclick="closePerfilAvatarModal()" style="background:none;border:none;cursor:pointer;color:var(--t2);padding:4px" aria-label="Fechar"><i data-lucide="x" style="width:22px;height:22px"></i></button>
+</div>
+<div class="card-modal-body">
+<p style="font-size:.9em;color:var(--t2);margin:0 0 16px">Como você gostaria de adicionar sua foto?</p>
+<button type="button" class="perfil-avatar-option-btn" onclick="document.getElementById('perfilAvatarInputCamera').click()"><i data-lucide="camera" style="width:22px;height:22px"></i><span>Tirar uma foto</span><small>Usar câmera</small></button>
+<button type="button" class="perfil-avatar-option-btn" onclick="document.getElementById('perfilAvatarInputFiles').click()"><i data-lucide="folder-open" style="width:22px;height:22px"></i><span>Buscar nos arquivos</span><small>Galeria ou pasta</small></button>
+<button type="button" class="perfil-avatar-option-btn perfil-avatar-option-disabled" onclick="toast('Em breve: importar do Instagram','info');"><i data-lucide="instagram" style="width:22px;height:22px"></i><span>Puxar do Instagram</span><small>Em breve</small></button>
+</div>
+</div>
+</div>
 <div class="perfil-hero-text">
 <h1 id="perfilNome">Carregando...</h1>
 <span class="perfil-plan-badge" id="perfilPlanBadge">Free</span>
@@ -2788,6 +2827,194 @@
 </div>
 
 <!-- TAB: COMUNIDADE -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MÓDULO: CREDI AMIGO                                       -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="crediamigo" class="tab">
+<div class="cg">
+<div class="ca-hero">
+  <div class="ca-hero-icon"><i data-lucide="handshake" style="width:28px;height:28px;color:#10B981"></i></div>
+  <div class="ca-hero-text">
+    <h2>Credi Amigo</h2>
+    <p>Empréstimos entre amigos com taxas combinadas, parcelas e lembretes automáticos. Transparência total para ambos os lados.</p>
+  </div>
+  <button class="btn btn-p" onclick="openCrediAmigoModal()" style="white-space:nowrap;display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus" style="width:16px;height:16px"></i> Novo empréstimo</button>
+</div>
+
+<!-- Sub-tabs -->
+<div class="ca-tabs" id="caTabsWrap">
+  <button class="ca-tab on" onclick="showCaTab('caEmprestei')">Emprestei</button>
+  <button class="ca-tab" onclick="showCaTab('caRecebi')">Recebi</button>
+  <button class="ca-tab" onclick="showCaTab('caHistorico')">Histórico</button>
+</div>
+
+<!-- KPIs -->
+<div class="ca-kpis" id="caKpis">
+  <div class="ca-kpi"><div class="ca-kpi-label">Total emprestado</div><div class="ca-kpi-val" id="caTotalEmprestado">R$ 0,00</div></div>
+  <div class="ca-kpi"><div class="ca-kpi-label">A receber</div><div class="ca-kpi-val green" id="caTotalReceber">R$ 0,00</div></div>
+  <div class="ca-kpi"><div class="ca-kpi-label">Total tomado</div><div class="ca-kpi-val" id="caTotalTomado">R$ 0,00</div></div>
+  <div class="ca-kpi"><div class="ca-kpi-label">A pagar</div><div class="ca-kpi-val red" id="caTotalPagar">R$ 0,00</div></div>
+</div>
+
+<!-- Listas -->
+<div id="caEmprestei" class="ca-list-wrap on">
+  <div id="caEmpresteiList" class="ca-list"></div>
+</div>
+<div id="caRecebi" class="ca-list-wrap">
+  <div id="caRecebiList" class="ca-list"></div>
+</div>
+<div id="caHistorico" class="ca-list-wrap">
+  <div id="caHistoricoList" class="ca-list"></div>
+</div>
+
+</div><!-- .cg -->
+</div><!-- #crediamigo -->
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODAL: NOVO EMPRÉSTIMO CREDI AMIGO                        -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="caModal" class="ca-modal-ov" onclick="if(event.target===this)closeCrediAmigoModal()" style="display:none">
+<div class="ca-modal-box">
+  <div class="ca-modal-hd">
+    <span id="caModalTitle">Novo Empréstimo</span>
+    <button type="button" onclick="closeCrediAmigoModal()" class="ca-modal-close"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+  </div>
+  <div class="ca-modal-body">
+    <input type="hidden" id="caModalId">
+    <div class="fg"><label class="fl">Tipo</label>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button type="button" class="ca-tipo-btn on" id="caTipoEmprestei" onclick="setCaTipo('emprestei')"><i data-lucide="arrow-up-right" style="width:14px;height:14px"></i> Emprestei</button>
+        <button type="button" class="ca-tipo-btn" id="caTipoRecebi" onclick="setCaTipo('recebi')"><i data-lucide="arrow-down-left" style="width:14px;height:14px"></i> Recebi</button>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Amigo / Devedor</label><input type="text" id="caAmigo" class="fi" placeholder="Nome ou apelido"></div>
+    <div class="ca-modal-row">
+      <div class="fg"><label class="fl">Valor (R$)</label><input type="number" id="caValor" class="fi" placeholder="0,00" min="0" step="0.01" oninput="caCalcParcelas()"></div>
+      <div class="fg"><label class="fl">Data</label><input type="date" id="caData" class="fi"></div>
+    </div>
+    <div class="ca-modal-row">
+      <div class="fg"><label class="fl">Taxa de juros (% a.m.)</label><input type="number" id="caTaxa" class="fi" placeholder="0 = sem juros" min="0" step="0.1" value="0" oninput="caCalcParcelas()"></div>
+      <div class="fg"><label class="fl">Parcelas</label>
+        <select id="caParcelas" class="fi" onchange="caCalcParcelas()">
+          <option value="1">1x (à vista)</option>
+          <option value="2">2x</option>
+          <option value="3">3x</option>
+          <option value="4">4x</option>
+          <option value="6">6x</option>
+          <option value="12">12x</option>
+          <option value="24">24x</option>
+          <option value="custom">Personalizado</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg" id="caParcelasCustomWrap" style="display:none"><label class="fl">Nº de parcelas</label><input type="number" id="caParcelasCustom" class="fi" min="1" max="120" placeholder="Ex: 18" oninput="caCalcParcelas()"></div>
+    <div id="caResumo" class="ca-resumo" style="display:none"></div>
+    <div class="fg"><label class="fl">Observação (opcional)</label><input type="text" id="caObs" class="fi" placeholder="Ex: Ajuda do casamento"></div>
+    <div class="fg"><label class="fl">Notificar amigo por (opcional)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--t2);cursor:pointer"><input type="checkbox" id="caNotifWhatsApp"> WhatsApp</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--t2);cursor:pointer"><input type="checkbox" id="caNotifEmail"> E-mail</label>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+      <button type="button" class="btn btn-p" onclick="saveCrediAmigo()" style="flex:1"><i data-lucide="check" style="width:15px;height:15px;vertical-align:middle;margin-right:6px"></i>Salvar empréstimo</button>
+      <button type="button" class="btn" onclick="closeCrediAmigoModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODAL: REGISTRAR PAGAMENTO CREDI AMIGO                    -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="caPgtoModal" class="ca-modal-ov" onclick="if(event.target===this)closeCaPgtoModal()" style="display:none">
+<div class="ca-modal-box" style="max-width:400px">
+  <div class="ca-modal-hd"><span>Registrar Pagamento</span><button type="button" onclick="closeCaPgtoModal()" class="ca-modal-close"><i data-lucide="x" style="width:18px;height:18px"></i></button></div>
+  <div class="ca-modal-body">
+    <input type="hidden" id="caPgtoId">
+    <div id="caPgtoInfo" style="margin-bottom:16px;font-size:.88rem;color:var(--t2)"></div>
+    <div class="fg"><label class="fl">Valor pago (R$)</label><input type="number" id="caPgtoValor" class="fi" placeholder="0,00" min="0" step="0.01"></div>
+    <div class="fg"><label class="fl">Data do pagamento</label><input type="date" id="caPgtoData" class="fi"></div>
+    <div class="fg"><label class="fl">Obs (opcional)</label><input type="text" id="caPgtoObs" class="fi" placeholder="Pix, dinheiro..."></div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button type="button" class="btn btn-p" onclick="saveCaPgto()" style="flex:1">Confirmar pagamento</button>
+      <button type="button" class="btn" onclick="closeCaPgtoModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MÓDULO: CONSÓRCIO AMIGOS                                  -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="consorcioamigos" class="tab">
+<div class="cg">
+<div class="ca-hero">
+  <div class="ca-hero-icon"><i data-lucide="piggy-bank" style="width:28px;height:28px;color:#F59E0B"></i></div>
+  <div class="ca-hero-text">
+    <h2>Consórcio Amigos</h2>
+    <p>Forme um grupo de amigos, definam um valor mensal e sorteiem quem recebe o bolo a cada mês. Sem juros, sem banco — só confiança.</p>
+  </div>
+  <button class="btn btn-p" onclick="openConsorcioModal()" style="white-space:nowrap;display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus" style="width:16px;height:16px"></i> Criar grupo</button>
+</div>
+
+<!-- Lista de grupos -->
+<div id="consorcioGruposWrap">
+  <div class="co-grupos-grid" id="consorcioGruposGrid"></div>
+</div>
+
+</div><!-- .cg -->
+</div><!-- #consorcioamigos -->
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODAL: CRIAR/EDITAR GRUPO CONSÓRCIO                       -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="consorcioModal" class="ca-modal-ov" onclick="if(event.target===this)closeConsorcioModal()" style="display:none">
+<div class="ca-modal-box">
+  <div class="ca-modal-hd"><span id="consorcioModalTitle">Novo Grupo de Consórcio</span><button type="button" onclick="closeConsorcioModal()" class="ca-modal-close"><i data-lucide="x" style="width:18px;height:18px"></i></button></div>
+  <div class="ca-modal-body">
+    <input type="hidden" id="consorcioId">
+    <div class="fg"><label class="fl">Nome do grupo</label><input type="text" id="consorcioNome" class="fi" placeholder="Ex: Turma da Firma, Família Silva..."></div>
+    <div class="ca-modal-row">
+      <div class="fg"><label class="fl">Contribuição mensal (R$)</label><input type="number" id="consorcioValor" class="fi" placeholder="500,00" min="0" step="0.01" oninput="consorcioCalc()"></div>
+      <div class="fg"><label class="fl">Nº de participantes</label><input type="number" id="consorcioParticipantes" class="fi" placeholder="Ex: 10" min="2" max="50" oninput="consorcioCalc()"></div>
+    </div>
+    <div class="fg"><label class="fl">Dia de vencimento</label>
+      <select id="consorcioDia" class="fi">
+        <option value="5">Dia 5</option><option value="10">Dia 10</option>
+        <option value="15">Dia 15</option><option value="20">Dia 20</option>
+        <option value="25">Dia 25</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Modo de contemplação</label>
+      <select id="consorcioModo" class="fi">
+        <option value="sorteio">Sorteio aleatório</option>
+        <option value="lance">Maior lance</option>
+        <option value="rotativo">Ordem de entrada</option>
+      </select>
+    </div>
+    <div id="consorcioResumo" class="ca-resumo" style="margin-top:14px"></div>
+    <div class="fg" style="margin-top:14px"><label class="fl">Participantes (e-mails separados por vírgula)</label>
+      <textarea id="consorcioEmails" class="fi" rows="3" placeholder="amigo1@email.com, amigo2@email.com..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+      <button type="button" class="btn btn-p" onclick="saveConsorcio()" style="flex:1">Criar grupo</button>
+      <button type="button" class="btn" onclick="closeConsorcioModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODAL: DETALHES DO GRUPO CONSÓRCIO                        -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="consorcioDetalheModal" class="ca-modal-ov" onclick="if(event.target===this)closeConsorcioDetalhe()" style="display:none">
+<div class="ca-modal-box" style="max-width:600px">
+  <div class="ca-modal-hd"><span id="consorcioDetalheTitulo">Detalhes do Grupo</span><button type="button" onclick="closeConsorcioDetalhe()" class="ca-modal-close"><i data-lucide="x" style="width:18px;height:18px"></i></button></div>
+  <div class="ca-modal-body" id="consorcioDetalheBody"></div>
+</div>
+</div>
+
 <div id="comunidade" class="tab tab-comunidade">
 <div id="commSetup" class="comm-setup comm-aceite" style="display:none">
 <div class="comm-aceite-box">
@@ -2835,6 +3062,24 @@
 </div>
 </div>
 <div id="commFeed" class="comm-feed">
+<!-- Faixa Stories (estilo Instagram) -->
+<div id="commStoriesStrip" class="comm-stories-strip">
+<div class="comm-stories-scroll">
+<div class="comm-story-item comm-story-add" onclick="document.getElementById('commPostText')&&document.getElementById('commPostText').focus();document.getElementById('commPostText')&&document.getElementById('commPostText').scrollIntoView({behavior:'smooth',block:'center'})" title="Publicar">
+<div class="comm-story-ring"><div class="comm-story-av" id="commStoryMyAv">+</div></div>
+<span class="comm-story-label">Seu story</span>
+</div>
+<div class="comm-story-item" onclick="var b=document.querySelector('#commFeedFilters [data-cat=dica]');filterCommFeed('dica',b);">
+<div class="comm-story-ring"><div class="comm-story-av" style="background:linear-gradient(135deg,#22C55E,#16A34A)"><i data-lucide="lightbulb" style="width:22px;height:22px;color:#fff"></i></div></div>
+<span class="comm-story-label">Dica do dia</span>
+</div>
+<div class="comm-story-item" onclick="var b=document.querySelector('#commFeedFilters [data-cat=all]');filterCommFeed('all',b);">
+<div class="comm-story-ring"><div class="comm-story-av" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED)"><i data-lucide="trophy" style="width:22px;height:22px;color:#fff"></i></div></div>
+<span class="comm-story-label">Em alta</span>
+</div>
+<div id="commStoriesTrending"></div>
+</div>
+</div>
 <div id="commProfileCard" class="comm-profile-card" style="display:none">
 <div class="comm-profile-av" id="commProfileAv"></div>
 <div style="flex:1">
@@ -2873,12 +3118,12 @@
 <div class="comm-compose-hint">Dica: use #hashtag e @apelido</div>
 </div>
 </div>
-<div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap" id="commFeedFilters">
-<button class="comm-tag on" onclick="filterCommFeed('all',this)">Todos</button>
-<button class="comm-tag" onclick="filterCommFeed('dica',this)">Dicas</button>
-<button class="comm-tag" onclick="filterCommFeed('analise',this)">Analises</button>
-<button class="comm-tag" onclick="filterCommFeed('duvida',this)">Duvidas</button>
-<button class="comm-tag" onclick="filterCommFeed('discussao',this)">Discussoes</button>
+<div class="comm-filter" style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap" id="commFeedFilters">
+<button class="comm-tag on" data-cat="all" onclick="filterCommFeed('all',this)">Todos</button>
+<button class="comm-tag" data-cat="dica" onclick="filterCommFeed('dica',this)">Dicas</button>
+<button class="comm-tag" data-cat="analise" onclick="filterCommFeed('analise',this)">Analises</button>
+<button class="comm-tag" data-cat="duvida" onclick="filterCommFeed('duvida',this)">Duvidas</button>
+<button class="comm-tag" data-cat="discussao" onclick="filterCommFeed('discussao',this)">Discussoes</button>
 </div>
 <div class="comm-sort-bar">
 <span class="comm-sort-label">Ordenar:</span>
@@ -2886,8 +3131,9 @@
 <button class="comm-sort-btn" onclick="sortCommFeed('popular',this)"><i data-lucide="flame" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Populares</button>
 <button class="comm-sort-btn" onclick="sortCommFeed('discussed',this)"><i data-lucide="message-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Mais comentados</button>
 </div>
+<div id="commPullRefresh" class="comm-pull-refresh" aria-hidden="true"><span class="comm-pull-icon"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i></span><span>Solte para atualizar</span></div>
 <div id="commNewPostsBanner" class="comm-new-posts-banner" onclick="scrollToTopComm()">&#8593; Novas publicacoes disponiveis</div>
-<div id="commPosts" class="comm-posts-grid"><div class="comm-empty"><div class="comm-empty-icon"><i data-lucide="message-circle" style="width:48px;height:48px;color:var(--t3)"></i></div><p>Nenhuma publicacao ainda.<br>Seja o primeiro a compartilhar!</p></div></div>
+<div id="commPosts" class="comm-posts-grid"><div class="comm-empty"><div class="comm-empty-icon"><i data-lucide="sparkles" style="width:56px;height:56px;color:var(--t3)"></i></div><p>Nenhuma publicação ainda.<br>Seja o primeiro a compartilhar uma dica ou conquista!</p><div class="comm-empty-cta"><button type="button" class="btn btn-p" onclick="var el=document.getElementById('commPostText');if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'})}"><i data-lucide="pen-line" style="width:18px;height:18px"></i> Publicar agora</button></div></div></div>
 </div>
 <div id="commGrupos" style="display:none" class="comm-grupos-wrap">
 <div class="comm-grupos-grid" id="commGruposGrid">

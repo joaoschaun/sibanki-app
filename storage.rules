@@ -1,0 +1,16 @@
+rules_version = '2';
+// Firebase Storage: avatares de perfil (app + comunidade)
+// Leitura: qualquer autenticado (para exibir fotos no feed/comunidade)
+// Escrita: apenas o dono do arquivo (nome deve comecar com seu uid)
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /avatars/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && fileName.matches('^' + request.auth.uid + '_.*');
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
