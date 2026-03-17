@@ -2989,7 +2989,16 @@ if(labelEl)labelEl.textContent=saud;
 var el=document.getElementById('dashGreet');
 if(el)el.innerHTML=escapeHtml(userName);
 var badgeEl=document.getElementById('dashScoreBadge');
-if(badgeEl){var icon=scoreNum>=70?'trending-up':scoreNum>=40?'minus':'alert-triangle';badgeEl.className='dash-score-badge score-'+(scoreNum>=70?'high':scoreNum>=40?'mid':'low');badgeEl.innerHTML='<i data-lucide="'+icon+'" style="width:14px;height:14px"></i><span>'+scoreNum+'</span>';badgeEl.setAttribute('aria-label','Score: '+scoreNum);badgeEl.title=typeof t==='function'&&t('score_financeiro')?t('score_financeiro')+' : '+scoreNum:'Score de saúde financeira: '+scoreNum;if(typeof lucide!=='undefined'&&lucide.createIcons)lucide.createIcons();}
+if(badgeEl){
+var scoreClass=scoreNum>=70?'high':scoreNum>=40?'mid':'low';
+var scoreIcon=scoreNum>=70?'shield-check':scoreNum>=40?'shield':'shield-alert';
+var scoreLabel=scoreNum>=70?'Saudável':scoreNum>=40?'Moderado':'Atenção';
+badgeEl.className='dash-score-badge score-'+scoreClass;
+badgeEl.innerHTML='<i data-lucide="'+scoreIcon+'" style="width:13px;height:13px"></i><span>'+scoreNum+'</span><span style="font-size:.65rem;font-weight:600;opacity:.8">'+scoreLabel+'</span>';
+badgeEl.setAttribute('aria-label','Score: '+scoreNum);
+badgeEl.title='Score de saúde financeira: '+scoreNum+' de 100';
+if(typeof lucide!=='undefined'&&lucide.createIcons)lucide.createIcons();
+}
 var sub=document.getElementById('dashSubtitle');
 if(sub){
 var diasSemana=['Domingo','Segunda-feira','Ter\u00e7a-feira','Quarta-feira','Quinta-feira','Sexta-feira','S\u00e1bado'];

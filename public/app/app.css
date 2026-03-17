@@ -451,10 +451,14 @@ body.light .avatar-dropdown-item-sair:hover{background:rgba(239,68,68,.08)}
 .dash-greet-label{font-size:.875rem;font-weight:500;color:var(--t2);margin:0}
 .dash-greet-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .dash-greet-title{font-size:clamp(1.5rem,3vw,2rem);font-weight:700;letter-spacing:-.02em;margin:.125rem 0 0;font-family:var(--font-display);line-height:1.2}
-.dash-score-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:50px;font-size:.75rem;font-weight:700;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);color:var(--t2)}
-.dash-score-badge.score-high{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.35);color:#22C55E}
-.dash-score-badge.score-mid{background:rgba(234,179,8,.15);border-color:rgba(234,179,8,.35);color:#EAB308}
-.dash-score-badge.score-low{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.35);color:#EF4444}
+.dash-score-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:50px;font-size:.74rem;font-weight:800;background:rgba(79,140,255,.1);border:1px solid rgba(79,140,255,.2);color:var(--vr);letter-spacing:.01em;cursor:default;transition:all .2s}
+.dash-score-badge:hover{background:rgba(79,140,255,.16);border-color:rgba(79,140,255,.35)}
+.dash-score-badge.score-high{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3);color:#22C55E}
+.dash-score-badge.score-high:hover{background:rgba(34,197,94,.2)}
+.dash-score-badge.score-mid{background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.3);color:#EAB308}
+.dash-score-badge.score-mid:hover{background:rgba(234,179,8,.2)}
+.dash-score-badge.score-low{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#EF4444}
+.dash-score-badge.score-low:hover{background:rgba(239,68,68,.2)}
 /* Card insight proativo (consultor invisível) */
 .dash-insight-proativo-card{background:var(--card);border:1px solid var(--brd);border-radius:var(--rs);padding:14px 18px;box-shadow:0 4px 16px rgba(0,0,0,.2)}
 .dash-insight-proativo-hd{display:flex;align-items:center;gap:8px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:8px}
@@ -982,7 +986,7 @@ body.light .metas-progress-geral-bar{background:rgba(0,0,0,.06)}
 .metas-filled-top{display:flex;justify-content:flex-end;margin-bottom:16px}
 .metas-filled-list{display:flex;flex-direction:column;gap:12px}
 /* Invest hero header */
-.inv-hero{display:flex;align-items:center;gap:16px;padding:18px 20px;margin-bottom:16px;background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(5,150,105,.06));border-radius:var(--r);border:1px solid rgba(16,185,129,.22);position:relative;overflow:hidden}
+.inv-hero{display:flex;align-items:center;gap:16px;padding:18px 20px;margin-bottom:16px;background:var(--card);background-image:linear-gradient(135deg,rgba(16,185,129,.1),rgba(5,150,105,.06));border-radius:var(--r);border:1px solid rgba(16,185,129,.22);position:relative;overflow:hidden}
 .inv-hero::after{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;background:rgba(16,185,129,.07);border-radius:50%;pointer-events:none}
 .inv-hero-icon{width:52px;height:52px;border-radius:14px;background:rgba(16,185,129,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;z-index:1}
 .inv-hero-text{position:relative;z-index:1;flex:1}
@@ -2539,6 +2543,7 @@ body.light .lanc-periodo-toggle{background:var(--bg2)!important;border-color:var
 /* ── Investimentos: garantir fundo sólido ── */
 body.light .inv-sub{background:var(--bg)!important}
 body.light .inv-nav{background:var(--bg2)!important;border-color:var(--brd)!important}
+body.light .comm-page-header{background:var(--bg)!important}
 body.light .inv-sub .cb,body.light .inv-sub .fb,body.light .inv-sub .tb{background:#FFFFFF!important;border-color:rgba(15,23,42,.08)!important}
 body.light .inv-sub-section{background:var(--bg)!important}
 body.light [id^="inv"]{background:var(--bg);}
@@ -2943,7 +2948,7 @@ html,body{overflow-x:hidden;width:100%;max-width:100vw}
 
 
 /* ===== SPRINT 6: INVESTIMENTOS REDESIGN ===== */
-.inv-nav{display:flex;gap:4px;padding:4px;background:var(--bg2);border-radius:14px;border:1px solid var(--brd);margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.inv-nav{display:flex;gap:4px;padding:4px;background:var(--bg2);border-radius:14px;border:1px solid var(--brd);margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:sticky;top:60px;z-index:120;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 .inv-nav::-webkit-scrollbar{display:none}
 .inv-tab{display:flex;align-items:center;gap:6px;padding:10px 16px;border:none;background:transparent;color:var(--t3);font-size:.82em;font-weight:600;border-radius:10px;cursor:pointer;transition:all .3s;white-space:nowrap;flex-shrink:0}
 .inv-tab:hover{color:var(--t1);background:rgba(255,255,255,.03)}
@@ -3029,7 +3034,7 @@ html,body{overflow-x:hidden;width:100%;max-width:100vw}
 .comm-tabs{display:flex;gap:4px;background:var(--bg2);border-radius:12px;padding:4px;border:1px solid var(--brd);flex-wrap:wrap}
 .comm-tab{padding:8px 16px;border-radius:10px;font-size:.82em;font-weight:600;cursor:pointer;transition:all .3s;color:var(--t3);border:none;background:none}
 .comm-tab.on{background:var(--pri);color:#fff;box-shadow:0 2px 8px rgba(79,140,255,.3)}
-.comm-page-header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-shrink:0}
+.comm-page-header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-shrink:0;position:sticky;top:60px;z-index:150;background:var(--bg);padding:12px 0 8px;margin-top:-4px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 .comm-page-sub{font-size:.85em;font-weight:600;color:var(--t2);margin:0 0 4px}
 .comm-page-title{font-size:1.75rem;font-weight:800;letter-spacing:-.02em;margin:0;color:var(--t1)}
 .comm-page-desc{font-size:.85em;color:var(--t2);margin:8px 0 0}
