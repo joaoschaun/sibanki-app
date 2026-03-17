@@ -3761,3 +3761,7 @@ body.light .ca-tab.on{background:#fff}body.light .ca-resumo{background:#f8fafc}
 body.light .fil-hero{background:linear-gradient(135deg,#fff,#f0f9ff)}
 body.light .fil-share-btn{background:#f8fafc}
 body.light .fil-nivel{background:#f8fafc}
+
+/* Fix anti-piscada Lucide -- esconde <i> durante conversao para SVG */
+i[data-lucide]{visibility:hidden!important;font-size:0!important;line-height:0!important}
+i[data-lucide] svg,i[data-lucide]>*{visibility:visible!important}
