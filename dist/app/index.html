@@ -324,6 +324,7 @@
 </button>
 <div class="drawer-nav-group-body" id="drawerGroupCrescimentoBody">
 <div class="drawer-nav-item" data-go="invest"><div class="module-icon module-icon-invest"><i data-lucide="trending-up"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_investimentos">Investimentos</span></div></div>
+<div class="drawer-nav-item" data-go="solucoes"><div class="module-icon module-icon-solucoes"><i data-lucide="store"></i></div><div class="dni-text"><span class="dni-label">Soluções Financeiras</span><span class="dni-desc">Crédito, seguros e mais</span></div></div>
 <div class="drawer-nav-item" data-go="ia"><div class="module-icon module-icon-ia"><i data-lucide="bot"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_consultor_ia">Consultor IA</span></div></div>
 <div class="drawer-nav-item" data-go="dicas"><div class="module-icon module-icon-dicas"><i data-lucide="graduation-cap"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_educacao">Educação</span></div></div>
 </div>
@@ -2024,6 +2025,12 @@
 <div class="perfil-tabs">
 <button class="perfil-tab on" data-perfil-tab="visao">Visão Geral</button>
 <button class="perfil-tab" data-perfil-tab="conta">Minha Conta</button>
+<button class="perfil-tab" data-perfil-tab="filiado" id="perfilTabFiliado">
+  <span style="display:inline-flex;align-items:center;gap:5px">
+    <i data-lucide="star" style="width:13px;height:13px"></i> Programa Filiado
+    <span id="perfilFiliadoBadge" style="display:none;background:var(--vr);color:#fff;font-size:.62rem;font-weight:800;padding:1px 6px;border-radius:99px;margin-left:2px">PRO</span>
+  </span>
+</button>
 <button class="perfil-tab" data-perfil-tab="seguranca">Segurança</button>
 <button class="perfil-tab" data-perfil-tab="privacidade">Privacidade</button>
 </div>
@@ -2155,6 +2162,157 @@
 </div>
 
 </div><!-- fecha #perfilConta -->
+<div id="perfilFiliado" class="perfil-tab-content">
+
+<!-- GATE: usuário sem Pro -->
+<div id="filiadoGate" style="display:none">
+  <div class="perfil-card" style="text-align:center;padding:40px 24px;max-width:520px;margin:0 auto">
+    <div style="width:64px;height:64px;border-radius:18px;background:rgba(79,140,255,.12);display:flex;align-items:center;justify-content:center;margin:0 auto 20px"><i data-lucide="star" style="width:32px;height:32px;color:var(--vr)"></i></div>
+    <div style="font-size:1.1rem;font-weight:800;color:var(--t1);margin-bottom:8px">Programa Filiado Sibanki</div>
+    <div style="font-size:.87rem;color:var(--t2);line-height:1.6;margin-bottom:24px">Tenha seu link exclusivo de indicação, acompanhe sua rede e receba SibCoins por cada amigo que ativar o app.<br><br><strong style="color:var(--t1)">Requisito: Plano Pro ou Família ativo.</strong></div>
+    <button class="btn btn-p" onclick="showPlansModal()" style="font-size:.88rem;padding:12px 28px"><i data-lucide="zap" style="width:15px;height:15px;vertical-align:middle;margin-right:6px"></i>Assinar Pro e Virar Filiado</button>
+  </div>
+</div>
+
+<!-- CONTEÚDO: Filiado ativo -->
+<div id="filiadoContent" style="display:none">
+
+  <!-- Hero status -->
+  <div class="fil-hero">
+    <div class="fil-hero-left">
+      <div class="fil-badge" id="filBadge">
+        <i data-lucide="star" style="width:18px;height:18px"></i>
+        <span id="filNivelLabel">Filiado Iniciante</span>
+      </div>
+      <div class="fil-hero-title">Seu link de indicação</div>
+      <div class="fil-link-box">
+        <span id="filLinkText" class="fil-link-url">sibanki.com.br/?ref=XXXXXX</span>
+        <button class="fil-copy-btn" onclick="copiarLinkFiliado()" title="Copiar link">
+          <i data-lucide="copy" style="width:15px;height:15px"></i>
+        </button>
+        <button class="fil-copy-btn" onclick="compartilharLinkFiliado()" title="Compartilhar">
+          <i data-lucide="share-2" style="width:15px;height:15px"></i>
+        </button>
+      </div>
+      <div style="font-size:.76rem;color:var(--t3);margin-top:6px">Código: <strong id="filCodigo" style="color:var(--vr)">—</strong></div>
+    </div>
+    <div class="fil-kpis">
+      <div class="fil-kpi"><div class="fil-kpi-val" id="filTotalIndicados">0</div><div class="fil-kpi-label">Indicados</div></div>
+      <div class="fil-kpi"><div class="fil-kpi-val green" id="filAtivos">0</div><div class="fil-kpi-label">Ativos</div></div>
+      <div class="fil-kpi"><div class="fil-kpi-val" id="filSibCoins">0</div><div class="fil-kpi-label">SibCoins ganhos</div></div>
+      <div class="fil-kpi"><div class="fil-kpi-val yellow" id="filPendentes">0</div><div class="fil-kpi-label">Em análise</div></div>
+    </div>
+  </div>
+
+  <!-- Compartilhar -->
+  <div class="perfil-card" style="margin-bottom:16px">
+    <div style="font-size:.88rem;font-weight:700;color:var(--t1);margin-bottom:14px">Compartilhar meu link</div>
+    <div class="fil-share-btns">
+      <button class="fil-share-btn whatsapp" onclick="compartilharWhatsApp()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366"><path d="M12.04 2C6.58 2 2.13 6.44 2.13 11.9c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.01c5.46 0 9.9-4.44 9.9-9.9C21.96 6.45 17.5 2 12.04 2z"/></svg>
+        WhatsApp
+      </button>
+      <button class="fil-share-btn email" onclick="compartilharEmailFil()">
+        <i data-lucide="mail" style="width:16px;height:16px"></i> E-mail
+      </button>
+      <button class="fil-share-btn copy" onclick="copiarLinkFiliado()">
+        <i data-lucide="link" style="width:16px;height:16px"></i> Copiar link
+      </button>
+    </div>
+  </div>
+
+  <!-- Como funciona -->
+  <div class="perfil-card" style="margin-bottom:16px">
+    <div style="font-size:.88rem;font-weight:700;color:var(--t1);margin-bottom:16px">Como você ganha SibCoins</div>
+    <div class="fil-steps">
+      <div class="fil-step">
+        <div class="fil-step-num">1</div>
+        <div class="fil-step-body">
+          <div class="fil-step-title">Amigo se cadastra pelo seu link</div>
+          <div class="fil-step-desc">Seu link leva ao Sibanki. O cadastro é rastreado automaticamente.</div>
+          <div class="fil-step-reward">—</div>
+        </div>
+      </div>
+      <div class="fil-step">
+        <div class="fil-step-num">2</div>
+        <div class="fil-step-body">
+          <div class="fil-step-title">Amigo ativa o app (30 dias + 5 lançamentos)</div>
+          <div class="fil-step-desc">Conta considerada ativa após 30 dias com pelo menos 5 lançamentos registrados.</div>
+          <div class="fil-step-reward fil-reward-badge"><i data-lucide="coins" style="width:13px;height:13px"></i> +100 SibCoins</div>
+        </div>
+      </div>
+      <div class="fil-step">
+        <div class="fil-step-num">3</div>
+        <div class="fil-step-body">
+          <div class="fil-step-title">Amigo conecta Open Banking</div>
+          <div class="fil-step-desc">Vincula pelo menos um banco via Open Finance — sincronização automática de extratos.</div>
+          <div class="fil-step-reward fil-reward-badge"><i data-lucide="coins" style="width:13px;height:13px"></i> +200 SibCoins</div>
+        </div>
+      </div>
+      <div class="fil-step">
+        <div class="fil-step-num">4</div>
+        <div class="fil-step-body">
+          <div class="fil-step-title">Amigo assina o Plano Pro</div>
+          <div class="fil-step-desc">Quando seu indicado migrar para o plano pago você recebe uma recompensa especial.</div>
+          <div class="fil-step-reward fil-reward-badge gold"><i data-lucide="zap" style="width:13px;height:13px"></i> +500 SibCoins</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de indicados -->
+  <div class="perfil-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:.88rem;font-weight:700;color:var(--t1)">Seus indicados</div>
+      <div class="fil-filter-tabs">
+        <button class="fil-ftab on" onclick="filtrarIndicados('todos',this)">Todos</button>
+        <button class="fil-ftab" onclick="filtrarIndicados('ativo',this)">Ativos</button>
+        <button class="fil-ftab" onclick="filtrarIndicados('pendente',this)">Pendentes</button>
+      </div>
+    </div>
+    <div id="filIndicadosList">
+      <div class="fil-empty"><i data-lucide="users" style="width:32px;height:32px;opacity:.3"></i><p>Nenhum indicado ainda.<br>Compartilhe seu link para começar!</p></div>
+    </div>
+  </div>
+
+  <!-- Histórico SibCoins -->
+  <div class="perfil-card" style="margin-top:16px">
+    <div style="font-size:.88rem;font-weight:700;color:var(--t1);margin-bottom:12px">Extrato SibCoins</div>
+    <div id="filSibCoinHistorico">
+      <div class="fil-empty"><i data-lucide="coins" style="width:32px;height:32px;opacity:.3"></i><p>Nenhuma movimentação ainda.</p></div>
+    </div>
+  </div>
+
+  <!-- Níveis -->
+  <div class="perfil-card" style="margin-top:16px">
+    <div style="font-size:.88rem;font-weight:700;color:var(--t1);margin-bottom:16px">Níveis de Filiado</div>
+    <div class="fil-niveis">
+      <div class="fil-nivel" id="filNivelIniciante">
+        <div class="fil-nivel-icon"><i data-lucide="star" style="width:20px;height:20px"></i></div>
+        <div class="fil-nivel-info"><div class="fil-nivel-nome">Iniciante</div><div class="fil-nivel-req">0–4 ativos</div></div>
+        <div class="fil-nivel-bonus">Padrão</div>
+      </div>
+      <div class="fil-nivel" id="filNivelParceiro">
+        <div class="fil-nivel-icon"><i data-lucide="shield" style="width:20px;height:20px"></i></div>
+        <div class="fil-nivel-info"><div class="fil-nivel-nome">Parceiro</div><div class="fil-nivel-req">5–14 ativos</div></div>
+        <div class="fil-nivel-bonus">+25% SibCoins</div>
+      </div>
+      <div class="fil-nivel" id="filNivelEmbaixador">
+        <div class="fil-nivel-icon"><i data-lucide="award" style="width:20px;height:20px"></i></div>
+        <div class="fil-nivel-info"><div class="fil-nivel-nome">Embaixador</div><div class="fil-nivel-req">15–49 ativos</div></div>
+        <div class="fil-nivel-bonus">+50% SibCoins</div>
+      </div>
+      <div class="fil-nivel" id="filNivelElite">
+        <div class="fil-nivel-icon"><i data-lucide="gem" style="width:20px;height:20px"></i></div>
+        <div class="fil-nivel-info"><div class="fil-nivel-nome">Elite</div><div class="fil-nivel-req">50+ ativos</div></div>
+        <div class="fil-nivel-bonus">+100% SibCoins</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /filiadoContent -->
+</div><!-- /perfilFiliado -->
+
 <div id="perfilSeguranca" class="perfil-tab-content">
   <div style="padding:24px">
     <h3 style="color:var(--t1);margin-bottom:16px">Alterar Senha</h3>
@@ -2759,6 +2917,201 @@
 </div>
 
 <!-- TAB: RELATORIOS -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MÓDULO: SOLUÇÕES FINANCEIRAS (Parceiros + SibCoin Cashback) -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="solucoes" class="tab">
+<div class="cg">
+
+<!-- Hero -->
+<div class="sol-hero">
+  <div class="sol-hero-icon"><i data-lucide="store" style="width:28px;height:28px;color:#4F8CFF"></i></div>
+  <div class="sol-hero-text">
+    <h2>Soluções Financeiras</h2>
+    <p>Use produtos dos nossos parceiros direto no Sibanki e ganhe <strong style="color:#F59E0B">SibCoins</strong> de cashback em cada contratação. Crédito, seguros, consórcio e mais.</p>
+  </div>
+  <!-- Saldo SibCoin em destaque -->
+  <div class="sol-saldo-box">
+    <div class="sol-saldo-label"><i data-lucide="coins" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Seu saldo</div>
+    <div class="sol-saldo-val" id="solSaldoSC">— SC</div>
+    <div class="sol-saldo-sub">SibCoins disponíveis</div>
+  </div>
+</div>
+
+<!-- Banner cashback fixo -->
+<div class="sol-cashback-banner">
+  <i data-lucide="zap" style="width:18px;height:18px;color:#F59E0B;flex-shrink:0"></i>
+  <span>Cada produto contratado via Sibanki gera <strong>SibCoin de cashback</strong> proporcional ao valor. Use na loja do Sibanki: meses Pro, relatórios, consultoria e descontos.</span>
+</div>
+
+<!-- Filtro de categorias -->
+<div class="sol-cats" id="solCatFilter">
+  <button class="sol-cat on" onclick="filtrarSolucoes('todos',this)"><i data-lucide="layout-grid" style="width:13px;height:13px"></i> Todos</button>
+  <button class="sol-cat" onclick="filtrarSolucoes('credito',this)"><i data-lucide="credit-card" style="width:13px;height:13px"></i> Crédito</button>
+  <button class="sol-cat" onclick="filtrarSolucoes('seguro',this)"><i data-lucide="shield-check" style="width:13px;height:13px"></i> Seguros</button>
+  <button class="sol-cat" onclick="filtrarSolucoes('consorcio',this)"><i data-lucide="piggy-bank" style="width:13px;height:13px"></i> Consórcio</button>
+  <button class="sol-cat" onclick="filtrarSolucoes('investimento',this)"><i data-lucide="trending-up" style="width:13px;height:13px"></i> Investimentos</button>
+</div>
+
+<!-- Grid de produtos parceiros -->
+<div class="sol-grid" id="solGrid">
+
+  <!-- ── CRÉDITO ── -->
+  <div class="sol-card" data-cat="credito">
+    <div class="sol-card-head">
+      <div class="sol-partner-logo sol-logo-jb">JB</div>
+      <div class="sol-card-info">
+        <div class="sol-card-nome">Empréstimo Pessoal</div>
+        <div class="sol-card-parceiro">Juros Baixos</div>
+      </div>
+      <div class="sol-cashback-pill"><i data-lucide="coins" style="width:11px;height:11px"></i> 2% cashback SC</div>
+    </div>
+    <div class="sol-card-desc">Compare taxas de 40+ instituições: BV, Santander, Creditas, Simplic. Taxa a partir de 1,9% a.m. Sem consultar CPF.</div>
+    <div class="sol-card-stats">
+      <div class="sol-stat"><div class="sol-stat-val">1,9%</div><div class="sol-stat-lbl">taxa/mês</div></div>
+      <div class="sol-stat"><div class="sol-stat-val">R$500–50k</div><div class="sol-stat-lbl">valor</div></div>
+      <div class="sol-stat"><div class="sol-stat-val">até 72x</div><div class="sol-stat-lbl">parcelas</div></div>
+    </div>
+    <div class="sol-card-foot">
+      <div class="sol-ai-tip" id="solAiTipEmpPessoal"></div>
+      <button class="sol-cta-btn" onclick="abrirSolucao('emp_pessoal')"><i data-lucide="arrow-right" style="width:15px;height:15px"></i> Simular agora</button>
+    </div>
+  </div>
+
+  <div class="sol-card" data-cat="credito">
+    <div class="sol-card-head">
+      <div class="sol-partner-logo sol-logo-jb">JB</div>
+      <div class="sol-card-info">
+        <div class="sol-card-nome">Empréstimo com Garantia FGTS</div>
+        <div class="sol-card-parceiro">Juros Baixos</div>
+      </div>
+      <div class="sol-cashback-pill"><i data-lucide="coins" style="width:11px;height:11px"></i> 1,5% cashback SC</div>
+    </div>
+    <div class="sol-card-desc">Antecipe seu FGTS com taxa a partir de 1,29% a.m. Valor liberado em até 48h. Sem comprometer salário mensal.</div>
+    <div class="sol-card-stats">
+      <div class="sol-stat"><div class="sol-stat-val">1,29%</div><div class="sol-stat-lbl">taxa/mês</div></div>
+      <div class="sol-stat"><div class="sol-stat-val">até 10x</div><div class="sol-stat-lbl">saldo FGTS</div></div>
+      <div class="sol-stat"><div class="sol-stat-val">48h</div><div class="sol-stat-lbl">liberação</div></div>
+    </div>
+    <div class="sol-card-foot">
+      <div class="sol-ai-tip" id="solAiTipFGTS"></div>
+      <button class="sol-cta-btn" onclick="abrirSolucao('emp_fgts')"><i data-lucide="arrow-right" style="width:15px;height:15px"></i> Simular agora</button>
+    </div>
+  </div>
+
+  <div class="sol-card" data-cat="credito">
+    <div class="sol-card-head">
+      <div class="sol-partner-logo sol-logo-creditas">CR</div>
+      <div class="sol-card-info">
+        <div class="sol-card-nome">Crédito com Garantia de Veículo</div>
+        <div class="sol-card-parceiro">Creditas (via Juros Baixos)</div>
+      </div>
+      <div class="sol-cashback-pill"><i data-lucide="coins" style="width:11px;height:11px"></i> 2,5% cashback SC</div>
+    </div>
+    <div class="sol-card-desc">Use seu veículo como garantia e obtenha até 90% do valor. Taxa a partir de 1,09% a.m. Continue usando o carro normalmente.</div>
+    <div class="sol-card-stats">
+      <div class="sol-stat"><div class="sol-stat-val">1,09%</div><div class="sol-stat-lbl">taxa/mês</div></div>
+      <div class="sol-stat"><div class="sol-stat-val">até 90%</div><div class="sol-stat-lbl">do veículo</div></div>
+      <div class="sol-stat"><div class="sol-stat-val">60 meses</div><div class="sol-stat-lbl">prazo</div></div>
+    </div>
+    <div class="sol-card-foot">
+      <div class="sol-ai-tip" id="solAiTipVeiculo"></div>
+      <button class="sol-cta-btn" onclick="abrirSolucao('emp_veiculo')"><i data-lucide="arrow-right" style="width:15px;height:15px"></i> Simular agora</button>
+    </div>
+  </div>
+
+  <!-- ── SEGUROS ── -->
+  <div class="sol-card" data-cat="seguro">
+    <div class="sol-card-head">
+      <div class="sol-partner-logo sol-logo-s2u">S2</div>
+      <div class="sol-card-info">
+        <div class="sol-card-nome">Seguro Celular</div>
+        <div class="sol-card-parceiro">Simple2u (White Label Sibanki)</div>
+      </div>
+      <div class="sol-cashback-pill"><i data-lucide="coins" style="width:11px;height:11px"></i> 3% cashback SC</div>
+    </div>
+    <div class="sol-card-desc">Proteção contra roubo, furto e quebra de tela. Cobertura nacional. Apólice emitida em minutos, diretamente pelo Sibanki.</div>
+    <div class="sol-card-stats">
+      <div class="sol-stat"><div class="sol-stat-val">R$15</div><div class="sol-stat-lbl">/mês</div></div>
+      <div class="sol-stat"><div class="sol-stat-val">100%</div><div class="sol-stat-lbl">digital</div></div>
+      <div class="sol-stat"><div class="sol-stat-val">24h</div><div class="sol-stat-lbl">acionamento</div></div>
+    </div>
+    <div class="sol-card-foot">
+      <div class="sol-ai-tip" id="solAiTipSegCel"></div>
+      <button class="sol-cta-btn" onclick="abrirSolucao('seg_celular')"><i data-lucide="arrow-right" style="width:15px;height:15px"></i> Contratar</button>
+    </div>
+  </div>
+
+  <div class="sol-card" data-cat="seguro">
+    <div class="sol-card-head">
+      <div class="sol-partner-logo sol-logo-s2u">S2</div>
+      <div class="sol-card-info">
+        <div class="sol-card-nome">Seguro de Vida</div>
+        <div class="sol-card-parceiro">Simple2u (White Label Sibanki)</div>
+      </div>
+      <div class="sol-cashback-pill"><i data-lucide="coins" style="width:11px;height:11px"></i> 3% cashback SC</div>
+    </div>
+    <div class="sol-card-desc">Proteção financeira para sua família. Cobertura por morte, invalidez e doenças graves. A partir de R$29/mês. Regulado pela SUSEP.</div>
+    <div class="sol-card-stats">
+      <div class="sol-stat"><div class="sol-stat-val">R$29</div><div class="sol-stat-lbl">/mês</div></div>
+      <div class="sol-stat"><div class="sol-stat-val">R$100k</div><div class="sol-stat-lbl">cobertura</div></div>
+      <div class="sol-stat"><div class="sol-stat-val">SUSEP</div><div class="sol-stat-lbl">regulado</div></div>
+    </div>
+    <div class="sol-card-foot">
+      <div class="sol-ai-tip" id="solAiTipSegVida"></div>
+      <button class="sol-cta-btn" onclick="abrirSolucao('seg_vida')"><i data-lucide="arrow-right" style="width:15px;height:15px"></i> Contratar</button>
+    </div>
+  </div>
+
+  <!-- ── CONSÓRCIO ── -->
+  <div class="sol-card" data-cat="consorcio">
+    <div class="sol-card-head">
+      <div class="sol-partner-logo sol-logo-emb">EM</div>
+      <div class="sol-card-info">
+        <div class="sol-card-nome">Consórcio de Imóvel</div>
+        <div class="sol-card-parceiro">Embracon (em análise)</div>
+      </div>
+      <div class="sol-cashback-pill"><i data-lucide="coins" style="width:11px;height:11px"></i> 1% cashback SC</div>
+    </div>
+    <div class="sol-card-desc">Adquira seu imóvel sem juros. Maior administradora digital de consórcios do Brasil. 500k+ bens entregues. Simule sua parcela.</div>
+    <div class="sol-card-stats">
+      <div class="sol-stat"><div class="sol-stat-val">0%</div><div class="sol-stat-lbl">juros</div></div>
+      <div class="sol-stat"><div class="sol-stat-val">240x</div><div class="sol-stat-lbl">parcelas</div></div>
+      <div class="sol-stat"><div class="sol-stat-val">até R$1M</div><div class="sol-stat-lbl">carta crédito</div></div>
+    </div>
+    <div class="sol-card-foot">
+      <div class="sol-ai-tip" id="solAiTipConsImovel"></div>
+      <button class="sol-cta-btn" onclick="abrirSolucao('cons_imovel')"><i data-lucide="arrow-right" style="width:15px;height:15px"></i> Simular</button>
+    </div>
+  </div>
+
+</div><!-- /sol-grid -->
+
+<!-- Histórico de cashbacks -->
+<div class="perfil-card" style="margin-top:20px" id="solCashbackHistCard">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div style="font-size:.88rem;font-weight:700;color:var(--t1)"><i data-lucide="history" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i>Histórico de Cashbacks</div>
+    <div style="font-size:.78rem;color:var(--t3)">SibCoins ganhos por contratações</div>
+  </div>
+  <div id="solCashbackList"><div class="fil-empty"><i data-lucide="coins" style="width:32px;height:32px;opacity:.3"></i><p>Nenhuma contratação ainda.<br>Use um produto parceiro para ganhar SibCoins!</p></div></div>
+</div>
+
+</div><!-- .cg -->
+</div><!-- #solucoes -->
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODAL: DETALHES E SIMULAÇÃO DO PRODUTO PARCEIRO            -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="solModal" class="ca-modal-ov" onclick="if(event.target===this)closeSolModal()" style="display:none">
+<div class="ca-modal-box" style="max-width:560px">
+  <div class="ca-modal-hd">
+    <span id="solModalTitle">Produto</span>
+    <button type="button" onclick="closeSolModal()" class="ca-modal-close"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+  </div>
+  <div class="ca-modal-body" id="solModalBody"></div>
+</div>
+</div>
+
 <div id="rel" class="tab">
 
 <div class="rel-hero">

@@ -866,6 +866,8 @@ c.classList.toggle('on',isActive);
 c.style.removeProperty('display');
 c.style.removeProperty('visibility');
 });
+// Hook especial para aba Filiado
+if(id==='filiado'&&typeof onPerfilTabFiliado==='function')onPerfilTabFiliado();
 try{if(typeof loadPerfilData==='function')loadPerfilData();}catch(e){}
 if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);
 });
@@ -1167,6 +1169,7 @@ perfilAtualizarStatusNotif();toast('WhatsApp configurado! Notificações serão 
 function go(id,el){
 /* Hook: show child section when entering family tab */
 if(id==='comunidade'&&typeof initCommunity==='function'){setTimeout(initCommunity,100);}
+if(id==='solucoes'&&typeof onSolucoesEnter==='function'){setTimeout(onSolucoesEnter,100);}
 if(id==='config'&&typeof loadIAUsage==='function'){setTimeout(loadIAUsage,300);}
 if(id==='config'&&typeof checkTelegramLink==='function'){setTimeout(checkTelegramLink,300);}
 if(id==='config'&&typeof checkWhatsAppLink==='function'){setTimeout(checkWhatsAppLink,300);}
@@ -1393,7 +1396,8 @@ var DASHBOARD_WIDGETS=[
 {id:'proximos-vencimentos',title:'Próximos Vencimentos',size:'medium',iconName:'credit-card'},
 {id:'conquistas',title:'Conquistas Recentes',size:'medium',iconName:'trophy'},
 {id:'ultimos-lancamentos',title:'Últimos Lançamentos',size:'full',iconName:'arrow-left-right'},
-{id:'calendario-mini',title:'Calendário Mini',size:'medium',iconName:'calendar'}
+{id:'calendario-mini',title:'Calendário Mini',size:'medium',iconName:'calendar'},
+{id:'sibcoin',title:'SibCoin & Parceiros',size:'medium',iconName:'coins'}
 ];
 var DEFAULT_DASHBOARD_LAYOUT=[
 {id:'insight',ordem:0,visivel:true},{id:'evolucao-financeira',ordem:1,visivel:true},{id:'despesas-categoria',ordem:2,visivel:true},
@@ -1510,6 +1514,32 @@ var coresPieArr=['hsl(221, 83%, 53%)','hsl(160, 64%, 43%)','hsl(38, 92%, 50%)','
 setTimeout(function(){var cid='w_c3_despesas_categoria';var can=document.getElementById(cid);if(!can||typeof Chart==='undefined')return;if(charts[cid])charts[cid].destroy();charts[cid]=new Chart(can,{type:'doughnut',data:{labels:pieEntries.map(function(x){return x.name}),datasets:[{data:pieEntries.map(function(x){return x.value}),backgroundColor:pieEntries.map(function(_,i){return coresPieArr[i%6]}),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}})},100);
 }
 if(widgetId==='insight'&&typeof renderInsightDoDia==='function')setTimeout(renderInsightDoDia,200);
+// Widget SibCoin — saldo + CTA para Soluções
+if(widgetId==='sibcoin'){
+container.innerHTML='<div class="widget-label" style="display:flex;align-items:center;gap:6px"><i data-lucide="coins" style="width:14px;height:14px;color:var(--yellow)"></i> SibCoin</div>'+
+'<div style="margin:12px 0 8px;text-align:center">'+
+'<div style="font-size:2rem;font-weight:800;color:var(--yellow);font-variant-numeric:tabular-nums" id="dashSibCoinSaldo">— SC</div>'+
+'<div style="font-size:.72rem;color:var(--t3);margin-top:2px">saldo disponível</div>'+
+'</div>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">'+
+'<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:8px;text-align:center">'+
+'<div style="font-size:.7rem;color:var(--yellow);font-weight:700;margin-bottom:2px">CASHBACK</div>'+
+'<div style="font-size:.82rem;color:var(--t2)">Parceiros</div></div>'+
+'<div style="background:rgba(79,140,255,.08);border:1px solid rgba(79,140,255,.2);border-radius:10px;padding:8px;text-align:center">'+
+'<div style="font-size:.7rem;color:var(--vr);font-weight:700;margin-bottom:2px">INDICAÇÃO</div>'+
+'<div style="font-size:.82rem;color:var(--t2)">Programa</div></div>'+
+'</div>'+
+'<button onclick="if(typeof go===\'function\')go(\'solucoes\',null)" style="width:100%;background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(79,140,255,.1));border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:9px;font-size:.78rem;font-weight:700;color:var(--yellow);cursor:pointer;font-family:var(--font-body);transition:all .2s">Ver Soluções e ganhar SC →</button>';
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},30);
+// Carregar saldo real
+if(U&&U.uid){
+db.collection('users').doc(U.uid).collection('filiado').doc('dados').get().then(function(snap){
+var sc=snap.exists?(snap.data().totalSibCoins||0):0;
+var el=document.getElementById('dashSibCoinSaldo');
+if(el)el.textContent=sc.toLocaleString('pt-BR')+' SC';
+}).catch(function(){});
+}
+}
 }
 function renderDashboardWidgets(){
 var grid=document.getElementById('dashboardGrid');if(!grid)return;
@@ -8386,6 +8416,17 @@ else{topPlanTag.style.display='none';}
 var planSection=document.getElementById('planSection');
 if(planSection)renderPlanSection();
 if(typeof updateDrawerUser==='function')updateDrawerUser();
+// Badge PRO na aba Filiado
+var filBadge=document.getElementById('perfilFiliadoBadge');
+if(filBadge)filBadge.style.display=(userPlan==='pro'||userPlan==='familia')?'inline':'none';
+// Salvar código de filiado no campo filiadoCodigo do user (para query por ref)
+if((userPlan==='pro'||userPlan==='familia')&&U&&U.uid){
+db.collection('users').doc(U.uid).collection('filiado').doc('dados').get().then(function(snap){
+if(snap.exists&&snap.data().codigo){
+db.collection('users').doc(U.uid).set({filiadoCodigo:snap.data().codigo},{merge:true}).catch(function(){});
+}
+}).catch(function(){});
+}
 }
 
 function getPlanLimit(feature){
@@ -16682,4 +16723,676 @@ function showFeatureUpsell(key) {
     '</div>';
   modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
   document.body.appendChild(modal);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROGRAMA FILIADO SIBANKI
+   ── Requisito: plano Pro ou Família
+   ── Recompensas: SibCoins por ativação, Open Banking e Pro
+   ═══════════════════════════════════════════════════════════════ */
+
+var _filiadoData = null; // cache dos dados do filiado
+
+// ── Config de recompensas (editável pelo admin via Firestore config/filiado) ──
+var FILIADO_CONFIG = {
+  recompensas: {
+    ativacao:    100,  // indicado com 30d + 5 lançamentos
+    openBanking: 200,  // indicado conectou Open Finance
+    assinouPro:  500,  // indicado assinou Pro
+  },
+  multiplicadores: {
+    iniciante:   1.0,  // 0-4 ativos
+    parceiro:    1.25, // 5-14 ativos
+    embaixador:  1.5,  // 15-49 ativos
+    elite:       2.0,  // 50+ ativos
+  },
+  ativacaoMinDias:        30,
+  ativacaoMinLancamentos: 5,
+};
+
+// ── Carrega config do Firestore (admin pode ajustar sem deploy) ──
+function loadFiliadoConfig() {
+  db.collection('config').doc('filiado').get().then(function(snap) {
+    if (snap.exists) {
+      var d = snap.data();
+      if (d.recompensas) Object.assign(FILIADO_CONFIG.recompensas, d.recompensas);
+      if (d.multiplicadores) Object.assign(FILIADO_CONFIG.multiplicadores, d.multiplicadores);
+    }
+  }).catch(function(){});
+}
+
+// ── Gera código único para o usuário ──
+function gerarCodigoFiliado(uid) {
+  // 6 chars alfanuméricos derivados do UID (uppercase) + 2 chars aleatórios
+  var base = uid.replace(/[^a-zA-Z0-9]/g, '').substring(0, 5).toUpperCase();
+  var rnd = Math.random().toString(36).substring(2, 4).toUpperCase();
+  return base + rnd;
+}
+
+// ── Nível do filiado baseado em ativos ──
+function getNivelFiliado(ativos) {
+  if (ativos >= 50) return { nome: 'Elite',       key: 'elite',       mult: FILIADO_CONFIG.multiplicadores.elite };
+  if (ativos >= 15) return { nome: 'Embaixador',  key: 'embaixador',  mult: FILIADO_CONFIG.multiplicadores.embaixador };
+  if (ativos >= 5)  return { nome: 'Parceiro',    key: 'parceiro',    mult: FILIADO_CONFIG.multiplicadores.parceiro };
+  return               { nome: 'Iniciante',    key: 'iniciante',   mult: FILIADO_CONFIG.multiplicadores.iniciante };
+}
+
+// ── Inicializa/carrega dados do filiado do Firestore ──
+function initFiliado() {
+  if (!U || !U.uid) return;
+
+  var isPro = (typeof userPlan !== 'undefined') && (userPlan === 'pro' || userPlan === 'familia');
+  var gateEl    = document.getElementById('filiadoGate');
+  var contentEl = document.getElementById('filiadoContent');
+  var badgeEl   = document.getElementById('perfilFiliadoBadge');
+
+  if (!isPro) {
+    if (gateEl)    gateEl.style.display    = 'block';
+    if (contentEl) contentEl.style.display = 'none';
+    if (badgeEl)   badgeEl.style.display   = 'none';
+    return;
+  }
+
+  if (badgeEl) badgeEl.style.display = 'inline';
+  if (gateEl)    gateEl.style.display    = 'none';
+  if (contentEl) contentEl.style.display = 'block';
+
+  // Carrega ou cria documento do filiado
+  var ref = db.collection('users').doc(U.uid).collection('filiado').doc('dados');
+  ref.get().then(function(snap) {
+    if (!snap.exists) {
+      // Primeiro acesso: gerar código e criar doc
+      var codigo = gerarCodigoFiliado(U.uid);
+      var dadosIniciais = {
+        codigo: codigo,
+        ativo: true,
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+        totalIndicados: 0,
+        totalAtivos: 0,
+        totalSibCoins: 0,
+        pendentes: 0,
+      };
+      ref.set(dadosIniciais).then(function() {
+        _filiadoData = dadosIniciais;
+        _filiadoData.codigo = codigo;
+        renderFiliadoUI(_filiadoData);
+      });
+    } else {
+      _filiadoData = snap.data();
+      renderFiliadoUI(_filiadoData);
+    }
+  }).catch(function(e) {
+    console.error('Filiado load error:', e);
+  });
+
+  // Carrega config do admin
+  loadFiliadoConfig();
+}
+
+// ── Renderiza a UI com os dados ──
+function renderFiliadoUI(data) {
+  if (!data) return;
+  var codigo = data.codigo || '—';
+  var link   = 'sibanki.com.br/?ref=' + codigo;
+  var ativos = data.totalAtivos || 0;
+  var nivel  = getNivelFiliado(ativos);
+
+  // KPIs
+  var el = function(id) { return document.getElementById(id); };
+  if (el('filLinkText'))        el('filLinkText').textContent        = link;
+  if (el('filCodigo'))          el('filCodigo').textContent          = codigo;
+  if (el('filTotalIndicados'))  el('filTotalIndicados').textContent  = data.totalIndicados || 0;
+  if (el('filAtivos'))          el('filAtivos').textContent          = ativos;
+  if (el('filSibCoins'))        el('filSibCoins').textContent        = (data.totalSibCoins || 0).toLocaleString('pt-BR');
+  if (el('filPendentes'))       el('filPendentes').textContent       = data.pendentes || 0;
+
+  // Badge de nível
+  if (el('filNivelLabel')) el('filNivelLabel').textContent = 'Filiado ' + nivel.nome;
+
+  // Destacar nível atual
+  ['Iniciante','Parceiro','Embaixador','Elite'].forEach(function(n) {
+    var card = el('filNivel' + n);
+    if (card) card.classList.toggle('atual', n === nivel.nome);
+  });
+
+  // Carregar lista de indicados
+  carregarIndicados('todos');
+  // Carregar extrato SibCoins
+  carregarExtratoCoin();
+}
+
+// ── Carregar lista de indicados ──
+function carregarIndicados(filtro) {
+  if (!U || !U.uid) return;
+  var listEl = document.getElementById('filIndicadosList');
+  if (!listEl) return;
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--t3)"><i data-lucide="loader" style="width:20px;height:20px"></i></div>';
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+
+  var query = db.collection('users').doc(U.uid).collection('indicados').orderBy('criadoEm', 'desc').limit(50);
+
+  query.get().then(function(snap) {
+    if (snap.empty) {
+      listEl.innerHTML = '<div class="fil-empty"><i data-lucide="users" style="width:32px;height:32px;opacity:.3"></i><p>Nenhum indicado ainda.<br>Compartilhe seu link para começar!</p></div>';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+      return;
+    }
+
+    var docs = snap.docs.filter(function(d) {
+      if (filtro === 'todos') return true;
+      return d.data().status === filtro;
+    });
+
+    if (docs.length === 0) {
+      listEl.innerHTML = '<div class="fil-empty" style="padding:24px 0"><p>Nenhum resultado para este filtro.</p></div>';
+      return;
+    }
+
+    listEl.innerHTML = docs.map(function(d) {
+      var info = d.data();
+      var iniciais = (info.nome || info.email || 'U').charAt(0).toUpperCase();
+      var statusLabel = info.status === 'ativo' ? 'Ativo' : info.status === 'pendente' ? 'Pendente' : 'Inativo';
+      var statusClass = info.status || 'pendente';
+      var dataStr = info.criadoEm ? new Date(info.criadoEm.toDate()).toLocaleDateString('pt-BR') : '—';
+      var coinsGanhos = (info.sibCoinsGerados || 0);
+      return '<div class="fil-indicado-card">' +
+        '<div class="fil-indicado-av">' + escapeHtml(iniciais) + '</div>' +
+        '<div class="fil-indicado-info">' +
+          '<div class="fil-indicado-nome">' + escapeHtml(info.nome || info.email || 'Usuário') + '</div>' +
+          '<div class="fil-indicado-meta">Desde ' + dataStr + (coinsGanhos > 0 ? ' · ' + coinsGanhos + ' SC gerados' : '') + '</div>' +
+        '</div>' +
+        '<span class="fil-indicado-status ' + escapeHtml(statusClass) + '">' + escapeHtml(statusLabel) + '</span>' +
+      '</div>';
+    }).join('');
+  }).catch(function(e) {
+    listEl.innerHTML = '<div class="fil-empty"><p>Erro ao carregar indicados.</p></div>';
+    console.error('Indicados load error:', e);
+  });
+}
+
+// ── Filtrar indicados por status ──
+function filtrarIndicados(filtro, btn) {
+  document.querySelectorAll('.fil-ftab').forEach(function(b) { b.classList.remove('on'); });
+  if (btn) btn.classList.add('on');
+  carregarIndicados(filtro);
+}
+
+// ── Carregar extrato de SibCoins ──
+function carregarExtratoCoin() {
+  if (!U || !U.uid) return;
+  var histEl = document.getElementById('filSibCoinHistorico');
+  if (!histEl) return;
+
+  db.collection('users').doc(U.uid).collection('sibcoin')
+    .orderBy('ts', 'desc').limit(20).get()
+    .then(function(snap) {
+      if (snap.empty) {
+        histEl.innerHTML = '<div class="fil-empty"><i data-lucide="coins" style="width:32px;height:32px;opacity:.3"></i><p>Nenhuma movimentação ainda.</p></div>';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        return;
+      }
+      histEl.innerHTML = snap.docs.map(function(d) {
+        var info = d.data();
+        var dataStr = info.ts ? new Date(info.ts.toDate()).toLocaleDateString('pt-BR') : '—';
+        var sinal = info.tipo === 'gasto' ? '-' : '+';
+        var cor   = info.tipo === 'gasto' ? 'color:var(--danger)' : 'color:var(--green)';
+        return '<div class="fil-coin-row">' +
+          '<div><div class="fil-coin-desc">' + escapeHtml(info.desc || 'SibCoin') + '</div>' +
+          '<div style="font-size:.72rem;color:var(--t3)">' + dataStr + '</div></div>' +
+          '<div class="fil-coin-val" style="' + cor + '">' + sinal + (info.valor || 0) + ' SC</div>' +
+        '</div>';
+      }).join('');
+    }).catch(function() {
+      histEl.innerHTML = '<div class="fil-empty"><p>Erro ao carregar extrato.</p></div>';
+    });
+}
+
+// ── Copiar link ──
+function copiarLinkFiliado() {
+  if (!_filiadoData || !_filiadoData.codigo) return;
+  var link = 'https://sibanki.com.br/?ref=' + _filiadoData.codigo;
+  navigator.clipboard.writeText(link).then(function() {
+    toast('Link copiado!', 'ok');
+  }).catch(function() {
+    var inp = document.createElement('input');
+    inp.value = link;
+    document.body.appendChild(inp);
+    inp.select();
+    document.execCommand('copy');
+    document.body.removeChild(inp);
+    toast('Link copiado!', 'ok');
+  });
+}
+
+// ── Compartilhar via navigator.share ou fallback ──
+function compartilharLinkFiliado() {
+  if (!_filiadoData || !_filiadoData.codigo) return;
+  var link = 'https://sibanki.com.br/?ref=' + _filiadoData.codigo;
+  var msg  = 'Controle suas finanças com o Sibanki! Use meu link e ganhe acesso gratuito: ' + link;
+  if (navigator.share) {
+    navigator.share({ title: 'Sibanki', text: msg, url: link }).catch(function(){});
+  } else {
+    copiarLinkFiliado();
+  }
+}
+
+// ── Compartilhar no WhatsApp ──
+function compartilharWhatsApp() {
+  if (!_filiadoData || !_filiadoData.codigo) return;
+  var link = 'https://sibanki.com.br/?ref=' + _filiadoData.codigo;
+  var msg  = encodeURIComponent('Ei! Estou usando o Sibanki para controlar minhas finanças e é incrível. Acesse pelo meu link e experimente grátis: ' + link);
+  window.open('https://wa.me/?text=' + msg, '_blank');
+}
+
+// ── Compartilhar por e-mail ──
+function compartilharEmailFil() {
+  if (!_filiadoData || !_filiadoData.codigo) return;
+  var link    = 'https://sibanki.com.br/?ref=' + _filiadoData.codigo;
+  var subject = encodeURIComponent('Te indico o Sibanki — controle financeiro com IA');
+  var body    = encodeURIComponent('Oi!\n\nEstou usando o Sibanki para organizar minhas finanças e é realmente diferente. Tem IA que analisa seus gastos, metas, investimentos e muito mais.\n\nAcesse pelo meu link e comece grátis:\n' + link + '\n\nAbraços!');
+  window.open('mailto:?subject=' + subject + '&body=' + body);
+}
+
+// ── Hook na navegação do perfil para inicializar quando entrar na aba ──
+// (integrado com o sistema existente de tabs do perfil via data-perfil-tab)
+var _filiadoInitialized = false;
+function onPerfilTabFiliado() {
+  if (!_filiadoInitialized) {
+    _filiadoInitialized = true;
+    initFiliado();
+  } else if (_filiadoData) {
+    renderFiliadoUI(_filiadoData); // re-render para atualizar
+  }
+}
+
+// ── Processar ?ref= na URL ao entrar no app (rastrear indicação) ──
+function checkRefParam() {
+  var params = new URLSearchParams(window.location.search);
+  var ref    = params.get('ref');
+  if (!ref || !ref.trim()) return;
+  // Salva no localStorage para processar depois do login
+  try { localStorage.setItem('sib_ref_code', ref.trim().toUpperCase()); } catch(e) {}
+  // Limpar da URL sem reload
+  var newUrl = window.location.pathname + (window.location.hash || '');
+  history.replaceState({}, '', newUrl);
+}
+
+// Processar ref após login confirmado
+function processarRefAposLogin() {
+  if (!U || !U.uid) return;
+  var refCode;
+  try { refCode = localStorage.getItem('sib_ref_code'); } catch(e) {}
+  if (!refCode) return;
+
+  // Verificar se usuário já tem referral registrado
+  db.collection('users').doc(U.uid).get().then(function(snap) {
+    var dados = snap.exists ? snap.data() : {};
+    if (dados.refCode) return; // já tem referral, ignorar
+
+    // Buscar filiado pelo código
+    db.collection('users').where('filiadoCodigo', '==', refCode).limit(1).get().then(function(qsnap) {
+      if (qsnap.empty) {
+        // Tentar via índice alternativo
+        return;
+      }
+      var filiadoUid = qsnap.docs[0].id;
+      if (filiadoUid === U.uid) return; // não pode se indicar
+
+      // Registrar referral no usuário novo
+      db.collection('users').doc(U.uid).set({
+        refCode: refCode,
+        refFiliadoUid: filiadoUid,
+        refRegistradoEm: firebase.firestore.FieldValue.serverTimestamp(),
+        openBankingAtivo: false,
+      }, { merge: true });
+
+      // Registrar indicado no filiado
+      db.collection('users').doc(filiadoUid).collection('indicados').add({
+        uid: U.uid,
+        nome: U.name || '',
+        email: U.email || '',
+        status: 'pendente',
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+        sibCoinsGerados: 0,
+        eventos: { cadastro: true, ativacao: false, openBanking: false, assinou: false },
+      });
+
+      // Atualizar contador
+      db.collection('users').doc(filiadoUid).collection('filiado').doc('dados').set({
+        totalIndicados: firebase.firestore.FieldValue.increment(1),
+        pendentes: firebase.firestore.FieldValue.increment(1),
+      }, { merge: true });
+
+      // Limpar localStorage
+      try { localStorage.removeItem('sib_ref_code'); } catch(e) {}
+    }).catch(function(e) { console.error('Ref process error:', e); });
+  });
+}
+
+// Chamar ao inicializar app
+setTimeout(checkRefParam, 100);
+// Chamar após login (integrar em _proceedToApp via observer)
+var _filRefProcessed = false;
+auth.onAuthStateChanged(function(user) {
+  if (user && !_filRefProcessed) {
+    _filRefProcessed = true;
+    setTimeout(processarRefAposLogin, 2000);
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   SOLUÇÕES FINANCEIRAS — Catálogo de parceiros + Cashback SibCoin
+   ═══════════════════════════════════════════════════════════════ */
+
+// ── Catálogo de produtos (editável via Firestore config/solucoes sem deploy) ──
+var SOL_CATALOG = {
+  emp_pessoal: {
+    id: 'emp_pessoal', nome: 'Empréstimo Pessoal', parceiro: 'Juros Baixos',
+    categoria: 'credito', cashbackPct: 0.02,
+    url: 'https://jurosbaixos.com.br?utm_source=sibanki&utm_medium=parceiro&utm_campaign=emp_pessoal',
+    descricao: 'Compare taxas de 40+ instituições. Taxa a partir de 1,9% a.m.',
+    passos: ['Preencha seus dados básicos', 'Compare propostas das melhores instituições', 'Escolha a melhor e contrate', 'Receba SibCoin de cashback automaticamente'],
+    obs: 'O cashback em SibCoin é creditado após confirmação do contrato pelo parceiro (até 7 dias úteis).',
+  },
+  emp_fgts: {
+    id: 'emp_fgts', nome: 'FGTS Antecipado', parceiro: 'Juros Baixos',
+    categoria: 'credito', cashbackPct: 0.015,
+    url: 'https://jurosbaixos.com.br/fgts?utm_source=sibanki',
+    descricao: 'Antecipe seu FGTS com taxa a partir de 1,29% a.m.',
+    passos: ['Informe seu saldo FGTS estimado', 'Receba proposta em segundos', 'Assine digitalmente', 'Dinheiro em conta em até 48h'],
+    obs: 'Cashback calculado sobre o valor liberado. Crédito em 7 dias úteis.',
+  },
+  emp_veiculo: {
+    id: 'emp_veiculo', nome: 'Crédito com Garantia de Veículo', parceiro: 'Creditas',
+    categoria: 'credito', cashbackPct: 0.025,
+    url: 'https://jurosbaixos.com.br/garantia-veiculo?utm_source=sibanki',
+    descricao: 'Taxa a partir de 1,09% a.m. Continue usando o carro normalmente.',
+    passos: ['Informe os dados do veículo', 'Receba avaliação em minutos', 'Assine o contrato online', 'Dinheiro em conta em até 72h'],
+    obs: 'Cashback maior porque o parceiro paga mais por leads com garantia. Crédito em 7 dias úteis.',
+  },
+  seg_celular: {
+    id: 'seg_celular', nome: 'Seguro Celular', parceiro: 'Simple2u',
+    categoria: 'seguro', cashbackPct: 0.03,
+    url: 'https://simple2u.com.br?utm_source=sibanki',
+    descricao: 'Proteção contra roubo, furto e quebra de tela.',
+    passos: ['Informe o modelo do aparelho', 'Escolha o plano de cobertura', 'Pague via cartão ou Pix', 'Apólice emitida em minutos'],
+    obs: 'Cashback de 3% da primeira mensalidade. Recorrente anual = cashback na renovação.',
+  },
+  seg_vida: {
+    id: 'seg_vida', nome: 'Seguro de Vida', parceiro: 'Simple2u',
+    categoria: 'seguro', cashbackPct: 0.03,
+    url: 'https://simple2u.com.br/vida?utm_source=sibanki',
+    descricao: 'Proteção financeira para sua família. A partir de R$29/mês.',
+    passos: ['Responda algumas perguntas de saúde', 'Receba sua proposta personalizada', 'Aceite e pague', 'Apólice ativa imediatamente'],
+    obs: 'Regulado pela SUSEP. Cashback de 3% na contratação e em cada renovação anual.',
+  },
+  cons_imovel: {
+    id: 'cons_imovel', nome: 'Consórcio de Imóvel', parceiro: 'Embracon',
+    categoria: 'consorcio', cashbackPct: 0.01,
+    url: 'https://embracon.com.br?utm_source=sibanki',
+    descricao: 'Adquira seu imóvel sem juros. 500k+ bens entregues.',
+    passos: ['Simule o valor da carta de crédito', 'Escolha o prazo e parcela', 'Assine online e entre no grupo', 'Aguarde sorteio ou dê um lance'],
+    obs: 'Cashback de 1% do valor da primeira parcela. Parceiro em análise de integração.',
+  },
+};
+
+// ── Carrega config dinâmica do Firestore ──
+function loadSolucoesConfig() {
+  db.collection('config').doc('solucoes').get().then(function(snap) {
+    if (!snap.exists) return;
+    var d = snap.data();
+    if (d.produtos) {
+      Object.keys(d.produtos).forEach(function(k) {
+        if (SOL_CATALOG[k]) Object.assign(SOL_CATALOG[k], d.produtos[k]);
+      });
+    }
+  }).catch(function(){});
+}
+
+// ── Inicializa o módulo ao navegar para ele ──
+function initSolucoes() {
+  loadSolucoesConfig();
+  carregarSaldoSibCoin();
+  carregarCashbackHistorico();
+  gerarAiTipsSolucoes();
+}
+
+// ── Exibir saldo de SibCoin no hero ──
+function carregarSaldoSibCoin() {
+  var el = document.getElementById('solSaldoSC');
+  if (!el || !U || !U.uid) return;
+  db.collection('users').doc(U.uid).collection('filiado').doc('dados')
+    .get().then(function(snap) {
+      var saldo = snap.exists ? (snap.data().totalSibCoins || 0) : 0;
+      if (el) el.textContent = saldo.toLocaleString('pt-BR') + ' SC';
+      // Sincroniza com a aba Filiado se estiver aberta
+      var filEl = document.getElementById('filSibCoins');
+      if (filEl) filEl.textContent = saldo.toLocaleString('pt-BR');
+    }).catch(function() {
+      if (el) el.textContent = '0 SC';
+    });
+}
+
+// ── Histórico de cashbacks desta seção ──
+function carregarCashbackHistorico() {
+  var listEl = document.getElementById('solCashbackList');
+  if (!listEl || !U || !U.uid) return;
+  db.collection('users').doc(U.uid).collection('sibcoin')
+    .where('origem', '==', 'parceiro')
+    .orderBy('ts', 'desc').limit(10)
+    .get().then(function(snap) {
+      if (snap.empty) {
+        listEl.innerHTML = '<div class="fil-empty"><i data-lucide="coins" style="width:32px;height:32px;opacity:.3"></i><p>Nenhuma contratação ainda.<br>Use um produto parceiro para ganhar SibCoins!</p></div>';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        return;
+      }
+      listEl.innerHTML = snap.docs.map(function(d) {
+        var info = d.data();
+        var dataStr = info.ts ? new Date(info.ts.toDate()).toLocaleDateString('pt-BR') : '—';
+        return '<div class="sol-cb-row">' +
+          '<div class="sol-cb-icon"><i data-lucide="coins" style="width:18px;height:18px;color:var(--yellow)"></i></div>' +
+          '<div class="sol-cb-info">' +
+            '<div class="sol-cb-desc">' + escapeHtml(info.desc || 'Cashback parceiro') + '</div>' +
+            '<div class="sol-cb-meta">' + dataStr + (info.produto ? ' · ' + escapeHtml(info.produto) : '') + '</div>' +
+          '</div>' +
+          '<div class="sol-cb-val">+' + (info.valor || 0).toLocaleString('pt-BR') + ' SC</div>' +
+        '</div>';
+      }).join('');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }).catch(function(){});
+}
+
+// ── IA gera dicas contextuais para cada produto ──
+function gerarAiTipsSolucoes() {
+  // Mapa de id → elemento
+  var tipMap = {
+    'solAiTipEmpPessoal': { produto: 'empréstimo pessoal', contexto: calcContextoFinanceiro() },
+    'solAiTipFGTS':       { produto: 'antecipação FGTS',   contexto: calcContextoFinanceiro() },
+    'solAiTipVeiculo':    { produto: 'crédito com garantia de veículo', contexto: calcContextoFinanceiro() },
+    'solAiTipSegCel':     { produto: 'seguro celular',     contexto: calcContextoFinanceiro() },
+    'solAiTipSegVida':    { produto: 'seguro de vida',     contexto: calcContextoFinanceiro() },
+    'solAiTipConsImovel': { produto: 'consórcio imóvel',   contexto: calcContextoFinanceiro() },
+  };
+  Object.keys(tipMap).forEach(function(elId) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    var info = tipMap[elId];
+    // Dica local imediata baseada nos dados do usuário (sem chamar LLM)
+    var tip = gerarDicaLocalProduto(info.produto, info.contexto);
+    if (tip) el.textContent = '💡 ' + tip;
+  });
+}
+
+// ── Contexto financeiro resumido do usuário ──
+function calcContextoFinanceiro() {
+  var mesAtual = new Date().toISOString().substring(0, 7);
+  var despMes = (entries || []).filter(function(e) {
+    return e.type === 'despesa' && e.date && e.date.startsWith(mesAtual);
+  }).reduce(function(s, e) { return s + e.value; }, 0);
+  var recMes = (entries || []).filter(function(e) {
+    return e.type === 'receita' && e.date && e.date.startsWith(mesAtual);
+  }).reduce(function(s, e) { return s + e.value; }, 0);
+  var saldo = (userAccs || []).reduce(function(s, a) { return s + (getAccBal ? getAccBal(a).atual : 0); }, 0);
+  return { despMes: despMes, recMes: recMes, saldo: saldo, endividamento: recMes > 0 ? despMes / recMes : 0 };
+}
+
+// ── Dica local rápida (sem LLM, baseada em regras) ──
+function gerarDicaLocalProduto(produto, ctx) {
+  var endiv = ctx.endividamento || 0;
+  var saldo = ctx.saldo || 0;
+  if (produto.includes('empréstimo') || produto.includes('crédito')) {
+    if (endiv > 0.8) return 'Seus gastos estão altos. Considere refinanciar dívidas caras primeiro.';
+    if (endiv < 0.5 && saldo > 0) return 'Seu saldo está positivo — ótimo histórico para taxas mais baixas.';
+    return 'Compare sempre as taxas antes de contratar. Pequenas diferenças geram economia significativa.';
+  }
+  if (produto.includes('seguro')) {
+    if (saldo < 500) return 'Com reserva baixa, um seguro protege você de gastos inesperados.';
+    return 'Proteção inteligente: o custo mensal é menor que uma emergência sem cobertura.';
+  }
+  if (produto.includes('consórcio')) {
+    if (endiv > 0.7) return 'Consórcio é disciplina financeira — parcela fixa sem juros é melhor que financiamento.';
+    return 'Sem juros: ideal para quem planeja comprar em médio prazo com economia máxima.';
+  }
+  if (produto.includes('FGTS')) {
+    return 'Use apenas se a taxa do FGTS for menor que sua dívida mais cara.';
+  }
+  return null;
+}
+
+// ── Filtrar produtos por categoria ──
+function filtrarSolucoes(cat, btn) {
+  document.querySelectorAll('.sol-cat').forEach(function(b) { b.classList.remove('on'); });
+  if (btn) btn.classList.add('on');
+  document.querySelectorAll('.sol-card').forEach(function(card) {
+    var cardCat = card.getAttribute('data-cat');
+    card.style.display = (cat === 'todos' || cardCat === cat) ? '' : 'none';
+  });
+}
+
+// ── Abrir modal do produto ──
+function abrirSolucao(produtoId) {
+  var prod = SOL_CATALOG[produtoId];
+  if (!prod) return;
+  var modal = document.getElementById('solModal');
+  var title = document.getElementById('solModalTitle');
+  var body  = document.getElementById('solModalBody');
+  if (!modal || !title || !body) return;
+
+  title.textContent = prod.nome;
+
+  // Calcular cashback estimado (exemplo: R$5.000 → X SC)
+  var exemploValor = 5000;
+  var exemploSC = Math.round(exemploValor * prod.cashbackPct * 100); // 1 SC = R$0,10
+
+  body.innerHTML =
+    '<div class="sol-modal-produto">' +
+    // Hero parceiro
+    '<div class="sol-modal-hero">' +
+      '<div class="sol-partner-logo ' + getSolLogoClass(prod.parceiro) + '" style="width:52px;height:52px;font-size:.9rem">' + prod.parceiro.substring(0, 2).toUpperCase() + '</div>' +
+      '<div>' +
+        '<div style="font-weight:700;color:var(--t1);margin-bottom:2px">' + escapeHtml(prod.nome) + '</div>' +
+        '<div style="font-size:.78rem;color:var(--t3)">Parceiro: ' + escapeHtml(prod.parceiro) + '</div>' +
+        '<div style="font-size:.78rem;color:var(--t2);margin-top:4px">' + escapeHtml(prod.descricao) + '</div>' +
+      '</div>' +
+    '</div>' +
+    // Cashback destaque
+    '<div class="sol-modal-cashback-destaque">' +
+      '<div style="font-size:.75rem;color:var(--yellow);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px"><i data-lucide="coins" style="width:13px;height:13px;vertical-align:middle"></i> SibCoin de Cashback</div>' +
+      '<div style="font-size:1.6rem;font-weight:800;color:var(--yellow)">' + Math.round(prod.cashbackPct * 100) + '% em SibCoins</div>' +
+      '<div style="font-size:.8rem;color:var(--t2);margin-top:6px">Exemplo: R$ 5.000 contratados → <strong style="color:var(--yellow)">+' + exemploSC + ' SibCoins</strong></div>' +
+      '<div style="font-size:.73rem;color:var(--t3);margin-top:4px">' + escapeHtml(prod.obs || '') + '</div>' +
+    '</div>' +
+    // Passos
+    '<div>' +
+      '<div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:10px">Como funciona</div>' +
+      '<div class="sol-modal-steps">' +
+        (prod.passos || []).map(function(p, i) {
+          return '<div class="sol-modal-step">' +
+            '<div class="sol-modal-step-num">' + (i + 1) + '</div>' +
+            '<div style="font-size:.82rem;color:var(--t2)">' + escapeHtml(p) + '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+    // CTA
+    '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+      '<button class="sol-cta-btn" style="flex:1;justify-content:center;font-size:.9rem;padding:12px" onclick="confirmarAberturaSolucao(\'' + escapeHtml(produtoId) + '\')">' +
+        '<i data-lucide="external-link" style="width:16px;height:16px"></i> Acessar ' + escapeHtml(prod.parceiro) + ' com tracking' +
+      '</button>' +
+      '<button class="btn" onclick="closeSolModal()" style="padding:12px 20px">Fechar</button>' +
+    '</div>' +
+    '</div>';
+
+  modal.style.display = 'flex';
+  if (typeof lucide !== 'undefined') setTimeout(function() { lucide.createIcons(); }, 30);
+}
+
+function getSolLogoClass(parceiro) {
+  if (parceiro.toLowerCase().includes('juros')) return 'sol-logo-jb';
+  if (parceiro.toLowerCase().includes('simple')) return 'sol-logo-s2u';
+  if (parceiro.toLowerCase().includes('creditas')) return 'sol-logo-creditas';
+  if (parceiro.toLowerCase().includes('embracon')) return 'sol-logo-emb';
+  return 'sol-logo-jb';
+}
+
+function closeSolModal() {
+  var modal = document.getElementById('solModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// ── Registrar clique e abrir parceiro com UTM + tracking ──
+function confirmarAberturaSolucao(produtoId) {
+  var prod = SOL_CATALOG[produtoId];
+  if (!prod) return;
+
+  // Registrar o clique no Firestore para rastreamento
+  if (U && U.uid) {
+    var refCode = null;
+    try { refCode = (window._filiadoData && window._filiadoData.codigo) || null; } catch(e) {}
+    var url = prod.url;
+    // Adicionar ref do filiado na URL se disponível
+    if (refCode) {
+      url += (url.includes('?') ? '&' : '?') + 'sib_ref=' + encodeURIComponent(refCode);
+    }
+    // Registrar clique local
+    db.collection('users').doc(U.uid).collection('sol_cliques').add({
+      produtoId:  produtoId,
+      produto:    prod.nome,
+      parceiro:   prod.parceiro,
+      categoria:  prod.categoria,
+      ts:         firebase.firestore.FieldValue.serverTimestamp(),
+      uid:        U.uid,
+      refCode:    refCode || null,
+    }).catch(function(){});
+
+    // Registrar clique global via Cloud Function (analytics)
+    try {
+      var fns = firebase.functions();
+      var cliqueFn = fns.httpsCallable('registrarCliqueSolucao');
+      cliqueFn({ produtoId, produto: prod.nome, parceiro: prod.parceiro, categoria: prod.categoria }).catch(function(){});
+    } catch(e) {}
+
+    // Abrir parceiro
+    window.open(url, '_blank', 'noopener,noreferrer');
+    closeSolModal();
+
+    // Toast informativo
+    toast('Redirecionando para ' + prod.parceiro + '. Ao contratar, seus SibCoins de cashback serão creditados automaticamente!', 'ok');
+  } else {
+    window.open(prod.url, '_blank', 'noopener,noreferrer');
+    closeSolModal();
+  }
+}
+
+// ── Creditar cashback SibCoin (chamado pela Cloud Function após confirmação do parceiro) ──
+// No app, esta função é chamada quando o webhook do parceiro confirma a contratação.
+// Aqui fica só a leitura do saldo — a escrita é feita pela Cloud Function via admin SDK.
+
+// ── Hook de navegação para o módulo ──
+var _solucoesInitialized = false;
+function onSolucoesEnter() {
+  if (!_solucoesInitialized) {
+    _solucoesInitialized = true;
+  }
+  initSolucoes();
 }
