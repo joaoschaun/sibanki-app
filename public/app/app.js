@@ -1516,28 +1516,48 @@ setTimeout(function(){var cid='w_c3_despesas_categoria';var can=document.getElem
 if(widgetId==='insight'&&typeof renderInsightDoDia==='function')setTimeout(renderInsightDoDia,200);
 // Widget SibCoin — saldo + CTA para Soluções
 if(widgetId==='sibcoin'){
-container.innerHTML='<div class="widget-label" style="display:flex;align-items:center;gap:6px"><i data-lucide="coins" style="width:14px;height:14px;color:var(--yellow)"></i> SibCoin</div>'+
-'<div style="margin:12px 0 8px;text-align:center">'+
-'<div style="font-size:2rem;font-weight:800;color:var(--yellow);font-variant-numeric:tabular-nums" id="dashSibCoinSaldo">— SC</div>'+
-'<div style="font-size:.72rem;color:var(--t3);margin-top:2px">saldo disponível</div>'+
-'</div>'+
-'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">'+
-'<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:8px;text-align:center">'+
-'<div style="font-size:.7rem;color:var(--yellow);font-weight:700;margin-bottom:2px">CASHBACK</div>'+
-'<div style="font-size:.82rem;color:var(--t2)">Parceiros</div></div>'+
-'<div style="background:rgba(79,140,255,.08);border:1px solid rgba(79,140,255,.2);border-radius:10px;padding:8px;text-align:center">'+
-'<div style="font-size:.7rem;color:var(--vr);font-weight:700;margin-bottom:2px">INDICAÇÃO</div>'+
-'<div style="font-size:.82rem;color:var(--t2)">Programa</div></div>'+
-'</div>'+
-'<button onclick="if(typeof go===\'function\')go(\'solucoes\',null)" style="width:100%;background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(79,140,255,.1));border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:9px;font-size:.78rem;font-weight:700;color:var(--yellow);cursor:pointer;font-family:var(--font-body);transition:all .2s">Ver Soluções e ganhar SC →</button>';
+// Renderização inicial com placeholder
+container.innerHTML =
+  '<div class="sib-widget-rank" id="dashSibRank">PATENTE: —</div>'+
+  '<div class="sib-widget-label">SALDO SIBANKI</div>'+
+  '<div class="sib-widget-valor"><span id="dashSibCoinSaldo">—</span><span class="sib-widget-ticker"> SC</span></div>'+
+  '<div class="sib-widget-brl" id="dashSibCoinBRL">≈ R$ —</div>'+
+  '<div class="sib-widget-prox-wrap">'+
+    '<div class="sib-widget-prox-row">'+
+      '<span class="sib-widget-prox-label">Próximo nível: <span id="dashSibProxNivel">—</span></span>'+
+      '<span class="sib-widget-prox-pct" id="dashSibPct">—%</span>'+
+    '</div>'+
+    '<div class="sib-widget-bar-bg"><div class="sib-widget-bar-fill" id="dashSibBar" style="width:0%"></div></div>'+
+  '</div>'+
+  '<div class="sib-widget-footer">'+
+    '<div class="sib-widget-footer-item" onclick="if(typeof go===\'function\')go(\'solucoes\',null)">'+
+      '<i data-lucide="coins" style="width:13px;height:13px"></i> Cashback Parceiros'+
+    '</div>'+
+    '<div class="sib-widget-footer-item" onclick="if(typeof go===\'function\')go(\'perfil\',null)">'+
+      '<i data-lucide="users" style="width:13px;height:13px"></i> Indicações'+
+    '</div>'+
+  '</div>';
 if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},30);
-// Carregar saldo real
+// Carregar dados reais do Firestore
 if(U&&U.uid){
-db.collection('users').doc(U.uid).collection('filiado').doc('dados').get().then(function(snap){
-var sc=snap.exists?(snap.data().totalSibCoins||0):0;
-var el=document.getElementById('dashSibCoinSaldo');
-if(el)el.textContent=sc.toLocaleString('pt-BR')+' SC';
-}).catch(function(){});
+  db.collection('users').doc(U.uid).collection('filiado').doc('dados').get().then(function(snap){
+    var sc=snap.exists?(snap.data().totalSibCoins||0):0;
+    var ativos=snap.exists?(snap.data().totalAtivos||0):0;
+    var nivel=snap.exists?(snap.data().nivel||'iniciante'):'iniciante';
+    // Calcular nível e próximo
+    var nivelMap={iniciante:{nome:'Observador',prox:'Filiado',minAtivos:0,maxAtivos:4},parceiro:{nome:'Filiado',prox:'Parceiro',minAtivos:5,maxAtivos:14},embaixador:{nome:'Parceiro',prox:'Embaixador',minAtivos:15,maxAtivos:49},elite:{nome:'Embaixador',prox:'Elite',minAtivos:50,maxAtivos:50}};
+    var nv=nivelMap[nivel]||nivelMap.iniciante;
+    var pct=nv.maxAtivos>nv.minAtivos?Math.min(100,Math.round(((ativos-nv.minAtivos)/(nv.maxAtivos-nv.minAtivos))*100)):100;
+    // 1 SC = R$0,10
+    var brl=(sc*0.10).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    // Atualizar UI
+    var s=document.getElementById('dashSibCoinSaldo');if(s)s.textContent=sc.toLocaleString('pt-BR');
+    var b=document.getElementById('dashSibCoinBRL');if(b)b.textContent='≈ R$ '+brl;
+    var r=document.getElementById('dashSibRank');if(r)r.textContent='PATENTE: '+nv.nome.toUpperCase();
+    var pn=document.getElementById('dashSibProxNivel');if(pn)pn.textContent=nv.prox;
+    var pp=document.getElementById('dashSibPct');if(pp)pp.textContent=pct+'%';
+    var bar=document.getElementById('dashSibBar');if(bar)bar.style.width=pct+'%';
+  }).catch(function(){});
 }
 }
 }
@@ -1549,7 +1569,7 @@ grid.innerHTML='';
 layout.forEach(function(item){
 var w=DASHBOARD_WIDGETS.find(function(x){return x.id===item.id});if(!w)return;
 var div=document.createElement('div');
-div.className='widget '+(w.size==='full'?'widget-full':'');
+div.className='widget '+(w.size==='full'?'widget-full':'')+' widget-'+item.id;
 div.dataset.widgetId=item.id;
 div.innerHTML='<span class="widget-drag-handle" aria-label="Arrastar"><i data-lucide="grip-vertical" style="width:16px;height:16px"></i></span><span class="widget-remove-btn" onclick="removerWidgetDashboard(\''+item.id+'\')" aria-label="Remover"><i data-lucide="x" style="width:14px;height:14px"></i></span><div class="widget-content"></div>';
 var content=div.querySelector('.widget-content');
