@@ -1,4 +1,4 @@
-(function(){
+﻿(function(){
 var old1=localStorage.getItem('brapiToken');
 var old2=localStorage.getItem('vrt_b3_token');
 var cur=localStorage.getItem('vrt_b3token');
@@ -17084,195 +17084,259 @@ auth.onAuthStateChanged(function(user) {
    SOLUÇÕES FINANCEIRAS — Catálogo de parceiros + Cashback SibCoin
    ═══════════════════════════════════════════════════════════════ */
 
-// ── Catálogo de produtos (editável via Firestore config/solucoes sem deploy) ──
-var SOL_CATALOG = {
-  emp_pessoal: {
-    id: 'emp_pessoal', nome: 'Empréstimo Pessoal', parceiro: 'Juros Baixos',
-    categoria: 'credito', cashbackPct: 0.02,
-    url: 'https://jurosbaixos.com.br?utm_source=sibanki&utm_medium=parceiro&utm_campaign=emp_pessoal',
-    descricao: 'Compare taxas de 40+ instituições. Taxa a partir de 1,9% a.m.',
-    passos: ['Preencha seus dados básicos', 'Compare propostas das melhores instituições', 'Escolha a melhor e contrate', 'Receba SibCoin de cashback automaticamente'],
-    obs: 'O cashback em SibCoin é creditado após confirmação do contrato pelo parceiro (até 7 dias úteis).',
+// ── Parceiros — estrutura orientada por empresa, não por produto ──
+var SOL_PARCEIROS = [
+  {
+    id: 'jurosbaixos',
+    nome: 'Juros Baixos',
+    sigla: 'JB',
+    logoClass: 'sol-logo-jb',
+    desc: 'Marketplace de crédito com 40+ instituições. Compare e contrate empréstimos com a menor taxa do mercado, 100% pelo Sibanki.',
+    status: 'ativo',
+    tags: ['credito', 'wl'],
+    tagLabels: ['Crédito', 'White Label'],
+    cashbackMax: '2,5%',
+    aberto: true,
+    produtos: [
+      {
+        id: 'emp_pessoal',
+        nome: 'Empréstimo Pessoal',
+        desc: 'Compare taxas de 40+ instituições: BV, Santander, Creditas, Simplic. Aprovação em minutos, sem sair do Sibanki.',
+        cashbackPct: 0.02,
+        stats: [{ val: '1,9%', lbl: 'taxa/mês' }, { val: 'R$500–50k', lbl: 'valor' }, { val: 'até 72x', lbl: 'parcelas' }],
+        url: 'https://jurosbaixos.com.br?utm_source=sibanki&utm_campaign=emp_pessoal',
+        ctaLabel: 'Simular agora',
+        passos: ['Preencha seus dados básicos', 'Compare propostas em tempo real', 'Escolha a melhor taxa e contrate', 'SibCoins creditados em até 7 dias úteis após confirmação'],
+      },
+      {
+        id: 'emp_fgts',
+        nome: 'Antecipação FGTS',
+        desc: 'Use seu saldo do FGTS sem comprometer o salário. Taxa a partir de 1,29% a.m. e liberação em até 48h.',
+        cashbackPct: 0.015,
+        stats: [{ val: '1,29%', lbl: 'taxa/mês' }, { val: 'até 10x', lbl: 'saldo FGTS' }, { val: '48h', lbl: 'liberação' }],
+        url: 'https://jurosbaixos.com.br/fgts?utm_source=sibanki',
+        ctaLabel: 'Simular agora',
+        passos: ['Informe seu CPF e saldo estimado do FGTS', 'Receba proposta instantânea', 'Assine digitalmente', 'Dinheiro na conta em até 48h'],
+      },
+      {
+        id: 'emp_veiculo',
+        nome: 'Crédito com Garantia de Veículo',
+        desc: 'Use seu carro como garantia e obtenha até 90% do valor. Você continua dirigindo normalmente.',
+        cashbackPct: 0.025,
+        stats: [{ val: '1,09%', lbl: 'taxa/mês' }, { val: 'até 90%', lbl: 'do veículo' }, { val: '60 meses', lbl: 'prazo' }],
+        url: 'https://jurosbaixos.com.br/garantia-veiculo?utm_source=sibanki',
+        ctaLabel: 'Simular agora',
+        passos: ['Informe os dados do veículo', 'Avaliação automática em minutos', 'Assine o contrato online', 'Dinheiro em conta em até 72h'],
+      },
+    ],
   },
-  emp_fgts: {
-    id: 'emp_fgts', nome: 'FGTS Antecipado', parceiro: 'Juros Baixos',
-    categoria: 'credito', cashbackPct: 0.015,
-    url: 'https://jurosbaixos.com.br/fgts?utm_source=sibanki',
-    descricao: 'Antecipe seu FGTS com taxa a partir de 1,29% a.m.',
-    passos: ['Informe seu saldo FGTS estimado', 'Receba proposta em segundos', 'Assine digitalmente', 'Dinheiro em conta em até 48h'],
-    obs: 'Cashback calculado sobre o valor liberado. Crédito em 7 dias úteis.',
+  {
+    id: 'simple2u',
+    nome: 'Simple2u',
+    sigla: 'S2',
+    logoClass: 'sol-logo-s2u',
+    desc: 'Seguros com a marca Sibanki. Apólice emitida em minutos, 100% digital, regulado pela SUSEP. Grupo MAG.',
+    status: 'ativo',
+    tags: ['seguro', 'wl'],
+    tagLabels: ['Seguros', 'Marca Sibanki'],
+    cashbackMax: '3%',
+    aberto: false,
+    produtos: [
+      {
+        id: 'seg_celular',
+        nome: 'Seguro Celular',
+        desc: 'Proteção contra roubo, furto e quebra de tela. Cobertura nacional, acionamento em 24h, apólice instantânea.',
+        cashbackPct: 0.03,
+        stats: [{ val: 'R$15', lbl: '/mês' }, { val: '100%', lbl: 'digital' }, { val: '24h', lbl: 'acionamento' }],
+        url: 'https://simple2u.com.br?utm_source=sibanki',
+        ctaLabel: 'Contratar',
+        passos: ['Informe o modelo do aparelho', 'Escolha o plano de cobertura', 'Pague via cartão ou Pix', 'Apólice emitida na hora com a marca Sibanki'],
+      },
+      {
+        id: 'seg_vida',
+        nome: 'Seguro de Vida',
+        desc: 'Proteção financeira para sua família. Cobertura por morte, invalidez e doenças graves. A partir de R$29/mês.',
+        cashbackPct: 0.03,
+        stats: [{ val: 'R$29', lbl: '/mês' }, { val: 'R$100k', lbl: 'cobertura' }, { val: 'SUSEP', lbl: 'regulado' }],
+        url: 'https://simple2u.com.br/vida?utm_source=sibanki',
+        ctaLabel: 'Contratar',
+        passos: ['Responda algumas perguntas de saúde', 'Receba proposta personalizada', 'Aceite e pague', 'Apólice ativa imediatamente'],
+      },
+    ],
   },
-  emp_veiculo: {
-    id: 'emp_veiculo', nome: 'Crédito com Garantia de Veículo', parceiro: 'Creditas',
-    categoria: 'credito', cashbackPct: 0.025,
-    url: 'https://jurosbaixos.com.br/garantia-veiculo?utm_source=sibanki',
-    descricao: 'Taxa a partir de 1,09% a.m. Continue usando o carro normalmente.',
-    passos: ['Informe os dados do veículo', 'Receba avaliação em minutos', 'Assine o contrato online', 'Dinheiro em conta em até 72h'],
-    obs: 'Cashback maior porque o parceiro paga mais por leads com garantia. Crédito em 7 dias úteis.',
+  {
+    id: 'embracon',
+    nome: 'Embracon',
+    sigla: 'EM',
+    logoClass: 'sol-logo-emb',
+    desc: 'Maior administradora digital de consórcios do Brasil. 35+ anos, 500k+ bens entregues. Em análise de integração.',
+    status: 'analise',
+    tags: ['consorcio'],
+    tagLabels: ['Consórcio'],
+    cashbackMax: '1%',
+    aberto: false,
+    produtos: [
+      {
+        id: 'cons_imovel',
+        nome: 'Consórcio de Imóvel',
+        desc: 'Adquira seu imóvel sem pagar juros. Parcelas fixas, carta de crédito de até R$1M, prazo de até 240 meses.',
+        cashbackPct: 0.01,
+        stats: [{ val: '0%', lbl: 'juros' }, { val: 'até R$1M', lbl: 'carta crédito' }, { val: '240x', lbl: 'parcelas' }],
+        url: 'https://embracon.com.br?utm_source=sibanki',
+        ctaLabel: 'Simular',
+        passos: ['Simule o valor da carta de crédito', 'Escolha o prazo e a parcela', 'Assine online e entre no grupo', 'Aguarde sorteio ou dê um lance'],
+      },
+      {
+        id: 'cons_veiculo',
+        nome: 'Consórcio de Veículo',
+        desc: 'Troque de carro sem juros. Parcelas a partir de R$400/mês, carta de crédito de até R$200k.',
+        cashbackPct: 0.01,
+        stats: [{ val: '0%', lbl: 'juros' }, { val: 'até R$200k', lbl: 'carta crédito' }, { val: '100x', lbl: 'parcelas' }],
+        url: 'https://embracon.com.br/veiculo?utm_source=sibanki',
+        ctaLabel: 'Simular',
+        passos: ['Informe o valor do veículo desejado', 'Simule parcela e prazo', 'Entre no grupo de consórcio', 'Seja contemplado por sorteio ou lance'],
+      },
+    ],
   },
-  seg_celular: {
-    id: 'seg_celular', nome: 'Seguro Celular', parceiro: 'Simple2u',
-    categoria: 'seguro', cashbackPct: 0.03,
-    url: 'https://simple2u.com.br?utm_source=sibanki',
-    descricao: 'Proteção contra roubo, furto e quebra de tela.',
-    passos: ['Informe o modelo do aparelho', 'Escolha o plano de cobertura', 'Pague via cartão ou Pix', 'Apólice emitida em minutos'],
-    obs: 'Cashback de 3% da primeira mensalidade. Recorrente anual = cashback na renovação.',
-  },
-  seg_vida: {
-    id: 'seg_vida', nome: 'Seguro de Vida', parceiro: 'Simple2u',
-    categoria: 'seguro', cashbackPct: 0.03,
-    url: 'https://simple2u.com.br/vida?utm_source=sibanki',
-    descricao: 'Proteção financeira para sua família. A partir de R$29/mês.',
-    passos: ['Responda algumas perguntas de saúde', 'Receba sua proposta personalizada', 'Aceite e pague', 'Apólice ativa imediatamente'],
-    obs: 'Regulado pela SUSEP. Cashback de 3% na contratação e em cada renovação anual.',
-  },
-  cons_imovel: {
-    id: 'cons_imovel', nome: 'Consórcio de Imóvel', parceiro: 'Embracon',
-    categoria: 'consorcio', cashbackPct: 0.01,
-    url: 'https://embracon.com.br?utm_source=sibanki',
-    descricao: 'Adquira seu imóvel sem juros. 500k+ bens entregues.',
-    passos: ['Simule o valor da carta de crédito', 'Escolha o prazo e parcela', 'Assine online e entre no grupo', 'Aguarde sorteio ou dê um lance'],
-    obs: 'Cashback de 1% do valor da primeira parcela. Parceiro em análise de integração.',
-  },
-};
+];
 
-// ── Carrega config dinâmica do Firestore ──
-function loadSolucoesConfig() {
+// ── Inicializa o módulo ──
+function initSolucoes() {
+  _loadSolucoesConfig();
+  _renderSolucoesBody();
+  _carregarSaldoSibCoinSol();
+  _carregarCashbackHistoricoSol();
+}
+
+// ── Carrega config do Firestore (sem bloquear) ──
+function _loadSolucoesConfig() {
   db.collection('config').doc('solucoes').get().then(function(snap) {
     if (!snap.exists) return;
     var d = snap.data();
-    if (d.produtos) {
-      Object.keys(d.produtos).forEach(function(k) {
-        if (SOL_CATALOG[k]) Object.assign(SOL_CATALOG[k], d.produtos[k]);
-      });
-    }
+    if (!d.parceiros) return;
+    d.parceiros.forEach(function(p) {
+      var local = SOL_PARCEIROS.find(function(x) { return x.id === p.id; });
+      if (local) Object.assign(local, p);
+    });
+    _renderSolucoesBody();
   }).catch(function(){});
 }
 
-// ── Inicializa o módulo ao navegar para ele ──
-function initSolucoes() {
-  loadSolucoesConfig();
-  carregarSaldoSibCoin();
-  carregarCashbackHistorico();
-  gerarAiTipsSolucoes();
-}
+// ── Renderiza o corpo inteiro do módulo ──
+function _renderSolucoesBody() {
+  var root = document.getElementById('solucoesBody');
+  if (!root) return;
 
-// ── Exibir saldo de SibCoin no hero ──
-function carregarSaldoSibCoin() {
-  var el = document.getElementById('solSaldoSC');
-  if (!el || !U || !U.uid) return;
-  db.collection('users').doc(U.uid).collection('filiado').doc('dados')
-    .get().then(function(snap) {
-      var saldo = snap.exists ? (snap.data().totalSibCoins || 0) : 0;
-      if (el) el.textContent = saldo.toLocaleString('pt-BR') + ' SC';
-      // Sincroniza com a aba Filiado se estiver aberta
-      var filEl = document.getElementById('filSibCoins');
-      if (filEl) filEl.textContent = saldo.toLocaleString('pt-BR');
-    }).catch(function() {
-      if (el) el.textContent = '0 SC';
-    });
-}
+  var h = '';
 
-// ── Histórico de cashbacks desta seção ──
-function carregarCashbackHistorico() {
-  var listEl = document.getElementById('solCashbackList');
-  if (!listEl || !U || !U.uid) return;
-  db.collection('users').doc(U.uid).collection('sibcoin')
-    .where('origem', '==', 'parceiro')
-    .orderBy('ts', 'desc').limit(10)
-    .get().then(function(snap) {
-      if (snap.empty) {
-        listEl.innerHTML = '<div class="fil-empty"><i data-lucide="coins" style="width:32px;height:32px;opacity:.3"></i><p>Nenhuma contratação ainda.<br>Use um produto parceiro para ganhar SibCoins!</p></div>';
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-        return;
-      }
-      listEl.innerHTML = snap.docs.map(function(d) {
-        var info = d.data();
-        var dataStr = info.ts ? new Date(info.ts.toDate()).toLocaleDateString('pt-BR') : '—';
-        return '<div class="sol-cb-row">' +
-          '<div class="sol-cb-icon"><i data-lucide="coins" style="width:18px;height:18px;color:var(--yellow)"></i></div>' +
-          '<div class="sol-cb-info">' +
-            '<div class="sol-cb-desc">' + escapeHtml(info.desc || 'Cashback parceiro') + '</div>' +
-            '<div class="sol-cb-meta">' + dataStr + (info.produto ? ' · ' + escapeHtml(info.produto) : '') + '</div>' +
-          '</div>' +
-          '<div class="sol-cb-val">+' + (info.valor || 0).toLocaleString('pt-BR') + ' SC</div>' +
-        '</div>';
+  // Header
+  h += '<div class="sol-header">';
+  h += '<div class="sol-header-left">';
+  h += '<h2>Soluções Financeiras</h2>';
+  h += '<p>Crédito, seguros e consórcio dos melhores parceiros — direto no Sibanki.<br>Cada contratação gera <strong style="color:var(--yellow)">SibCoin de cashback</strong> proporcional ao valor.</p>';
+  h += '</div>';
+  h += '<div class="sol-saldo-pill">';
+  h += '<div><div class="sol-saldo-pill-label"><i data-lucide="coins" style="width:12px;height:12px;vertical-align:middle;margin-right:3px"></i>SibCoins</div>';
+  h += '<div class="sol-saldo-pill-val" id="solSaldoSC">— SC</div></div>';
+  h += '</div>';
+  h += '</div>';
+
+  // Banner cashback
+  h += '<div class="sol-cashback-banner">';
+  h += '<i data-lucide="zap" style="width:16px;height:16px;color:var(--yellow);flex-shrink:0"></i>';
+  h += '<span>Cada produto contratado via Sibanki gera SibCoin de cashback automático. Use na <strong>loja Sibanki</strong>: plano Pro, relatórios, consultoria e descontos exclusivos.</span>';
+  h += '</div>';
+
+  // Cards de parceiros
+  SOL_PARCEIROS.forEach(function(p) {
+    var isOpen = p.aberto;
+    var statusHtml = '';
+    if (p.status === 'ativo') statusHtml = '<span class="sol-status-badge ativo">Disponível</span>';
+    else if (p.status === 'breve') statusHtml = '<span class="sol-status-badge breve">Em breve</span>';
+    else statusHtml = '<span class="sol-status-badge analise">Em análise</span>';
+
+    var tagsHtml = p.tags.map(function(t, i) {
+      return '<span class="sol-parceiro-tag ' + t + '">' + p.tagLabels[i] + '</span>';
+    }).join('');
+
+    h += '<div class="sol-parceiro-card' + (isOpen ? ' open' : '') + '" id="solParceiro_' + p.id + '">';
+    h += '<div class="sol-parceiro-header" onclick="toggleSolParceiro(\'' + p.id + '\')">';
+    h += '<div class="sol-parceiro-logo ' + p.logoClass + '">' + escapeHtml(p.sigla) + '</div>';
+    h += '<div class="sol-parceiro-info">';
+    h += '<div class="sol-parceiro-nome">' + escapeHtml(p.nome) + ' ' + statusHtml + '</div>';
+    h += '<div class="sol-parceiro-desc">' + escapeHtml(p.desc) + '</div>';
+    h += '<div class="sol-parceiro-tags">' + tagsHtml + '</div>';
+    h += '</div>';
+    h += '<div class="sol-parceiro-cashback-badge"><i data-lucide="coins" style="width:11px;height:11px"></i>até ' + p.cashbackMax + ' SC</div>';
+    h += '<i data-lucide="chevron-down" class="sol-parceiro-chevron" style="width:20px;height:20px"></i>';
+    h += '</div>';
+
+    // Body expansível
+    h += '<div class="sol-parceiro-body">';
+    h += '<div class="sol-parceiro-divider"></div>';
+    h += '<div class="sol-produtos-grid">';
+
+    p.produtos.forEach(function(prod) {
+      var statsHtml = prod.stats.map(function(s) {
+        return '<div class="sol-produto-stat"><div class="sol-produto-stat-val">' + escapeHtml(s.val) + '</div><div class="sol-produto-stat-lbl">' + escapeHtml(s.lbl) + '</div></div>';
       }).join('');
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-    }).catch(function(){});
-}
 
-// ── IA gera dicas contextuais para cada produto ──
-function gerarAiTipsSolucoes() {
-  // Mapa de id → elemento
-  var tipMap = {
-    'solAiTipEmpPessoal': { produto: 'empréstimo pessoal', contexto: calcContextoFinanceiro() },
-    'solAiTipFGTS':       { produto: 'antecipação FGTS',   contexto: calcContextoFinanceiro() },
-    'solAiTipVeiculo':    { produto: 'crédito com garantia de veículo', contexto: calcContextoFinanceiro() },
-    'solAiTipSegCel':     { produto: 'seguro celular',     contexto: calcContextoFinanceiro() },
-    'solAiTipSegVida':    { produto: 'seguro de vida',     contexto: calcContextoFinanceiro() },
-    'solAiTipConsImovel': { produto: 'consórcio imóvel',   contexto: calcContextoFinanceiro() },
-  };
-  Object.keys(tipMap).forEach(function(elId) {
-    var el = document.getElementById(elId);
-    if (!el) return;
-    var info = tipMap[elId];
-    // Dica local imediata baseada nos dados do usuário (sem chamar LLM)
-    var tip = gerarDicaLocalProduto(info.produto, info.contexto);
-    if (tip) el.textContent = '💡 ' + tip;
+      var scExemplo = Math.round(5000 * prod.cashbackPct / 0.10);
+      var aiTipId = 'solTip_' + prod.id;
+
+      h += '<div class="sol-produto" onclick="abrirSolucaoProduto(\'' + prod.id + '\',\'' + p.id + '\')">';
+      h += '<div>';
+      h += '<div class="sol-produto-nome">' + escapeHtml(prod.nome) + '</div>';
+      h += '<div class="sol-produto-desc">' + escapeHtml(prod.desc) + '</div>';
+      h += '</div>';
+      h += '<div class="sol-produto-stats">' + statsHtml + '</div>';
+      h += '<div class="sol-produto-foot">';
+      h += '<div class="sol-produto-cashback"><i data-lucide="coins" style="width:12px;height:12px"></i>' + Math.round(prod.cashbackPct * 100) + '% em SC <span style="color:var(--t3);font-weight:400;font-size:.68rem">(ex: R$5k → +' + scExemplo + ' SC)</span></div>';
+      h += '<button class="sol-cta-btn" onclick="event.stopPropagation();abrirSolucaoProduto(\'' + prod.id + '\',\'' + p.id + '\')">';
+      h += '<i data-lucide="arrow-right" style="width:13px;height:13px"></i> ' + escapeHtml(prod.ctaLabel);
+      h += '</button>';
+      h += '</div>';
+      h += '<div class="sol-ai-tip" id="' + aiTipId + '"></div>';
+      h += '</div>';
+    });
+
+    h += '</div></div></div>';
   });
+
+  // Histórico de cashbacks
+  h += '<div class="perfil-card" style="margin-top:20px">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">';
+  h += '<div style="font-size:.88rem;font-weight:700;color:var(--t1)"><i data-lucide="history" style="width:15px;height:15px;vertical-align:middle;margin-right:6px"></i>Histórico de Cashbacks</div>';
+  h += '<div style="font-size:.77rem;color:var(--t3)">SibCoins ganhos por contratações</div>';
+  h += '</div>';
+  h += '<div id="solCashbackList"><div class="fil-empty" style="padding:20px 0"><i data-lucide="coins" style="width:28px;height:28px;opacity:.3"></i><p>Nenhuma contratação ainda. Use um produto acima para ganhar SibCoins!</p></div></div>';
+  h += '</div>';
+
+  root.innerHTML = h;
+  if (typeof lucide !== 'undefined') setTimeout(function() { lucide.createIcons(); }, 30);
+
+  // Gerar tips de IA depois de renderizar
+  setTimeout(_gerarAiTipsSol, 100);
 }
 
-// ── Contexto financeiro resumido do usuário ──
-function calcContextoFinanceiro() {
-  var mesAtual = new Date().toISOString().substring(0, 7);
-  var despMes = (entries || []).filter(function(e) {
-    return e.type === 'despesa' && e.date && e.date.startsWith(mesAtual);
-  }).reduce(function(s, e) { return s + e.value; }, 0);
-  var recMes = (entries || []).filter(function(e) {
-    return e.type === 'receita' && e.date && e.date.startsWith(mesAtual);
-  }).reduce(function(s, e) { return s + e.value; }, 0);
-  var saldo = (userAccs || []).reduce(function(s, a) { return s + (getAccBal ? getAccBal(a).atual : 0); }, 0);
-  return { despMes: despMes, recMes: recMes, saldo: saldo, endividamento: recMes > 0 ? despMes / recMes : 0 };
+// ── Toggle do accordion de parceiro ──
+function toggleSolParceiro(parceiroId) {
+  var card = document.getElementById('solParceiro_' + parceiroId);
+  if (!card) return;
+  card.classList.toggle('open');
+  // Atualiza estado local
+  var p = SOL_PARCEIROS.find(function(x) { return x.id === parceiroId; });
+  if (p) p.aberto = card.classList.contains('open');
+  if (typeof lucide !== 'undefined') setTimeout(function() { lucide.createIcons(); }, 20);
 }
 
-// ── Dica local rápida (sem LLM, baseada em regras) ──
-function gerarDicaLocalProduto(produto, ctx) {
-  var endiv = ctx.endividamento || 0;
-  var saldo = ctx.saldo || 0;
-  if (produto.includes('empréstimo') || produto.includes('crédito')) {
-    if (endiv > 0.8) return 'Seus gastos estão altos. Considere refinanciar dívidas caras primeiro.';
-    if (endiv < 0.5 && saldo > 0) return 'Seu saldo está positivo — ótimo histórico para taxas mais baixas.';
-    return 'Compare sempre as taxas antes de contratar. Pequenas diferenças geram economia significativa.';
-  }
-  if (produto.includes('seguro')) {
-    if (saldo < 500) return 'Com reserva baixa, um seguro protege você de gastos inesperados.';
-    return 'Proteção inteligente: o custo mensal é menor que uma emergência sem cobertura.';
-  }
-  if (produto.includes('consórcio')) {
-    if (endiv > 0.7) return 'Consórcio é disciplina financeira — parcela fixa sem juros é melhor que financiamento.';
-    return 'Sem juros: ideal para quem planeja comprar em médio prazo com economia máxima.';
-  }
-  if (produto.includes('FGTS')) {
-    return 'Use apenas se a taxa do FGTS for menor que sua dívida mais cara.';
-  }
-  return null;
-}
-
-// ── Filtrar produtos por categoria ──
-function filtrarSolucoes(cat, btn) {
-  document.querySelectorAll('.sol-cat').forEach(function(b) { b.classList.remove('on'); });
-  if (btn) btn.classList.add('on');
-  document.querySelectorAll('.sol-card').forEach(function(card) {
-    var cardCat = card.getAttribute('data-cat');
-    card.style.display = (cat === 'todos' || cardCat === cat) ? '' : 'none';
-  });
-}
-
-// ── Abrir modal do produto ──
-function abrirSolucao(produtoId) {
-  var prod = SOL_CATALOG[produtoId];
+// ── Abre modal do produto ──
+function abrirSolucaoProduto(produtoId, parceiroId) {
+  var parceiro = SOL_PARCEIROS.find(function(p) { return p.id === parceiroId; });
+  if (!parceiro) return;
+  var prod = parceiro.produtos.find(function(p) { return p.id === produtoId; });
   if (!prod) return;
+
   var modal = document.getElementById('solModal');
   var title = document.getElementById('solModalTitle');
   var body  = document.getElementById('solModalBody');
@@ -17280,28 +17344,39 @@ function abrirSolucao(produtoId) {
 
   title.textContent = prod.nome;
 
-  // Calcular cashback estimado (exemplo: R$5.000 → X SC)
-  var exemploValor = 5000;
-  var exemploSC = Math.round(exemploValor * prod.cashbackPct * 100); // 1 SC = R$0,10
+  var scExemplo = Math.round(5000 * prod.cashbackPct / 0.10);
+  var cashbackReais = (5000 * prod.cashbackPct).toFixed(2).replace('.', ',');
 
   body.innerHTML =
     '<div class="sol-modal-produto">' +
+
     // Hero parceiro
     '<div class="sol-modal-hero">' +
-      '<div class="sol-partner-logo ' + getSolLogoClass(prod.parceiro) + '" style="width:52px;height:52px;font-size:.9rem">' + prod.parceiro.substring(0, 2).toUpperCase() + '</div>' +
-      '<div>' +
-        '<div style="font-weight:700;color:var(--t1);margin-bottom:2px">' + escapeHtml(prod.nome) + '</div>' +
-        '<div style="font-size:.78rem;color:var(--t3)">Parceiro: ' + escapeHtml(prod.parceiro) + '</div>' +
-        '<div style="font-size:.78rem;color:var(--t2);margin-top:4px">' + escapeHtml(prod.descricao) + '</div>' +
+      '<div class="sol-parceiro-logo ' + parceiro.logoClass + '" style="width:52px;height:52px;font-size:.9rem;flex-shrink:0">' + escapeHtml(parceiro.sigla) + '</div>' +
+      '<div style="min-width:0">' +
+        '<div style="font-weight:800;font-size:.95rem;color:var(--t1);margin-bottom:2px">' + escapeHtml(prod.nome) + '</div>' +
+        '<div style="font-size:.77rem;color:var(--t3)">Parceiro: ' + escapeHtml(parceiro.nome) + '</div>' +
+        '<div style="font-size:.78rem;color:var(--t2);margin-top:5px;line-height:1.5">' + escapeHtml(prod.desc) + '</div>' +
       '</div>' +
     '</div>' +
-    // Cashback destaque
+
+    // Destaque cashback
     '<div class="sol-modal-cashback-destaque">' +
-      '<div style="font-size:.75rem;color:var(--yellow);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px"><i data-lucide="coins" style="width:13px;height:13px;vertical-align:middle"></i> SibCoin de Cashback</div>' +
-      '<div style="font-size:1.6rem;font-weight:800;color:var(--yellow)">' + Math.round(prod.cashbackPct * 100) + '% em SibCoins</div>' +
-      '<div style="font-size:.8rem;color:var(--t2);margin-top:6px">Exemplo: R$ 5.000 contratados → <strong style="color:var(--yellow)">+' + exemploSC + ' SibCoins</strong></div>' +
-      '<div style="font-size:.73rem;color:var(--t3);margin-top:4px">' + escapeHtml(prod.obs || '') + '</div>' +
+      '<div style="font-size:.7rem;color:var(--yellow);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">' +
+        '<i data-lucide="coins" style="width:12px;height:12px;vertical-align:middle;margin-right:3px"></i>Cashback em SibCoin' +
+      '</div>' +
+      '<div style="font-size:2rem;font-weight:800;color:var(--yellow)">' + Math.round(prod.cashbackPct * 100) + '% em SibCoins</div>' +
+      '<div style="font-size:.8rem;color:var(--t2);margin-top:6px">Exemplo: R$&nbsp;5.000 contratados → <strong style="color:var(--yellow)">+' + scExemplo + ' SibCoins</strong></div>' +
+      '<div style="font-size:.72rem;color:var(--t3);margin-top:4px">Cashback calculado sobre o valor contratado. Creditado em até 7 dias úteis após confirmação do parceiro.</div>' +
     '</div>' +
+
+    // Stats
+    '<div class="sol-produto-stats">' +
+      prod.stats.map(function(s) {
+        return '<div class="sol-produto-stat"><div class="sol-produto-stat-val">' + escapeHtml(s.val) + '</div><div class="sol-produto-stat-lbl">' + escapeHtml(s.lbl) + '</div></div>';
+      }).join('') +
+    '</div>' +
+
     // Passos
     '<div>' +
       '<div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:10px">Como funciona</div>' +
@@ -17314,25 +17389,52 @@ function abrirSolucao(produtoId) {
         }).join('') +
       '</div>' +
     '</div>' +
-    // CTA
+
+    // CTAs
     '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
-      '<button class="sol-cta-btn" style="flex:1;justify-content:center;font-size:.9rem;padding:12px" onclick="confirmarAberturaSolucao(\'' + escapeHtml(produtoId) + '\')">' +
-        '<i data-lucide="external-link" style="width:16px;height:16px"></i> Acessar ' + escapeHtml(prod.parceiro) + ' com tracking' +
+      '<button class="sol-cta-btn" style="flex:1;justify-content:center;font-size:.88rem;padding:12px" ' +
+        'onclick="confirmarAberturaSolucao(\'' + escapeHtml(produtoId) + '\',\'' + escapeHtml(parceiroId) + '\')">' +
+        '<i data-lucide="external-link" style="width:15px;height:15px"></i> Acessar ' + escapeHtml(parceiro.nome) +
       '</button>' +
-      '<button class="btn" onclick="closeSolModal()" style="padding:12px 20px">Fechar</button>' +
+      '<button class="btn" onclick="closeSolModal()" style="padding:12px 18px">Fechar</button>' +
     '</div>' +
+
     '</div>';
 
   modal.style.display = 'flex';
   if (typeof lucide !== 'undefined') setTimeout(function() { lucide.createIcons(); }, 30);
 }
 
-function getSolLogoClass(parceiro) {
-  if (parceiro.toLowerCase().includes('juros')) return 'sol-logo-jb';
-  if (parceiro.toLowerCase().includes('simple')) return 'sol-logo-s2u';
-  if (parceiro.toLowerCase().includes('creditas')) return 'sol-logo-creditas';
-  if (parceiro.toLowerCase().includes('embracon')) return 'sol-logo-emb';
-  return 'sol-logo-jb';
+// ── Confirmar abertura e registrar clique ──
+function confirmarAberturaSolucao(produtoId, parceiroId) {
+  var parceiro = SOL_PARCEIROS.find(function(p) { return p.id === parceiroId; });
+  if (!parceiro) return;
+  var prod = parceiro.produtos.find(function(p) { return p.id === produtoId; });
+  if (!prod) return;
+
+  var url = prod.url || 'https://sibanki.com.br';
+
+  if (U && U.uid) {
+    var refCode = null;
+    try { refCode = (window._filiadoData && window._filiadoData.codigo) || null; } catch(e) {}
+    if (refCode) url += (url.includes('?') ? '&' : '?') + 'sib_ref=' + encodeURIComponent(refCode);
+
+    db.collection('users').doc(U.uid).collection('sol_cliques').add({
+      produtoId: produtoId, parceiroId: parceiroId,
+      produto: prod.nome, parceiro: parceiro.nome,
+      ts: firebase.firestore.FieldValue.serverTimestamp(),
+      uid: U.uid, refCode: refCode || null,
+    }).catch(function(){});
+
+    try {
+      var cliqueFn = firebase.functions().httpsCallable('registrarCliqueSolucao');
+      cliqueFn({ produtoId: produtoId, produto: prod.nome, parceiro: parceiro.nome }).catch(function(){});
+    } catch(e) {}
+  }
+
+  window.open(url, '_blank', 'noopener,noreferrer');
+  closeSolModal();
+  toast('Redirecionando para ' + parceiro.nome + '. SibCoins de cashback serão creditados automaticamente após confirmação da contratação!', 'ok');
 }
 
 function closeSolModal() {
@@ -17340,59 +17442,90 @@ function closeSolModal() {
   if (modal) modal.style.display = 'none';
 }
 
-// ── Registrar clique e abrir parceiro com UTM + tracking ──
-function confirmarAberturaSolucao(produtoId) {
-  var prod = SOL_CATALOG[produtoId];
-  if (!prod) return;
-
-  // Registrar o clique no Firestore para rastreamento
-  if (U && U.uid) {
-    var refCode = null;
-    try { refCode = (window._filiadoData && window._filiadoData.codigo) || null; } catch(e) {}
-    var url = prod.url;
-    // Adicionar ref do filiado na URL se disponível
-    if (refCode) {
-      url += (url.includes('?') ? '&' : '?') + 'sib_ref=' + encodeURIComponent(refCode);
-    }
-    // Registrar clique local
-    db.collection('users').doc(U.uid).collection('sol_cliques').add({
-      produtoId:  produtoId,
-      produto:    prod.nome,
-      parceiro:   prod.parceiro,
-      categoria:  prod.categoria,
-      ts:         firebase.firestore.FieldValue.serverTimestamp(),
-      uid:        U.uid,
-      refCode:    refCode || null,
-    }).catch(function(){});
-
-    // Registrar clique global via Cloud Function (analytics)
-    try {
-      var fns = firebase.functions();
-      var cliqueFn = fns.httpsCallable('registrarCliqueSolucao');
-      cliqueFn({ produtoId, produto: prod.nome, parceiro: prod.parceiro, categoria: prod.categoria }).catch(function(){});
-    } catch(e) {}
-
-    // Abrir parceiro
-    window.open(url, '_blank', 'noopener,noreferrer');
-    closeSolModal();
-
-    // Toast informativo
-    toast('Redirecionando para ' + prod.parceiro + '. Ao contratar, seus SibCoins de cashback serão creditados automaticamente!', 'ok');
-  } else {
-    window.open(prod.url, '_blank', 'noopener,noreferrer');
-    closeSolModal();
-  }
+// ── Saldo SibCoin ──
+function _carregarSaldoSibCoinSol() {
+  var el = document.getElementById('solSaldoSC');
+  if (!el || !U || !U.uid) return;
+  db.collection('users').doc(U.uid).collection('filiado').doc('dados')
+    .get().then(function(snap) {
+      var saldo = snap.exists ? (snap.data().totalSibCoins || 0) : 0;
+      if (el) el.textContent = saldo.toLocaleString('pt-BR') + ' SC';
+    }).catch(function() { if (el) el.textContent = '0 SC'; });
 }
 
-// ── Creditar cashback SibCoin (chamado pela Cloud Function após confirmação do parceiro) ──
-// No app, esta função é chamada quando o webhook do parceiro confirma a contratação.
-// Aqui fica só a leitura do saldo — a escrita é feita pela Cloud Function via admin SDK.
+// ── Histórico de cashbacks ──
+function _carregarCashbackHistoricoSol() {
+  var listEl = document.getElementById('solCashbackList');
+  if (!listEl || !U || !U.uid) return;
+  db.collection('users').doc(U.uid).collection('sibcoin')
+    .where('origem', '==', 'parceiro').orderBy('ts', 'desc').limit(10)
+    .get().then(function(snap) {
+      if (snap.empty) {
+        listEl.innerHTML = '<div class="fil-empty" style="padding:20px 0"><i data-lucide="coins" style="width:28px;height:28px;opacity:.3"></i><p>Nenhuma contratação ainda.</p></div>';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        return;
+      }
+      listEl.innerHTML = snap.docs.map(function(d) {
+        var info = d.data();
+        var dataStr = info.ts ? new Date(info.ts.toDate()).toLocaleDateString('pt-BR') : '—';
+        return '<div class="sol-cb-row">' +
+          '<div class="sol-cb-icon"><i data-lucide="coins" style="width:16px;height:16px;color:var(--yellow)"></i></div>' +
+          '<div class="sol-cb-info">' +
+            '<div class="sol-cb-desc">' + escapeHtml(info.desc || 'Cashback parceiro') + '</div>' +
+            '<div class="sol-cb-meta">' + dataStr + (info.produto ? ' · ' + escapeHtml(info.produto) : '') + '</div>' +
+          '</div>' +
+          '<div class="sol-cb-val">+' + (info.valor || 0).toLocaleString('pt-BR') + ' SC</div>' +
+        '</div>';
+      }).join('');
+    }).catch(function(){});
+}
 
-// ── Hook de navegação para o módulo ──
+// ── Tips de IA por produto (baseado em dados locais do usuário) ──
+function _gerarAiTipsSol() {
+  var ctx = _calcContextoFin();
+  SOL_PARCEIROS.forEach(function(p) {
+    p.produtos.forEach(function(prod) {
+      var el = document.getElementById('solTip_' + prod.id);
+      if (!el) return;
+      var tip = _dicaLocalSol(prod.id, ctx);
+      if (tip) el.textContent = '💡 ' + tip;
+    });
+  });
+}
+
+function _calcContextoFin() {
+  var mes = new Date().toISOString().substring(0, 7);
+  var ents = entries || [];
+  var desp = ents.filter(function(e) { return e.type === 'despesa' && (e.date || '').startsWith(mes); }).reduce(function(s, e) { return s + e.value; }, 0);
+  var rec  = ents.filter(function(e) { return e.type === 'receita'  && (e.date || '').startsWith(mes); }).reduce(function(s, e) { return s + e.value; }, 0);
+  var saldo = (userAccs || []).reduce(function(s, a) { return s + (typeof getAccBal === 'function' ? getAccBal(a).atual : 0); }, 0);
+  return { desp: desp, rec: rec, saldo: saldo, endiv: rec > 0 ? desp / rec : 0 };
+}
+
+function _dicaLocalSol(id, ctx) {
+  var e = ctx.endiv || 0;
+  if (id === 'emp_pessoal') {
+    if (e > 0.8) return 'Seus gastos estão altos. Refinanciar dívidas caras pode reduzir o endividamento.';
+    if (e < 0.5) return 'Seu histórico é positivo — boa condição para conseguir taxas menores.';
+    return 'Compare as taxas antes de contratar. Pequenas diferenças geram grande economia.';
+  }
+  if (id === 'emp_fgts') return 'Use apenas se a taxa do FGTS for menor que a sua dívida mais cara.';
+  if (id === 'emp_veiculo') return 'Crédito com garantia tem as menores taxas do mercado — boa opção para quem tem carro.';
+  if (id === 'seg_celular' || id === 'seg_vida') {
+    if (ctx.saldo < 500) return 'Com reserva baixa, um seguro protege você de gastos inesperados.';
+    return 'O custo mensal é menor que uma emergência sem cobertura.';
+  }
+  if (id.startsWith('cons_')) {
+    if (e > 0.7) return 'Consórcio tem parcela fixa sem juros — melhor que financiamento em muitos casos.';
+    return 'Sem juros: ideal para planejar a compra com economia máxima.';
+  }
+  return null;
+}
+
+// ── Hook de navegação ──
 var _solucoesInitialized = false;
 function onSolucoesEnter() {
-  if (!_solucoesInitialized) {
-    _solucoesInitialized = true;
-  }
+  if (!_solucoesInitialized) _solucoesInitialized = true;
   initSolucoes();
 }
+

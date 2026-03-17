@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;600;700&family=Outfit:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;600;700&family=Outfit:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
 /* Responsivo global */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 /* Transições apenas para elementos interativos */
@@ -3566,65 +3566,78 @@ body.light .ca-tab.on{background:#fff}body.light .ca-resumo{background:#f8fafc}
 .module-icon-solucoes{background:rgba(79,140,255,.15)!important}.module-icon-solucoes [data-lucide]{color:#4F8CFF!important}
 
 /* ═══════════════════════════════════════════
-   SOLUÇÕES FINANCEIRAS — Parceiros + Cashback SibCoin
+   SOLUÇÕES FINANCEIRAS — Design por Parceiro
    ═══════════════════════════════════════════ */
-.sol-hero{display:flex;align-items:center;gap:16px;padding:22px;background:var(--card);border:1px solid var(--brd);border-radius:18px;margin-bottom:16px;flex-wrap:wrap}
-.sol-hero-icon{width:52px;height:52px;border-radius:14px;background:rgba(79,140,255,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.sol-hero-text{flex:1;min-width:200px}
-.sol-hero-text h2{margin:0 0 4px;font-size:1.1rem;font-weight:800;color:var(--t1)}
-.sol-hero-text p{margin:0;font-size:.82rem;color:var(--t2);line-height:1.5}
-.sol-saldo-box{text-align:center;background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(245,158,11,.06));border:1px solid rgba(245,158,11,.3);border-radius:14px;padding:14px 20px;flex-shrink:0}
-.sol-saldo-label{font-size:.7rem;color:var(--yellow);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-.sol-saldo-val{font-size:1.5rem;font-weight:800;color:var(--yellow);font-variant-numeric:tabular-nums}
-.sol-saldo-sub{font-size:.68rem;color:var(--t3);margin-top:2px}
-.sol-cashback-banner{display:flex;align-items:center;gap:12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:.82rem;color:var(--t2);line-height:1.5}
-.sol-cats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
-.sol-cat{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:1px solid var(--brd);border-radius:99px;background:var(--bg2);color:var(--t3);font-size:.78rem;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .18s}
-.sol-cat:hover{color:var(--t1);border-color:var(--brd2)}
-.sol-cat.on{background:var(--vr);border-color:var(--vr);color:#fff}
-.sol-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:8px}
-.sol-card{background:var(--card);border:1px solid var(--brd);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px;transition:all .25s;position:relative;overflow:hidden}
-.sol-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--vr),rgba(79,140,255,.4));border-radius:99px 99px 0 0}
-.sol-card:hover{transform:translateY(-2px);border-color:rgba(79,140,255,.35);box-shadow:0 8px 28px rgba(79,140,255,.12)}
-.sol-card-head{display:flex;align-items:center;gap:12px}
-.sol-partner-logo{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#fff;flex-shrink:0}
-.sol-logo-jb{background:linear-gradient(135deg,#1E40AF,#3B82F6)}
-.sol-logo-s2u{background:linear-gradient(135deg,#065F46,#10B981)}
-.sol-logo-creditas{background:linear-gradient(135deg,#7C3AED,#A78BFA)}
-.sol-logo-emb{background:linear-gradient(135deg,#92400E,#F59E0B)}
-.sol-card-info{flex:1;min-width:0}
-.sol-card-nome{font-weight:700;font-size:.9rem;color:var(--t1);margin-bottom:2px}
-.sol-card-parceiro{font-size:.72rem;color:var(--t3)}
-.sol-cashback-pill{display:inline-flex;align-items:center;gap:4px;background:rgba(245,158,11,.15);color:var(--yellow);font-size:.7rem;font-weight:800;padding:4px 10px;border-radius:99px;border:1px solid rgba(245,158,11,.25);white-space:nowrap;flex-shrink:0}
-.sol-card-desc{font-size:.8rem;color:var(--t2);line-height:1.6}
-.sol-card-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.sol-stat{background:var(--bg2);border-radius:10px;padding:10px 8px;text-align:center}
-.sol-stat-val{font-size:.88rem;font-weight:800;color:var(--t1);margin-bottom:2px}
-.sol-stat-lbl{font-size:.65rem;color:var(--t3)}
-.sol-card-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.sol-ai-tip{font-size:.73rem;color:var(--green);flex:1;min-width:0;line-height:1.4;font-style:italic;opacity:.9}
-.sol-cta-btn{display:inline-flex;align-items:center;gap:6px;background:var(--vr);color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all .2s;white-space:nowrap;flex-shrink:0}
-.sol-cta-btn:hover{opacity:.88;transform:translateY(-1px)}
-/* Cashback row no histórico */
+
+/* Header do módulo */
+.sol-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.sol-header-left h2{margin:0 0 4px;font-size:1.15rem;font-weight:800;color:var(--t1)}
+.sol-header-left p{margin:0;font-size:.82rem;color:var(--t2);line-height:1.5}
+.sol-saldo-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:10px 16px;flex-shrink:0}
+.sol-saldo-pill-label{font-size:.7rem;color:var(--yellow);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.sol-saldo-pill-val{font-size:1.1rem;font-weight:800;color:var(--yellow);font-variant-numeric:tabular-nums}
+
+/* Banner cashback */
+.sol-cashback-banner{display:flex;align-items:center;gap:10px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.18);border-radius:12px;padding:11px 14px;margin-bottom:20px;font-size:.8rem;color:var(--t2);line-height:1.5}
+
+/* Card de parceiro (dropdown) */
+.sol-parceiro-card{background:var(--card);border:1px solid var(--brd);border-radius:18px;margin-bottom:14px;overflow:hidden;transition:border-color .2s}
+.sol-parceiro-card.open{border-color:rgba(79,140,255,.3)}
+.sol-parceiro-header{display:flex;align-items:center;gap:14px;padding:18px 20px;cursor:pointer;user-select:none;transition:background .18s}
+.sol-parceiro-header:hover{background:rgba(255,255,255,.02)}
+.sol-parceiro-logo{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.95rem;color:#fff;flex-shrink:0;position:relative}
+.sol-parceiro-logo img{width:100%;height:100%;object-fit:contain;border-radius:14px}
+.sol-parceiro-info{flex:1;min-width:0}
+.sol-parceiro-nome{font-weight:800;font-size:.95rem;color:var(--t1);margin-bottom:3px;display:flex;align-items:center;gap:8px}
+.sol-parceiro-desc{font-size:.77rem;color:var(--t2);line-height:1.4}
+.sol-parceiro-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.sol-parceiro-tag{font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:99px}
+.sol-parceiro-tag.credito{background:rgba(59,130,246,.12);color:#60A5FA}
+.sol-parceiro-tag.seguro{background:rgba(16,185,129,.12);color:var(--green)}
+.sol-parceiro-tag.consorcio{background:rgba(245,158,11,.12);color:var(--yellow)}
+.sol-parceiro-tag.wl{background:rgba(124,58,237,.12);color:#A78BFA}
+.sol-parceiro-cashback-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(245,158,11,.12);color:var(--yellow);font-size:.72rem;font-weight:800;padding:5px 12px;border-radius:99px;border:1px solid rgba(245,158,11,.2);flex-shrink:0;white-space:nowrap}
+.sol-parceiro-chevron{color:var(--t3);transition:transform .25s;flex-shrink:0}
+.sol-parceiro-card.open .sol-parceiro-chevron{transform:rotate(180deg)}
+.sol-parceiro-body{display:none;padding:0 20px 20px;animation:fadeIn .25s}
+.sol-parceiro-card.open .sol-parceiro-body{display:block}
+
+/* Divisor dentro do parceiro */
+.sol-parceiro-divider{height:1px;background:var(--brd);margin-bottom:16px}
+
+/* Grid de produtos dentro do parceiro */
+.sol-produtos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+
+/* Card de produto */
+.sol-produto{background:var(--bg2);border:1px solid var(--brd);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;transition:all .2s;cursor:pointer;position:relative}
+.sol-produto:hover{border-color:rgba(79,140,255,.3);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.sol-produto-nome{font-weight:700;font-size:.88rem;color:var(--t1);margin-bottom:2px}
+.sol-produto-desc{font-size:.76rem;color:var(--t2);line-height:1.5}
+.sol-produto-stats{display:flex;gap:8px;flex-wrap:wrap}
+.sol-produto-stat{background:var(--card);border-radius:8px;padding:6px 10px;text-align:center;flex:1;min-width:70px}
+.sol-produto-stat-val{font-size:.82rem;font-weight:800;color:var(--t1)}
+.sol-produto-stat-lbl{font-size:.6rem;color:var(--t3)}
+.sol-produto-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.sol-produto-cashback{font-size:.72rem;font-weight:700;color:var(--yellow);display:flex;align-items:center;gap:3px}
+.sol-cta-btn{display:inline-flex;align-items:center;gap:5px;background:var(--vr);color:#fff;border:none;border-radius:9px;padding:8px 14px;font-size:.79rem;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all .2s;white-space:nowrap}
+.sol-cta-btn:hover{opacity:.85;transform:translateY(-1px)}
+.sol-ai-tip{font-size:.71rem;color:var(--green);width:100%;line-height:1.4;font-style:italic;opacity:.9;padding-top:4px;border-top:1px solid rgba(255,255,255,.04)}
+
+/* Histórico de cashbacks */
 .sol-cb-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.04)}
 .sol-cb-row:last-child{border-bottom:none}
-.sol-cb-icon{width:36px;height:36px;border-radius:10px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sol-cb-icon{width:34px;height:34px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sol-cb-info{flex:1;min-width:0}
-.sol-cb-desc{font-size:.85rem;font-weight:600;color:var(--t1)}
-.sol-cb-meta{font-size:.73rem;color:var(--t3);margin-top:1px}
-.sol-cb-val{font-size:.92rem;font-weight:800;color:var(--yellow);font-variant-numeric:tabular-nums;flex-shrink:0}
+.sol-cb-desc{font-size:.84rem;font-weight:600;color:var(--t1)}
+.sol-cb-meta{font-size:.72rem;color:var(--t3);margin-top:1px}
+.sol-cb-val{font-size:.9rem;font-weight:800;color:var(--yellow);font-variant-numeric:tabular-nums;flex-shrink:0}
+
 /* Modal produto */
 .sol-modal-produto{display:flex;flex-direction:column;gap:16px}
 .sol-modal-hero{background:var(--bg2);border-radius:14px;padding:18px;display:flex;align-items:center;gap:14px}
-.sol-modal-steps{display:flex;flex-direction:column;gap:10px}
-.sol-modal-step{display:flex;align-items:flex-start;gap:10px;padding:12px;background:var(--bg2);border-radius:12px}
-.sol-modal-step-num{width:24px;height:24px;border-radius:50%;background:var(--vr);color:#fff;font-size:.72rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.sol-modal-cashback-destaque{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3);border-radius:14px;padding:16px;text-align:center}
-body.light .sol-hero{background:#fff}
-body.light .sol-card{background:#fff}
-body.light .sol-stat{background:#f8fafc}
-
-/* ═══════════════════════════════════════════
+.sol-modal-steps{display:flex;flex-direction:column;gap:8px}
+.sol-modal-step{display:flex;align-items:flex-start;gap:10px;padding:11px;background:var(--bg2);border-radius:11px}
+.sol-modal-step-num{width:22px;height:22px;border-radius:50%;background:var(--vr);color:#fff;font-size:.7rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
    PROGRAMA FILIADO SIBANKI
    ═══════════════════════════════════════════ */
 .fil-hero{display:flex;align-items:flex-start;gap:20px;padding:24px;background:linear-gradient(135deg,var(--card),rgba(79,140,255,.06));border:1px solid var(--brd);border-radius:20px;margin-bottom:16px;flex-wrap:wrap}
