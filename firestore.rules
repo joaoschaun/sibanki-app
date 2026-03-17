@@ -59,6 +59,22 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── SOLUÇÕES FINANCEIRAS — cliques e cashback ──
+    // Cliques por usuário — só o dono lê; app escreve
+    match /users/{userId}/sol_cliques/{docId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update, delete: if false;
+    }
+    // Log global de cashbacks — só Cloud Function (admin SDK) escreve; admin lê
+    match /cashback_log/{docId} {
+      allow read, write: if false; // apenas admin SDK
+    }
+    // Cliques globais — só Cloud Function escreve
+    match /sol_cliques_global/{docId} {
+      allow read, write: if false;
+    }
+
     // ── PROGRAMA FILIADO ──
     // Dados do programa filiado - só o próprio lê/escreve
     match /users/{userId}/filiado/{docId} {

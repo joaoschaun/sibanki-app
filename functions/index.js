@@ -796,3 +796,217 @@ exports.registrarOpenBanking = functions.https.onCall(async (data, context) => {
   // O cron diário processará o crédito. Retorna OK.
   return { success: true };
 });
+
+// =============================================
+// SOLUÇÕES FINANCEIRAS — Cashback SibCoin por parceiros
+// =============================================
+
+/**
+ * Taxa de cashback por produto (em % do valor contratado).
+ * 1 SibCoin = R$ 0,10 → cashback de 2% em R$5.000 = R$100 = 1.000 SC
+ */
+const SOL_CASHBACK = {
+  emp_pessoal:  0.02,
+  emp_fgts:     0.015,
+  emp_veiculo:  0.025,
+  seg_celular:  0.03,
+  seg_vida:     0.03,
+  cons_imovel:  0.01,
+};
+
+const SOL_NOMES = {
+  emp_pessoal:  'Empréstimo Pessoal (Juros Baixos)',
+  emp_fgts:     'FGTS Antecipado (Juros Baixos)',
+  emp_veiculo:  'Crédito com Garantia de Veículo (Creditas)',
+  seg_celular:  'Seguro Celular (Simple2u)',
+  seg_vida:     'Seguro de Vida (Simple2u)',
+  cons_imovel:  'Consórcio de Imóvel (Embracon)',
+};
+
+/**
+ * Callable interno: creditar cashback SibCoin após confirmação de contratação.
+ * Chamado pela Cloud Function de webhook ou manualmente pelo admin.
+ * Parâmetros: { uid, produtoId, valorContratado, contratoId }
+ */
+exports.creditarCashbackSibCoin = functions.https.onCall(async (data, context) => {
+  // Só pode ser chamado autenticado OU por admin (uid passado explicitamente)
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Login necessário');
+  }
+
+  const { produtoId, valorContratado, contratoId } = data;
+  const uid = context.auth.uid;
+  const db = admin.firestore();
+
+  if (!produtoId || !SOL_CASHBACK[produtoId]) {
+    throw new functions.https.HttpsError('invalid-argument', 'Produto inválido');
+  }
+  if (!valorContratado || isNaN(valorContratado) || valorContratado <= 0) {
+    throw new functions.https.HttpsError('invalid-argument', 'Valor inválido');
+  }
+
+  // Verificar se este contratoId já foi processado (idempotência)
+  if (contratoId) {
+    const existing = await db.collection('users').doc(uid)
+      .collection('sibcoin').where('contratoId', '==', contratoId).limit(1).get();
+    if (!existing.empty) {
+      return { success: true, sibCoins: 0, msg: 'Cashback já creditado para este contrato' };
+    }
+  }
+
+  // Calcular SibCoins: 1 SC = R$0,10
+  const cashbackReais = valorContratado * SOL_CASHBACK[produtoId];
+  const sibCoins = Math.round(cashbackReais / 0.10);
+
+  if (sibCoins <= 0) {
+    return { success: false, msg: 'Valor muito baixo para gerar cashback' };
+  }
+
+  const batch = db.batch();
+
+  // 1. Registrar transação SibCoin
+  const txRef = db.collection('users').doc(uid).collection('sibcoin').doc();
+  batch.set(txRef, {
+    tipo:         'emissao',
+    origem:       'parceiro',
+    produtoId,
+    produto:      SOL_NOMES[produtoId] || produtoId,
+    valor:        sibCoins,
+    valorReais:   valorContratado,
+    cashbackPct:  SOL_CASHBACK[produtoId],
+    cashbackReais,
+    contratoId:   contratoId || null,
+    desc:         `Cashback por contratar ${SOL_NOMES[produtoId]}`,
+    ts:           admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // 2. Atualizar saldo no documento filiado
+  const filRef = db.collection('users').doc(uid).collection('filiado').doc('dados');
+  batch.set(filRef, {
+    totalSibCoins: admin.firestore.FieldValue.increment(sibCoins),
+    totalCashbackSC: admin.firestore.FieldValue.increment(sibCoins),
+  }, { merge: true });
+
+  // 3. Log global de cashbacks (para analytics admin)
+  const logRef = db.collection('cashback_log').doc();
+  batch.set(logRef, {
+    uid, produtoId, valorContratado, sibCoins, cashbackReais,
+    contratoId: contratoId || null,
+    ts: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  await batch.commit();
+
+  console.log(`Cashback: uid=${uid} produto=${produtoId} valor=R$${valorContratado} → +${sibCoins} SC`);
+  return { success: true, sibCoins, cashbackReais };
+});
+
+/**
+ * Webhook HTTP: parceiros notificam contratações confirmadas.
+ * URL: https://REGION-PROJECT.cloudfunctions.net/webhookParceiro
+ * Header: X-Sibanki-Secret: <WEBHOOK_SECRET do .env>
+ * Body JSON: { uid, produtoId, valorContratado, contratoId, parceiro }
+ */
+exports.webhookParceiro = functions.https.onRequest(async (req, res) => {
+  // Validar método
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Validar secret do parceiro
+  const secret = req.headers['x-sibanki-secret'];
+  const expectedSecret = process.env.WEBHOOK_PARCEIRO_SECRET;
+  if (!expectedSecret || secret !== expectedSecret) {
+    console.warn('webhookParceiro: secret inválido');
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { uid, produtoId, valorContratado, contratoId, parceiro } = req.body;
+
+  if (!uid || !produtoId || !valorContratado) {
+    return res.status(400).json({ error: 'Parâmetros obrigatórios: uid, produtoId, valorContratado' });
+  }
+
+  const db = admin.firestore();
+
+  try {
+    // Verificar se usuário existe
+    const userSnap = await db.collection('users').doc(uid).get();
+    if (!userSnap.exists) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Idempotência: verificar contrato já processado
+    if (contratoId) {
+      const existing = await db.collection('users').doc(uid)
+        .collection('sibcoin').where('contratoId', '==', String(contratoId)).limit(1).get();
+      if (!existing.empty) {
+        return res.status(200).json({ success: true, msg: 'Já processado', sibCoins: 0 });
+      }
+    }
+
+    // Calcular cashback
+    const taxaCashback = SOL_CASHBACK[produtoId] || 0;
+    if (taxaCashback <= 0) {
+      return res.status(400).json({ error: `Produto '${produtoId}' sem cashback configurado` });
+    }
+
+    const cashbackReais = Number(valorContratado) * taxaCashback;
+    const sibCoins = Math.round(cashbackReais / 0.10);
+
+    const batch = db.batch();
+
+    // Transação SibCoin
+    const txRef = db.collection('users').doc(uid).collection('sibcoin').doc();
+    batch.set(txRef, {
+      tipo: 'emissao', origem: 'parceiro',
+      produtoId, produto: SOL_NOMES[produtoId] || produtoId,
+      valor: sibCoins, valorReais: Number(valorContratado),
+      cashbackPct: taxaCashback, cashbackReais,
+      contratoId: contratoId ? String(contratoId) : null,
+      parceiro: parceiro || null,
+      desc: `Cashback por contratar ${SOL_NOMES[produtoId]}`,
+      ts: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Saldo filiado
+    const filRef = db.collection('users').doc(uid).collection('filiado').doc('dados');
+    batch.set(filRef, {
+      totalSibCoins:    admin.firestore.FieldValue.increment(sibCoins),
+      totalCashbackSC:  admin.firestore.FieldValue.increment(sibCoins),
+    }, { merge: true });
+
+    // Log global
+    const logRef = db.collection('cashback_log').doc();
+    batch.set(logRef, {
+      uid, produtoId, parceiro: parceiro || null,
+      valorContratado: Number(valorContratado),
+      sibCoins, cashbackReais, contratoId: contratoId || null,
+      ts: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+
+    console.log(`webhookParceiro: uid=${uid} ${produtoId} R$${valorContratado} → +${sibCoins} SC`);
+    return res.status(200).json({ success: true, sibCoins, cashbackReais });
+
+  } catch (err) {
+    console.error('webhookParceiro erro:', err.message);
+    return res.status(500).json({ error: 'Erro interno', details: err.message });
+  }
+});
+
+/**
+ * Callable: registrar clique em produto parceiro (analytics).
+ * Parâmetros: { produtoId, produto, parceiro, categoria }
+ */
+exports.registrarCliqueSolucao = functions.https.onCall(async (data, context) => {
+  if (!context.auth) return { success: false };
+  const uid = context.auth.uid;
+  const db = admin.firestore();
+  await db.collection('sol_cliques_global').add({
+    uid, ...data,
+    ts: admin.firestore.FieldValue.serverTimestamp(),
+  }).catch(() => {});
+  return { success: true };
+});
