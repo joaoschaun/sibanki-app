@@ -3551,12 +3551,37 @@
 
 <!-- TAB: CALENDARIO -->
 <div id="calendario" class="tab tab-calendario">
+
+<!-- KPIs do mês -->
 <div class="cal-sum" id="calSum"></div>
+
+<!-- Header com navegação -->
 <div class="cal-hd">
-<h3><i data-lucide="calendar-days" style="width:18px;height:18px;color:#6366F1"></i> Calendário Financeiro</h3>
-<div class="cal-nv"><button onclick="calNv(-1)">&#9664;</button><span id="calLbl"></span><button onclick="calNv(1)">&#9654;</button></div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <i data-lucide="calendar-days" style="width:20px;height:20px;color:#6366F1;flex-shrink:0"></i>
+    <span style="font-size:1rem;font-weight:800;color:var(--t1)">Calendário Financeiro</span>
+  </div>
+  <div class="cal-nv">
+    <button onclick="calNv(-1)" title="Mês anterior">&#9664;</button>
+    <button class="cal-nv-hoje" onclick="calGoHoje()" title="Ir para hoje">Hoje</button>
+    <span id="calLbl"></span>
+    <button onclick="calNv(1)" title="Próximo mês">&#9654;</button>
+  </div>
 </div>
-<div class="cal-g" id="calG"></div>
+
+<!-- Layout: grid + painel lateral -->
+<div class="cal-layout">
+  <div class="cal-grid-wrap">
+    <div class="cal-g" id="calG"></div>
+  </div>
+  <div class="cal-side" id="calSide">
+    <div class="cal-side-title"><i data-lucide="clock" style="width:14px;height:14px"></i> Próximos 7 dias</div>
+    <div id="calProximos"></div>
+    <div class="cal-side-title" style="margin-top:16px"><i data-lucide="repeat" style="width:14px;height:14px"></i> Recorrentes do mês</div>
+    <div id="calRecorrentes"></div>
+  </div>
+</div>
+
 </div>
 
 <div class="km-ov" id="kmOv" onclick="if(event.target===this)closeKpiModal()"><div class="km-box"><button class="km-x" onclick="closeKpiModal()">&times;</button><div id="kmC"></div></div></div>

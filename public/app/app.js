@@ -12709,44 +12709,182 @@ if(typeof lucide!=='undefined')lucide.createIcons();
 // MODULO: CALENDARIO FINANCEIRO
 // ============================================================
 var cM=new Date().getMonth(),cY=new Date().getFullYear();
-function calNv(d){cM+=d;if(cM>11){cM=0;cY++}if(cM<0){cM=11;cY--}rCal()}
+var CAL_MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function calNv(d){cM+=d;if(cM>11){cM=0;cY++}if(cM<0){cM=11;cY--}rCal();}
+function calGoHoje(){cM=new Date().getMonth();cY=new Date().getFullYear();rCal();}
+
 function rCal(){
-var ms=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-document.getElementById('calLbl').textContent=ms[cM]+' '+cY;
-var mk=cY+'-'+String(cM+1).padStart(2,'0'),p1=new Date(cY,cM,1).getDay(),ud=new Date(cY,cM+1,0).getDate(),hj=new Date();
-var dd={};
-entries.forEach(function(e){if(e.date&&e.date.startsWith(mk)){var d=parseInt(e.date.substring(8,10));if(!dd[d])dd[d]=[];dd[d].push(e)}});
-if(typeof recurrents!=='undefined')recurrents.forEach(function(r){if(!r.active)return;if(r.day<=ud){if(!dd[r.day])dd[r.day]=[];dd[r.day].push({desc:r.desc,value:r.value,type:r.type,isR:1})}});
-var rm=0,dm=0,nt=0;
-entries.forEach(function(e){if(e.date&&e.date.startsWith(mk)){nt++;if(e.type==='receita')rm+=e.value;else dm+=e.value}});
-document.getElementById('calSum').innerHTML='<div class="cal-sc"><div class="csl">Receitas</div><div class="csv" style="color:var(--green)">'+fmt(rm)+'</div></div><div class="cal-sc"><div class="csl">Despesas</div><div class="csv" style="color:var(--vr)">'+fmt(dm)+'</div></div><div class="cal-sc"><div class="csl">Saldo</div><div class="csv" style="color:'+(rm-dm>=0?'var(--blue)':'var(--vr)')+'">'+fmt(rm-dm)+'</div></div><div class="cal-sc"><div class="csl">Transações</div><div class="csv" style="color:var(--purple)">'+nt+'</div></div>';
-var h='';['Dom','Seg','Ter','Qua','Qui','Sex','Sab'].forEach(function(d){h+='<div class="cal-dh">'+d+'</div>'});
-for(var i=0;i<p1;i++)h+='<div class="cal-d om"></div>';
-for(var d=1;d<=ud;d++){
-var it=(d===hj.getDate()&&cM===hj.getMonth()&&cY===hj.getFullYear());
-h+='<div class="cal-d'+(it?' today':'')+'" onclick="oCD('+d+','+cM+','+cY+')">';
-h+='<div class="cdn">'+d+'</div>';
-if(dd[d]){var s=0;dd[d].forEach(function(e){if(s<2){var c=e.isR?'rec':(e.type==='receita'?'inc':'exp');h+='<span class="cdr '+c+'">'+e.desc.substring(0,8)+'</span>';s++}});if(dd[d].length>2)h+='<div class="cdm">+'+(dd[d].length-2)+'</div>'}
-h+='</div>';
+  var mk=cY+'-'+String(cM+1).padStart(2,'0');
+  var p1=new Date(cY,cM,1).getDay();
+  var ud=new Date(cY,cM+1,0).getDate();
+  var hj=new Date();
+  var isHojeMes=(cM===hj.getMonth()&&cY===hj.getFullYear());
+
+  // Label
+  var lbl=document.getElementById('calLbl');
+  if(lbl)lbl.textContent=CAL_MESES[cM]+' '+cY;
+
+  // Agrupa entradas por dia
+  var dd={};
+  entries.forEach(function(e){
+    if(e.date&&e.date.startsWith(mk)){
+      var d=parseInt(e.date.substring(8,10));
+      if(!dd[d])dd[d]=[];
+      dd[d].push(e);
+    }
+  });
+
+  // KPIs do mês
+  var rm=0,dm=0,nt=0;
+  entries.forEach(function(e){
+    if(e.date&&e.date.startsWith(mk)){nt++;if(e.type==='receita')rm+=e.value;else dm+=e.value;}
+  });
+  var sumEl=document.getElementById('calSum');
+  if(sumEl)sumEl.innerHTML=
+    '<div class="cal-sc"><div class="csl">Receitas</div><div class="csv" style="color:var(--green)">'+fmt(rm)+'</div></div>'+
+    '<div class="cal-sc"><div class="csl">Despesas</div><div class="csv" style="color:var(--vr)">'+fmt(dm)+'</div></div>'+
+    '<div class="cal-sc"><div class="csl">Saldo</div><div class="csv" style="color:'+(rm-dm>=0?'var(--blue)':'var(--vr)')+'">'+fmt(rm-dm)+'</div></div>'+
+    '<div class="cal-sc"><div class="csl">Transações</div><div class="csv" style="color:var(--purple)">'+nt+'</div></div>';
+
+  // Grid de dias
+  var h='';
+  ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(function(d){h+='<div class="cal-dh">'+d+'</div>';});
+  for(var i=0;i<p1;i++)h+='<div class="cal-d om"></div>';
+  for(var d=1;d<=ud;d++){
+    var isHj=(isHojeMes&&d===hj.getDate());
+    var temDados=dd[d]&&dd[d].length>0;
+    // Calcular saldo do dia para barra colorida
+    var dRec=0,dDesp=0;
+    if(temDados)dd[d].forEach(function(e){if(e.type==='receita')dRec+=e.value;else dDesp+=e.value;});
+    var saldoDia=dRec-dDesp;
+    var barColor=dRec>0&&dDesp===0?'var(--green)':dDesp>0&&dRec===0?'var(--vr)':saldoDia>=0?'var(--blue)':'var(--vr)';
+
+    h+='<div class="cal-d'+(isHj?' today':'')+'" onclick="oCD('+d+','+cM+','+cY+')">';
+    h+='<div class="cdn">'+d+'</div>';
+    if(temDados){
+      var s=0;
+      dd[d].forEach(function(e){
+        if(s>=2)return;
+        var c=e.type==='receita'?'inc':'exp';
+        h+='<span class="cdr '+c+'">'+escapeHtml((e.desc||e.category||'').substring(0,9))+'</span>';
+        s++;
+      });
+      if(dd[d].length>2)h+='<div class="cdm">+'+(dd[d].length-2)+' mais</div>';
+      h+='<div class="cal-d-bar" style="background:'+barColor+'"></div>';
+    }
+    h+='</div>';
+  }
+  var gEl=document.getElementById('calG');
+  if(gEl)gEl.innerHTML=h;
+
+  // Painel lateral
+  _rCalSide(mk,ud,hj,isHojeMes);
+
+  if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},30);
 }
-document.getElementById('calG').innerHTML=h;
+
+function _rCalSide(mk,ud,hj,isHojeMes){
+  var proxEl=document.getElementById('calProximos');
+  var recEl=document.getElementById('calRecorrentes');
+  if(!proxEl||!recEl)return;
+
+  // Próximos 7 dias
+  var proxItems=[];
+  var hoje=new Date(hj.getFullYear(),hj.getMonth(),hj.getDate());
+  for(var offset=0;offset<14;offset++){
+    var dia=new Date(hoje.getTime()+offset*86400000);
+    var dk=dia.getFullYear()+'-'+String(dia.getMonth()+1).padStart(2,'0')+'-'+String(dia.getDate()).padStart(2,'0');
+    entries.forEach(function(e){
+      if(e.date===dk)proxItems.push({e:e,dk:dk,dia:dia,offset:offset});
+    });
+    if(proxItems.length>=8)break;
+  }
+
+  if(!proxItems.length){
+    proxEl.innerHTML='<div class="cal-empty-side">Nenhum lançamento nos próximos dias</div>';
+  } else {
+    proxEl.innerHTML=proxItems.slice(0,7).map(function(item){
+      var isHj=item.offset===0;
+      var label=isHj?'Hoje':item.offset===1?'Amanhã':item.dia.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+      var cor=item.e.type==='receita'?'#22C55E':'#EF4444';
+      return '<div class="cal-prox-item">'+
+        '<div class="cal-prox-dot" style="background:'+cor+'"></div>'+
+        '<div class="cal-prox-info">'+
+          '<div class="cal-prox-desc">'+escapeHtml((item.e.desc||item.e.category||'—').substring(0,22))+'</div>'+
+          '<div class="cal-prox-date">'+label+'</div>'+
+        '</div>'+
+        '<div class="cal-prox-val" style="color:'+cor+'">'+(item.e.type==='receita'?'+':'-')+fmt(item.e.value)+'</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  // Recorrentes do mês
+  var recs=typeof recurrents!=='undefined'?recurrents.filter(function(r){return r.active!==false;}):[];
+  if(!recs.length){
+    recEl.innerHTML='<div class="cal-empty-side">Nenhum recorrente cadastrado</div>';
+  } else {
+    recEl.innerHTML=recs.slice(0,8).map(function(r){
+      var cor=r.type==='receita'?'#22C55E':'#EF4444';
+      var diaLabel='Dia '+r.day;
+      return '<div class="cal-rec-item">'+
+        '<div class="cal-rec-desc">'+escapeHtml((r.desc||'Recorrente').substring(0,20))+'</div>'+
+        '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'+
+          '<span style="font-size:.65rem;color:var(--t3)">'+diaLabel+'</span>'+
+          '<div class="cal-rec-val" style="color:'+cor+'">'+(r.type==='receita'?'+':'-')+fmt(r.value)+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+    if(recs.length>8)recEl.innerHTML+='<div class="cal-empty-side">+' +(recs.length-8)+' mais</div>';
+  }
 }
+
 function oCD(d,m,a){
-var mk=a+'-'+String(m+1).padStart(2,'0'),dk=mk+'-'+String(d).padStart(2,'0'),it=[];
-entries.forEach(function(e){if(e.date===dk)it.push(e)});
-if(typeof recurrents!=='undefined')recurrents.forEach(function(r){if(r.active&&r.day===d)it.push({desc:r.desc+' (Fixo)',value:r.value,type:r.type})});
-var ms=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-var h='<h3>'+d+' de '+ms[m]+' '+a+'</h3>';
-if(!it.length)h+='<div style="text-align:center;padding:20px;color:var(--t3)"><i data-lucide="inbox" style="width:24px;height:24px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> Nenhuma movimentação</div>';
-else{var tr2=0,td2=0;it.forEach(function(e){if(e.type==='receita')tr2+=e.value;else td2+=e.value;h+='<div class="km-it"><span class="il"><i data-lucide="'+(e.type==='receita'?'wallet':'receipt')+'" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;vertical-align:middle"></i> '+e.desc+'</span><span class="iv" style="color:'+(e.type==='receita'?'var(--green)':'var(--vr)')+'">'+fmt(e.value)+'</span></div>'});
-if(tr2||td2){h+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--brd);display:flex;justify-content:space-between">';if(tr2)h+='<span style="color:var(--green);font-weight:700">+'+fmt(tr2)+'</span>';if(td2)h+='<span style="color:var(--vr);font-weight:700">-'+fmt(td2)+'</span>';h+='</div>'}}
-h+='<button onclick="cCD()" style="width:100%;margin-top:16px;padding:10px;background:var(--vr);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">Fechar</button>';
-document.getElementById('cdmC').innerHTML=h;
-document.getElementById('cdmOv').classList.add('on');
-document.getElementById('cdmBox').classList.add('on');
-if(typeof lucide!=='undefined')lucide.createIcons();
+  var mk=a+'-'+String(m+1).padStart(2,'0');
+  var dk=mk+'-'+String(d).padStart(2,'0');
+  var it=[];
+  entries.forEach(function(e){if(e.date===dk)it.push(e);});
+  if(typeof recurrents!=='undefined')recurrents.forEach(function(r){if(r.active!==false&&r.day===d)it.push({desc:(r.desc||'Recorrente')+' (Fixo)',value:r.value,type:r.type,isR:1});});
+  var h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">'+
+    '<div style="width:40px;height:40px;border-radius:12px;background:rgba(99,102,241,.12);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;color:#6366F1">'+d+'</div>'+
+    '<div><div style="font-weight:800;font-size:1rem;color:var(--t1)">'+d+' de '+CAL_MESES[m]+'</div>'+
+    '<div style="font-size:.78rem;color:var(--t3)">'+a+'</div></div>'+
+  '</div>';
+  if(!it.length){
+    h+='<div style="text-align:center;padding:24px 0;color:var(--t3)">'+
+      '<i data-lucide="inbox" style="width:28px;height:28px;vertical-align:middle;margin-bottom:8px;display:block;margin:0 auto 8px"></i>'+
+      'Nenhuma movimentação neste dia</div>';
+  } else {
+    var tr2=0,td2=0;
+    it.forEach(function(e){if(e.type==='receita')tr2+=e.value;else td2+=e.value;});
+    h+='<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">';
+    it.forEach(function(e){
+      var cor=e.type==='receita'?'var(--green)':'var(--vr)';
+      var icon=e.type==='receita'?'wallet':'receipt';
+      if(e.isR)icon='repeat';
+      h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:var(--bg2);border-radius:10px">'+
+        '<div style="display:flex;align-items:center;gap:8px;min-width:0">'+
+          '<i data-lucide="'+icon+'" style="width:15px;height:15px;color:'+cor+';flex-shrink:0"></i>'+
+          '<span style="font-size:.85rem;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(e.desc||e.category||'—')+'</span>'+
+        '</div>'+
+        '<span style="font-size:.88rem;font-weight:700;color:'+cor+';flex-shrink:0">'+(e.type==='receita'?'+':'-')+fmt(e.value)+'</span>'+
+      '</div>';
+    });
+    h+='</div>';
+    if(tr2||td2){
+      h+='<div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--bg2);border-radius:10px;margin-bottom:14px">';
+      if(tr2)h+='<span style="color:var(--green);font-weight:700;font-size:.85rem">Receitas: +'+fmt(tr2)+'</span>';
+      if(td2)h+='<span style="color:var(--vr);font-weight:700;font-size:.85rem">Despesas: -'+fmt(td2)+'</span>';
+      h+='</div>';
+    }
+  }
+  h+='<button onclick="cCD()" style="width:100%;padding:11px;background:var(--bg2);border:1px solid var(--brd);color:var(--t2);border-radius:10px;cursor:pointer;font-weight:600;font-size:.85rem;font-family:var(--font-body)">Fechar</button>';
+  document.getElementById('cdmC').innerHTML=h;
+  document.getElementById('cdmOv').classList.add('on');
+  document.getElementById('cdmBox').classList.add('on');
+  if(typeof lucide!=='undefined')lucide.createIcons();
 }
-function cCD(){document.getElementById('cdmOv').classList.remove('on');document.getElementById('cdmBox').classList.remove('on')}
+function cCD(){document.getElementById('cdmOv').classList.remove('on');document.getElementById('cdmBox').classList.remove('on');}
 
 // Hook: renderizar calendario ao navegar para a tab (FIX: sem wrapper recursivo)
 // Calendar hook agora é chamado via observer dentro de go()
