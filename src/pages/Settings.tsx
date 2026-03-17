@@ -1,0 +1,430 @@
+import { useState, useRef } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { useFinancialData } from '../hooks/useFinancialData';
+import { resetUserData, updateUserDoc } from '../services/persistUserData';
+import type { Entry } from '../types/userData';
+import { generateReportPdf } from '../utils/generateReportPdf';
+import { Modal } from '../components/ui/Modal';
+import { Database, Trash2, Upload, FileDown, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../hooks/useTheme';
+
+export default function Settings() {
+  const { user } = useAuth();
+  const { data, entries, accounts, accountBalances, cards, goals, investments, budgets, categories, recurrents, loading } = useFinancialData(user?.uid);
+  const userName = user?.displayName ?? (data?.name as string) ?? '';
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [backupDone, setBackupDone] = useState(false);
+  const [importMessage, setImportMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const jsonInputRef = useRef<HTMLInputElement>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
+  const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null);
+  const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+
+  const handleBackupJson = () => {
+    const payload = {
+      entries: entries ?? [],
+      investments: investments ?? [],
+      goals: goals ?? [],
+      budgets: budgets ?? {},
+      categories: categories ?? [],
+      accounts: accounts ?? [],
+      accountBalances: accountBalances ?? {},
+      recurrents: (data as any)?.recurrents ?? [],
+      cards: cards ?? [],
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sibanki_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setBackupDone(true);
+    setTimeout(() => setBackupDone(false), 3000);
+  };
+
+  const handleImportJson = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.uid) return;
+    e.target.value = '';
+    setImportMessage(null);
+    setError(null);
+    setBusy(true);
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const text = ev.target?.result as string;
+        const parsed = JSON.parse(text) as {
+          entries?: Entry[];
+          investments?: unknown[];
+          goals?: unknown[];
+          budgets?: Record<string, unknown>;
+          categories?: string[];
+          accounts?: string[];
+          accountBalances?: Record<string, number>;
+          recurrents?: unknown[];
+        };
+        const base = Date.now();
+        const importedEntries = (parsed.entries ?? []).map((e, i) => ({
+          ...e,
+          id: typeof (e as Entry).id === 'number' ? (e as Entry).id : base + i,
+        })) as Entry[];
+        const newEntries = [...entries, ...importedEntries];
+        const newInvestments = [...investments, ...(parsed.investments ?? [])];
+        const newGoals = [...goals, ...(parsed.goals ?? [])];
+        const newBudgets = { ...budgets, ...(parsed.budgets ?? {}) };
+        const newCategories = [...new Set([...categories, ...(parsed.categories ?? [])])];
+        const newAccounts = [...new Set([...accounts, ...(parsed.accounts ?? [])])];
+        const newAccountBalances = { ...accountBalances, ...(parsed.accountBalances ?? {}) };
+        const newRecurrents = Array.isArray(parsed.recurrents) ? parsed.recurrents : recurrents;
+        await updateUserDoc(user.uid, {
+          entries: newEntries,
+          investments: newInvestments,
+          goals: newGoals,
+          budgets: newBudgets,
+          categories: newCategories,
+          accounts: newAccounts,
+          accountBalances: newAccountBalances,
+          recurrents: newRecurrents,
+        });
+        const parts = [];
+        if (importedEntries.length) parts.push(`${importedEntries.length} lançamentos`);
+        if (parsed.investments?.length) parts.push(`${parsed.investments.length} investimentos`);
+        if (parsed.goals?.length) parts.push(`${parsed.goals.length} metas`);
+        if (Array.isArray(parsed.recurrents) && parsed.recurrents.length) parts.push(`${parsed.recurrents.length} recorrentes`);
+        setImportMessage({ type: 'ok', text: `Importado: ${parts.join(', ') || 'dados'}.` });
+      } catch (err) {
+        setImportMessage({ type: 'err', text: (err instanceof Error ? err.message : 'JSON inválido ou formato não reconhecido.') });
+      } finally {
+        setBusy(false);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  };
+
+  const parseCsvLine = (line: string): string[] => {
+    const out: string[] = [];
+    let i = 0;
+    while (i < line.length) {
+      if (line[i] === '"') {
+        let s = '';
+        i++;
+        while (i < line.length) {
+          if (line[i] === '"' && line[i + 1] === '"') { s += '"'; i += 2; continue; }
+          if (line[i] === '"') { i++; break; }
+          s += line[i++];
+        }
+        out.push(s);
+      } else {
+        let s = '';
+        while (i < line.length && line[i] !== ',') s += line[i++];
+        out.push(s.trim());
+        if (line[i] === ',') i++;
+      }
+    }
+    return out;
+  };
+
+  const handleImportCsv = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.uid) return;
+    e.target.value = '';
+    setImportMessage(null);
+    setError(null);
+    setBusy(true);
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const text = (ev.target?.result as string) || '';
+        const lines = text.split(/\r?\n/).filter((l) => l.trim());
+        if (lines.length < 2) {
+          setImportMessage({ type: 'err', text: 'Arquivo vazio ou sem linhas de dados.' });
+          setBusy(false);
+          return;
+        }
+        const base = Date.now();
+        const newEntries: Entry[] = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = parseCsvLine(lines[i]);
+          if (cols.length < 5) continue;
+          const date = cols[0]?.trim() ?? '';
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+          const tipoStr = (cols[1] ?? '').toLowerCase();
+          const type = tipoStr.includes('rec') ? 'receita' : 'despesa';
+          const desc = (cols[2] ?? '').trim();
+          const category = (cols[3] ?? '').trim() || 'Outros';
+          const value = parseFloat((cols[4] ?? '0').replace(',', '.')) || 0;
+          const account = (cols[5] ?? '').trim();
+          newEntries.push({
+            id: base + i,
+            type,
+            date,
+            desc: desc || undefined,
+            category,
+            value,
+            account: account || undefined,
+          });
+        }
+        if (newEntries.length === 0) {
+          setImportMessage({ type: 'err', text: 'Nenhum lançamento válido no CSV. Use cabeçalho: Data,Tipo,Descrição,Categoria,Valor,Conta' });
+          setBusy(false);
+          return;
+        }
+        const merged = [...entries, ...newEntries];
+        await updateUserDoc(user.uid, { entries: merged });
+        setImportMessage({ type: 'ok', text: `${newEntries.length} lançamentos importados.` });
+      } catch (err) {
+        setImportMessage({ type: 'err', text: (err instanceof Error ? err.message : 'Erro ao importar CSV.') });
+      } finally {
+        setBusy(false);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  };
+
+  const handleReset = async () => {
+    if (!user?.uid) return;
+    const msg1 = 'Tem certeza? Todos os lançamentos, metas, contas, investimentos e categorias serão apagados. Sua conta de login continua. Esta ação não pode ser desfeita.';
+    const msg2 = 'Última confirmação: realmente apagar TUDO e recomeçar do zero?';
+    if (!window.confirm(msg1)) return;
+    if (!window.confirm(msg2)) return;
+    setError(null);
+    setBusy(true);
+    try {
+      await resetUserData(user.uid, {
+        name: user.displayName ?? (data?.name as string) ?? undefined,
+        email: user.email ?? undefined,
+      });
+      navigate('/', { replace: true });
+      window.location.reload(); // recarrega para limpar estado do hook
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao apagar dados.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-3xl font-bold">Configurações</h2>
+        <p className="text-zinc-500 text-sm">Tema, backup e opções avançadas</p>
+      </div>
+
+      {error && (
+        <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl px-4 py-3 text-rose-400 text-sm">
+          {error}
+        </div>
+      )}
+
+      <section className="bg-[#0a0f18] rounded-2xl border border-white/5 p-6 space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="font-semibold text-zinc-100">Tema do aplicativo</h3>
+            <p className="text-zinc-500 text-sm">
+              Escolha entre modo escuro e claro. Sua preferência fica salva neste navegador.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-zinc-200 hover:bg-white/10"
+          >
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#05080d] border border-white/10 text-xs">
+              {theme === 'light' ? '☀' : '🌙'}
+            </span>
+            {theme === 'light' ? 'Tema claro' : 'Tema escuro'}
+          </button>
+        </div>
+      </section>
+
+      <section className="bg-[#0a0f18] rounded-2xl border border-white/5 p-6 space-y-4">
+        <div>
+          <h3 className="font-semibold text-zinc-100 flex items-center gap-2">
+            <Database className="w-5 h-5 text-blue-400" />
+            Dados e Backup
+          </h3>
+          <p className="text-zinc-500 text-sm mt-1">Exporte seus dados financeiros em JSON (mesmo formato do app atual).</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleBackupJson}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm"
+        >
+          <Database className="w-4 h-4" />
+          Backup JSON
+        </button>
+        {backupDone && (
+          <p className="text-emerald-400 text-sm">Backup baixado com sucesso.</p>
+        )}
+        <p className="text-zinc-500 text-xs">
+          Faça backup regularmente. O JSON inclui lançamentos, metas, investimentos, contas, cartões e configurações.
+        </p>
+
+        <div className="pt-4 border-t border-white/5">
+          <p className="font-medium text-zinc-300 text-sm mb-2">Relatório PDF</p>
+          <p className="text-zinc-500 text-xs mb-2">Gera um PDF com resumo do mês, lançamentos e despesas por categoria.</p>
+          <button
+            type="button"
+            onClick={() => {
+              try {
+                generateReportPdf({
+                  userName,
+                  entries,
+                  investments,
+                  goals,
+                });
+                setImportMessage({ type: 'ok', text: 'Relatório PDF gerado!' });
+                setTimeout(() => setImportMessage(null), 3000);
+              } catch (err) {
+                setImportMessage({ type: 'err', text: (err instanceof Error ? err.message : 'Erro ao gerar PDF.') });
+              }
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-zinc-200 font-medium text-sm"
+          >
+            <FileDown className="w-4 h-4" />
+            Gerar relatório PDF
+          </button>
+        </div>
+
+        <div className="pt-6 border-t border-white/5">
+          <p className="font-medium text-zinc-300 text-sm mb-3">Importar dados</p>
+          <p className="text-zinc-500 text-xs mb-3">
+            JSON: mescla com seus dados atuais. CSV: adiciona lançamentos (cabeçalho: Data,Tipo,Descrição,Categoria,Valor,Conta).
+          </p>
+          {importMessage && (
+            <div
+              className={`rounded-xl px-3 py-2 text-sm mb-3 ${importMessage.type === 'ok' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}
+            >
+              {importMessage.text}
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <input
+              ref={jsonInputRef}
+              type="file"
+              accept=".json,application/json"
+              onChange={handleImportJson}
+              className="hidden"
+              aria-label="Selecionar arquivo JSON para importar"
+            />
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => jsonInputRef.current?.click()}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-zinc-200 font-medium text-sm disabled:opacity-50"
+            >
+              <Upload className="w-4 h-4" />
+              Importar JSON
+            </button>
+            <input
+              ref={csvInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              onChange={handleImportCsv}
+              className="hidden"
+              aria-label="Selecionar arquivo CSV de lançamentos"
+            />
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => csvInputRef.current?.click()}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-zinc-200 font-medium text-sm disabled:opacity-50"
+            >
+              <Upload className="w-4 h-4" />
+              Importar CSV (lançamentos)
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#0a0f18] rounded-2xl border border-white/5 p-6 space-y-4">
+        <div>
+          <h3 className="font-semibold text-zinc-100 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-blue-400" />
+            Privacidade e termos
+          </h3>
+          <p className="text-zinc-500 text-sm mt-1">Termos de uso e política de privacidade do app.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setLegalModal('terms')}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-zinc-200 font-medium text-sm"
+          >
+            <FileText className="w-4 h-4" /> Termos de Uso
+          </button>
+          <button
+            type="button"
+            onClick={() => setLegalModal('privacy')}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-zinc-200 font-medium text-sm"
+          >
+            <FileText className="w-4 h-4" /> Política de Privacidade
+          </button>
+        </div>
+      </section>
+
+      <section className="bg-[#0a0f18] rounded-2xl border border-white/5 p-6 space-y-4">
+        <div>
+          <h3 className="font-semibold text-zinc-100 flex items-center gap-2">
+            <Trash2 className="w-5 h-5 text-rose-400" />
+            Recomeçar do zero
+          </h3>
+          <p className="text-zinc-500 text-sm mt-1">Apaga todos os lançamentos, metas, contas, cartões e investimentos. Sua conta de login permanece.</p>
+        </div>
+        <p className="text-zinc-400 text-sm">
+          Esta ação não pode ser desfeita. Faça um backup antes se quiser guardar seus dados.
+        </p>
+        <button
+          type="button"
+          onClick={handleReset}
+          disabled={busy}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white font-medium text-sm disabled:opacity-50 border border-rose-500/30"
+        >
+          <Trash2 className="w-4 h-4" />
+          {busy ? 'Apagando…' : 'Apagar tudo e recomeçar'}
+        </button>
+      </section>
+
+      <Modal
+        open={legalModal !== null}
+        onClose={() => setLegalModal(null)}
+        title={legalModal === 'terms' ? 'Termos de Uso' : 'Política de Privacidade'}
+      >
+        <div className="max-h-[70vh] overflow-y-auto p-1 text-zinc-400 text-sm space-y-4">
+          {legalModal === 'terms' && (
+            <>
+              <p><strong className="text-zinc-200">1. Aceitação.</strong> Ao utilizar o Sibanki, você concorda com estes Termos. Se não concordar, não utilize o aplicativo.</p>
+              <p><strong className="text-zinc-200">2. Uso.</strong> O app é para controle financeiro pessoal. Use de forma lícita e responsável.</p>
+              <p><strong className="text-zinc-200">3. Conta.</strong> Você é responsável por manter a confidencialidade do login.</p>
+              <p><strong className="text-zinc-200">4. Dados.</strong> Seus dados são armazenados de forma segura. Faça backup periodicamente.</p>
+              <p><strong className="text-zinc-200">5. Modificações.</strong> Podemos alterar estes Termos. O uso continuado após alterações constitui aceitação.</p>
+              <p><strong className="text-zinc-200">6. Legislação.</strong> Regidos pela legislação brasileira (CDC e LGPD – Lei nº 13.709/2018).</p>
+            </>
+          )}
+          {legalModal === 'privacy' && (
+            <>
+              <p><strong className="text-zinc-200">1. Dados coletados.</strong> E-mail, nome, dados financeiros que você insere (lançamentos, contas, metas) para oferecer o serviço.</p>
+              <p><strong className="text-zinc-200">2. Uso.</strong> Para operar o app, personalizar sua experiência e melhorar o serviço.</p>
+              <p><strong className="text-zinc-200">3. Armazenamento.</strong> Dados no Firebase (Google), com medidas de segurança.</p>
+              <p><strong className="text-zinc-200">4. Compartilhamento.</strong> Não vendemos seus dados. Podemos compartilhar apenas quando exigido por lei.</p>
+              <p><strong className="text-zinc-200">5. Seus direitos (LGPD).</strong> Acessar, corrigir, solicitar exclusão, revogar consentimento e exportar dados (JSON/CSV nas Configurações).</p>
+              <p><strong className="text-zinc-200">6. Contato.</strong> Para dúvidas ou exercício dos direitos, use o e-mail de suporte disponível no app.</p>
+            </>
+          )}
+        </div>
+      </Modal>
+    </div>
+  );
+}

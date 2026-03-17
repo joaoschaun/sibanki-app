@@ -59,6 +59,37 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── PROGRAMA FILIADO ──
+    // Dados do programa filiado - só o próprio lê/escreve
+    match /users/{userId}/filiado/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Lista de indicados do filiado - só o próprio lê; Cloud Function escreve via admin
+    match /users/{userId}/indicados/{docId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // só Cloud Function (admin SDK) escreve
+    }
+    // Extrato SibCoin - só o próprio lê; Cloud Function escreve via admin
+    match /users/{userId}/sibcoin/{docId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // só Cloud Function (admin SDK) escreve
+    }
+    // Feedback board (sugestões de features)
+    match /feedbackBoard/{docId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (
+        resource.data.autorId == request.auth.uid ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votos'])
+      );
+      allow delete: if request.auth != null && resource.data.autorId == request.auth.uid;
+    }
+    // Config global do Filiado - só leitura pelo app; escrita apenas pelo admin
+    match /config/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     // Bloqueia tudo mais
     match /{document=**} {
       allow read, write: if false;

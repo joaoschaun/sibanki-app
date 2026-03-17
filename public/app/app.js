@@ -866,6 +866,8 @@ c.classList.toggle('on',isActive);
 c.style.removeProperty('display');
 c.style.removeProperty('visibility');
 });
+// Hook especial para aba Filiado
+if(id==='filiado'&&typeof onPerfilTabFiliado==='function')onPerfilTabFiliado();
 try{if(typeof loadPerfilData==='function')loadPerfilData();}catch(e){}
 if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);
 });
@@ -8386,6 +8388,17 @@ else{topPlanTag.style.display='none';}
 var planSection=document.getElementById('planSection');
 if(planSection)renderPlanSection();
 if(typeof updateDrawerUser==='function')updateDrawerUser();
+// Badge PRO na aba Filiado
+var filBadge=document.getElementById('perfilFiliadoBadge');
+if(filBadge)filBadge.style.display=(userPlan==='pro'||userPlan==='familia')?'inline':'none';
+// Salvar código de filiado no campo filiadoCodigo do user (para query por ref)
+if((userPlan==='pro'||userPlan==='familia')&&U&&U.uid){
+db.collection('users').doc(U.uid).collection('filiado').doc('dados').get().then(function(snap){
+if(snap.exists&&snap.data().codigo){
+db.collection('users').doc(U.uid).set({filiadoCodigo:snap.data().codigo},{merge:true}).catch(function(){});
+}
+}).catch(function(){});
+}
 }
 
 function getPlanLimit(feature){
@@ -9226,8 +9239,11 @@ var _assetType=detectAssetType(stock.symbol||'');
 var _typeLabels={'acao':'\u{1F4C8} Ação','fii':'\u{1F3E2} FII','etf':'\u{1F4CA} ETF','bdr':'\u{1F30D} BDR'};
 var _typeColors={'acao':'#8B5CF6','fii':'#22C55E','etf':'#7C5CFC','bdr':'#F59E0B'};
 
-// Badge de tipo de ativo (mostrar logo após KPIs)
-var typeBadge='<div style="display:flex;align-items:center;gap:8px;margin:12px 0 16px;padding:8px 14px;background:'+_typeColors[_assetType]+'15;border:1px solid '+_typeColors[_assetType]+'33;border-radius:10px;width:fit-content">';
+// Badge de tipo de ativo (mostrar logo após KPIs) — remover só badges anteriores (não o wrapper do gráfico)
+while(kpisEl&&kpisEl.nextElementSibling&&!kpisEl.nextElementSibling.querySelector('#b3Chart')){
+kpisEl.nextElementSibling.remove();
+}
+var typeBadge='<div id="b3TypeBadgeWrap" style="display:flex;align-items:center;gap:8px;margin:12px 0 16px;padding:8px 14px;background:'+_typeColors[_assetType]+'15;border:1px solid '+_typeColors[_assetType]+'33;border-radius:10px;width:fit-content">';
 typeBadge+='<span style="font-size:1.2em">'+(_typeLabels[_assetType]||'\u{1F4C8} Ação')+'</span>';
 typeBadge+='<span style="font-size:.75em;color:'+_typeColors[_assetType]+';font-weight:700">Análise especializada para '+(_assetType==='fii'?'Fundos Imobiliários':_assetType==='etf'?'Fundos de Índice':_assetType==='bdr'?'BDRs (Ações Internacionais)':'Ações')+'</span></div>';
 if(kpisEl)kpisEl.insertAdjacentHTML('afterend',typeBadge);
@@ -16680,3 +16696,358 @@ function showFeatureUpsell(key) {
   modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
   document.body.appendChild(modal);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PROGRAMA FILIADO SIBANKI
+   ── Requisito: plano Pro ou Família
+   ── Recompensas: SibCoins por ativação, Open Banking e Pro
+   ═══════════════════════════════════════════════════════════════ */
+
+var _filiadoData = null; // cache dos dados do filiado
+
+// ── Config de recompensas (editável pelo admin via Firestore config/filiado) ──
+var FILIADO_CONFIG = {
+  recompensas: {
+    ativacao:    100,  // indicado com 30d + 5 lançamentos
+    openBanking: 200,  // indicado conectou Open Finance
+    assinouPro:  500,  // indicado assinou Pro
+  },
+  multiplicadores: {
+    iniciante:   1.0,  // 0-4 ativos
+    parceiro:    1.25, // 5-14 ativos
+    embaixador:  1.5,  // 15-49 ativos
+    elite:       2.0,  // 50+ ativos
+  },
+  ativacaoMinDias:        30,
+  ativacaoMinLancamentos: 5,
+};
+
+// ── Carrega config do Firestore (admin pode ajustar sem deploy) ──
+function loadFiliadoConfig() {
+  db.collection('config').doc('filiado').get().then(function(snap) {
+    if (snap.exists) {
+      var d = snap.data();
+      if (d.recompensas) Object.assign(FILIADO_CONFIG.recompensas, d.recompensas);
+      if (d.multiplicadores) Object.assign(FILIADO_CONFIG.multiplicadores, d.multiplicadores);
+    }
+  }).catch(function(){});
+}
+
+// ── Gera código único para o usuário ──
+function gerarCodigoFiliado(uid) {
+  // 6 chars alfanuméricos derivados do UID (uppercase) + 2 chars aleatórios
+  var base = uid.replace(/[^a-zA-Z0-9]/g, '').substring(0, 5).toUpperCase();
+  var rnd = Math.random().toString(36).substring(2, 4).toUpperCase();
+  return base + rnd;
+}
+
+// ── Nível do filiado baseado em ativos ──
+function getNivelFiliado(ativos) {
+  if (ativos >= 50) return { nome: 'Elite',       key: 'elite',       mult: FILIADO_CONFIG.multiplicadores.elite };
+  if (ativos >= 15) return { nome: 'Embaixador',  key: 'embaixador',  mult: FILIADO_CONFIG.multiplicadores.embaixador };
+  if (ativos >= 5)  return { nome: 'Parceiro',    key: 'parceiro',    mult: FILIADO_CONFIG.multiplicadores.parceiro };
+  return               { nome: 'Iniciante',    key: 'iniciante',   mult: FILIADO_CONFIG.multiplicadores.iniciante };
+}
+
+// ── Inicializa/carrega dados do filiado do Firestore ──
+function initFiliado() {
+  if (!U || !U.uid) return;
+
+  var isPro = (typeof userPlan !== 'undefined') && (userPlan === 'pro' || userPlan === 'familia');
+  var gateEl    = document.getElementById('filiadoGate');
+  var contentEl = document.getElementById('filiadoContent');
+  var badgeEl   = document.getElementById('perfilFiliadoBadge');
+
+  if (!isPro) {
+    if (gateEl)    gateEl.style.display    = 'block';
+    if (contentEl) contentEl.style.display = 'none';
+    if (badgeEl)   badgeEl.style.display   = 'none';
+    return;
+  }
+
+  if (badgeEl) badgeEl.style.display = 'inline';
+  if (gateEl)    gateEl.style.display    = 'none';
+  if (contentEl) contentEl.style.display = 'block';
+
+  // Carrega ou cria documento do filiado
+  var ref = db.collection('users').doc(U.uid).collection('filiado').doc('dados');
+  ref.get().then(function(snap) {
+    if (!snap.exists) {
+      // Primeiro acesso: gerar código e criar doc
+      var codigo = gerarCodigoFiliado(U.uid);
+      var dadosIniciais = {
+        codigo: codigo,
+        ativo: true,
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+        totalIndicados: 0,
+        totalAtivos: 0,
+        totalSibCoins: 0,
+        pendentes: 0,
+      };
+      ref.set(dadosIniciais).then(function() {
+        _filiadoData = dadosIniciais;
+        _filiadoData.codigo = codigo;
+        renderFiliadoUI(_filiadoData);
+      });
+    } else {
+      _filiadoData = snap.data();
+      renderFiliadoUI(_filiadoData);
+    }
+  }).catch(function(e) {
+    console.error('Filiado load error:', e);
+  });
+
+  // Carrega config do admin
+  loadFiliadoConfig();
+}
+
+// ── Renderiza a UI com os dados ──
+function renderFiliadoUI(data) {
+  if (!data) return;
+  var codigo = data.codigo || '—';
+  var link   = 'sibanki.com.br/?ref=' + codigo;
+  var ativos = data.totalAtivos || 0;
+  var nivel  = getNivelFiliado(ativos);
+
+  // KPIs
+  var el = function(id) { return document.getElementById(id); };
+  if (el('filLinkText'))        el('filLinkText').textContent        = link;
+  if (el('filCodigo'))          el('filCodigo').textContent          = codigo;
+  if (el('filTotalIndicados'))  el('filTotalIndicados').textContent  = data.totalIndicados || 0;
+  if (el('filAtivos'))          el('filAtivos').textContent          = ativos;
+  if (el('filSibCoins'))        el('filSibCoins').textContent        = (data.totalSibCoins || 0).toLocaleString('pt-BR');
+  if (el('filPendentes'))       el('filPendentes').textContent       = data.pendentes || 0;
+
+  // Badge de nível
+  if (el('filNivelLabel')) el('filNivelLabel').textContent = 'Filiado ' + nivel.nome;
+
+  // Destacar nível atual
+  ['Iniciante','Parceiro','Embaixador','Elite'].forEach(function(n) {
+    var card = el('filNivel' + n);
+    if (card) card.classList.toggle('atual', n === nivel.nome);
+  });
+
+  // Carregar lista de indicados
+  carregarIndicados('todos');
+  // Carregar extrato SibCoins
+  carregarExtratoCoin();
+}
+
+// ── Carregar lista de indicados ──
+function carregarIndicados(filtro) {
+  if (!U || !U.uid) return;
+  var listEl = document.getElementById('filIndicadosList');
+  if (!listEl) return;
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--t3)"><i data-lucide="loader" style="width:20px;height:20px"></i></div>';
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+
+  var query = db.collection('users').doc(U.uid).collection('indicados').orderBy('criadoEm', 'desc').limit(50);
+
+  query.get().then(function(snap) {
+    if (snap.empty) {
+      listEl.innerHTML = '<div class="fil-empty"><i data-lucide="users" style="width:32px;height:32px;opacity:.3"></i><p>Nenhum indicado ainda.<br>Compartilhe seu link para começar!</p></div>';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+      return;
+    }
+
+    var docs = snap.docs.filter(function(d) {
+      if (filtro === 'todos') return true;
+      return d.data().status === filtro;
+    });
+
+    if (docs.length === 0) {
+      listEl.innerHTML = '<div class="fil-empty" style="padding:24px 0"><p>Nenhum resultado para este filtro.</p></div>';
+      return;
+    }
+
+    listEl.innerHTML = docs.map(function(d) {
+      var info = d.data();
+      var iniciais = (info.nome || info.email || 'U').charAt(0).toUpperCase();
+      var statusLabel = info.status === 'ativo' ? 'Ativo' : info.status === 'pendente' ? 'Pendente' : 'Inativo';
+      var statusClass = info.status || 'pendente';
+      var dataStr = info.criadoEm ? new Date(info.criadoEm.toDate()).toLocaleDateString('pt-BR') : '—';
+      var coinsGanhos = (info.sibCoinsGerados || 0);
+      return '<div class="fil-indicado-card">' +
+        '<div class="fil-indicado-av">' + escapeHtml(iniciais) + '</div>' +
+        '<div class="fil-indicado-info">' +
+          '<div class="fil-indicado-nome">' + escapeHtml(info.nome || info.email || 'Usuário') + '</div>' +
+          '<div class="fil-indicado-meta">Desde ' + dataStr + (coinsGanhos > 0 ? ' · ' + coinsGanhos + ' SC gerados' : '') + '</div>' +
+        '</div>' +
+        '<span class="fil-indicado-status ' + escapeHtml(statusClass) + '">' + escapeHtml(statusLabel) + '</span>' +
+      '</div>';
+    }).join('');
+  }).catch(function(e) {
+    listEl.innerHTML = '<div class="fil-empty"><p>Erro ao carregar indicados.</p></div>';
+    console.error('Indicados load error:', e);
+  });
+}
+
+// ── Filtrar indicados por status ──
+function filtrarIndicados(filtro, btn) {
+  document.querySelectorAll('.fil-ftab').forEach(function(b) { b.classList.remove('on'); });
+  if (btn) btn.classList.add('on');
+  carregarIndicados(filtro);
+}
+
+// ── Carregar extrato de SibCoins ──
+function carregarExtratoCoin() {
+  if (!U || !U.uid) return;
+  var histEl = document.getElementById('filSibCoinHistorico');
+  if (!histEl) return;
+
+  db.collection('users').doc(U.uid).collection('sibcoin')
+    .orderBy('ts', 'desc').limit(20).get()
+    .then(function(snap) {
+      if (snap.empty) {
+        histEl.innerHTML = '<div class="fil-empty"><i data-lucide="coins" style="width:32px;height:32px;opacity:.3"></i><p>Nenhuma movimentação ainda.</p></div>';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        return;
+      }
+      histEl.innerHTML = snap.docs.map(function(d) {
+        var info = d.data();
+        var dataStr = info.ts ? new Date(info.ts.toDate()).toLocaleDateString('pt-BR') : '—';
+        var sinal = info.tipo === 'gasto' ? '-' : '+';
+        var cor   = info.tipo === 'gasto' ? 'color:var(--danger)' : 'color:var(--green)';
+        return '<div class="fil-coin-row">' +
+          '<div><div class="fil-coin-desc">' + escapeHtml(info.desc || 'SibCoin') + '</div>' +
+          '<div style="font-size:.72rem;color:var(--t3)">' + dataStr + '</div></div>' +
+          '<div class="fil-coin-val" style="' + cor + '">' + sinal + (info.valor || 0) + ' SC</div>' +
+        '</div>';
+      }).join('');
+    }).catch(function() {
+      histEl.innerHTML = '<div class="fil-empty"><p>Erro ao carregar extrato.</p></div>';
+    });
+}
+
+// ── Copiar link ──
+function copiarLinkFiliado() {
+  if (!_filiadoData || !_filiadoData.codigo) return;
+  var link = 'https://sibanki.com.br/?ref=' + _filiadoData.codigo;
+  navigator.clipboard.writeText(link).then(function() {
+    toast('Link copiado!', 'ok');
+  }).catch(function() {
+    var inp = document.createElement('input');
+    inp.value = link;
+    document.body.appendChild(inp);
+    inp.select();
+    document.execCommand('copy');
+    document.body.removeChild(inp);
+    toast('Link copiado!', 'ok');
+  });
+}
+
+// ── Compartilhar via navigator.share ou fallback ──
+function compartilharLinkFiliado() {
+  if (!_filiadoData || !_filiadoData.codigo) return;
+  var link = 'https://sibanki.com.br/?ref=' + _filiadoData.codigo;
+  var msg  = 'Controle suas finanças com o Sibanki! Use meu link e ganhe acesso gratuito: ' + link;
+  if (navigator.share) {
+    navigator.share({ title: 'Sibanki', text: msg, url: link }).catch(function(){});
+  } else {
+    copiarLinkFiliado();
+  }
+}
+
+// ── Compartilhar no WhatsApp ──
+function compartilharWhatsApp() {
+  if (!_filiadoData || !_filiadoData.codigo) return;
+  var link = 'https://sibanki.com.br/?ref=' + _filiadoData.codigo;
+  var msg  = encodeURIComponent('Ei! Estou usando o Sibanki para controlar minhas finanças e é incrível. Acesse pelo meu link e experimente grátis: ' + link);
+  window.open('https://wa.me/?text=' + msg, '_blank');
+}
+
+// ── Compartilhar por e-mail ──
+function compartilharEmailFil() {
+  if (!_filiadoData || !_filiadoData.codigo) return;
+  var link    = 'https://sibanki.com.br/?ref=' + _filiadoData.codigo;
+  var subject = encodeURIComponent('Te indico o Sibanki — controle financeiro com IA');
+  var body    = encodeURIComponent('Oi!\n\nEstou usando o Sibanki para organizar minhas finanças e é realmente diferente. Tem IA que analisa seus gastos, metas, investimentos e muito mais.\n\nAcesse pelo meu link e comece grátis:\n' + link + '\n\nAbraços!');
+  window.open('mailto:?subject=' + subject + '&body=' + body);
+}
+
+// ── Hook na navegação do perfil para inicializar quando entrar na aba ──
+// (integrado com o sistema existente de tabs do perfil via data-perfil-tab)
+var _filiadoInitialized = false;
+function onPerfilTabFiliado() {
+  if (!_filiadoInitialized) {
+    _filiadoInitialized = true;
+    initFiliado();
+  } else if (_filiadoData) {
+    renderFiliadoUI(_filiadoData); // re-render para atualizar
+  }
+}
+
+// ── Processar ?ref= na URL ao entrar no app (rastrear indicação) ──
+function checkRefParam() {
+  var params = new URLSearchParams(window.location.search);
+  var ref    = params.get('ref');
+  if (!ref || !ref.trim()) return;
+  // Salva no localStorage para processar depois do login
+  try { localStorage.setItem('sib_ref_code', ref.trim().toUpperCase()); } catch(e) {}
+  // Limpar da URL sem reload
+  var newUrl = window.location.pathname + (window.location.hash || '');
+  history.replaceState({}, '', newUrl);
+}
+
+// Processar ref após login confirmado
+function processarRefAposLogin() {
+  if (!U || !U.uid) return;
+  var refCode;
+  try { refCode = localStorage.getItem('sib_ref_code'); } catch(e) {}
+  if (!refCode) return;
+
+  // Verificar se usuário já tem referral registrado
+  db.collection('users').doc(U.uid).get().then(function(snap) {
+    var dados = snap.exists ? snap.data() : {};
+    if (dados.refCode) return; // já tem referral, ignorar
+
+    // Buscar filiado pelo código
+    db.collection('users').where('filiadoCodigo', '==', refCode).limit(1).get().then(function(qsnap) {
+      if (qsnap.empty) {
+        // Tentar via índice alternativo
+        return;
+      }
+      var filiadoUid = qsnap.docs[0].id;
+      if (filiadoUid === U.uid) return; // não pode se indicar
+
+      // Registrar referral no usuário novo
+      db.collection('users').doc(U.uid).set({
+        refCode: refCode,
+        refFiliadoUid: filiadoUid,
+        refRegistradoEm: firebase.firestore.FieldValue.serverTimestamp(),
+        openBankingAtivo: false,
+      }, { merge: true });
+
+      // Registrar indicado no filiado
+      db.collection('users').doc(filiadoUid).collection('indicados').add({
+        uid: U.uid,
+        nome: U.name || '',
+        email: U.email || '',
+        status: 'pendente',
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+        sibCoinsGerados: 0,
+        eventos: { cadastro: true, ativacao: false, openBanking: false, assinou: false },
+      });
+
+      // Atualizar contador
+      db.collection('users').doc(filiadoUid).collection('filiado').doc('dados').set({
+        totalIndicados: firebase.firestore.FieldValue.increment(1),
+        pendentes: firebase.firestore.FieldValue.increment(1),
+      }, { merge: true });
+
+      // Limpar localStorage
+      try { localStorage.removeItem('sib_ref_code'); } catch(e) {}
+    }).catch(function(e) { console.error('Ref process error:', e); });
+  });
+}
+
+// Chamar ao inicializar app
+setTimeout(checkRefParam, 100);
+// Chamar após login (integrar em _proceedToApp via observer)
+var _filRefProcessed = false;
+auth.onAuthStateChanged(function(user) {
+  if (user && !_filRefProcessed) {
+    _filRefProcessed = true;
+    setTimeout(processarRefAposLogin, 2000);
+  }
+});

@@ -957,6 +957,18 @@ function goToPlan(e) {
 function setSelectedPlan(plan) {
   try { localStorage.setItem('sib_selected_plan', plan); } catch(z) {}
 }
+
+// ── Capturar código de indicação ?ref= na landing ──
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var ref = params.get('ref');
+  if (ref && ref.trim().length >= 5) {
+    try { localStorage.setItem('sib_ref_code', ref.trim().toUpperCase()); } catch(e) {}
+    // Limpar da URL para não vazar em analytics
+    var clean = window.location.pathname + (window.location.hash || '');
+    history.replaceState({}, '', clean);
+  }
+})();
 </script>
 </body>
 </html>

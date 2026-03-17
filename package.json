@@ -2,8 +2,12 @@
   "name": "virtus-financeiro",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "npx serve public -l 3000",
+    "dev": "vite",
+    "dev:legacy": "npx serve public -l 3000",
+    "build": "vite build",
+    "preview": "vite preview",
     "syntax-check": "node -e \"new Function(require('fs').readFileSync('public/app/app.js','utf8'))\"",
     "test": "playwright test",
     "test:smoke": "playwright test smoke",
@@ -11,12 +15,34 @@
     "test:erros": "playwright test check-erros",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
+    "test:compare": "playwright test compare-modulos-legado compare-modulos-react --config=playwright.config.cjs --project=compare-legado --project=compare-react",
+    "test:compare:react": "playwright test compare-modulos-react --config=playwright.config.cjs --project=compare-react",
+    "test:compare:legado": "playwright test compare-modulos-legado --config=playwright.config.cjs --project=compare-legado",
     "report": "playwright show-report",
     "deploy:staging": "firebase deploy --only hosting:staging",
     "deploy:app": "firebase deploy --only hosting:app",
     "deploy:doc-investidor": "firebase deploy --only hosting:doc-investidor"
   },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "firebase": "^11.6.0",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
+    "lucide-react": "^0.546.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "tailwind-merge": "^3.5.0",
+    "zustand": "^5.0.0"
+  },
   "devDependencies": {
-    "@playwright/test": "^1.58.2"
+    "@playwright/test": "^1.58.2",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.0",
+    "typescript": "~5.6.0",
+    "vite": "^6.0.0"
   }
 }

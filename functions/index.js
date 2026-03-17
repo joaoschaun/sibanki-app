@@ -612,3 +612,187 @@ exports.telegramWebhook = telegramBot.telegramWebhook;
 exports.checkPriceAlerts = telegramBot.checkPriceAlerts;
 exports.dailyNews = telegramBot.dailyNews;
 exports.weeklyReport = telegramBot.weeklyReport;
+
+// =============================================
+// PROGRAMA FILIADO — validação diária de ativação
+// =============================================
+
+// Config padrão (sobreposta pela config/filiado do Firestore)
+const FILIADO_REWARDS = {
+  ativacao:    100,
+  openBanking: 200,
+  assinou:     500,
+};
+
+const FILIADO_MULT = {
+  iniciante:  1.0,  // 0-4 ativos
+  parceiro:   1.25, // 5-14 ativos
+  embaixador: 1.5,  // 15-49 ativos
+  elite:      2.0,  // 50+ ativos
+};
+
+function getNivelFil(ativos) {
+  if (ativos >= 50) return 'elite';
+  if (ativos >= 15) return 'embaixador';
+  if (ativos >= 5)  return 'parceiro';
+  return 'iniciante';
+}
+
+async function emitirSibCoin(db, filiadoUid, valor, desc, ref) {
+  const mult = FILIADO_MULT[getNivelFil(0)]; // atualizado no batch
+  const valorFinal = Math.round(valor * mult);
+  const batch = db.batch();
+
+  // Log da transação
+  const txRef = db.collection('users').doc(filiadoUid)
+                  .collection('sibcoin').doc();
+  batch.set(txRef, {
+    tipo:  'emissao',
+    valor: valorFinal,
+    desc,
+    ref:   ref || null,
+    ts:    admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Atualiza saldo do filiado
+  const filRef = db.collection('users').doc(filiadoUid)
+                   .collection('filiado').doc('dados');
+  batch.set(filRef, {
+    totalSibCoins: admin.firestore.FieldValue.increment(valorFinal),
+  }, { merge: true });
+
+  await batch.commit();
+  return valorFinal;
+}
+
+/**
+ * Roda diariamente — verifica indicados pendentes e credita SibCoins
+ * quando critérios de ativação são atendidos.
+ */
+exports.processarFiliadosDiario = functions.pubsub
+  .schedule('every 24 hours')
+  .onRun(async (context) => {
+    const db = admin.firestore();
+
+    // Carregar config customizada (se existir)
+    try {
+      const cfgSnap = await db.collection('config').doc('filiado').get();
+      if (cfgSnap.exists) {
+        const cfg = cfgSnap.data();
+        if (cfg.recompensas) Object.assign(FILIADO_REWARDS, cfg.recompensas);
+      }
+    } catch (e) { /* usa padrão */ }
+
+    // Buscar todos os usuários com indicados pendentes
+    // Estratégia: query por subcoleção via collectionGroup
+    const indicadosSnap = await db.collectionGroup('indicados')
+      .where('status', '==', 'pendente')
+      .limit(200)
+      .get();
+
+    if (indicadosSnap.empty) {
+      console.log('Filiado: nenhum indicado pendente.');
+      return null;
+    }
+
+    const promises = indicadosSnap.docs.map(async (doc) => {
+      const indicado = doc.data();
+      const filiadoUid = doc.ref.parent.parent.id; // users/{filiadoUid}/indicados/{id}
+      const indicadoUid = indicado.uid;
+      if (!indicadoUid || !filiadoUid) return;
+
+      try {
+        // Buscar dados do indicado
+        const indSnap = await db.collection('users').doc(indicadoUid).get();
+        if (!indSnap.exists) return;
+        const indData = indSnap.data();
+
+        const criadoEm = indicado.criadoEm ? indicado.criadoEm.toDate() : new Date();
+        const diasDesde = (Date.now() - criadoEm.getTime()) / (1000 * 60 * 60 * 24);
+        const lancamentos = (indData.entries || []).length;
+        const eventos = indicado.eventos || {};
+
+        const updates = { eventos: { ...eventos } };
+        const atualizacoesFil = {};
+        let mudou = false;
+
+        // Critério 1: ativação (30 dias + 5 lançamentos)
+        if (!eventos.ativacao && diasDesde >= 30 && lancamentos >= 5) {
+          updates.eventos.ativacao = true;
+          updates.status = 'ativo';
+          const sc = await emitirSibCoin(db, filiadoUid, FILIADO_REWARDS.ativacao,
+            `Indicado ${indicado.nome || indicado.email} ativou o app`, doc.id);
+          updates.sibCoinsGerados = admin.firestore.FieldValue.increment(sc);
+          atualizacoesFil.totalAtivos = admin.firestore.FieldValue.increment(1);
+          atualizacoesFil.pendentes   = admin.firestore.FieldValue.increment(-1);
+          mudou = true;
+          console.log(`Filiado ${filiadoUid}: ativação de ${indicadoUid} — +${sc} SC`);
+        }
+
+        // Critério 2: Open Banking conectado
+        if (!eventos.openBanking && indData.openBankingAtivo === true) {
+          updates.eventos.openBanking = true;
+          const sc = await emitirSibCoin(db, filiadoUid, FILIADO_REWARDS.openBanking,
+            `Indicado ${indicado.nome || indicado.email} conectou Open Finance`, doc.id);
+          updates.sibCoinsGerados = admin.firestore.FieldValue.increment(sc);
+          mudou = true;
+          console.log(`Filiado ${filiadoUid}: Open Banking de ${indicadoUid} — +${sc} SC`);
+        }
+
+        // Critério 3: assinou Pro
+        if (!eventos.assinou && (indData.plan === 'pro' || indData.plan === 'familia')) {
+          updates.eventos.assinou = true;
+          const sc = await emitirSibCoin(db, filiadoUid, FILIADO_REWARDS.assinou,
+            `Indicado ${indicado.nome || indicado.email} assinou o plano Pro`, doc.id);
+          updates.sibCoinsGerados = admin.firestore.FieldValue.increment(sc);
+          mudou = true;
+          console.log(`Filiado ${filiadoUid}: Pro de ${indicadoUid} — +${sc} SC`);
+        }
+
+        if (mudou) {
+          // Atualizar doc do indicado
+          await doc.ref.set(updates, { merge: true });
+
+          // Atualizar totais do filiado
+          if (Object.keys(atualizacoesFil).length > 0) {
+            await db.collection('users').doc(filiadoUid)
+              .collection('filiado').doc('dados')
+              .set(atualizacoesFil, { merge: true });
+          }
+
+          // Atualizar nível do filiado
+          const filSnap = await db.collection('users').doc(filiadoUid)
+            .collection('filiado').doc('dados').get();
+          if (filSnap.exists) {
+            const ativos = filSnap.data().totalAtivos || 0;
+            const nivel  = getNivelFil(ativos);
+            await filSnap.ref.set({ nivel }, { merge: true });
+          }
+        }
+      } catch (err) {
+        console.error(`Filiado erro em indicado ${doc.id}:`, err.message);
+      }
+    });
+
+    await Promise.allSettled(promises);
+    console.log(`Filiado: processados ${indicadosSnap.docs.length} indicados pendentes.`);
+    return null;
+  });
+
+/**
+ * Callable: registrar Open Banking ativo (chamado pelo app quando usuário conecta)
+ */
+exports.registrarOpenBanking = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Login necessário');
+  const uid = context.auth.uid;
+  const db = admin.firestore();
+
+  // Marcar usuário como tendo Open Banking ativo
+  await db.collection('users').doc(uid).set(
+    { openBankingAtivo: true, openBankingAtivoEm: admin.firestore.FieldValue.serverTimestamp() },
+    { merge: true }
+  );
+
+  // O cron diário processará o crédito. Retorna OK.
+  return { success: true };
+});

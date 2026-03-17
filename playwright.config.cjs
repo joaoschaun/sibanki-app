@@ -1,6 +1,7 @@
 /**
  * Playwright - Sibanki / Virtus Financeiro
  * Testes E2E otimizados para detectar erros e acelerar o processo
+ * Config em .cjs para compatibilidade com package.json "type": "module"
  */
 const { defineConfig, devices } = require('@playwright/test');
 
@@ -71,7 +72,7 @@ module.exports = defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         baseURL: 'https://staging-13a0b.web.app',
-        headless: false, // Firebase Auth costuma falhar em headless (cookies/contexto); headed garante login
+        headless: false,
       },
     },
     {
@@ -80,6 +81,22 @@ module.exports = defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         baseURL: 'https://staging-13a0b.web.app',
+      },
+    },
+    {
+      name: 'compare-legado',
+      testMatch: '**/compare-modulos-legado.spec.js',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.LEGACY_BASE_URL || 'https://staging-13a0b.web.app/app',
+      },
+    },
+    {
+      name: 'compare-react',
+      testMatch: '**/compare-modulos-react.spec.js',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.REACT_BASE_URL || 'https://staging-13a0b.web.app',
       },
     },
   ],

@@ -1,0 +1,58 @@
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../firebase';
+
+export interface B3Quote {
+  ticker: string;
+  name: string;
+  price: number;
+  change: number;
+  changePct: number;
+  type?: string;
+  sector?: string;
+  dy?: number;
+  pe?: number;
+}
+
+interface BrapiQuoteResponse {
+  results?: any[];
+  [key: string]: unknown;
+}
+
+export async function fetchB3Quote(tickerRaw: string): Promise<B3Quote> {
+  const ticker = tickerRaw.trim().toUpperCase();
+  if (!ticker) {
+    throw new Error('Informe um ticker válido.');
+  }
+
+  const callable = httpsCallable<{ ticker: string }, BrapiQuoteResponse>(functions, 'brapiQuote');
+  const res = await callable({ ticker });
+  const json = res.data;
+
+  const stockSource = (json && (json as BrapiQuoteResponse).results) || [];
+  const stock = Array.isArray(stockSource) ? stockSource[0] : (stockSource as any)[0] ?? stockSource;
+
+  if (!stock) {
+    throw new Error('Ticker não encontrado na B3.');
+  }
+
+  const price = Number(stock.regularMarketPrice ?? stock.close ?? stock.price ?? 0);
+  const change = Number(stock.regularMarketChange ?? 0);
+  const changePct = Number(stock.regularMarketChangePercent ?? 0);
+  const type = stock.type ?? stock.stockType ?? undefined;
+  const sector = stock.sector ?? stock.sectorName ?? stock.industry ?? undefined;
+  const dy = stock.dividendYield ?? stock.dy ?? undefined;
+  const pe = stock.priceEarnings ?? stock.pe ?? undefined;
+
+  return {
+    ticker: stock.symbol || ticker,
+    name: stock.longName || stock.shortName || stock.name || ticker,
+    price,
+    change,
+    changePct,
+    type,
+    sector,
+    dy: typeof dy === 'number' ? dy : undefined,
+    pe: typeof pe === 'number' ? pe : undefined,
+  };
+}
+
