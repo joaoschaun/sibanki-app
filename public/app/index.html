@@ -3198,6 +3198,40 @@
     <div class="fg" style="margin-top:14px"><label class="fl">Participantes (e-mails separados por vírgula)</label>
       <textarea id="consorcioEmails" class="fi" rows="3" placeholder="amigo1@email.com, amigo2@email.com..."></textarea>
     </div>
+
+    <!-- Opções avançadas (opcional) -->
+    <details class="ca-modal-extras" style="margin-top:14px">
+      <summary style="font-size:.8rem;font-weight:600;color:var(--t2);cursor:pointer;display:flex;align-items:center;gap:6px;padding:8px 0;border-top:1px solid var(--brd)"><i data-lucide="settings-2" style="width:13px;height:13px"></i> Opções avançadas (opcional)</summary>
+      <div style="padding-top:12px;display:flex;flex-direction:column;gap:14px">
+        <!-- Fundo de reserva -->
+        <div style="background:var(--bg2);border-radius:12px;padding:12px 14px;border:1px solid var(--brd)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div>
+              <div style="font-size:.85rem;font-weight:600;color:var(--t1);display:flex;align-items:center;gap:6px"><i data-lucide="piggy-bank" style="width:13px;height:13px;color:#F59E0B"></i> Fundo de Reserva</div>
+              <div style="font-size:.72rem;color:var(--t3);margin-top:2px">Cada membro contribui um valor extra mensal para cobrir inadimplências pontuais</div>
+            </div>
+            <button type="button" id="caToggleFundoReserva" class="perfil-toggle" onclick="caToggleOpcao('fundoReserva')" aria-label="Ativar fundo de reserva"></button>
+          </div>
+          <div id="caFundoReservaFields" style="display:none">
+            <div class="fg"><label class="fl" style="font-size:.72rem">Contribuição extra por membro (R$)</label><input type="number" id="consorcioFundoReserva" class="fi" placeholder="Ex: 20,00" min="0" step="0.01"></div>
+          </div>
+        </div>
+        <!-- Fiador -->
+        <div style="background:var(--bg2);border-radius:12px;padding:12px 14px;border:1px solid var(--brd)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div>
+              <div style="font-size:.85rem;font-weight:600;color:var(--t1);display:flex;align-items:center;gap:6px"><i data-lucide="shield-check" style="width:13px;height:13px;color:var(--vr)"></i> Fiador Digital</div>
+              <div style="font-size:.72rem;color:var(--t3);margin-top:2px">Cada membro indica um responsável que é alertado em caso de inadimplência</div>
+            </div>
+            <button type="button" id="caToggleFiador" class="perfil-toggle" onclick="caToggleOpcao('fiador')" aria-label="Ativar fiador digital"></button>
+          </div>
+          <div id="caFiadorFields" style="display:none">
+            <div style="font-size:.75rem;color:var(--t3);padding:6px 0">Ao entrar no grupo, cada membro poderá indicar o e-mail do seu fiador nas configurações do grupo.</div>
+          </div>
+        </div>
+      </div>
+    </details>
+
     <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
       <button type="button" class="btn btn-p" onclick="saveConsorcio()" style="flex:1">Criar grupo</button>
       <button type="button" class="btn" onclick="closeConsorcioModal()">Cancelar</button>
