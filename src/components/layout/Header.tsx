@@ -28,7 +28,10 @@ export function Header() {
   };
 
   return (
-    <header className="h-20 bg-[#0a0f18]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-8 shrink-0">
+    <header
+      className="h-20 bg-[#0a0f18]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-8 shrink-0"
+      onMouseLeave={() => setDropdownOpen(false)}
+    >
       <div className="flex items-center gap-4">
         <button type="button" className="p-2 hover:bg-white/5 rounded-lg" aria-label="Menu">
           <Menu className="w-5 h-5" />

@@ -49,7 +49,7 @@
 
 
 
-<link rel="stylesheet" href="app.css?v=20260317-b8">
+<link rel="stylesheet" href="app.css?v=20260317-loja-v2">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
@@ -325,6 +325,7 @@
 <div class="drawer-nav-group-body" id="drawerGroupCrescimentoBody">
 <div class="drawer-nav-item" data-go="invest"><div class="module-icon module-icon-invest"><i data-lucide="trending-up"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_investimentos">Investimentos</span></div></div>
 <div class="drawer-nav-item" data-go="solucoes"><div class="module-icon module-icon-solucoes"><i data-lucide="store"></i></div><div class="dni-text"><span class="dni-label">Soluções Financeiras</span><span class="dni-desc">Crédito, seguros e mais</span></div></div>
+<div class="drawer-nav-item" data-go="loja"><div class="module-icon module-icon-loja"><i data-lucide="gift"></i></div><div class="dni-text"><span class="dni-label">Loja SibCoin</span><span class="dni-desc">Recompensas e parceiros</span></div></div>
 <div class="drawer-nav-item" data-go="ia"><div class="module-icon module-icon-ia"><i data-lucide="bot"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_consultor_ia">Consultor IA</span></div></div>
 <div class="drawer-nav-item" data-go="dicas"><div class="module-icon module-icon-dicas"><i data-lucide="graduation-cap"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_educacao">Educação</span></div></div>
 </div>
@@ -2941,7 +2942,13 @@
 </div>
 </div>
 
-<div id="rel" class="tab">
+<!-- LOJA SIBCOIN v2 -->
+<div id="loja" class="tab">
+<div class="lv2-wrap cg"><div id="lojaBody"></div></div>
+<div id="lv2Modal" class="lv2-modal-ov" style="display:none" onclick="if(event.target===this)fecharLojaModal()">
+  <div class="lv2-modal-box" id="lv2ModalInner"></div>
+</div>
+</div><div id="rel" class="tab">
 
 <div class="rel-hero">
 <div class="rel-hero-icon"><i data-lucide="file-bar-chart" style="width:26px;height:26px;color:#64748B"></i></div>
@@ -3908,7 +3915,7 @@
 </div></div>
 
 
-<script src="app.js?v=20260313-v13"></script>
+<script src="app.js?v=20260317-loja-v2"></script>
 <!-- BRIEFING MODAL (pós-login) -->
 <div id="sibBriefingModal" class="sib-bf-ov" onclick="if(event.target===this)closeBriefing()" role="dialog" aria-modal="true" aria-labelledby="sibBriefTitle" style="display:none">
   <div class="sib-bf-box">

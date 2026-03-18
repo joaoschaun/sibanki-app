@@ -1169,7 +1169,7 @@ perfilAtualizarStatusNotif();toast('WhatsApp configurado! Notificações serão 
 function go(id,el){
 /* Hook: show child section when entering family tab */
 if(id==='comunidade'&&typeof initCommunity==='function'){setTimeout(initCommunity,100);}
-if(id==='solucoes'&&typeof onSolucoesEnter==='function'){setTimeout(onSolucoesEnter,100);}
+if(id==='solucoes'&&typeof onSolucoesEnter==='function'){setTimeout(onSolucoesEnter,100);}if(id==='loja'&&typeof initLoja==='function'){setTimeout(initLoja,100);}if(id==='loja'&&typeof initLoja==='function'){setTimeout(initLoja,100);}
 if(id==='config'&&typeof loadIAUsage==='function'){setTimeout(loadIAUsage,300);}
 if(id==='config'&&typeof checkTelegramLink==='function'){setTimeout(checkTelegramLink,300);}
 if(id==='config'&&typeof checkWhatsAppLink==='function'){setTimeout(checkWhatsAppLink,300);}
@@ -17696,3 +17696,231 @@ function onSolucoesEnter() {
   initSolucoes();
 }
 
+
+/* ═══════════════════════════════════════════════════════════════
+   LOJA SIBCOIN v2 — Sibanki como funil de performance financeira
+   SC financiado pelos parceiros, custo ~zero nas features proprias
+   ═══════════════════════════════════════════════════════════════ */
+
+window.LOJA_V2={
+  beneficios:[
+    {id:'pro_30d',emoji:'🏆',nome:'Plano Pro — 30 dias',desc:'Acesso completo ao Pro: relatorios avancados, IA financeira ilimitada, widgets exclusivos, sem limites.',detalhe:'Ativado instantaneamente na sua conta. Sem necessidade de cartao de credito.',sc:2500,scOld:null,custo:'~R$ 0,50',valorPercebido:'R$ 29,00',rating:4.9,resgates:1240,badge:'destaque',disponivel:true,categoria:'beneficio',como:'Apos confirmar, seu plano e elevado para Pro imediatamente por 30 dias corridos.'},
+    {id:'ia_extra_5',emoji:'🤖',nome:'5 Consultas IA Extra',desc:'Pacote com 5 sessoes extras de consultoria financeira com IA. Valido por 60 dias.',detalhe:'Ideal para meses de decisoes financeiras importantes.',sc:1200,scOld:null,custo:'~R$ 0,30',valorPercebido:'R$ 15,00',rating:4.8,resgates:623,badge:null,disponivel:true,categoria:'beneficio',como:'Consultas creditadas na sua conta em ate 5 minutos apos o resgate.'},
+    {id:'relatorio',emoji:'📊',nome:'Relatorio Premium Completo',desc:'Analise profunda da sua saude financeira com score, graficos e recomendacoes personalizadas.',detalhe:'PDF gerado com os seus dados reais dos ultimos 12 meses.',sc:800,scOld:null,custo:'~R$ 0,10',valorPercebido:'R$ 12,00',rating:4.7,resgates:856,badge:null,disponivel:true,categoria:'beneficio',como:'Relatorio gerado e enviado ao seu e-mail em ate 2 horas apos o resgate.'},
+    {id:'curso_intro',emoji:'🎓',nome:'Cupom 10% — Educacao Financeira',desc:'Desconto de 10% em qualquer curso da plataforma Sibanki Edu. Sem validade.',detalhe:'Aplicado automaticamente no checkout do curso escolhido.',sc:500,scOld:750,custo:'~R$ 0',valorPercebido:'variavel',rating:4.6,resgates:2100,badge:null,disponivel:true,categoria:'beneficio',como:'Codigo de desconto enviado por e-mail imediatamente apos o resgate.'},
+  ],
+  parceirosAtivos:[
+    {id:'juros_baixos_emp',emoji:'💰',nome:'Emprestimo Pessoal',desc:'Compare as melhores taxas de emprestimo pessoal. Cashback em SibCoins na contratacao.',detalhe:'Parceiro: Juros Baixos. Taxas a partir de 1,49% ao mes. Aprovacao em 24h.',sc:0,scCashback:'2% do valor em SC',rating:4.6,resgates:892,badge:'parceiro',disponivel:true,categoria:'parceiro',parceiro:'Juros Baixos',isParceiroExterno:true,como:'Voce sera redirecionado para a plataforma do parceiro. O cashback em SibCoins e creditado em ate 7 dias apos a contratacao.',goTo:'solucoes'},
+    {id:'juros_baixos_fgts',emoji:'📋',nome:'Antecipacao de FGTS',desc:'Antecipe ate 10 parcelas do seu FGTS com as menores taxas do mercado.',detalhe:'Parceiro: Juros Baixos. Dinheiro na conta em ate 1 dia util.',sc:0,scCashback:'1,5% do valor em SC',rating:4.5,resgates:634,badge:'parceiro',disponivel:true,categoria:'parceiro',parceiro:'Juros Baixos',isParceiroExterno:true,como:'Voce sera redirecionado para simular e contratar diretamente com o parceiro.',goTo:'solucoes'},
+    {id:'simple2u_cel',emoji:'📱',nome:'Seguro de Celular',desc:'Proteja seu smartphone contra roubo, furto e quebra acidental. A partir de R$9,90/mes.',detalhe:'Parceiro: Simple2u. Ativacao imediata, cobertura nacional.',sc:0,scCashback:'3% do premio anual em SC',rating:4.4,resgates:445,badge:'parceiro',disponivel:true,categoria:'parceiro',parceiro:'Simple2u',isParceiroExterno:true,como:'Voce sera direcionado para contratar o seguro com o parceiro. SC creditados apos a 1a mensalidade paga.',goTo:'solucoes'},
+    {id:'embracon_imovel',emoji:'🏠',nome:'Consorcio Imovel',desc:'Realize o sonho da casa propria com o maior administrador de consorcios do Brasil.',detalhe:'Parceiro: Embracon. Sem juros, apenas taxa de administracao.',sc:0,scCashback:'1% da carta de credito em SC',rating:4.3,resgates:178,badge:'parceiro',disponivel:true,categoria:'parceiro',parceiro:'Embracon',isParceiroExterno:true,como:'Simulacao e contratacao com o parceiro. SC creditados apos adesao confirmada.',goTo:'solucoes'},
+  ],
+  parceirosBreve:[
+    {id:'breve_ifood',emoji:'🍔',nome:'Voucher iFood',desc:'Creditos para usar em qualquer restaurante do iFood. Em negociacao.',sc:null,categoria:'breve',interesse:847,parceiro:'iFood'},
+    {id:'breve_spotify',emoji:'🎵',nome:'Spotify Premium — 1 mes',desc:'Assine o Spotify Premium por 1 mes. Em negociacao com parceiro.',sc:null,categoria:'breve',interesse:1203,parceiro:'Spotify'},
+    {id:'breve_amazon',emoji:'📦',nome:'Voucher Amazon',desc:'Creditos para compras na Amazon Brasil. Em negociacao.',sc:null,categoria:'breve',interesse:692,parceiro:'Amazon'},
+    {id:'breve_uber',emoji:'🚗',nome:'Creditos Uber',desc:'Corridas no Uber pagas com SibCoins. Em negociacao.',sc:null,categoria:'breve',interesse:531,parceiro:'Uber'},
+    {id:'breve_corretora',emoji:'📈',nome:'Abertura de Conta — Corretora',desc:'Abra sua conta em corretora parceira e ganhe SC de bonus. Em negociacao.',sc:null,categoria:'breve',interesse:389,parceiro:'Corretora'},
+    {id:'breve_seguro_vida',emoji:'🛡️',nome:'Seguro de Vida',desc:'Protecao financeira para voce e sua familia com cashback em SC. Em negociacao.',sc:null,categoria:'breve',interesse:267,parceiro:'Seguradora'},
+  ],
+  missoes:[
+    {id:'miss_lancamentos',titulo:'Registre 5 lancamentos',desc:'Registre 5 receitas ou despesas esta semana.',progresso:2,meta:5,sc:25,tipo:'semanal'},
+    {id:'miss_orcamento',titulo:'Complete seu orcamento',desc:'Defina o limite de cada categoria no orcamento deste mes.',progresso:0,meta:1,sc:50,tipo:'mensal'},
+    {id:'miss_meta',titulo:'Avance na sua meta',desc:'Adicione qualquer valor a sua meta de poupanca.',progresso:1,meta:1,sc:30,tipo:'semanal'},
+    {id:'miss_streak',titulo:'Streak de 7 dias',desc:'Use o app por 7 dias seguidos esta semana.',progresso:3,meta:7,sc:25,tipo:'semanal'},
+  ],
+  niveis:[{nome:'Observador',min:0,max:500},{nome:'Iniciante',min:500,max:2000},{nome:'Parceiro',min:2000,max:5000},{nome:'Embaixador',min:5000,max:10000},{nome:'Elite',min:10000,max:null}],
+};
+
+function _lv2Nivel(sc){var ns=window.LOJA_V2.niveis;for(var i=ns.length-1;i>=0;i--){if(sc>=ns[i].min){var n=ns[i];var pct=n.max?Math.round(((sc-n.min)/(n.max-n.min))*100):100;return{nome:n.nome,idx:i,pct:Math.min(100,pct),prox:ns[i+1]?ns[i+1].nome:null,faltam:n.max?(n.max-sc):0};}}return{nome:'Observador',idx:0,pct:0,prox:'Iniciante',faltam:500};}
+function _lv2Fmt(n){return Number(n||0).toLocaleString('pt-BR');}
+function _lv2BRL(sc){return 'R$ '+(sc*0.01).toFixed(2).replace('.',',');}
+function fecharLojaModal(){var m=document.getElementById('lv2Modal');if(m)m.style.display='none';window._lv2ModalProd=null;}
+
+function _lv2RenderHero(saldo){
+  var nivel=_lv2Nivel(saldo);var vel=47;
+  var h='<div class="lv2-hero"><div class="lv2-hero-top"><div class="lv2-hero-left"><h2>Loja SibCoin</h2><p>Seus coins, suas recompensas — ganhos por evolucao financeira</p></div>';
+  h+='<div><div class="lv2-saldo-big"><span class="lv2-saldo-num">'+_lv2Fmt(saldo)+'</span><span class="lv2-saldo-ticker">SC</span></div><div class="lv2-saldo-brl">≈ '+_lv2BRL(saldo)+' em valor de resgate</div></div></div>';
+  h+='<div class="lv2-stats">';
+  h+='<div class="lv2-stat"><div class="lv2-stat-label">Ganho esta semana</div><div class="lv2-stat-val amber">⚡ '+_lv2Fmt(vel)+' SC</div></div>';
+  var prx=saldo<500?{sc:500}:saldo<800?{sc:800}:null;
+  if(prx){var dif=prx.sc-saldo;var dias=Math.ceil(dif/(vel/7));h+='<div class="lv2-stat"><div class="lv2-stat-label">Proxima recompensa</div><div class="lv2-stat-val green">'+dias+' dias</div></div>';}
+  h+='<div class="lv2-stat"><div class="lv2-stat-label">Streak atual</div><div class="lv2-stat-val blue">🔥 3 dias</div></div>';
+  h+='</div>';
+  h+='<div class="lv2-nivel-row"><div class="lv2-nivel-pill">'+nivel.nome+'</div>';
+  h+='<div class="lv2-nivel-bar-wrap"><div class="lv2-nivel-bar-track"><div class="lv2-nivel-bar-fill" style="width:'+nivel.pct+'%"></div></div>';
+  if(nivel.prox&&nivel.faltam>0)h+='<div class="lv2-nivel-hint">'+_lv2Fmt(nivel.faltam)+' SC para '+nivel.prox+'</div>';
+  else if(!nivel.prox)h+='<div class="lv2-nivel-hint" style="color:var(--yellow)">Nivel maximo atingido 🏆</div>';
+  h+='</div><button class="lv2-hist-btn" onclick="_lv2AbrirExtrato()"><i data-lucide="clock" style="width:13px;height:13px"></i> Extrato SC</button></div></div>';
+  return h;
+}
+
+function _lv2RenderMissoes(){
+  var ms=window.LOJA_V2.missoes;
+  var h='<div class="lv2-section-title"><i data-lucide="zap" style="width:15px;height:15px;color:#F59E0B"></i> Missoes ativas</div><div class="lv2-missoes">';
+  ms.forEach(function(m){var done=m.progresso>=m.meta;var pct=Math.round((m.progresso/m.meta)*100);
+    h+='<div class="lv2-missao'+(done?' concluida':'')+'">';
+    h+='<div class="lv2-missao-badge '+(done?'concluida':m.tipo)+'">'+(done?'✓ Concluida':m.tipo==='semanal'?'Esta semana':'Este mes')+'</div>';
+    h+='<div class="lv2-missao-title">'+m.titulo+'</div><div class="lv2-missao-desc">'+m.desc+'</div>';
+    h+='<div class="lv2-missao-progress"><div class="lv2-missao-bar'+(done?' green':'')+'" style="width:'+pct+'%"></div></div>';
+    h+='<div class="lv2-missao-meta"><span>'+m.progresso+'/'+m.meta+'</span><span>'+pct+'%</span></div>';
+    h+='<div class="lv2-missao-recompensa">🪙 +'+m.sc+' SC ao concluir</div></div>';
+  });
+  return h+'</div>';
+}
+
+function _lv2RenderGrid(saldo,cat,search){
+  var lv2=window.LOJA_V2;var ints=window._lv2Interesses||{};
+  var disp=lv2.beneficios.concat(lv2.parceirosAtivos).filter(function(p){return(cat==='all'||cat===p.categoria)&&(!search||p.nome.toLowerCase().includes(search.toLowerCase()));});
+  var breve=(cat==='all'||cat==='breve')?lv2.parceirosBreve.filter(function(p){return!search||p.nome.toLowerCase().includes(search.toLowerCase());}):[];
+  var bens=disp.filter(function(p){return p.categoria==='beneficio';});
+  var parts=disp.filter(function(p){return p.categoria==='parceiro';});
+  var h='';
+  if(bens.length){
+    h+='<div class="lv2-grid-sep"><div class="lv2-grid-sep-line"></div><div class="lv2-grid-sep-label"><i data-lucide="star" style="width:12px;height:12px;color:#F59E0B"></i> Beneficios Sibanki</div><div class="lv2-grid-sep-line"></div></div>';
+    bens.forEach(function(p){var ok=saldo>=p.sc;
+      h+='<div class="lv2-card" onclick="_lv2AbrirModal(\''+p.id+'\')">';
+      if(p.badge)h+='<div class="lv2-card-badge '+p.badge+'">'+({destaque:'⭐ Destaque',novo:'Novo',exclusivo:'Elite'}[p.badge]||p.badge)+'</div>';
+      h+='<div class="lv2-card-emoji">'+p.emoji+'</div><div class="lv2-card-body">';
+      h+='<div class="lv2-card-name">'+escapeHtml(p.nome)+'</div><div class="lv2-card-desc">'+escapeHtml(p.desc)+'</div>';
+      h+='<div class="lv2-card-rating">⭐ '+p.rating+' · '+_lv2Fmt(p.resgates)+' resgates</div>';
+      h+='<div class="lv2-card-footer"><div><div class="lv2-card-price">🪙 '+_lv2Fmt(p.sc)+(p.scOld?'<span class="lv2-card-price-old">'+_lv2Fmt(p.scOld)+'</span>':'')+'</div><div class="lv2-card-custo">≈ '+_lv2BRL(p.sc)+'</div></div>';
+      h+='<button class="lv2-card-btn '+(ok?'resgatar':'sem-sc')+'" onclick="event.stopPropagation();_lv2AbrirModal(\''+p.id+'\')">'+(ok?'Resgatar':'Preciso mais SC')+'</button></div></div></div>';
+    });
+  }
+  if(parts.length){
+    h+='<div class="lv2-grid-sep"><div class="lv2-grid-sep-line"></div><div class="lv2-grid-sep-label"><i data-lucide="handshake" style="width:12px;height:12px;color:var(--vr)"></i> Parceiros Financeiros</div><div class="lv2-grid-sep-line"></div></div>';
+    parts.forEach(function(p){
+      h+='<div class="lv2-card" onclick="_lv2AbrirModal(\''+p.id+'\')">';
+      h+='<div class="lv2-card-badge parceiro">Parceiro</div>';
+      h+='<div class="lv2-card-emoji">'+p.emoji+'</div><div class="lv2-card-body">';
+      h+='<div class="lv2-card-name">'+escapeHtml(p.nome)+'</div><div class="lv2-card-desc">'+escapeHtml(p.desc)+'</div>';
+      h+='<div class="lv2-card-parceiro-name"><i data-lucide="building-2" style="width:11px;height:11px"></i>'+escapeHtml(p.parceiro)+'</div>';
+      h+='<div class="lv2-card-rating">⭐ '+p.rating+' · '+_lv2Fmt(p.resgates)+' contratos</div>';
+      h+='<div class="lv2-card-footer"><div><div class="lv2-card-price" style="color:var(--green);font-size:.78rem">'+escapeHtml(p.scCashback||'')+'</div><div class="lv2-card-custo">Cashback automatico</div></div>';
+      h+='<button class="lv2-card-btn ver-parceiro" onclick="event.stopPropagation();_lv2AbrirModal(\''+p.id+'\')">Ver oferta</button></div></div></div>';
+    });
+  }
+  if(breve.length){
+    h+='<div class="lv2-grid-sep"><div class="lv2-grid-sep-line"></div><div class="lv2-grid-sep-label"><i data-lucide="clock" style="width:12px;height:12px"></i> Em negociacao — demonstre interesse</div><div class="lv2-grid-sep-line"></div></div>';
+    breve.forEach(function(p){var reg=ints[p.id];var cnt=(p.interesse||0)+(reg?1:0);
+      h+='<div class="lv2-card-breve"><div class="lv2-card-badge" style="background:rgba(255,255,255,.06);color:var(--t3);border:1px solid rgba(255,255,255,.08)">Em breve</div>';
+      h+='<div class="lv2-card-emoji" style="opacity:.7">'+p.emoji+'</div><div class="lv2-breve-body">';
+      h+='<div class="lv2-card-name" style="opacity:.8">'+escapeHtml(p.nome)+'</div>';
+      h+='<div class="lv2-card-desc" style="opacity:.7">'+escapeHtml(p.desc)+'</div>';
+      h+='<div class="lv2-card-parceiro-name" style="opacity:.6">'+escapeHtml(p.parceiro)+'</div>';
+      h+='<button class="lv2-interesse-btn'+(reg?' registrado':'')+'" '+(reg?'disabled':'')+' onclick="event.stopPropagation();_lv2RegistrarInteresse(\''+p.id+'\')">';
+      h+=reg?'✓ Interesse registrado':'<i data-lucide="bell" style="width:12px;height:12px"></i> Avise-me quando disponivel';
+      h+='</button><div class="lv2-interesse-count">'+_lv2Fmt(cnt)+' pessoas demonstraram interesse</div></div></div>';
+    });
+  }
+  if(!bens.length&&!parts.length&&!breve.length)h+='<div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--t3)"><p>Nenhum item encontrado</p></div>';
+  return h;
+}
+
+window._lv2State={cat:'all',search:'',sort:'popular'};
+window._lv2Interesses={};
+
+function initLoja(){
+  window._lv2State=window._lv2State||{cat:'all',search:'',sort:'popular'};
+  if(!U||!U.uid){window._lojaSaldo=0;_lv2Render(0);return;}
+  db.collection('users').doc(U.uid).collection('filiado').doc('dados').get()
+    .then(function(snap){var sc=snap.exists?(snap.data().totalSibCoins||0):0;window._lojaSaldo=sc;_lv2CarregarInteresses(function(){_lv2Render(sc);});})
+    .catch(function(){window._lojaSaldo=0;_lv2Render(0);});
+}
+function _lv2CarregarInteresses(cb){
+  if(!U||!U.uid){cb&&cb();return;}
+  db.collection('users').doc(U.uid).collection('loja_interesses').get()
+    .then(function(snap){snap.forEach(function(d){window._lv2Interesses[d.id]=true;});cb&&cb();}).catch(function(){cb&&cb();});
+}
+function _lv2Render(saldo){
+  var root=document.getElementById('lojaBody');if(!root)return;
+  var state=window._lv2State;
+  var h='<div class="lv2-wrap">';
+  h+=_lv2RenderHero(saldo);
+  h+=_lv2RenderMissoes();
+  var tabs=[{id:'all',label:'Todos'},{id:'beneficio',label:'Beneficios Sibanki'},{id:'parceiro',label:'Parceiros Ativos'},{id:'breve',label:'Em Breve'}];
+  h+='<div><div class="lv2-section-title" style="margin-bottom:8px"><i data-lucide="gift" style="width:15px;height:15px;color:var(--vr)"></i> Catalogo</div>';
+  h+='<div class="lv2-tabs">';
+  tabs.forEach(function(t){h+='<button class="lv2-tab'+(state.cat===t.id?' on':'')+'" onclick="_lv2Cat(\''+t.id+'\')">'+t.label+'</button>';});
+  h+='</div><div class="lv2-search-row"><div class="lv2-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+  h+='<input type="text" placeholder="Buscar no catalogo..." value="'+escapeHtml(state.search)+'" oninput="_lv2Search(this.value)"></div></div>';
+  h+='<div class="lv2-sort-row"><span class="lv2-count">'+(window.LOJA_V2.beneficios.length+window.LOJA_V2.parceirosAtivos.length)+' disponiveis · '+window.LOJA_V2.parceirosBreve.length+' em breve</span></div></div>';
+  h+='<div class="lv2-grid">'+_lv2RenderGrid(saldo,state.cat,state.search)+'</div>';
+  h+='<div><div class="lv2-section-title"><i data-lucide="history" style="width:15px;height:15px"></i> Extrato de SibCoins</div>';
+  h+='<div class="lv2-extrato" id="lv2ExtratoBody"><div style="text-align:center;padding:24px;color:var(--t3);font-size:.82rem">Carregando...</div></div></div>';
+  h+='</div>';
+  root.innerHTML=h;
+  if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},30);
+  _lv2CarregarExtrato();
+}
+function _lv2Cat(c){window._lv2State.cat=c;_lv2Render(window._lojaSaldo||0);}
+function _lv2Search(v){window._lv2State.search=v;_lv2Render(window._lojaSaldo||0);}
+function _lv2AbrirExtrato(){document.getElementById('lv2ExtratoBody')?.scrollIntoView({behavior:'smooth'});}
+function _lv2RegistrarInteresse(id){
+  window._lv2Interesses[id]=true;_lv2Render(window._lojaSaldo||0);
+  if(!U||!U.uid)return;
+  db.collection('users').doc(U.uid).collection('loja_interesses').doc(id).set({ts:firebase.firestore.FieldValue.serverTimestamp(),uid:U.uid}).catch(function(){});
+  var p=window.LOJA_V2.parceirosBreve.find(function(x){return x.id===id;});
+  db.collection('loja_interesses_global').doc(id).set({count:firebase.firestore.FieldValue.increment(1),parceiro:p?p.parceiro:''},{merge:true}).catch(function(){});
+}
+function _lv2CarregarExtrato(){
+  var el=document.getElementById('lv2ExtratoBody');if(!el||!U||!U.uid){if(el)el.innerHTML='<div style="text-align:center;padding:20px;color:var(--t3);font-size:.82rem">Nenhuma movimentacao.</div>';return;}
+  var icons={lancamento:'📝',streak:'🔥',meta:'🎯',filiado:'👥',cashback:'💳',gasto:'🛍️',resgate:'🛍️',indicacao:'👤',conquista:'🏅'};
+  db.collection('users').doc(U.uid).collection('sibcoin').orderBy('ts','desc').limit(10).get()
+    .then(function(snap){
+      if(!el)return;
+      if(snap.empty){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--t3);font-size:.82rem">Nenhuma movimentacao ainda. Use o app para ganhar SibCoins!</div>';return;}
+      el.innerHTML=snap.docs.map(function(d){var i=d.data();var val=i.valor||i.value||0;var ent=val>=0;var dt=i.ts?new Date(i.ts.toDate()).toLocaleDateString('pt-BR'):'—';var ic=icons[i.tipo]||icons[i.origem]||(ent?'⬆️':'⬇️');
+        return'<div class="lv2-extrato-row"><div class="lv2-extrato-icon '+(ent?'entrada':'saida')+'">'+ic+'</div><div class="lv2-extrato-info"><div class="lv2-extrato-desc">'+escapeHtml(i.desc||i.tipo||'SibCoin')+'</div><div class="lv2-extrato-date">'+dt+'</div></div><div class="lv2-extrato-val '+(ent?'entrada':'saida')+'">'+(ent?'+':'')+_lv2Fmt(Math.abs(val))+' SC</div></div>';
+      }).join('');
+    }).catch(function(){if(el)el.innerHTML='<div style="text-align:center;padding:16px;color:var(--t3);font-size:.8rem">Sem movimentacoes.</div>';});
+}
+function _lv2AbrirModal(id){
+  var todos=window.LOJA_V2.beneficios.concat(window.LOJA_V2.parceirosAtivos);
+  var p=todos.find(function(x){return x.id===id;});if(!p)return;
+  window._lv2ModalProd=p;var saldo=window._lojaSaldo||0;var ok=!p.isParceiroExterno&&saldo>=p.sc;
+  var modal=document.getElementById('lv2Modal');
+  if(!modal){modal=document.createElement('div');modal.id='lv2Modal';modal.className='lv2-modal-ov';modal.style.display='none';modal.onclick=function(e){if(e.target===modal)fecharLojaModal();};modal.innerHTML='<div class="lv2-modal-box" id="lv2ModalInner"></div>';document.body.appendChild(modal);}
+  var h='<div class="lv2-modal-header"><button class="lv2-modal-close" onclick="fecharLojaModal()"><i data-lucide="x" style="width:15px;height:15px"></i></button>';
+  h+='<div class="lv2-modal-emoji">'+p.emoji+'</div><div class="lv2-modal-name">'+escapeHtml(p.nome)+'</div>';
+  if(p.parceiro)h+='<div class="lv2-modal-parceiro"><i data-lucide="building-2" style="width:12px;height:12px"></i>'+escapeHtml(p.parceiro)+'</div>';
+  h+='<div class="lv2-modal-desc">'+escapeHtml(p.detalhe||p.desc)+'</div></div>';
+  h+='<div class="lv2-calc"><div class="lv2-calc-title">'+(p.isParceiroExterno?'Como funciona':'Resumo do resgate')+'</div>';
+  if(!p.isParceiroExterno){
+    h+='<div class="lv2-calc-row"><span class="lv2-calc-label">Custo em SibCoins</span><span class="lv2-calc-val yellow">🪙 '+_lv2Fmt(p.sc)+' SC</span></div>';
+    h+='<div class="lv2-calc-row"><span class="lv2-calc-label">Equivale a</span><span class="lv2-calc-val blue">'+_lv2BRL(p.sc)+'</span></div>';
+    h+='<div class="lv2-calc-row"><span class="lv2-calc-label">Valor recebido</span><span class="lv2-calc-val green">'+escapeHtml(p.valorPercebido||'—')+'</span></div>';
+    h+='<div class="lv2-calc-row"><span class="lv2-calc-label">Seu saldo atual</span><span class="lv2-calc-val '+(ok?'green':'red')+'">'+_lv2Fmt(saldo)+' SC</span></div>';
+    if(ok)h+='<div class="lv2-calc-row"><span class="lv2-calc-label">Saldo apos resgate</span><span class="lv2-calc-val">'+_lv2Fmt(saldo-p.sc)+' SC</span></div>';
+  }else{
+    h+='<div class="lv2-calc-row"><span class="lv2-calc-label">Cashback em SC</span><span class="lv2-calc-val green">'+escapeHtml(p.scCashback||'variavel')+'</span></div>';
+    h+='<div class="lv2-calc-row"><span class="lv2-calc-label">Custo para voce</span><span class="lv2-calc-val blue">Gratuito — pago pelo parceiro</span></div>';
+    h+='<div class="lv2-calc-row"><span class="lv2-calc-label">SC creditados em</span><span class="lv2-calc-val">Ate 7 dias apos contratacao</span></div>';
+  }
+  h+='</div>';
+  if(p.como)h+='<div class="lv2-modal-como"><strong>Como funciona:</strong> '+escapeHtml(p.como)+'</div>';
+  h+='<div class="lv2-modal-footer"><button class="lv2-modal-cancel" onclick="fecharLojaModal()">Cancelar</button>';
+  if(p.isParceiroExterno){h+='<button class="lv2-modal-confirm parceiro-btn" onclick="_lv2IrParceiro(\''+p.id+'\')"><i data-lucide="external-link" style="width:15px;height:15px"></i> Ver no parceiro</button>';}
+  else{h+='<button class="lv2-modal-confirm" id="lv2ModalBtn" '+(ok?'':'disabled')+' onclick="_lv2Resgatar(\''+p.id+'\')">'+(ok?'<i data-lucide="check" style="width:15px;height:15px"></i> Confirmar resgate':'🪙 SibCoins insuficientes')+'</button>';}
+  h+='</div>';
+  document.getElementById('lv2ModalInner').innerHTML=h;
+  modal.style.display='flex';
+  if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);
+}
+function _lv2IrParceiro(id){var p=window.LOJA_V2.parceirosAtivos.find(function(x){return x.id===id;});fecharLojaModal();if(p&&p.goTo&&typeof go==='function')go(p.goTo,null);}
+function _lv2Resgatar(id){
+  var p=window.LOJA_V2.beneficios.find(function(x){return x.id===id;});if(!p||!U||!U.uid)return;
+  var saldo=window._lojaSaldo||0;if(saldo<p.sc){fecharLojaModal();if(typeof toast==='function')toast('SibCoins insuficientes.','erro');return;}
+  var btn=document.getElementById('lv2ModalBtn');if(btn){btn.disabled=true;btn.innerHTML='Processando...';}
+  var batch=db.batch(),uid=U.uid;
+  batch.set(db.collection('users').doc(uid).collection('sibcoin').doc(),{tipo:'gasto',origem:'loja',produtoId:p.id,produto:p.nome,valor:-p.sc,desc:'Resgate: '+p.nome,ts:firebase.firestore.FieldValue.serverTimestamp()});
+  batch.set(db.collection('users').doc(uid).collection('filiado').doc('dados'),{totalSibCoins:firebase.firestore.FieldValue.increment(-p.sc)},{merge:true});
+  batch.set(db.collection('users').doc(uid).collection('resgates').doc(),{produtoId:p.id,produto:p.nome,emoji:p.emoji,sc:p.sc,status:'processando',ts:firebase.firestore.FieldValue.serverTimestamp()});
+  batch.commit().then(function(){
+    window._lojaSaldo=Math.max(0,saldo-p.sc);fecharLojaModal();
+    if(typeof toast==='function')toast('🎉 "'+p.nome+'" resgatado! Instrucoes por e-mail em breve.','ok');
+    _lv2Render(window._lojaSaldo);
+    ['solSaldoSC','dashSibCoinSaldo'].forEach(function(elId){var el=document.getElementById(elId);if(el)el.textContent=_lv2Fmt(window._lojaSaldo)+(elId==='solSaldoSC'?' SC':'');});
+  }).catch(function(err){fecharLojaModal();if(typeof toast==='function')toast('Erro: '+err.message,'erro');});
+}
