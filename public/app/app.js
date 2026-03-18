@@ -18010,7 +18010,18 @@ function saveConsorcio(){if(!U||!U.uid)return;var id=document.getElementById('co
   var fundoBtn=document.getElementById('caToggleFundoReserva');
   if(fundoBtn&&fundoBtn.classList.contains('on')){var fv=parseFloat(document.getElementById('consorcioFundoReserva').value)||0;if(fv>0){doc.fundoReservaAtivo=true;doc.fundoReservaValor=fv;doc.fundoReservaTotal=0;}}
   var fiadorBtn=document.getElementById('caToggleFiador');
-  if(fiadorBtn&&fiadorBtn.classList.contains('on')){doc.fiadorAtivo=true;}var ref=db.collection('users').doc(U.uid).collection('consorcio_grupos');(id?ref.doc(id).set(doc,{merge:true}):ref.add(doc)).then(function(){closeConsorcioModal();toast(id?'Grupo atualizado!':'Grupo criado!','ok');renderConsorcioGrupos();}).catch(function(e){toast('Erro: '+e.message,'erro');});}
+  if(fiadorBtn&&fiadorBtn.classList.contains('on')){doc.fiadorAtivo=true;}var ref=db.collection('users').doc(U.uid).collection('consorcio_grupos');(id?ref.doc(id).set(doc,{merge:true}):ref.add(doc)).then(function(){closeConsorcioModal();toast(id?'Grupo atualizado!':'Grupo criado!','ok');renderConsorcioGrupos();
+    // Disparar e-mails de convite para participantes externos
+    if(!id&&emailsRaw){
+      var emailList=emailsRaw.split(',').map(function(e){return e.trim();}).filter(function(e){return e&&e.indexOf('@')>0;});
+      if(emailList.length>0){
+        var fnInv=firebase.functions().httpsCallable('sendConsorcioInvite');
+        fnInv({emails:emailList,nomeAdmin:U.name||'Alguém',nomeGrupo:nome,valorParcela:valor,numParticipantes:num,boloMensal:valor*num,prazo:num}).then(function(res){
+          if(res&&res.data&&res.data.ok){var cnt=(res.data.results||[]).filter(function(x){return x.ok;}).length;if(cnt>0)toast('Convites enviados para '+cnt+' participante'+(cnt>1?'s':'')+'! 📧','ok');}
+        }).catch(function(){});
+      }
+    }
+  }).catch(function(e){toast('Erro: '+e.message,'erro');});}
 function renderConsorcioGrupos(){var grid=document.getElementById('consorcioGruposGrid');if(!grid||!U||!U.uid)return;grid.innerHTML='<div style="text-align:center;padding:32px;color:var(--t3)">Carregando...</div>';db.collection('users').doc(U.uid).collection('consorcio_grupos').orderBy('createdAt','desc').get().then(function(snap){if(snap.empty){grid.innerHTML='<div class="ca-empty"><i data-lucide="users" style="width:44px;height:44px;color:var(--t3)"></i><p>Nenhum grupo criado ainda</p><p style="font-size:.78rem;color:var(--t3);max-width:260px;text-align:center;margin:0 auto">Crie um grupo entre amigos sem banco sem juros.</p><button class="btn btn-p" onclick="openConsorcioModal()" style="margin-top:14px;display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus" style="width:14px;height:14px"></i> Criar primeiro grupo</button></div>';if(typeof lucide!=='undefined')lucide.createIcons();return;}var html='';snap.forEach(function(doc){var d=doc.data();var gId=doc.id;var total=d.valorParcela*(d.numParticipantes||0);var parts=Array.isArray(d.participantes)?d.participantes:[];var pagaram=parts.filter(function(p){return p.statusMes==='pago';}).length;var inadim=parts.filter(function(p){return p.statusMes==='atrasado';}).length;var contemplados=parts.filter(function(p){return p.status==='contemplado';}).length;var modoIcon={sorteio:'shuffle',lance:'trending-up',rotativo:'list-ordered'}[d.modoContemplacao]||'shuffle';var stColor=d.status==='ativo'?'var(--green)':d.status==='pausado'?'var(--yellow)':'var(--t3)';html+='<div class="ca-card" onclick="openConsorcioDetalhe(\''+gId+'\')"><div class="ca-card-hd"><div class="ca-card-icon"><i data-lucide="users" style="width:16px;height:16px;color:#F59E0B"></i></div><div style="flex:1;min-width:0"><div class="ca-card-nome">'+escapeHtml(d.nome)+'</div><div style="font-size:.7rem;color:var(--t3);display:flex;align-items:center;gap:4px"><i data-lucide="'+modoIcon+'" style="width:10px;height:10px"></i>'+({sorteio:'Sorteio',lance:'Lance',rotativo:'Rotativo'}[d.modoContemplacao]||'Sorteio')+'</div></div><span style="font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.06);color:'+stColor+'">'+({ativo:'Ativo',pausado:'Pausado',finalizado:'Encerrado'}[d.status]||d.status)+'</span></div><div class="ca-card-kpis"><div class="ca-kpi"><div class="ca-kpi-label">Bolo/mes</div><div class="ca-kpi-val" style="color:#F59E0B">R$ '+_caFmt(total)+'</div></div><div class="ca-kpi"><div class="ca-kpi-label">Membros</div><div class="ca-kpi-val">'+d.numParticipantes+'</div></div><div class="ca-kpi"><div class="ca-kpi-label">Pagaram</div><div class="ca-kpi-val" style="color:'+(inadim>0?'var(--danger)':'var(--green)')+'">'+pagaram+'/'+parts.length+'</div></div><div class="ca-kpi"><div class="ca-kpi-label">Contemplados</div><div class="ca-kpi-val">'+contemplados+'/'+d.numParticipantes+'</div></div></div>'+(inadim>0?'<div class="ca-alert"><i data-lucide="alert-triangle" style="width:12px;height:12px"></i> '+inadim+' inadimplente'+(inadim>1?'s':'')+'</div>':'')+'<div class="ca-card-footer"><span style="font-size:.7rem;color:var(--t3)">Vence dia '+d.diaVencimento+' - prox: '+_caProxVenc(d.diaVencimento)+'</span><span style="font-size:.7rem;color:var(--vr)">Ver detalhes</span></div></div>';});grid.innerHTML=html;if(typeof lucide!=='undefined')lucide.createIcons();}).catch(function(){grid.innerHTML='<div style="text-align:center;padding:24px;color:var(--t3)">Erro ao carregar grupos.</div>';});}
 function openConsorcioDetalhe(gId){if(!U||!U.uid)return;var m=document.getElementById('consorcioDetalheModal');var body=document.getElementById('consorcioDetalheBody');if(!m||!body)return;body.innerHTML='<div style="text-align:center;padding:32px;color:var(--t3)">Carregando...</div>';m.style.display='flex';db.collection('users').doc(U.uid).collection('consorcio_grupos').doc(gId).get().then(function(snap){if(!snap.exists){body.innerHTML='Grupo nao encontrado.';return;}var d=snap.data();document.getElementById('consorcioDetalheTitulo').textContent=d.nome;window._caGrupoAtual={id:gId,data:d};_caRenderDetalhe(gId,d,body);if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},30);}).catch(function(e){body.innerHTML='Erro: '+e.message;});}
 function closeConsorcioDetalhe(){var m=document.getElementById('consorcioDetalheModal');if(m)m.style.display='none';}
@@ -18190,6 +18201,24 @@ function saveCrediAmigo(){
     closeCrediAmigoModal();
     toast((id?'Emprestimo atualizado!':'Emprestimo registrado!'),'ok');
     renderCaListas();
+    // Disparar e-mail de convite para o amigo (se tiver e-mail válido)
+    if(!id){
+      var emailAmigo=document.getElementById('caEmailAmigo')?document.getElementById('caEmailAmigo').value.trim():'';
+      if(emailAmigo&&emailAmigo.indexOf('@')>0){
+        var fnCa=firebase.functions().httpsCallable('sendCrediAmigoInvite');
+        fnCa({
+          emailAmigo:emailAmigo,
+          nomeCredor:U.name||'Alguém',
+          nomeDev:amigo,
+          valor:valor,
+          parcelas:p.n,
+          valorParcela:Math.round(p.parcela*100)/100,
+          tipoCredor:_caEmprestimoTipo==='emprestei'
+        }).then(function(res){
+          if(res&&res.data&&res.data.ok)toast('Convite enviado para '+emailAmigo+' 📧','ok');
+        }).catch(function(){});
+      }
+    }
   }).catch(function(e){toast('Erro: '+e.message,'erro');});
 }
 

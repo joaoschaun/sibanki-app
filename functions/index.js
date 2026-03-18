@@ -153,6 +153,8 @@ const APP_URL = process.env.APP_URL || "https://virtus-financeiro-cd7bd.web.app/
 const { getFamilyInviteEmailHtml } = require("./templates/familyInviteEmail");
 const { getVerifyEmailHtml } = require("./templates/verifyEmail");
 const { getWeeklySummaryEmailHtml } = require("./templates/weeklySummaryEmail");
+const { getConsorcioInviteEmailHtml } = require("./templates/consorcioInviteEmail");
+const { getCrediAmigoInviteEmailHtml } = require("./templates/crediAmigoInviteEmail");
 
 function getResendApiKey() {
   return process.env.RESEND_API_KEY ||
@@ -1009,4 +1011,107 @@ exports.registrarCliqueSolucao = functions.https.onCall(async (data, context) =>
     ts: admin.firestore.FieldValue.serverTimestamp(),
   }).catch(() => {});
   return { success: true };
+});
+
+// =============================================
+// CONVITE CONSÓRCIO AMIGOS — e-mail para participantes
+// =============================================
+exports.sendConsorcioInvite = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Faça login para enviar convites.");
+  }
+  const { emails, nomeAdmin, nomeGrupo, valorParcela, numParticipantes, boloMensal, prazo, grupoId } = data || {};
+  if (!emails || !emails.length || !nomeGrupo) {
+    throw new functions.https.HttpsError("invalid-argument", "emails e nomeGrupo são obrigatórios.");
+  }
+  const apiKey = process.env.RESEND_API_KEY || (functions.config().resend && functions.config().resend.api_key) || "";
+  if (!apiKey) return { ok: false, error: "EMAIL_NOT_CONFIGURED" };
+
+  const APP_URL = process.env.APP_URL || "https://sibanki.com.br/app";
+  const { Resend } = require("resend");
+  const resend = new Resend(apiKey);
+  const db = admin.firestore();
+
+  const results = [];
+  for (const email of emails) {
+    if (!email || email.indexOf("@") < 0) continue;
+    // Criar registro de convite no Firestore
+    const inviteRef = await db.collection("consorcio_invites").add({
+      grupoId: grupoId || null,
+      nomeGrupo,
+      nomeAdmin,
+      toEmail: email,
+      fromUid: context.auth.uid,
+      status: "pending",
+      ts: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    const link = `${APP_URL}/#consorcio_invite=${inviteRef.id}`;
+    const html = getConsorcioInviteEmailHtml(nomeAdmin, nomeGrupo, valorParcela, numParticipantes, boloMensal, prazo, link);
+    try {
+      const { error } = await resend.emails.send({
+        from: process.env.RESEND_FROM || "Sibanki <noreply@sibanki.com.br>",
+        to: [email],
+        subject: `${nomeAdmin} te convidou para um consórcio no Sibanki 🤝`,
+        html,
+      });
+      results.push({ email, ok: !error, error: error?.message });
+      logEvent("sendConsorcioInvite", { to: email, grupoId });
+    } catch (e) {
+      results.push({ email, ok: false, error: e.message });
+      logError("sendConsorcioInvite", e);
+    }
+  }
+  return { ok: true, results };
+});
+
+// =============================================
+// CONVITE CREDI AMIGO — e-mail para o amigo do acordo
+// =============================================
+exports.sendCrediAmigoInvite = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Faça login para enviar convites.");
+  }
+  const { emailAmigo, nomeCredor, nomeDev, valor, parcelas, valorParcela, emprestimoId, tipoCredor } = data || {};
+  if (!emailAmigo || emailAmigo.indexOf("@") < 0) {
+    throw new functions.https.HttpsError("invalid-argument", "emailAmigo inválido.");
+  }
+  const apiKey = process.env.RESEND_API_KEY || (functions.config().resend && functions.config().resend.api_key) || "";
+  if (!apiKey) return { ok: false, error: "EMAIL_NOT_CONFIGURED" };
+
+  const APP_URL = process.env.APP_URL || "https://sibanki.com.br/app";
+  const db = admin.firestore();
+
+  // Criar registro do convite
+  const inviteRef = await db.collection("crediamigo_invites").add({
+    emprestimoId: emprestimoId || null,
+    nomeCredor,
+    nomeDev,
+    emailAmigo,
+    fromUid: context.auth.uid,
+    valor,
+    status: "pending",
+    ts: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  const link = `${APP_URL}/#credi_invite=${inviteRef.id}`;
+  const html = getCrediAmigoInviteEmailHtml(nomeCredor, nomeDev, valor, parcelas, valorParcela, link, !!tipoCredor);
+
+  try {
+    const { Resend } = require("resend");
+    const resend = new Resend(apiKey);
+    const assunto = tipoCredor
+      ? `${nomeCredor} registrou um empréstimo para você no Sibanki 💸`
+      : `${nomeCredor} registrou que você tem R$ ${Number(valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})} a receber`;
+    const { error } = await resend.emails.send({
+      from: process.env.RESEND_FROM || "Sibanki <noreply@sibanki.com.br>",
+      to: [emailAmigo],
+      subject: assunto,
+      html,
+    });
+    if (error) { logError("sendCrediAmigoInvite", { error }); return { ok: false, error: error.message }; }
+    logEvent("sendCrediAmigoInvite", { to: emailAmigo, emprestimoId });
+    return { ok: true, inviteId: inviteRef.id };
+  } catch (e) {
+    logError("sendCrediAmigoInvite", e);
+    throw new functions.https.HttpsError("internal", e.message);
+  }
 });
