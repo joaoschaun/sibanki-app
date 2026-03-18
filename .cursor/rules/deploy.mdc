@@ -1,13 +1,13 @@
 ---
-description: Regras de deploy — usar staging para testes, app só para produção
+description: Regras de deploy — staging = React em migração; virtus = produção legado
 alwaysApply: true
 ---
 
 # Deploy (Firebase Hosting)
 
-- **Antes de qualquer deploy:** rodar sempre `npm run syntax-check` para validar a sintaxe de `public/app/app.js`. Se falhar, corrigir os erros antes de fazer o deploy.
-- **Deploy de teste / validação:** usar sempre `npm run deploy:staging`. O site de staging é outro (staging-13a0b), não o app principal.
-- **Deploy em produção (app principal):** usar `npm run deploy:app` apenas quando o usuário pedir explicitamente release/produção, nunca para "testar" ou "validar".
-- **Doc investidor:** `npm run deploy:doc-investidor` publica em doc-investidor.web.app.
+- **Antes de qualquer deploy:** rodar `npm run syntax-check` para validar `public/app/app.js` (obrigatório antes de `deploy:app`).
+- **Produção em uso — [virtus-financeiro-cd7bd.web.app](https://virtus-financeiro-cd7bd.web.app):** conteúdo em `public` (landing + app legado em `/app/`). Comando: **`npm run deploy:app`**. É o site que os usuários usam hoje.
+- **Staging — migração para React:** build Vite em `dist`. Comando: **`npm run deploy:staging`** (site separado, ex. staging-13a0b). Usar para evoluir o sistema em React aos poucos, **sem** substituir a produção até decisão explícita.
+- **Doc investidor:** `npm run deploy:doc-investidor`.
 
-Nunca fazer deploy no app principal (virtus-financeiro-cd7bd) para testes; isso pode afetar usuários reais.
+Não publicar o bundle React (`dist`) no target `app` enquanto a produção oficial for o legado em `public`, salvo pedido explícito para trocar.

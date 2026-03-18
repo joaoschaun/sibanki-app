@@ -20,7 +20,7 @@
     "test:compare:legado": "playwright test compare-modulos-legado --config=playwright.config.cjs --project=compare-legado",
     "report": "playwright show-report",
     "deploy:staging": "firebase deploy --only hosting:staging",
-    "deploy:app": "firebase deploy --only hosting:app",
+    "deploy:app": "npm run syntax-check && firebase deploy --only hosting:app",
     "deploy:doc-investidor": "firebase deploy --only hosting:doc-investidor"
   },
   "dependencies": {

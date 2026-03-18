@@ -6,7 +6,12 @@ import { useAuth } from '../../hooks/useAuth';
 import { useFinancialData } from '../../hooks/useFinancialData';
 import { Menu, Download, Eye, Sun, Bell, User, LogOut } from 'lucide-react';
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void;
+  sidebarCollapsed?: boolean;
+}
+
+export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
   const { user } = useAuth();
   const { data } = useFinancialData(user?.uid);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -33,7 +38,13 @@ export function Header() {
       onMouseLeave={() => setDropdownOpen(false)}
     >
       <div className="flex items-center gap-4">
-        <button type="button" className="p-2 hover:bg-white/5 rounded-lg" aria-label="Menu">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          className="p-2 hover:bg-white/5 rounded-lg"
+          aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+          aria-pressed={sidebarCollapsed}
+        >
           <Menu className="w-5 h-5" />
         </button>
         <h1 className="text-3xl font-black tracking-tighter text-white">Sibanki</h1>

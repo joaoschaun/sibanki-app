@@ -720,6 +720,14 @@ var expandEl=document.querySelector('.drawer-expand-icon');
 if(expandEl&&typeof lucide!=='undefined'&&lucide.createIcons){lucide.createIcons();}
 var btn=document.getElementById('drawerToggleBtn');
 if(btn)btn.setAttribute('aria-label',collapsed?'Expandir menu':'Recolher menu');
+if(collapsed){
+document.querySelectorAll('.drawer-nav-group.open').forEach(function(g){
+g.classList.remove('open');
+var hb=g.querySelector('.drawer-nav-group-head');
+if(hb)hb.setAttribute('aria-expanded','false');
+});
+try{localStorage.setItem('sibanki_drawer_groups','[]');}catch(z){}
+}
 }else{
 d.classList.toggle('open');var nowOpen=d.classList.contains('open');o.classList.toggle('show',nowOpen);o.setAttribute('aria-hidden',nowOpen?'false':'true');
 if(nowOpen){var hdr=document.getElementById('topHeader');if(hdr)o.style.top=hdr.getBoundingClientRect().bottom+'px';}
@@ -1187,7 +1195,9 @@ perfilAtualizarStatusNotif();toast('WhatsApp configurado! Notificações serão 
 function go(id,el){
 /* Hook: show child section when entering family tab */
 if(id==='comunidade'&&typeof initCommunity==='function'){setTimeout(initCommunity,100);}
-if(id==='solucoes'&&typeof onSolucoesEnter==='function'){setTimeout(onSolucoesEnter,100);}if(id==='loja'&&typeof initLoja==='function'){setTimeout(initLoja,100);}if(id==='loja'&&typeof initLoja==='function'){setTimeout(initLoja,100);}
+if(id==='solucoes'){id='solucoes-credito';}
+if((id==='solucoes-credito'||id==='solucoes-consorcio'||id==='solucoes-seguro'||id==='solucoes-investimentos')&&typeof onSolucoesTabEnter==='function'){setTimeout(function(){onSolucoesTabEnter(id.replace('solucoes-',''));},100);}
+if(id==='loja'&&typeof initLoja==='function'){setTimeout(initLoja,100);}if(id==='consorcioamigos'&&typeof initConsorcioAmigos==='function'){setTimeout(initConsorcioAmigos,100);}if(id==='loja'&&typeof initLoja==='function'){setTimeout(initLoja,100);}if(id==='consorcioamigos'&&typeof initConsorcioAmigos==='function'){setTimeout(initConsorcioAmigos,100);}
 if(id==='config'&&typeof loadIAUsage==='function'){setTimeout(loadIAUsage,300);}
 if(id==='config'&&typeof checkTelegramLink==='function'){setTimeout(checkTelegramLink,300);}
 if(id==='config'&&typeof checkWhatsAppLink==='function'){setTimeout(checkWhatsAppLink,300);}
@@ -1548,7 +1558,7 @@ container.innerHTML =
     '<div class="sib-widget-bar-bg"><div class="sib-widget-bar-fill" id="dashSibBar" style="width:0%"></div></div>'+
   '</div>'+
   '<div class="sib-widget-footer">'+
-    '<div class="sib-widget-footer-item" onclick="if(typeof go===\'function\')go(\'solucoes\',null)">'+
+    '<div class="sib-widget-footer-item" onclick="if(typeof go===\'function\')go(\'solucoes-credito\',null)">'+
       '<i data-lucide="coins" style="width:13px;height:13px"></i> Cashback Parceiros'+
     '</div>'+
     '<div class="sib-widget-footer-item" onclick="if(typeof go===\'function\')go(\'perfil\',null)">'+
@@ -17383,14 +17393,37 @@ var SOL_PARCEIROS = [
       },
     ],
   },
+  {
+    id: 'invest_parceiros',
+    nome: 'Investimentos (parceiros)',
+    sigla: 'INV',
+    logoClass: 'sol-logo-emb',
+    desc: 'Em breve: abertura de conta em corretoras e produtos de renda fixa/variável com bônus em SibCoin.',
+    status: 'breve',
+    tags: ['investimentos'],
+    tagLabels: ['Investimentos'],
+    cashbackMax: '—',
+    aberto: false,
+    produtos: [],
+  },
 ];
 
-// ── Inicializa o módulo ──
-function initSolucoes() {
+function _solParceirosFiltrados(cat) {
+  return SOL_PARCEIROS.filter(function(p) {
+    return p.tags && p.tags.indexOf(cat) >= 0;
+  });
+}
+
+// ── Inicializa o módulo (aba Soluções por categoria) ──
+function onSolucoesTabEnter(cat) {
+  cat = cat || 'credito';
+  window._solucoesActiveCat = cat;
+  var map = { credito: 'solucoesCreditoBody', consorcio: 'solucoesConsorcioBody', seguro: 'solucoesSeguroBody', investimentos: 'solucoesInvestBody' };
+  var rootId = map[cat] || map.credito;
   _loadSolucoesConfig();
-  _renderSolucoesBody();
+  _renderSolucoesBody(rootId, cat);
   _carregarSaldoSibCoinSol();
-  _carregarCashbackHistoricoSol();
+  _carregarCashbackHistoricoSol('solCashback_' + cat);
 }
 
 // ── Carrega config do Firestore (sem bloquear) ──
@@ -17403,37 +17436,55 @@ function _loadSolucoesConfig() {
       var local = SOL_PARCEIROS.find(function(x) { return x.id === p.id; });
       if (local) Object.assign(local, p);
     });
-    _renderSolucoesBody();
+    var ac = window._solucoesActiveCat || 'credito';
+    var mp = { credito: 'solucoesCreditoBody', consorcio: 'solucoesConsorcioBody', seguro: 'solucoesSeguroBody', investimentos: 'solucoesInvestBody' };
+    _renderSolucoesBody(mp[ac] || mp.credito, ac);
   }).catch(function(){});
 }
 
-// ── Renderiza o corpo inteiro do módulo ──
-function _renderSolucoesBody() {
-  var root = document.getElementById('solucoesBody');
+// ── Renderiza uma aba (crédito / consórcio / seguro / investimentos) ──
+function _renderSolucoesBody(rootId, categoria) {
+  var root = document.getElementById(rootId);
   if (!root) return;
+
+  var subMeta = {
+    credito: { titulo: 'Crédito', desc: 'Empréstimo pessoal, FGTS e crédito com garantia — compare taxas com parceiros.' },
+    consorcio: { titulo: 'Consórcio', desc: 'Imóvel e veículo sem juros: grupos e carta de crédito com administradoras parceiras.' },
+    seguro: { titulo: 'Seguro', desc: 'Proteção patrimonial: celular, vida e coberturas digitais com cashback em SibCoin.' },
+    investimentos: { titulo: 'Investimentos', desc: 'Corretoras e produtos de investimento — expansão com parceiros em breve.' },
+  };
+  var meta = subMeta[categoria] || subMeta.credito;
+  var parceiros = _solParceirosFiltrados(categoria);
 
   var h = '';
 
-  // Header
   h += '<div class="sol-header">';
   h += '<div class="sol-header-left">';
-  h += '<h2>Soluções Financeiras</h2>';
-  h += '<p>Crédito, seguros e consórcio dos melhores parceiros — direto no Sibanki.<br>Cada contratação gera <strong style="color:var(--yellow)">SibCoin de cashback</strong> proporcional ao valor.</p>';
+  h += '<h2>Soluções · ' + escapeHtml(meta.titulo) + '</h2>';
+  h += '<p>' + escapeHtml(meta.desc) + '</p>';
   h += '</div>';
   h += '<div class="sol-saldo-pill">';
   h += '<div><div class="sol-saldo-pill-label"><i data-lucide="coins" style="width:12px;height:12px;vertical-align:middle;margin-right:3px"></i>SibCoins</div>';
-  h += '<div class="sol-saldo-pill-val" id="solSaldoSC">— SC</div></div>';
-  h += '</div>';
+  h += '<div class="sol-saldo-pill-val sol-saldo-sc-val">— SC</div></div>';
+  h += '</div></div>';
+
+  h += '<div class="sol-subtabs" role="tablist">';
+  [['credito', 'Crédito'], ['consorcio', 'Consórcio'], ['seguro', 'Seguro'], ['investimentos', 'Investimentos']].forEach(function(t) {
+    var on = t[0] === categoria ? ' sol-subtab-on' : '';
+    h += '<button type="button" role="tab" class="sol-subtab' + on + '" onclick="go(\'solucoes-' + t[0] + '\',null)">' + t[1] + '</button>';
+  });
   h += '</div>';
 
-  // Banner cashback
   h += '<div class="sol-cashback-banner">';
   h += '<i data-lucide="zap" style="width:16px;height:16px;color:var(--yellow);flex-shrink:0"></i>';
-  h += '<span>Cada produto contratado via Sibanki gera SibCoin de cashback automático. Use na <strong>loja Sibanki</strong>: plano Pro, relatórios, consultoria e descontos exclusivos.</span>';
+  h += '<span>Cada contratação via Sibanki gera <strong style="color:var(--yellow)">SibCoin</strong>. Resgate na loja: Pro, relatórios e mais.</span>';
   h += '</div>';
 
-  // Cards de parceiros
-  SOL_PARCEIROS.forEach(function(p) {
+  if (!parceiros.length) {
+    h += '<div class="perfil-card" style="margin-top:16px;padding:28px;text-align:center;color:var(--t2)"><p style="margin:0;font-size:.9rem">Nenhum parceiro nesta categoria no momento.</p></div>';
+  }
+
+  parceiros.forEach(function(p) {
     var isOpen = p.aberto;
     var statusHtml = '';
     if (p.status === 'ativo') statusHtml = '<span class="sol-status-badge ativo">Disponível</span>';
@@ -17461,13 +17512,13 @@ function _renderSolucoesBody() {
     h += '<div class="sol-parceiro-divider"></div>';
     h += '<div class="sol-produtos-grid">';
 
-    p.produtos.forEach(function(prod) {
-      var statsHtml = prod.stats.map(function(s) {
+    (p.produtos || []).forEach(function(prod) {
+      var statsHtml = (prod.stats || []).map(function(s) {
         return '<div class="sol-produto-stat"><div class="sol-produto-stat-val">' + escapeHtml(s.val) + '</div><div class="sol-produto-stat-lbl">' + escapeHtml(s.lbl) + '</div></div>';
       }).join('');
 
-      var scExemplo = Math.round(5000 * prod.cashbackPct / 0.10);
-      var aiTipId = 'solTip_' + prod.id;
+      var scExemplo = Math.round(5000 * (prod.cashbackPct || 0) / 0.10);
+      var aiTipId = 'solTip_' + prod.id + '_' + categoria;
 
       h += '<div class="sol-produto" onclick="abrirSolucaoProduto(\'' + prod.id + '\',\'' + p.id + '\')">';
       h += '<div>';
@@ -17476,25 +17527,28 @@ function _renderSolucoesBody() {
       h += '</div>';
       h += '<div class="sol-produto-stats">' + statsHtml + '</div>';
       h += '<div class="sol-produto-foot">';
-      h += '<div class="sol-produto-cashback"><i data-lucide="coins" style="width:12px;height:12px"></i>' + Math.round(prod.cashbackPct * 100) + '% em SC <span style="color:var(--t3);font-weight:400;font-size:.68rem">(ex: R$5k → +' + scExemplo + ' SC)</span></div>';
+      h += '<div class="sol-produto-cashback"><i data-lucide="coins" style="width:12px;height:12px"></i>' + Math.round((prod.cashbackPct || 0) * 100) + '% em SC <span style="color:var(--t3);font-weight:400;font-size:.68rem">(ex: R$5k → +' + scExemplo + ' SC)</span></div>';
       h += '<button class="sol-cta-btn" onclick="event.stopPropagation();abrirSolucaoProduto(\'' + prod.id + '\',\'' + p.id + '\')">';
-      h += '<i data-lucide="arrow-right" style="width:13px;height:13px"></i> ' + escapeHtml(prod.ctaLabel);
+      h += '<i data-lucide="arrow-right" style="width:13px;height:13px"></i> ' + escapeHtml(prod.ctaLabel || 'Ver');
       h += '</button>';
       h += '</div>';
       h += '<div class="sol-ai-tip" id="' + aiTipId + '"></div>';
       h += '</div>';
     });
 
+    if (!(p.produtos && p.produtos.length)) {
+      h += '<div class="sol-produto" style="cursor:default;opacity:.9"><div class="sol-produto-nome">Em breve</div><div class="sol-produto-desc">Estamos fechando parcerias nesta linha. Volte em breve ou explore outras abas.</div></div>';
+    }
+
     h += '</div></div></div>';
   });
 
-  // Histórico de cashbacks
   h += '<div class="perfil-card" style="margin-top:20px">';
   h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">';
   h += '<div style="font-size:.88rem;font-weight:700;color:var(--t1)"><i data-lucide="history" style="width:15px;height:15px;vertical-align:middle;margin-right:6px"></i>Histórico de Cashbacks</div>';
-  h += '<div style="font-size:.77rem;color:var(--t3)">SibCoins ganhos por contratações</div>';
+  h += '<div style="font-size:.77rem;color:var(--t3)">Contratações via parceiros</div>';
   h += '</div>';
-  h += '<div id="solCashbackList"><div class="fil-empty" style="padding:20px 0"><i data-lucide="coins" style="width:28px;height:28px;opacity:.3"></i><p>Nenhuma contratação ainda. Use um produto acima para ganhar SibCoins!</p></div></div>';
+  h += '<div id="solCashback_' + categoria + '"><div class="fil-empty" style="padding:20px 0"><i data-lucide="coins" style="width:28px;height:28px;opacity:.3"></i><p>Carregando…</p></div></div>';
   h += '</div>';
 
   root.innerHTML = h;
@@ -17629,18 +17683,23 @@ function closeSolModal() {
 
 // ── Saldo SibCoin ──
 function _carregarSaldoSibCoinSol() {
-  var el = document.getElementById('solSaldoSC');
-  if (!el || !U || !U.uid) return;
+  if (!U || !U.uid) return;
   db.collection('users').doc(U.uid).collection('filiado').doc('dados')
     .get().then(function(snap) {
       var saldo = snap.exists ? (snap.data().totalSibCoins || 0) : 0;
-      if (el) el.textContent = saldo.toLocaleString('pt-BR') + ' SC';
-    }).catch(function() { if (el) el.textContent = '0 SC'; });
+      var txt = saldo.toLocaleString('pt-BR') + ' SC';
+      document.querySelectorAll('.sol-saldo-sc-val').forEach(function(el) { el.textContent = txt; });
+      var leg = document.getElementById('solSaldoSC');
+      if (leg) leg.textContent = txt;
+    }).catch(function() {
+      document.querySelectorAll('.sol-saldo-sc-val').forEach(function(el) { el.textContent = '0 SC'; });
+    });
 }
 
 // ── Histórico de cashbacks ──
-function _carregarCashbackHistoricoSol() {
-  var listEl = document.getElementById('solCashbackList');
+function _carregarCashbackHistoricoSol(listId) {
+  listId = listId || 'solCashbackList';
+  var listEl = document.getElementById(listId);
   if (!listEl || !U || !U.uid) return;
   db.collection('users').doc(U.uid).collection('sibcoin')
     .where('origem', '==', 'parceiro').orderBy('ts', 'desc').limit(10)
@@ -17668,9 +17727,10 @@ function _carregarCashbackHistoricoSol() {
 // ── Tips de IA por produto (baseado em dados locais do usuário) ──
 function _gerarAiTipsSol() {
   var ctx = _calcContextoFin();
+  var cat = window._solucoesActiveCat || 'credito';
   SOL_PARCEIROS.forEach(function(p) {
-    p.produtos.forEach(function(prod) {
-      var el = document.getElementById('solTip_' + prod.id);
+    (p.produtos || []).forEach(function(prod) {
+      var el = document.getElementById('solTip_' + prod.id + '_' + cat);
       if (!el) return;
       var tip = _dicaLocalSol(prod.id, ctx);
       if (tip) el.textContent = '💡 ' + tip;
@@ -17707,12 +17767,6 @@ function _dicaLocalSol(id, ctx) {
   return null;
 }
 
-// ── Hook de navegação ──
-var _solucoesInitialized = false;
-function onSolucoesEnter() {
-  if (!_solucoesInitialized) _solucoesInitialized = true;
-  initSolucoes();
-}
 
 
 /* ═══════════════════════════════════════════════════════════════
@@ -17728,10 +17782,10 @@ window.LOJA_V2={
     {id:'curso_intro',emoji:'🎓',nome:'Cupom 10% — Educacao Financeira',desc:'Desconto de 10% em qualquer curso da plataforma Sibanki Edu. Sem validade.',detalhe:'Aplicado automaticamente no checkout do curso escolhido.',sc:500,scOld:750,custo:'~R$ 0',valorPercebido:'variavel',rating:4.6,resgates:2100,badge:null,disponivel:true,categoria:'beneficio',como:'Codigo de desconto enviado por e-mail imediatamente apos o resgate.'},
   ],
   parceirosAtivos:[
-    {id:'juros_baixos_emp',emoji:'💰',nome:'Emprestimo Pessoal',desc:'Compare as melhores taxas de emprestimo pessoal. Cashback em SibCoins na contratacao.',detalhe:'Parceiro: Juros Baixos. Taxas a partir de 1,49% ao mes. Aprovacao em 24h.',sc:0,scCashback:'2% do valor em SC',rating:4.6,resgates:892,badge:'parceiro',disponivel:true,categoria:'parceiro',parceiro:'Juros Baixos',isParceiroExterno:true,como:'Voce sera redirecionado para a plataforma do parceiro. O cashback em SibCoins e creditado em ate 7 dias apos a contratacao.',goTo:'solucoes'},
-    {id:'juros_baixos_fgts',emoji:'📋',nome:'Antecipacao de FGTS',desc:'Antecipe ate 10 parcelas do seu FGTS com as menores taxas do mercado.',detalhe:'Parceiro: Juros Baixos. Dinheiro na conta em ate 1 dia util.',sc:0,scCashback:'1,5% do valor em SC',rating:4.5,resgates:634,badge:'parceiro',disponivel:true,categoria:'parceiro',parceiro:'Juros Baixos',isParceiroExterno:true,como:'Voce sera redirecionado para simular e contratar diretamente com o parceiro.',goTo:'solucoes'},
-    {id:'simple2u_cel',emoji:'📱',nome:'Seguro de Celular',desc:'Proteja seu smartphone contra roubo, furto e quebra acidental. A partir de R$9,90/mes.',detalhe:'Parceiro: Simple2u. Ativacao imediata, cobertura nacional.',sc:0,scCashback:'3% do premio anual em SC',rating:4.4,resgates:445,badge:'parceiro',disponivel:true,categoria:'parceiro',parceiro:'Simple2u',isParceiroExterno:true,como:'Voce sera direcionado para contratar o seguro com o parceiro. SC creditados apos a 1a mensalidade paga.',goTo:'solucoes'},
-    {id:'embracon_imovel',emoji:'🏠',nome:'Consorcio Imovel',desc:'Realize o sonho da casa propria com o maior administrador de consorcios do Brasil.',detalhe:'Parceiro: Embracon. Sem juros, apenas taxa de administracao.',sc:0,scCashback:'1% da carta de credito em SC',rating:4.3,resgates:178,badge:'parceiro',disponivel:true,categoria:'parceiro',parceiro:'Embracon',isParceiroExterno:true,como:'Simulacao e contratacao com o parceiro. SC creditados apos adesao confirmada.',goTo:'solucoes'},
+    {id:'juros_baixos_emp',emoji:'💰',nome:'Emprestimo Pessoal',desc:'Compare as melhores taxas de emprestimo pessoal. Cashback em SibCoins na contratacao.',detalhe:'Parceiro: Juros Baixos. Taxas a partir de 1,49% ao mes. Aprovacao em 24h.',sc:0,scCashback:'2% do valor em SC',rating:4.6,resgates:892,badge:'parceiro',disponivel:true,categoria:'parceiro',parceiro:'Juros Baixos',isParceiroExterno:true,como:'Voce sera redirecionado para a plataforma do parceiro. O cashback em SibCoins e creditado em ate 7 dias apos a contratacao.',goTo:'solucoes-credito'},
+    {id:'juros_baixos_fgts',emoji:'📋',nome:'Antecipacao de FGTS',desc:'Antecipe ate 10 parcelas do seu FGTS com as menores taxas do mercado.',detalhe:'Parceiro: Juros Baixos. Dinheiro na conta em ate 1 dia util.',sc:0,scCashback:'1,5% do valor em SC',rating:4.5,resgates:634,badge:'parceiro',disponivel:true,categoria:'parceiro',parceiro:'Juros Baixos',isParceiroExterno:true,como:'Voce sera redirecionado para simular e contratar diretamente com o parceiro.',goTo:'solucoes-credito'},
+    {id:'simple2u_cel',emoji:'📱',nome:'Seguro de Celular',desc:'Proteja seu smartphone contra roubo, furto e quebra acidental. A partir de R$9,90/mes.',detalhe:'Parceiro: Simple2u. Ativacao imediata, cobertura nacional.',sc:0,scCashback:'3% do premio anual em SC',rating:4.4,resgates:445,badge:'parceiro',disponivel:true,categoria:'parceiro',parceiro:'Simple2u',isParceiroExterno:true,como:'Voce sera direcionado para contratar o seguro com o parceiro. SC creditados apos a 1a mensalidade paga.',goTo:'solucoes-seguro'},
+    {id:'embracon_imovel',emoji:'🏠',nome:'Consorcio Imovel',desc:'Realize o sonho da casa propria com o maior administrador de consorcios do Brasil.',detalhe:'Parceiro: Embracon. Sem juros, apenas taxa de administracao.',sc:0,scCashback:'1% da carta de credito em SC',rating:4.3,resgates:178,badge:'parceiro',disponivel:true,categoria:'parceiro',parceiro:'Embracon',isParceiroExterno:true,como:'Simulacao e contratacao com o parceiro. SC creditados apos adesao confirmada.',goTo:'solucoes-consorcio'},
   ],
   parceirosBreve:[
     {id:'breve_ifood',emoji:'🍔',nome:'Voucher iFood',desc:'Creditos para usar em qualquer restaurante do iFood. Em negociacao.',sc:null,categoria:'breve',interesse:847,parceiro:'iFood'},
@@ -17942,3 +17996,25 @@ function _lv2Resgatar(id){
     ['solSaldoSC','dashSibCoinSaldo'].forEach(function(elId){var el=document.getElementById(elId);if(el)el.textContent=_lv2Fmt(window._lojaSaldo)+(elId==='solSaldoSC'?' SC':'');});
   }).catch(function(err){fecharLojaModal();if(typeof toast==='function')toast('Erro: '+err.message,'erro');});
 }
+/* test */const fs = require('fs');
+const js = `
+/* CONSORCIO AMIGOS - AmigoCaixa */
+function _caFmt(n){return Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function _caToday(){return new Date().toISOString().slice(0,10);}
+function _caMesAtual(){return new Date().toISOString().slice(0,7);}
+function _caProxVenc(dia){var d=new Date();var m=d.getMonth(),y=d.getFullYear();var v=new Date(y,m,parseInt(dia));if(v<=d)v=new Date(y,m+1,parseInt(dia));return v.toLocaleDateString('pt-BR');}
+function _caSeedHash(s){var h=0;for(var i=0;i<s.length;i++){h=(Math.imul(31,h)+s.charCodeAt(i))|0;}return Math.abs(h).toString(16).padStart(8,'0');}
+function openConsorcioModal(id){var m=document.getElementById('consorcioModal');if(!m)return;document.getElementById('consorcioId').value=id||'';['consorcioNome','consorcioValor','consorcioParticipantes','consorcioEmails'].forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});document.getElementById('consorcioDia').value='10';document.getElementById('consorcioModo').value='sorteio';document.getElementById('consorcioResumo').innerHTML='';document.getElementById('consorcioModalTitle').textContent=id?'Editar Grupo':'Novo Grupo de Consorcio';if(id&&U&&U.uid){db.collection('users').doc(U.uid).collection('consorcio_grupos').doc(id).get().then(function(snap){if(!snap.exists)return;var d=snap.data();document.getElementById('consorcioNome').value=d.nome||'';document.getElementById('consorcioValor').value=d.valorParcela||'';document.getElementById('consorcioParticipantes').value=d.numParticipantes||'';document.getElementById('consorcioDia').value=d.diaVencimento||'10';document.getElementById('consorcioModo').value=d.modoContemplacao||'sorteio';consorcioCalc();});}m.style.display='flex';if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);}
+function closeConsorcioModal(){var m=document.getElementById('consorcioModal');if(m)m.style.display='none';}
+function consorcioCalc(){var v=parseFloat(document.getElementById('consorcioValor').value)||0;var n=parseInt(document.getElementById('consorcioParticipantes').value)||0;var el=document.getElementById('consorcioResumo');if(!el||v<=0||n<2)return;el.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px"><div style="flex:1;min-width:90px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px 12px"><div style="font-size:.62rem;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Bolo mensal</div><div style="font-size:1rem;font-weight:700;color:#F59E0B">R$ '+_caFmt(v*n)+'</div></div><div style="flex:1;min-width:90px;background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:10px 12px"><div style="font-size:.62rem;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Duracao</div><div style="font-size:1rem;font-weight:700;color:var(--t1)">'+n+' meses</div></div><div style="flex:1;min-width:90px;background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:10px 12px"><div style="font-size:.62rem;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Total p/pessoa</div><div style="font-size:1rem;font-weight:700;color:var(--t1)">R$ '+_caFmt(v*n)+'</div></div></div>';}
+function saveConsorcio(){if(!U||!U.uid)return;var id=document.getElementById('consorcioId').value;var nome=document.getElementById('consorcioNome').value.trim();var valor=parseFloat(document.getElementById('consorcioValor').value)||0;var num=parseInt(document.getElementById('consorcioParticipantes').value)||0;var dia=document.getElementById('consorcioDia').value;var modo=document.getElementById('consorcioModo').value;var emailsRaw=(document.getElementById('consorcioEmails').value||'');if(!nome){toast('Informe o nome do grupo','erro');return;}if(valor<=0){toast('Informe o valor da contribuicao','erro');return;}if(num<2){toast('Minimo 2 participantes','erro');return;}var parts=[{uid:U.uid,nome:U.name||'Eu',email:U.email||'',admin:true,status:'ativo',statusMes:'pendente',ordem:0}];emailsRaw.split(',').forEach(function(e,i){var em=e.trim();if(em&&em.indexOf('@')>0)parts.push({uid:null,nome:em.split('@')[0],email:em,admin:false,status:'ativo',statusMes:'pendente',ordem:i+1});});var doc={nome:nome,valorParcela:valor,numParticipantes:num,diaVencimento:parseInt(dia),modoContemplacao:modo,status:'ativo',mesAtual:_caMesAtual(),adminUid:U.uid,adminNome:U.name||'Admin',participantes:parts,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()};var ref=db.collection('users').doc(U.uid).collection('consorcio_grupos');(id?ref.doc(id).set(doc,{merge:true}):ref.add(doc)).then(function(){closeConsorcioModal();toast(id?'Grupo atualizado!':'Grupo criado!','ok');renderConsorcioGrupos();}).catch(function(e){toast('Erro: '+e.message,'erro');});}
+function renderConsorcioGrupos(){var grid=document.getElementById('consorcioGruposGrid');if(!grid||!U||!U.uid)return;grid.innerHTML='<div style="text-align:center;padding:32px;color:var(--t3);font-size:.85rem">Carregando...</div>';db.collection('users').doc(U.uid).collection('consorcio_grupos').orderBy('createdAt','desc').get().then(function(snap){if(snap.empty){grid.innerHTML='<div class="ca-empty"><i data-lucide="users" style="width:44px;height:44px;color:var(--t3)"></i><p>Nenhum grupo criado ainda</p><p style="font-size:.78rem;color:var(--t3);max-width:260px;text-align:center;margin:0 auto">Crie um grupo de consorcio entre amigos sem banco sem juros.</p><button class="btn btn-p" onclick="openConsorcioModal()" style="margin-top:14px;display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus" style="width:14px;height:14px"></i> Criar primeiro grupo</button></div>';if(typeof lucide!=='undefined')lucide.createIcons();return;}var html='';snap.forEach(function(doc){var d=doc.data();var gId=doc.id;var total=d.valorParcela*(d.numParticipantes||0);var parts=Array.isArray(d.participantes)?d.participantes:[];var pagaram=parts.filter(function(p){return p.statusMes==='pago';}).length;var inadim=parts.filter(function(p){return p.statusMes==='atrasado';}).length;var contemplados=parts.filter(function(p){return p.status==='contemplado';}).length;var modoIcon={sorteio:'shuffle',lance:'trending-up',rotativo:'list-ordered'}[d.modoContemplacao]||'shuffle';var stColor=d.status==='ativo'?'var(--green)':d.status==='pausado'?'var(--yellow)':'var(--t3)';html+='<div class="ca-card" onclick="openConsorcioDetalhe(\''+gId+'\')"><div class="ca-card-hd"><div class="ca-card-icon"><i data-lucide="users" style="width:16px;height:16px;color:#F59E0B"></i></div><div style="flex:1;min-width:0"><div class="ca-card-nome">'+escapeHtml(d.nome)+'</div><div style="font-size:.7rem;color:var(--t3);display:flex;align-items:center;gap:4px"><i data-lucide="'+modoIcon+'" style="width:10px;height:10px"></i>'+({sorteio:'Sorteio',lance:'Lance',rotativo:'Rotativo'}[d.modoContemplacao]||'Sorteio')+'</div></div><span style="font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.06);color:'+stColor+'">'+({ativo:'Ativo',pausado:'Pausado',finalizado:'Encerrado'}[d.status]||d.status)+'</span></div><div class="ca-card-kpis"><div class="ca-kpi"><div class="ca-kpi-label">Bolo/mes</div><div class="ca-kpi-val" style="color:#F59E0B">R$ '+_caFmt(total)+'</div></div><div class="ca-kpi"><div class="ca-kpi-label">Membros</div><div class="ca-kpi-val">'+d.numParticipantes+'</div></div><div class="ca-kpi"><div class="ca-kpi-label">Pagaram</div><div class="ca-kpi-val" style="color:'+(inadim>0?'var(--danger)':'var(--green)')+'">'+pagaram+'/'+parts.length+'</div></div><div class="ca-kpi"><div class="ca-kpi-label">Contemplados</div><div class="ca-kpi-val">'+contemplados+'/'+d.numParticipantes+'</div></div></div>'+(inadim>0?'<div class="ca-alert"><i data-lucide="alert-triangle" style="width:12px;height:12px"></i> '+inadim+' inadimplente'+(inadim>1?'s':'')+'</div>':'')+'<div class="ca-card-footer"><span style="font-size:.7rem;color:var(--t3)">Vence dia '+d.diaVencimento+' - prox: '+_caProxVenc(d.diaVencimento)+'</span><span style="font-size:.7rem;color:var(--vr)">Ver detalhes</span></div></div>';});grid.innerHTML=html;if(typeof lucide!=='undefined')lucide.createIcons();}).catch(function(){grid.innerHTML='<div style="text-align:center;padding:24px;color:var(--t3)">Erro ao carregar grupos.</div>';});}
+function openConsorcioDetalhe(gId){if(!U||!U.uid)return;var m=document.getElementById('consorcioDetalheModal');var body=document.getElementById('consorcioDetalheBody');if(!m||!body)return;body.innerHTML='<div style="text-align:center;padding:32px;color:var(--t3)">Carregando...</div>';m.style.display='flex';db.collection('users').doc(U.uid).collection('consorcio_grupos').doc(gId).get().then(function(snap){if(!snap.exists){body.innerHTML='Grupo nao encontrado.';return;}var d=snap.data();document.getElementById('consorcioDetalheTitulo').textContent=d.nome;window._caGrupoAtual={id:gId,data:d};_caRenderDetalhe(gId,d,body);if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},30);}).catch(function(e){body.innerHTML='Erro: '+e.message;});}
+function _caRenderDetalhe(gId,d,body){var parts=Array.isArray(d.participantes)?d.participantes:[];var total=d.valorParcela*(parts.length||d.numParticipantes);var pagaram=parts.filter(function(p){return p.statusMes==='pago';}).length;var saldo=d.valorParcela*pagaram;var inadim=parts.filter(function(p){return p.statusMes==='atrasado';});var elegiveis=parts.filter(function(p){return p.status==='ativo'&&p.statusMes!=='atrasado';});var h='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px"><div class="ca-kpi-box"><div class="ca-kpi-label">Saldo coletado</div><div class="ca-kpi-val" style="color:#F59E0B">R$ '+_caFmt(saldo)+'</div><div style="font-size:.65rem;color:var(--t3)">de R$ '+_caFmt(total)+' esperado</div></div><div class="ca-kpi-box"><div class="ca-kpi-label">Prox. sorteio</div><div class="ca-kpi-val">'+_caProxVenc(d.diaVencimento)+'</div><div style="font-size:.65rem;color:var(--t3)">'+elegiveis.length+' elegiveis</div></div><div class="ca-kpi-box"><div class="ca-kpi-label">Inadimplentes</div><div class="ca-kpi-val" style="color:'+(inadim.length>0?'var(--danger)':'var(--green)')+'">'+(inadim.length||'Nenhum')+'</div><div style="font-size:.65rem;color:var(--t3)">'+(inadim.length?'Bloqueados':'Todos em dia')+'</div></div></div>';inadim.forEach(function(p){h+='<div class="ca-alert" style="margin-bottom:8px"><i data-lucide="alert-triangle" style="width:13px;height:13px"></i> <strong>'+escapeHtml(p.nome)+'</strong> nao pagou - bloqueado do sorteio.</div>';});h+='<div style="font-size:.8rem;font-weight:700;color:var(--t2);margin:0 0 8px;display:flex;align-items:center;gap:6px"><i data-lucide="users" style="width:13px;height:13px"></i> Participantes</div><div class="ca-membros-list">';parts.forEach(function(p,i){var st=p.statusMes||'pendente';var stColor={pago:'var(--green)',atrasado:'var(--danger)',pendente:'var(--yellow)',convidado:'var(--t3)'}[st]||'var(--t3)';var stLabel={pago:'Pago',atrasado:'Atrasado',pendente:'Pendente',convidado:'Convidado'}[st]||st;h+='<div class="ca-membro-row"><span class="ca-membro-avatar">'+(p.status==='contemplado'?'🏆':'👤')+'</span><div style="flex:1;min-width:0"><div class="ca-membro-nome">'+escapeHtml(p.nome)+(p.uid===d.adminUid?' <span class="ca-badge-admin">admin</span>':'')+(p.status==='contemplado'?' <span class="ca-badge-admin" style="background:rgba(245,158,11,.15);color:#F59E0B">contemplado</span>':'')+'</div><div style="font-size:.68rem;color:var(--t3)">'+escapeHtml(p.email||'-')+'</div></div><div style="display:flex;align-items:center;gap:6px"><span class="ca-status-pill" style="color:'+stColor+';border-color:'+stColor+'">'+stLabel+'</span>'+(d.adminUid===U.uid&&st!=='pago'&&p.status!=='contemplado'?'<button class="ca-btn-pagar" onclick="event.stopPropagation();_caPagarParcela(\''+gId+'\','+i+',this)"><i data-lucide="check-circle" style="width:15px;height:15px;color:var(--green)"></i></button>':'')+'</div></div>';});h+='</div>';if(d.adminUid===U.uid&&d.status==='ativo'){h+='<div style="margin-top:12px;display:flex;gap:8px"><input type="text" id="caAddNome" class="fi" placeholder="Nome" style="flex:1"><input type="email" id="caAddEmail" class="fi" placeholder="E-mail" style="flex:1.5"><button class="btn btn-p btn-sm" onclick="_caAdicionarParticipante(\''+gId+'\')" style="padding:8px 12px;font-size:.75rem;display:inline-flex;align-items:center;gap:5px"><i data-lucide="user-plus" style="width:13px;height:13px"></i> Add</button></div>';}var contemplados=parts.filter(function(p){return p.status==='contemplado';});h+='<div style="margin-top:18px;font-size:.8rem;font-weight:700;color:var(--t2);margin-bottom:8px;display:flex;align-items:center;gap:6px"><i data-lucide="history" style="width:13px;height:13px"></i> Contemplacoes</div>';if(contemplados.length===0)h+='<div style="font-size:.8rem;color:var(--t3);padding:8px 0">Nenhuma contemplacao ainda.</div>';else contemplados.forEach(function(p){h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span>🏆</span><div><div style="font-size:.85rem;font-weight:600;color:var(--t1)">'+escapeHtml(p.nome)+'</div><div style="font-size:.7rem;color:var(--t3)">'+escapeHtml(p.mesContemplado||'-')+'</div></div><div style="margin-left:auto;font-size:.82rem;font-weight:700;color:#F59E0B">R$ '+_caFmt(total)+'</div></div>';});if(d.adminUid===U.uid&&d.status==='ativo'){h+='<div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">'+(elegiveis.length>=2?'<button class="btn btn-p" onclick="_caIniciarSorteio(\''+gId+'\')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px"><i data-lucide="shuffle" style="width:15px;height:15px"></i> Realizar sorteio</button>':'<button class="btn" disabled style="flex:1;opacity:.4;display:inline-flex;align-items:center;justify-content:center;gap:6px"><i data-lucide="shuffle" style="width:15px;height:15px"></i> Realizar sorteio</button>')+'<button class="btn" onclick="openConsorcioModal(\''+gId+'\');" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="settings" style="width:14px;height:14px"></i></button><button class="btn" onclick="_caEncerrarGrupo(\''+gId+'\')" style="color:var(--danger);border-color:var(--danger);display:inline-flex;align-items:center;gap:5px"><i data-lucide="x-circle" style="width:14px;height:14px"></i></button></div>';}body.innerHTML=h;}
+function closeConsorcioDetalhe(){var m=document.getElementById('consorcioDetalheModal');if(m)m.style.display='none';}
+function _caPagarParcela(gId,idx,btn){if(!U||!U.uid)return;if(btn)btn.disabled=true;var ref=db.collection('users').doc(U.uid).collection('consorcio_grupos').doc(gId);ref.get().then(function(snap){if(!snap.exists)return;var d=snap.data();var parts=Array.isArray(d.participantes)?d.participantes.slice():[];if(!parts[idx])return;parts[idx].statusMes='pago';parts[idx].dataPagamento=_caToday();return ref.update({participantes:parts,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}).then(function(){toast('Pagamento registrado!','ok');renderConsorcioGrupos();db.collection('users').doc(U.uid).collection('consorcio_grupos').doc(gId).get().then(function(s){if(s.exists){var body=document.getElementById('consorcioDetalheBody');if(body){_caRenderDetalhe(gId,s.data(),body);if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);}}});}).catch(function(e){toast('Erro: '+e.message,'erro');if(btn)btn.disabled=false;});}
+function _caAdicionarParticipante(gId){var nome=(document.getElementById('caAddNome').value||'').trim();var email=(document.getElementById('caAddEmail').value||'').trim();if(!nome&&!email){toast('Informe nome ou e-mail','erro');return;}var ref=db.collection('users').doc(U.uid).collection('consorcio_grupos').doc(gId);ref.get().then(function(snap){if(!snap.exists)return;var d=snap.data();var parts=Array.isArray(d.participantes)?d.participantes.slice():[];parts.push({uid:null,nome:nome||(email.split('@')[0]),email:email,admin:false,status:'ativo',statusMes:'pendente',ordem:parts.length});return ref.update({participantes:parts,numParticipantes:parts.length,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}).then(function(){toast('Participante adicionado!','ok');if(document.getElementById('caAddNome'))document.getElementById('caAddNome').value='';if(document.getElementById('caAddEmail'))document.getElementById('caAddEmail').value='';db.collection('users').doc(U.uid).collection('consorcio_grupos').doc(gId).get().then(function(s){if(s.exists){var body=document.getElementById('consorcioDetalheBody');if(body){_caRenderDetalhe(gId,s.data(),body);if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);}}});renderConsorcioGrupos();}).catch(function(e){toast('Erro: '+e.message,'erro');});}
+function _caIniciarSorteio(gId){if(!confirm('Realizar o sorteio agora? O resultado sera registrado.'))return;var ref=db.collection('users').doc(U.uid).collection('consorcio_grupos').doc(gId);ref.get().then(function(snap){if(!snap.exists)return;var d=snap.data();var parts=Array.isArray(d.participantes)?d.participantes.slice():[];var el=parts.filter(function(p){return p.status==='ativo'&&p.statusMes!=='atrasado';});if(el.length<2){toast('Minimo 2 elegiveis para sorteio.','erro');return;}var ts=Date.now().toString();var seedStr=ts+'|'+el.map(function(p){return p.nome;}).join('|');var seed=_caSeedHash(seedStr);var seedNum=parseInt(seed.slice(0,8),16);var vencedor=el[seedNum%el.length];var total=d.valorParcela*(parts.length||d.numParticipantes);var updParts=parts.map(function(p){if(p.nome===vencedor.nome&&(p.email||'')===(vencedor.email||''))return Object.assign({},p,{status:'contemplado',mesContemplado:_caMesAtual()});return p;});var batch=db.batch();batch.update(ref,{participantes:updParts,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});batch.set(ref.collection('sorteios').doc(_caMesAtual()),{mes:_caMesAtual(),vencedorNome:vencedor.nome,vencedorEmail:vencedor.email||'',valor:total,tipo:d.modoContemplacao||'sorteio',seed:seed,ts:firebase.firestore.FieldValue.serverTimestamp(),elegiveisCnt:el.length});batch.commit().then(function(){toast('Contemplado: '+vencedor.nome+' - R$ '+_caFmt(total),'ok');setTimeout(function(){toast('Seed auditavel: '+seed,'info');},2500);db.collection('users').doc(U.uid).collection('consorcio_grupos').doc(gId).get().then(function(s){if(s.exists){var body=document.getElementById('consorcioDetalheBody');if(body){_caRenderDetalhe(gId,s.data(),body);if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);}}});renderConsorcioGrupos();}).catch(function(e){toast('Erro: '+e.message,'erro');});});}
+function _caEncerrarGrupo(gId){if(!confirm('Encerrar o grupo?'))return;db.collection('users').doc(U.uid).collection('consorcio_grupos').doc(gId).update({status:'finalizado',updatedAt:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){toast('Grupo encerrado.','ok');closeConsorcioDetalhe();renderConsorcioGrupos();});}
+function initConsorcioAmigos(){renderConsorcioGrupos();}
+(function(){var s=document.getElementById('ca-css-extra');if(s)return;s=document.createElement('style');s.id='ca-css-extra';s.textContent='.ca-kpi-box{background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:12px 14px;text-align:center}.ca-kpi-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:700;margin-bottom:4px}.ca-kpi-val{font-size:1.05rem;font-weight:800;color:var(--t1)}.ca-card{background:var(--card);border:1px solid var(--brd);border-radius:16px;padding:16px 18px;cursor:pointer;transition:all .2s}.ca-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.1);box-shadow:0 6px 24px rgba(0,0,0,.25)}.ca-card-hd{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}.ca-card-icon{width:34px;height:34px;border-radius:9px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}.ca-card-nome{font-size:.95rem;font-weight:700;color:var(--t1);margin-bottom:2px}.ca-card-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}.ca-kpi{background:var(--bg2);border-radius:8px;padding:8px 10px}.ca-kpi .ca-kpi-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:700;margin-bottom:2px}.ca-kpi .ca-kpi-val{font-size:.88rem;font-weight:700;color:var(--t1)}.ca-card-footer{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid rgba(255,255,255,.04)}.ca-alert{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:7px 10px;font-size:.75rem;color:var(--danger);display:flex;align-items:center;gap:6px;margin-bottom:8px}.ca-empty{text-align:center;padding:48px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--t2)}.ca-empty p{margin:0}.ca-membros-list{display:flex;flex-direction:column}.ca-membro-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)}.ca-membro-row:last-child{border-bottom:none}.ca-membro-avatar{width:30px;height:30px;border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}.ca-membro-nome{font-size:.86rem;font-weight:600;color:var(--t1)}.ca-status-pill{font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:99px;border:1px solid;background:transparent}.ca-badge-admin{font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(79,140,255,.12);color:var(--vr);border:1px solid rgba(79,140,255,.25);margin-left:4px}.ca-btn-pagar{background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;display:flex;align-items:center;transition:.15s}.ca-btn-pagar:hover{background:rgba(16,185,129,.1)}.co-grupos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}';document.head.appendChild(s);})();

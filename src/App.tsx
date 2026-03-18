@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { useFinancialData } from './hooks/useFinancialData';
 import { useTheme } from './hooks/useTheme';
-import { Sidebar } from './components/layout/Sidebar';
+import { Sidebar, type SidebarOpenGroup } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
@@ -19,12 +19,27 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 import Login from './pages/Login';
+import { useState } from 'react';
+import SolucaoCredito from './pages/solutions/SolucaoCredito';
+import SolucaoConsorcio from './pages/solutions/SolucaoConsorcio';
+import SolucaoSeguro from './pages/solutions/SolucaoSeguro';
+import SolucaoInvestimentosParceiros from './pages/solutions/SolucaoInvestimentosParceiros';
 
 export default function App() {
   const { user, loading } = useAuth();
   const { theme } = useTheme();
   const { score, data } = useFinancialData(user?.uid);
   const avatarURL = data?.avatarURL ?? null;
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarOpenGroup, setSidebarOpenGroup] = useState<SidebarOpenGroup>(null);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((c) => {
+      const next = !c;
+      if (next) setSidebarOpenGroup(null);
+      return next;
+    });
+  };
 
   if (loading) {
     return (
@@ -51,9 +66,12 @@ export default function App() {
           userEmail={user.email || undefined}
           avatarURL={avatarURL ?? user.photoURL ?? undefined}
           score={score}
+          collapsed={sidebarCollapsed}
+          openGroup={sidebarOpenGroup}
+          setOpenGroup={setSidebarOpenGroup}
         />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header />
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          <Header onMenuClick={toggleSidebar} sidebarCollapsed={sidebarCollapsed} />
           <main className="flex-1 overflow-y-auto p-8 space-y-8">
             <Routes>
               <Route path="/" element={<Dashboard />} />
@@ -68,6 +86,10 @@ export default function App() {
               <Route path="/social" element={<Social />} />
               <Route path="/consultor-ia" element={<Consultant />} />
               <Route path="/educacao" element={<Education />} />
+              <Route path="/solucoes/credito" element={<SolucaoCredito />} />
+              <Route path="/solucoes/consorcio" element={<SolucaoConsorcio />} />
+              <Route path="/solucoes/seguro" element={<SolucaoSeguro />} />
+              <Route path="/solucoes/investimentos" element={<SolucaoInvestimentosParceiros />} />
               <Route path="/perfil" element={<Profile />} />
               <Route path="/configuracoes" element={<Settings />} />
               <Route path="*" element={<NotFound />} />
