@@ -18031,3 +18031,379 @@ window.caToggleOpcao=function(tipo){
   if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);
 };
 (function(){var s=document.getElementById('ca-css-extra');if(s)return;s=document.createElement('style');s.id='ca-css-extra';s.textContent='.ca-kpi-box{background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:12px 14px;text-align:center}.ca-kpi-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:700;margin-bottom:4px}.ca-kpi-val{font-size:1.05rem;font-weight:800;color:var(--t1)}.ca-card{background:var(--card);border:1px solid var(--brd);border-radius:16px;padding:16px 18px;cursor:pointer;transition:all .2s}.ca-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.1);box-shadow:0 6px 24px rgba(0,0,0,.25)}.ca-card-hd{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}.ca-card-icon{width:34px;height:34px;border-radius:9px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}.ca-card-nome{font-size:.95rem;font-weight:700;color:var(--t1);margin-bottom:2px}.ca-card-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}.ca-kpi{background:var(--bg2);border-radius:8px;padding:8px 10px}.ca-kpi .ca-kpi-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:700;margin-bottom:2px}.ca-kpi .ca-kpi-val{font-size:.88rem;font-weight:700;color:var(--t1)}.ca-card-footer{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid rgba(255,255,255,.04)}.ca-alert{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:7px 10px;font-size:.75rem;color:var(--danger);display:flex;align-items:center;gap:6px;margin-bottom:8px}.ca-empty{text-align:center;padding:48px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--t2)}.ca-empty p{margin:0}.ca-membros-list{display:flex;flex-direction:column}.ca-membro-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)}.ca-membro-row:last-child{border-bottom:none}.ca-membro-avatar{width:30px;height:30px;border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}.ca-membro-nome{font-size:.86rem;font-weight:600;color:var(--t1)}.ca-status-pill{font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:99px;border:1px solid;background:transparent}.ca-badge-admin{font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(79,140,255,.12);color:var(--vr);border:1px solid rgba(79,140,255,.25);margin-left:4px}.ca-btn-pagar{background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;display:flex;align-items:center;transition:.15s}.ca-btn-pagar:hover{background:rgba(16,185,129,.1)}.co-grupos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}';document.head.appendChild(s);})();
+
+
+/* ═══════════════════════════════════════════════════════════════
+   CREDI AMIGO - Emprestimos P2P com juros, parcelas e score
+   ═══════════════════════════════════════════════════════════════ */
+var _caEmprestimoTipo='emprestei';
+
+function _caFmtR(n){return 'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function _caFmtN(n){return Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function _caDtBR(iso){if(!iso)return '-';var p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function _caVencParcela(dataInicio,parcelaIdx){
+  var d=new Date(dataInicio+'T00:00:00');
+  d.setMonth(d.getMonth()+parcelaIdx+1);
+  return d.toISOString().slice(0,10);
+}
+function _caStatus(emp){
+  if(emp.status==='quitado')return 'quitado';
+  var hoje=new Date().toISOString().slice(0,10);
+  var pago=emp.valorPago||0;
+  var total=emp.valorTotal||emp.valor;
+  if(pago>=total)return 'quitado';
+  var parc=emp.numParcelas||1;
+  var vpago=Math.round(pago/(emp.valorParcela||total)*10)/10;
+  for(var i=Math.floor(vpago);i<parc;i++){
+    var venc=_caVencParcela(emp.data,i);
+    if(venc<hoje&&(i+1)>vpago)return 'atrasado';
+  }
+  return 'ativo';
+}
+function _caScore(emprestimos,amigo){
+  var lista=emprestimos.filter(function(e){return e.amigo===amigo&&e.tipo==='recebi';});
+  if(!lista.length)return null;
+  var totalParcelas=0,emDia=0;
+  lista.forEach(function(e){
+    var parc=e.numParcelas||1;
+    var pgtos=Array.isArray(e.pagamentos)?e.pagamentos:[];
+    totalParcelas+=parc;
+    pgtos.forEach(function(p,i){
+      var venc=_caVencParcela(e.data,i);
+      if(p.data<=venc)emDia++;else emDia+=0.3;
+    });
+  });
+  return totalParcelas>0?Math.round((emDia/totalParcelas)*100):null;
+}
+function _caScoreBadge(score){
+  if(score===null)return '';
+  var cor=score>=80?'var(--green)':score>=50?'var(--yellow)':'var(--danger)';
+  var label=score>=80?'Otimo':score>=50?'Regular':'Risco';
+  return '<span style="font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:99px;border:1px solid '+cor+';color:'+cor+'">'+label+' '+score+'</span>';
+}
+
+function openCrediAmigoModal(id){
+  var m=document.getElementById('caModal');if(!m)return;
+  document.getElementById('caModalId').value=id||'';
+  document.getElementById('caModalTitle').textContent=id?'Editar Emprestimo':'Novo Emprestimo';
+  document.getElementById('caAmigo').value='';
+  document.getElementById('caValor').value='';
+  document.getElementById('caTaxa').value='0';
+  document.getElementById('caParcelas').value='1';
+  document.getElementById('caObs').value='';
+  document.getElementById('caData').value=new Date().toISOString().slice(0,10);
+  document.getElementById('caParcelasCustomWrap').style.display='none';
+  document.getElementById('caResumo').style.display='none';
+  setCaTipo('emprestei');
+  if(id&&U&&U.uid){
+    db.collection('users').doc(U.uid).collection('crediamigo').doc(id).get().then(function(snap){
+      if(!snap.exists)return;var d=snap.data();
+      document.getElementById('caAmigo').value=d.amigo||'';
+      document.getElementById('caValor').value=d.valor||'';
+      document.getElementById('caTaxa').value=d.taxa||'0';
+      document.getElementById('caData').value=d.data||'';
+      document.getElementById('caObs').value=d.obs||'';
+      setCaTipo(d.tipo||'emprestei');
+      caCalcParcelas();
+    });
+  }
+  m.style.display='flex';
+  if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);
+}
+function closeCrediAmigoModal(){var m=document.getElementById('caModal');if(m)m.style.display='none';}
+
+function setCaTipo(tipo){
+  _caEmprestimoTipo=tipo;
+  var bE=document.getElementById('caTipoEmprestei');
+  var bR=document.getElementById('caTipoRecebi');
+  if(bE&&bR){
+    bE.classList.toggle('on',tipo==='emprestei');
+    bR.classList.toggle('on',tipo==='recebi');
+  }
+}
+
+function showCaTab(tabId){
+  ['caEmprestei','caRecebi','caHistorico'].forEach(function(t){
+    var el=document.getElementById(t);if(el)el.classList.toggle('on',t===tabId);
+  });
+  document.querySelectorAll('.ca-tab').forEach(function(b,i){
+    var ids=['caEmprestei','caRecebi','caHistorico'];
+    b.classList.toggle('on',ids[i]===tabId);
+  });
+}
+
+function caCalcParcelas(){
+  var v=parseFloat(document.getElementById('caValor').value)||0;
+  var taxa=parseFloat(document.getElementById('caTaxa').value)||0;
+  var selP=document.getElementById('caParcelas').value;
+  var n=selP==='custom'?(parseInt(document.getElementById('caParcelasCustom').value)||1):parseInt(selP)||1;
+  var customWrap=document.getElementById('caParcelasCustomWrap');
+  if(customWrap)customWrap.style.display=selP==='custom'?'block':'none';
+  var resumo=document.getElementById('caResumo');
+  if(!resumo||v<=0)return;
+  var totalJuros=0,valorTotal=v,parcela=v/n;
+  if(taxa>0){
+    var r=taxa/100;
+    parcela=v*(r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1);
+    valorTotal=parcela*n;
+    totalJuros=valorTotal-v;
+  }
+  resumo.style.display='block';
+  resumo.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">'
+    +'<div style="flex:1;min-width:80px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:10px 12px"><div style="font-size:.6rem;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Parcela</div><div style="font-size:.95rem;font-weight:700;color:var(--green)">'+_caFmtR(parcela)+'</div></div>'
+    +'<div style="flex:1;min-width:80px;background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:10px 12px"><div style="font-size:.6rem;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Total</div><div style="font-size:.95rem;font-weight:700;color:var(--t1)">'+_caFmtR(valorTotal)+'</div></div>'
+    +(taxa>0?'<div style="flex:1;min-width:80px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.18);border-radius:10px;padding:10px 12px"><div style="font-size:.6rem;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Juros</div><div style="font-size:.95rem;font-weight:700;color:var(--danger)">'+_caFmtR(totalJuros)+'</div></div>':'')
+    +'</div>';
+}
+
+function _caGetParcela(){
+  var v=parseFloat(document.getElementById('caValor').value)||0;
+  var taxa=parseFloat(document.getElementById('caTaxa').value)||0;
+  var selP=document.getElementById('caParcelas').value;
+  var n=selP==='custom'?(parseInt(document.getElementById('caParcelasCustom').value)||1):parseInt(selP)||1;
+  if(taxa>0){var r=taxa/100;return {n:n,parcela:v*(r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1),total:v*(r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1)*n};}
+  return {n:n,parcela:v/n,total:v};
+}
+
+function saveCrediAmigo(){
+  if(!U||!U.uid)return;
+  var id=document.getElementById('caModalId').value;
+  var amigo=document.getElementById('caAmigo').value.trim();
+  var valor=parseFloat(document.getElementById('caValor').value)||0;
+  var taxa=parseFloat(document.getElementById('caTaxa').value)||0;
+  var data=document.getElementById('caData').value;
+  var obs=document.getElementById('caObs').value.trim();
+  if(!amigo){toast('Informe o nome do amigo','erro');return;}
+  if(valor<=0){toast('Informe o valor','erro');return;}
+  if(!data){toast('Informe a data','erro');return;}
+  var p=_caGetParcela();
+  var doc={
+    tipo:_caEmprestimoTipo,amigo:amigo,valor:valor,
+    taxa:taxa,numParcelas:p.n,valorParcela:Math.round(p.parcela*100)/100,
+    valorTotal:Math.round(p.total*100)/100,data:data,obs:obs,
+    status:'ativo',valorPago:0,pagamentos:[],
+    createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  var ref=db.collection('users').doc(U.uid).collection('crediamigo');
+  (id?ref.doc(id).set(doc,{merge:true}):ref.add(doc)).then(function(){
+    closeCrediAmigoModal();
+    toast((id?'Emprestimo atualizado!':'Emprestimo registrado!'),'ok');
+    renderCaListas();
+  }).catch(function(e){toast('Erro: '+e.message,'erro');});
+}
+
+function _caTimeline(emp){
+  var n=emp.numParcelas||1;
+  var pgtos=Array.isArray(emp.pagamentos)?emp.pagamentos:[];
+  var hoje=new Date().toISOString().slice(0,10);
+  var html='<div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin:8px 0">';
+  for(var i=0;i<n;i++){
+    var venc=_caVencParcela(emp.data,i);
+    var pg=pgtos[i];
+    var cor,title;
+    if(pg){cor=pg.data<=venc?'var(--green)':'#F59E0B';title='Pago '+_caDtBR(pg.data);}
+    else if(venc<hoje){cor='var(--danger)';title='Atrasado '+_caDtBR(venc);}
+    else{
+      var dias=Math.round((new Date(venc)-new Date(hoje))/(1000*60*60*24));
+      if(dias<=7){cor='#F59E0B';title='Vence em '+dias+' dia'+(dias!==1?'s':'');}
+      else{cor='rgba(255,255,255,.18)';title='Vence '+_caDtBR(venc);}
+    }
+    html+='<div title="Parcela '+(i+1)+' - '+title+'" style="width:10px;height:10px;border-radius:50%;background:'+cor+';flex-shrink:0;cursor:default"></div>';
+    if(i<n-1)html+='<div style="height:1px;flex:1;min-width:4px;background:rgba(255,255,255,.1)"></div>';
+  }
+  html+='</div>';
+  return html;
+}
+
+function _caAcordoTexto(emp){
+  var tipo=emp.tipo==='emprestei'?'emprestei para':'peguei emprestado de';
+  var txt='Acordo Credi Amigo - Sibanki\n';
+  txt+='---\n';
+  txt+=tipo.charAt(0).toUpperCase()+tipo.slice(1)+': '+emp.amigo+'\n';
+  txt+='Valor: '+_caFmtR(emp.valor)+'\n';
+  txt+='Data: '+_caDtBR(emp.data)+'\n';
+  if(emp.taxa>0)txt+='Taxa: '+emp.taxa+'% a.m.\n';
+  txt+='Parcelas: '+emp.numParcelas+'x de '+_caFmtR(emp.valorParcela)+'\n';
+  txt+='Total: '+_caFmtR(emp.valorTotal)+'\n';
+  if(emp.obs)txt+='Obs: '+emp.obs+'\n';
+  return txt;
+}
+
+function _caCopiarAcordo(id){
+  if(!U||!U.uid)return;
+  db.collection('users').doc(U.uid).collection('crediamigo').doc(id).get().then(function(snap){
+    if(!snap.exists)return;
+    var txt=_caAcordoTexto(snap.data());
+    if(navigator.clipboard)navigator.clipboard.writeText(txt).then(function(){toast('Acordo copiado!','ok');});
+    else{var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('Copiado!','ok');}
+  });
+}
+window._caCopiarAcordo=_caCopiarAcordo;
+
+function _caCard(emp,id,allEmps){
+  var pago=emp.valorPago||0;
+  var total=emp.valorTotal||emp.valor;
+  var pct=total>0?Math.round((pago/total)*100):0;
+  var status=_caStatus(emp);
+  var stColor={'ativo':'var(--vr)','quitado':'var(--green)','atrasado':'var(--danger)'}[status]||'var(--t3)';
+  var stLabel={'ativo':'Em andamento','quitado':'Quitado','atrasado':'Atrasado'}[status]||status;
+  var iniciais=(emp.amigo||'?').split(' ').map(function(x){return x[0];}).join('').substring(0,2).toUpperCase();
+  var bgIniciais=emp.tipo==='emprestei'?'rgba(79,140,255,.15)':'rgba(16,185,129,.15)';
+  var corIniciais=emp.tipo==='emprestei'?'var(--vr)':'var(--green)';
+  var score=_caScore(allEmps,emp.amigo);
+  var h='<div class="ca-emp-card" onclick="openCaDetalhe(\''+id+'\')">';
+  h+='<div class="ca-emp-hd"><div class="ca-emp-av" style="background:'+bgIniciais+';color:'+corIniciais+'">'+iniciais+'</div>';
+  h+='<div style="flex:1;min-width:0"><div class="ca-emp-nome">'+escapeHtml(emp.amigo)+'</div>';
+  h+='<div style="font-size:.7rem;color:var(--t3)">'+_caDtBR(emp.data)+(emp.numParcelas>1?' · '+emp.numParcelas+'x':' · A vista')+'</div></div>';
+  h+='<div style="text-align:right"><div style="font-size:.92rem;font-weight:700;color:var(--t1)">'+_caFmtR(total)+'</div>';
+  h+='<span style="font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:99px;border:1px solid '+stColor+';color:'+stColor+'">'+stLabel+'</span></div></div>';
+  if(emp.numParcelas>1)h+=_caTimeline(emp);
+  h+='<div class="ca-emp-bar-wrap"><div class="ca-emp-bar" style="width:'+pct+'%;background:'+(status==='atrasado'?'var(--danger)':status==='quitado'?'var(--green)':'var(--vr)')+'"></div></div>';
+  h+='<div class="ca-emp-ft"><span style="font-size:.7rem;color:var(--t3)">Pago: '+_caFmtR(pago)+' · Falta: '+_caFmtR(Math.max(0,total-pago))+'</span>';
+  if(score!==null)h+=_caScoreBadge(score);
+  h+='</div></div>';
+  return h;
+}
+
+function renderCaListas(){
+  var el=document.getElementById('caEmpresteiList');
+  var el2=document.getElementById('caRecebiList');
+  var el3=document.getElementById('caHistoricoList');
+  if(!el||!U||!U.uid)return;
+  [el,el2,el3].forEach(function(e){if(e)e.innerHTML='<div style="text-align:center;padding:24px;color:var(--t3);font-size:.82rem">Carregando...</div>';});
+  db.collection('users').doc(U.uid).collection('crediamigo').orderBy('createdAt','desc').get()
+    .then(function(snap){
+      var all=[],ativos=[],inativos=[];
+      snap.forEach(function(doc){var d=doc.data();d._id=doc.id;all.push(d);});
+      var emprestei=all.filter(function(e){return e.tipo==='emprestei'&&_caStatus(e)!=='quitado';});
+      var recebi=all.filter(function(e){return e.tipo==='recebi'&&_caStatus(e)!=='quitado';});
+      var hist=all.filter(function(e){return _caStatus(e)==='quitado';});
+      var teE=all.filter(function(e){return e.tipo==='emprestei';}).reduce(function(s,e){return s+(e.valorTotal||e.valor);},0);
+      var trE=emprestei.reduce(function(s,e){return s+Math.max(0,(e.valorTotal||e.valor)-(e.valorPago||0));},0);
+      var teT=all.filter(function(e){return e.tipo==='recebi';}).reduce(function(s,e){return s+(e.valorTotal||e.valor);},0);
+      var trT=recebi.reduce(function(s,e){return s+Math.max(0,(e.valorTotal||e.valor)-(e.valorPago||0));},0);
+      var k=document.getElementById('caTotalEmprestado');if(k)k.textContent=_caFmtR(teE);
+      var k2=document.getElementById('caTotalReceber');if(k2)k2.textContent=_caFmtR(trE);
+      var k3=document.getElementById('caTotalTomado');if(k3)k3.textContent=_caFmtR(teT);
+      var k4=document.getElementById('caTotalPagar');if(k4)k4.textContent=_caFmtR(trT);
+      var emptyMsg='<div class="ca-empty"><i data-lucide="handshake" style="width:40px;height:40px;color:var(--t3)"></i><p>Nenhum registro</p></div>';
+      el.innerHTML=emprestei.length?emprestei.map(function(e){return _caCard(e,e._id,all);}).join(''):emptyMsg;
+      el2.innerHTML=recebi.length?recebi.map(function(e){return _caCard(e,e._id,all);}).join(''):emptyMsg;
+      el3.innerHTML=hist.length?hist.map(function(e){return _caCard(e,e._id,all);}).join(''):'<div class="ca-empty"><i data-lucide="check-circle" style="width:40px;height:40px;color:var(--green)"></i><p>Nenhum emprestimo quitado ainda</p></div>';
+      if(typeof lucide!=='undefined')lucide.createIcons();
+    }).catch(function(){[el,el2,el3].forEach(function(e){if(e)e.innerHTML='<div style="text-align:center;padding:16px;color:var(--t3)">Erro ao carregar.</div>';});});
+}
+
+function initCrediAmigo(){renderCaListas();}
+
+function openCaPgtoModal(id){
+  var m=document.getElementById('caPgtoModal');if(!m||!U||!U.uid)return;
+  document.getElementById('caPgtoId').value=id;
+  document.getElementById('caPgtoValor').value='';
+  document.getElementById('caPgtoData').value=new Date().toISOString().slice(0,10);
+  document.getElementById('caPgtoObs').value='';
+  db.collection('users').doc(U.uid).collection('crediamigo').doc(id).get().then(function(snap){
+    if(!snap.exists)return;var d=snap.data();
+    var falta=Math.max(0,(d.valorTotal||d.valor)-(d.valorPago||0));
+    var info=document.getElementById('caPgtoInfo');
+    if(info)info.innerHTML='<strong>'+escapeHtml(d.amigo)+'</strong> · Falta: <span style="color:var(--danger);font-weight:700">'+_caFmtR(falta)+'</span> · Proxima parcela: <strong>'+_caFmtR(d.valorParcela||falta)+'</strong>';
+    document.getElementById('caPgtoValor').value=(d.valorParcela||falta).toFixed(2);
+  });
+  m.style.display='flex';
+}
+function closeCaPgtoModal(){var m=document.getElementById('caPgtoModal');if(m)m.style.display='none';}
+window.openCaPgtoModal=openCaPgtoModal;
+window.closeCaPgtoModal=closeCaPgtoModal;
+
+function saveCaPgto(){
+  if(!U||!U.uid)return;
+  var id=document.getElementById('caPgtoId').value;
+  var valor=parseFloat(document.getElementById('caPgtoValor').value)||0;
+  var data=document.getElementById('caPgtoData').value;
+  var obs=document.getElementById('caPgtoObs').value.trim();
+  if(!id||valor<=0){toast('Informe o valor pago','erro');return;}
+  var ref=db.collection('users').doc(U.uid).collection('crediamigo').doc(id);
+  ref.get().then(function(snap){
+    if(!snap.exists)return;var d=snap.data();
+    var pgtos=Array.isArray(d.pagamentos)?d.pagamentos.slice():[];
+    pgtos.push({data:data,valor:valor,obs:obs,ts:new Date().toISOString()});
+    var novoPago=(d.valorPago||0)+valor;
+    var total=d.valorTotal||d.valor;
+    var novoStatus=novoPago>=total?'quitado':'ativo';
+    return ref.update({pagamentos:pgtos,valorPago:novoPago,status:novoStatus,updatedAt:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){
+      if(typeof entries!=='undefined'&&typeof saveData!=='undefined'){
+        var entry={id:Date.now(),date:data,type:d.tipo==='emprestei'?'receita':'despesa',desc:'Credi Amigo - '+d.amigo,category:d.tipo==='emprestei'?'Freela':'Emprestimo',value:valor,account:userAccs&&userAccs[0]||'Carteira fisica',status:'pago'};
+        entries.push(entry);saveData();
+      }
+    });
+  }).then(function(){
+    closeCaPgtoModal();toast('Pagamento registrado!','ok');renderCaListas();
+  }).catch(function(e){toast('Erro: '+e.message,'erro');});
+}
+
+function openCaDetalhe(id){
+  if(!U||!U.uid)return;
+  var m=document.getElementById('caModal');if(!m)return;
+  db.collection('users').doc(U.uid).collection('crediamigo').doc(id).get().then(function(snap){
+    if(!snap.exists)return;var d=snap.data();
+    var pago=d.valorPago||0;var total=d.valorTotal||d.valor;var falta=Math.max(0,total-pago);
+    var status=_caStatus(d);
+    var stColor={'ativo':'var(--vr)','quitado':'var(--green)','atrasado':'var(--danger)'}[status]||'var(--t3)';
+    var stLabel={'ativo':'Em andamento','quitado':'Quitado','atrasado':'Atrasado'}[status]||status;
+    var html='<div class="ca-modal-hd"><span>'+escapeHtml(d.amigo)+'</span><button type="button" onclick="closeCrediAmigoModal()" class="ca-modal-close"><i data-lucide="x" style="width:18px;height:18px"></i></button></div>';
+    html+='<div class="ca-modal-body">';
+    html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">';
+    html+='<div class="ca-kpi-box"><div class="ca-kpi-label">Total</div><div class="ca-kpi-val" style="font-size:.9rem">'+_caFmtR(total)+'</div></div>';
+    html+='<div class="ca-kpi-box"><div class="ca-kpi-label">Pago</div><div class="ca-kpi-val" style="font-size:.9rem;color:var(--green)">'+_caFmtR(pago)+'</div></div>';
+    html+='<div class="ca-kpi-box"><div class="ca-kpi-label">Falta</div><div class="ca-kpi-val" style="font-size:.9rem;color:'+(falta>0?'var(--danger)':'var(--green)')+'">'+_caFmtR(falta)+'</div></div>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><span style="font-size:.8rem;color:var(--t2)">Status:</span><span style="font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:99px;border:1px solid '+stColor+';color:'+stColor+'">'+stLabel+'</span>';
+    if(d.taxa>0)html+='<span style="font-size:.75rem;color:var(--t3);margin-left:4px">'+d.taxa+'% a.m.</span>';
+    html+='</div>';
+    html+=_caTimeline(d);
+    var pgtos=Array.isArray(d.pagamentos)?d.pagamentos:[];
+    if(pgtos.length){
+      html+='<div style="font-size:.78rem;font-weight:700;color:var(--t2);margin:12px 0 6px;display:flex;align-items:center;gap:5px"><i data-lucide="history" style="width:13px;height:13px"></i> Pagamentos</div>';
+      pgtos.forEach(function(p){html+='<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem"><span style="color:var(--t2)">'+_caDtBR(p.data)+(p.obs?' · '+escapeHtml(p.obs):'')+'</span><span style="color:var(--green);font-weight:700">+'+_caFmtR(p.valor)+'</span></div>';});
+    }
+    html+='<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">';
+    if(status!=='quitado')html+='<button class="btn btn-p" onclick="closeCrediAmigoModal();openCaPgtoModal(\''+id+'\')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px"><i data-lucide="plus-circle" style="width:14px;height:14px"></i> Registrar pagamento</button>';
+    html+='<button class="btn" onclick="_caCopiarAcordo(\''+id+'\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="copy" style="width:14px;height:14px"></i> Copiar acordo</button>';
+    html+='<button class="btn" onclick="closeCrediAmigoModal();openCrediAmigoModal(\''+id+'\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="settings" style="width:14px;height:14px"></i></button>';
+    html+='</div></div>';
+    var box=m.querySelector('.ca-modal-box');if(box)box.innerHTML=html;
+    m.style.display='flex';
+    if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);
+  });
+}
+window.openCaDetalhe=openCaDetalhe;
+
+(function(){
+  var s=document.getElementById('crediamigo-css');if(s)return;
+  s=document.createElement('style');s.id='crediamigo-css';
+  s.textContent=
+    '.ca-tabs{display:flex;gap:6px;margin-bottom:16px}'
+    +'.ca-tab{padding:7px 18px;border-radius:99px;font-size:.82rem;font-weight:600;cursor:pointer;border:1px solid var(--brd);background:transparent;color:var(--t3);font-family:var(--font-body);transition:all .18s}'
+    +'.ca-tab.on{background:var(--green);border-color:var(--green);color:#fff}'
+    +'.ca-list-wrap{display:none}'
+    +'.ca-list-wrap.on{display:block}'
+    +'.ca-emp-card{background:var(--card);border:1px solid var(--brd);border-radius:16px;padding:16px 18px;cursor:pointer;transition:all .2s;margin-bottom:12px}'
+    +'.ca-emp-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.1);box-shadow:0 6px 24px rgba(0,0,0,.25)}'
+    +'.ca-emp-hd{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}'
+    +'.ca-emp-av{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;flex-shrink:0}'
+    +'.ca-emp-nome{font-size:.92rem;font-weight:700;color:var(--t1);margin-bottom:2px}'
+    +'.ca-emp-bar-wrap{height:4px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;margin:8px 0}'
+    +'.ca-emp-bar{height:100%;border-radius:99px;transition:width .8s ease}'
+    +'.ca-emp-ft{display:flex;align-items:center;justify-content:space-between;margin-top:4px}'
+    +'.ca-tipo-btn{padding:8px 16px;border-radius:10px;border:1px solid var(--brd);background:transparent;color:var(--t2);font-size:.82rem;font-weight:600;cursor:pointer;font-family:var(--font-body);display:inline-flex;align-items:center;gap:6px;transition:all .18s}'
+    +'.ca-tipo-btn.on{background:rgba(16,185,129,.15);border-color:var(--green);color:var(--green)}'
+    +'.ca-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}'
+    +'@media(max-width:500px){.ca-kpis{grid-template-columns:1fr 1fr}}'
+    +'.ca-kpi{background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:12px 14px}'
+    +'.ca-kpi .ca-kpi-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:700;margin-bottom:4px}'
+    +'.ca-kpi .ca-kpi-val{font-size:1rem;font-weight:800;color:var(--t1)}'
+    +'.ca-kpi .ca-kpi-val.green{color:var(--green)}'
+    +'.ca-kpi .ca-kpi-val.red{color:var(--danger)}';
+  document.head.appendChild(s);
+})();
