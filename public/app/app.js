@@ -13313,59 +13313,63 @@ return lower;
 /* --- ENVIAR CONVITE --- */
 function sendCoupleInvite(){
 var emailInput=document.getElementById('coupleEmail');
+var nomeInput=document.getElementById('coupleNome');
+var waInput=document.getElementById('coupleWhatsapp');
 var statusEl=document.getElementById('coupleInviteStatus');
 if(!emailInput||!statusEl)return;
 var emailRaw=emailInput.value.trim().toLowerCase();
-if(!emailRaw){statusEl.innerHTML='<span style="color:var(--vr)">Digite o email do parceiro(a)</span>';return}
+var nomeConvidado=(nomeInput&&nomeInput.value.trim())||'';
+var waConvidado=(waInput&&waInput.value.trim().replace(/\D/g,''))||'';
+if(!emailRaw){statusEl.innerHTML='<span style="color:var(--vr)">Digite o e-mail do convidado</span>';return;}
 var email=fixEmailDomainTypos(emailRaw);
 if(email!==emailRaw){emailInput.value=email;toast('Domínio corrigido: '+emailRaw.split('@')[1]+' → '+email.split('@')[1],'ok');}
-if(email===U.email.toLowerCase()){statusEl.innerHTML='<span style="color:var(--vr)">Voc\u00ea n\u00e3o pode convidar a si mesmo \u{1F605}</span>';return}
+if(email===U.email.toLowerCase()){statusEl.innerHTML='<span style="color:var(--vr)">Você não pode convidar a si mesmo 😅</span>';return;}
 statusEl.innerHTML='<span style="color:var(--yellow)">Enviando convite...</span>';
-
-/* Verificar se ja tem convite pendente */
 db.collection('invites').where('fromEmail','==',U.email.toLowerCase()).where('status','==','pending').get().then(function(snap){
-if(!snap.empty){
-statusEl.innerHTML='<span style="color:var(--yellow)">Voc\u00ea j\u00e1 tem um convite pendente. Aguarde a resposta.</span>';
-return;
-}
-/* Criar convite */
-var invite={
-from:U.uid,
-fromName:U.name||'Usu\u00e1rio',
-fromEmail:U.email.toLowerCase(),
-toEmail:email,
-status:'pending',
-created:new Date().toISOString()
-};
+if(!snap.empty){statusEl.innerHTML='<span style="color:var(--yellow)">Você já tem um convite pendente. Aguarde a resposta.</span>';return;}
+var invite={from:U.uid,fromName:U.name||'Usuário',fromEmail:U.email.toLowerCase(),toEmail:email,toNome:nomeConvidado,toWhatsapp:waConvidado,status:'pending',created:new Date().toISOString()};
 db.collection('invites').add(invite).then(function(docRef){
-emailInput.value='';
+if(nomeInput)nomeInput.value='';if(waInput)waInput.value='';emailInput.value='';
 var path=window.location.pathname||'/app/';
 var baseUrl=window.location.origin+(path.indexOf('/app')>=0?path.replace(/\/+$/,'')||'/app':'/app');
 var link=baseUrl+'#invite='+docRef.id;
 var fromName=(U.name||'Usuário').replace(/'/g,"\\'");
-statusEl.innerHTML='<span style="color:var(--green)">\u2705 Convite enviado!</span> Envie o link ou o e-mail para <b>'+escapeHtml(email)+'</b>: <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="text" readonly value="'+String(link).replace(/"/g,'&quot;')+'" style="flex:1;min-width:0;padding:6px 10px;font-size:.75em;background:var(--bg2);border:1px solid var(--brd);border-radius:6px;color:var(--t1)" id="coupleInviteLinkInput"><button type="button" class="btn btn-sm" style="font-size:.75em;padding:6px 12px" onclick="var i=document.getElementById(\'coupleInviteLinkInput\');if(i)navigator.clipboard.writeText(i.value).then(function(){toast(\'Link copiado!\',\'ok\')});">Copiar link</button><button type="button" class="btn btn-sm" style="font-size:.75em;padding:6px 12px;background:var(--green)" id="btnSendInviteEmail" onclick="sendInviteByEmail(\''+docRef.id+'\',\''+String(email).replace(/'/g,"\\'")+'\',\''+fromName+'\')">Enviar por e-mail</button></div>';
-toast(typeof t==='function'?t('toast_convite_enviado'):'Convite enviado! Envie o link ou use "Enviar por e-mail".','ok');
+var nomeLabel=nomeConvidado?(' para <b>'+escapeHtml(nomeConvidado)+'</b>'):'';
+statusEl.innerHTML='<span style="color:var(--green)">✅ Convite enviado!'+nomeLabel+'</span><div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="text" readonly value="'+String(link).replace(/"/g,'&quot;')+'" style="flex:1;min-width:0;padding:6px 10px;font-size:.75em;background:var(--bg2);border:1px solid var(--brd);border-radius:6px;color:var(--t1)" id="coupleInviteLinkInput"><button type="button" class="btn btn-sm" style="font-size:.75em;padding:6px 12px" onclick="var i=document.getElementById(\'coupleInviteLinkInput\');if(i)navigator.clipboard.writeText(i.value).then(function(){toast(\'Link copiado!\',\'ok\')});">Copiar</button><button type="button" class="btn btn-sm" style="font-size:.75em;padding:6px 12px;background:var(--green)" id="btnSendInviteEmail" onclick="sendInviteByEmail(\''+docRef.id+'\',\''+String(email).replace(/'/g,"\\'")+'\',\''+fromName+'\',\''+nomeConvidado.replace(/'/g,"\\'")+'\',\''+waConvidado+'\')"><i data-lucide="mail" style="width:12px;height:12px"></i> E-mail</button>'+(waConvidado?'<button type="button" class="btn btn-sm" style="font-size:.75em;padding:6px 12px;background:#25D366" id="btnSendInviteWA" onclick="sendInviteByWA(\''+waConvidado+'\',\''+String(link).replace(/'/g,"\\'")+'\',\''+fromName+'\',\''+nomeConvidado.replace(/'/g,"\\'")+'\')" ><i data-lucide="message-circle" style="width:12px;height:12px"></i> WhatsApp</button>':'')+'</div>';
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);
+toast(typeof t==='function'?t('toast_convite_enviado'):'Convite enviado!','ok');
 loadCoupleStatus();
-}).catch(function(err){
-statusEl.innerHTML='<span style="color:var(--vr)">Erro: '+err.message+'</span>';
-});
+}).catch(function(err){statusEl.innerHTML='<span style="color:var(--vr)">Erro: '+err.message+'</span>';});
 });
 }
 
-function sendInviteByEmail(inviteId,toEmail,fromName){
+function sendInviteByEmail(inviteId,toEmail,fromName,toNome,toWhatsapp){
 var btn=document.getElementById('btnSendInviteEmail');
-if(btn){btn.disabled=true;btn.textContent=typeof t==='function'?t('btn_enviando_email'):'Enviando...';}
+if(btn){btn.disabled=true;btn.innerHTML='<i data-lucide="loader" style="width:12px;height:12px"></i> Enviando...';}
 var fn=firebase.functions().httpsCallable('sendFamilyInviteEmail');
-fn({inviteId:inviteId,toEmail:toEmail,fromName:fromName||'Usuário'}).then(function(r){
-if(btn){btn.disabled=false;btn.textContent=typeof t==='function'?t('btn_enviar_por_email'):'Enviar por e-mail';}
-if(r.data&&r.data.ok){toast(typeof t==='function'?t('toast_email_enviado_familia'):'E-mail enviado! O convidado receberá uma mensagem com o link e apresentação do Sibanki.','ok');}
-else if(r.data&&r.data.error==='EMAIL_NOT_CONFIGURED'){toast(typeof t==='function'?t('toast_email_nao_configurado'):'Envio por e-mail não configurado. Copie o link e envie por WhatsApp ou e-mail.','info');}
+fn({inviteId:inviteId,toEmail:toEmail,fromName:fromName||'Usuário',toNome:toNome||''}).then(function(r){
+if(btn){btn.disabled=false;btn.innerHTML='<i data-lucide="check" style="width:12px;height:12px"></i> E-mail enviado!';}
+if(r.data&&r.data.ok){toast('✅ E-mail enviado para '+(toNome||toEmail)+'! Eles receberão a apresentação do Sibanki.','ok');}
+else if(r.data&&r.data.error==='EMAIL_NOT_CONFIGURED'){toast('E-mail não configurado. Copie o link manualmente.','info');}
 else{toast((r.data&&r.data.message)||'Erro ao enviar e-mail.','err');}
 }).catch(function(err){
-if(btn){btn.disabled=false;btn.textContent=typeof t==='function'?t('btn_enviar_por_email'):'Enviar por e-mail';}
+if(btn){btn.disabled=false;btn.innerHTML='<i data-lucide="mail" style="width:12px;height:12px"></i> E-mail';}
 toast('Erro: '+(err.message||'tente novamente'),'err');
-});
-}
+});}
+
+function sendInviteByWA(phone,link,fromName,toNome){
+var btn=document.getElementById('btnSendInviteWA');
+if(btn){btn.disabled=true;btn.innerHTML='<i data-lucide="loader" style="width:12px;height:12px"></i> Enviando...';}
+var fn=firebase.functions().httpsCallable('sendWhatsAppInviteFamilia');
+fn({toPhone:phone,nomeConvidador:fromName||U.name||'Alguém',toNome:toNome||'',linkConvite:link}).then(function(r){
+if(btn){btn.disabled=false;btn.innerHTML='<i data-lucide="check" style="width:12px;height:12px"></i> WA enviado!';}
+toast('✅ WhatsApp enviado para '+(toNome||phone)+'!','ok');
+}).catch(function(){
+if(btn){btn.disabled=false;btn.innerHTML='<i data-lucide="message-circle" style="width:12px;height:12px"></i> WhatsApp';}
+// Fallback: abrir WhatsApp Web com mensagem pré-formatada
+var txt=encodeURIComponent((fromName||'Seu amigo')+' te convidou para o Sibanki — Controle Financeiro com IA!\n\nAcesse: '+link);
+window.open('https://wa.me/'+phone.replace(/\D/g,'')+'?text='+txt,'_blank');
+});}
 
 /* --- VERIFICAR STATUS DO CASAL --- */
 function loadCoupleStatus(){
@@ -18002,26 +18006,74 @@ function _caToday(){return new Date().toISOString().slice(0,10);}
 function _caMesAtual(){return new Date().toISOString().slice(0,7);}
 function _caProxVenc(dia){var d=new Date();var m=d.getMonth(),y=d.getFullYear();var v=new Date(y,m,parseInt(dia));if(v<=d)v=new Date(y,m+1,parseInt(dia));return v.toLocaleDateString('pt-BR');}
 function _caSeedHash(s){var h=0;for(var i=0;i<s.length;i++){h=(Math.imul(31,h)+s.charCodeAt(i))|0;}return Math.abs(h).toString(16).padStart(8,'0');}
-function openConsorcioModal(id){var m=document.getElementById('consorcioModal');if(!m)return;document.getElementById('consorcioId').value=id||'';['consorcioNome','consorcioValor','consorcioParticipantes','consorcioEmails'].forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});document.getElementById('consorcioDia').value='10';document.getElementById('consorcioModo').value='sorteio';document.getElementById('consorcioResumo').innerHTML='';document.getElementById('consorcioModalTitle').textContent=id?'Editar Grupo':'Novo Grupo de Consorcio';if(id&&U&&U.uid){db.collection('users').doc(U.uid).collection('consorcio_grupos').doc(id).get().then(function(snap){if(!snap.exists)return;var d=snap.data();document.getElementById('consorcioNome').value=d.nome||'';document.getElementById('consorcioValor').value=d.valorParcela||'';document.getElementById('consorcioParticipantes').value=d.numParticipantes||'';document.getElementById('consorcioDia').value=d.diaVencimento||'10';document.getElementById('consorcioModo').value=d.modoContemplacao||'sorteio';consorcioCalc();});}m.style.display='flex';if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);}
+function openConsorcioModal(id){var m=document.getElementById('consorcioModal');if(!m)return;document.getElementById('consorcioId').value=id||'';['consorcioNome','consorcioValor','consorcioParticipantes','consorcioEmails'].forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});document.getElementById('consorcioDia').value='10';document.getElementById('consorcioModo').value='sorteio';document.getElementById('consorcioResumo').innerHTML='';document.getElementById('consorcioModalTitle').textContent=id?'Editar Grupo':'Novo Grupo de Consorcio';if(typeof caInitParticipantesList==='function')caInitParticipantesList();if(id&&U&&U.uid){db.collection('users').doc(U.uid).collection('consorcio_grupos').doc(id).get().then(function(snap){if(!snap.exists)return;var d=snap.data();document.getElementById('consorcioNome').value=d.nome||'';document.getElementById('consorcioValor').value=d.valorParcela||'';document.getElementById('consorcioParticipantes').value=d.numParticipantes||'';document.getElementById('consorcioDia').value=d.diaVencimento||'10';document.getElementById('consorcioModo').value=d.modoContemplacao||'sorteio';consorcioCalc();});}m.style.display='flex';if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},20);}
 function closeConsorcioModal(){var m=document.getElementById('consorcioModal');if(m)m.style.display='none';}
 function consorcioCalc(){var v=parseFloat(document.getElementById('consorcioValor').value)||0;var n=parseInt(document.getElementById('consorcioParticipantes').value)||0;var el=document.getElementById('consorcioResumo');if(!el||v<=0||n<2)return;el.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px"><div style="flex:1;min-width:90px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px 12px"><div style="font-size:.62rem;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Bolo mensal</div><div style="font-size:1rem;font-weight:700;color:#F59E0B">R$ '+_caFmt(v*n)+'</div></div><div style="flex:1;min-width:90px;background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:10px 12px"><div style="font-size:.62rem;color:var(--t3);margin-bottom:3px">Duracao</div><div style="font-size:1rem;font-weight:700;color:var(--t1)">'+n+' meses</div></div><div style="flex:1;min-width:90px;background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:10px 12px"><div style="font-size:.62rem;color:var(--t3);margin-bottom:3px">Total p/pessoa</div><div style="font-size:1rem;font-weight:700;color:var(--t1)">R$ '+_caFmt(v*n)+'</div></div></div>';}
-function saveConsorcio(){if(!U||!U.uid)return;var id=document.getElementById('consorcioId').value;var nome=document.getElementById('consorcioNome').value.trim();var valor=parseFloat(document.getElementById('consorcioValor').value)||0;var num=parseInt(document.getElementById('consorcioParticipantes').value)||0;var dia=document.getElementById('consorcioDia').value;var modo=document.getElementById('consorcioModo').value;var emailsRaw=(document.getElementById('consorcioEmails').value||'');if(!nome){toast('Informe o nome do grupo','erro');return;}if(valor<=0){toast('Informe o valor da contribuicao','erro');return;}if(num<2){toast('Minimo 2 participantes','erro');return;}var parts=[{uid:U.uid,nome:U.name||'Eu',email:U.email||'',admin:true,status:'ativo',statusMes:'pendente',ordem:0}];emailsRaw.split(',').forEach(function(e,i){var em=e.trim();if(em&&em.indexOf('@')>0)parts.push({uid:null,nome:em.split('@')[0],email:em,admin:false,status:'ativo',statusMes:'pendente',ordem:i+1});});var doc={nome:nome,valorParcela:valor,numParticipantes:num,diaVencimento:parseInt(dia),modoContemplacao:modo,status:'ativo',mesAtual:_caMesAtual(),adminUid:U.uid,adminNome:U.name||'Admin',participantes:parts,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
-  // Opções avançadas opcionais
+function saveConsorcio(){
+  if(!U||!U.uid)return;
+  var id=document.getElementById('consorcioId').value;
+  var nome=document.getElementById('consorcioNome').value.trim();
+  var valor=parseFloat(document.getElementById('consorcioValor').value)||0;
+  var num=parseInt(document.getElementById('consorcioParticipantes').value)||0;
+  var dia=document.getElementById('consorcioDia').value;
+  var modo=document.getElementById('consorcioModo').value;
+  if(!nome){toast('Informe o nome do grupo','erro');return;}
+  if(valor<=0){toast('Informe o valor da contribuição','erro');return;}
+  if(num<2){toast('Mínimo 2 participantes','erro');return;}
+
+  // Ler participantes do novo formulário dinâmico
+  var parts=[{uid:U.uid,nome:U.name||'Eu',email:U.email||'',whatsapp:'',admin:true,status:'ativo',statusMes:'pendente',ordem:0}];
+  var linhas=document.querySelectorAll('#consorcioParticipantesLista .ca-invite-row');
+  var convidados=[];
+  linhas.forEach(function(row,i){
+    var nomeP=(row.querySelector('.inv-nome')||{}).value||'';
+    var emailP=(row.querySelector('.inv-email')||{}).value||'';
+    var waP=(row.querySelector('.inv-wa')||{}).value||'';
+    nomeP=nomeP.trim(); emailP=emailP.trim(); waP=waP.replace(/\D/g,'');
+    if(nomeP||emailP){
+      parts.push({uid:null,nome:nomeP||(emailP?emailP.split('@')[0]:'Participante '+(i+1)),email:emailP,whatsapp:waP,admin:false,status:'ativo',statusMes:'pendente',ordem:i+1});
+      if(emailP||waP) convidados.push({nome:nomeP,email:emailP,whatsapp:waP});
+    }
+  });
+
+  var doc={nome:nome,valorParcela:valor,numParticipantes:num,diaVencimento:parseInt(dia),modoContemplacao:modo,status:'ativo',mesAtual:_caMesAtual(),adminUid:U.uid,adminNome:U.name||'Admin',participantes:parts,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+  // Opções avançadas
   var fundoBtn=document.getElementById('caToggleFundoReserva');
-  if(fundoBtn&&fundoBtn.classList.contains('on')){var fv=parseFloat(document.getElementById('consorcioFundoReserva').value)||0;if(fv>0){doc.fundoReservaAtivo=true;doc.fundoReservaValor=fv;doc.fundoReservaTotal=0;}}
+  if(fundoBtn&&fundoBtn.classList.contains('on')){var fv=parseFloat(document.getElementById('consorcioFundoReserva').value)||0;if(fv>0){doc.fundoReservaAtivo=true;doc.fundoReservaValor=fv;}}
   var fiadorBtn=document.getElementById('caToggleFiador');
-  if(fiadorBtn&&fiadorBtn.classList.contains('on')){doc.fiadorAtivo=true;}var ref=db.collection('users').doc(U.uid).collection('consorcio_grupos');(id?ref.doc(id).set(doc,{merge:true}):ref.add(doc)).then(function(){closeConsorcioModal();toast(id?'Grupo atualizado!':'Grupo criado!','ok');renderConsorcioGrupos();
-    // Disparar e-mails de convite para participantes externos
-    if(!id&&emailsRaw){
-      var emailList=emailsRaw.split(',').map(function(e){return e.trim();}).filter(function(e){return e&&e.indexOf('@')>0;});
-      if(emailList.length>0){
-        var fnInv=firebase.functions().httpsCallable('sendConsorcioInvite');
-        fnInv({emails:emailList,nomeAdmin:U.name||'Alguém',nomeGrupo:nome,valorParcela:valor,numParticipantes:num,boloMensal:valor*num,prazo:num}).then(function(res){
-          if(res&&res.data&&res.data.ok){var cnt=(res.data.results||[]).filter(function(x){return x.ok;}).length;if(cnt>0)toast('Convites enviados para '+cnt+' participante'+(cnt>1?'s':'')+'! 📧','ok');}
+  if(fiadorBtn&&fiadorBtn.classList.contains('on'))doc.fiadorAtivo=true;
+
+  var ref=db.collection('users').doc(U.uid).collection('consorcio_grupos');
+  (id?ref.doc(id).set(doc,{merge:true}):ref.add(doc)).then(function(r){
+    closeConsorcioModal();
+    toast(id?'Grupo atualizado!':'Grupo criado! 🎉','ok');
+    renderConsorcioGrupos();
+    // Disparar convites personalizados (e-mail + WhatsApp)
+    if(!id&&convidados.length>0){
+      var grupoId=r&&r.id?r.id:null;
+      var boloMensal=valor*num;
+      var fnEmail=firebase.functions().httpsCallable('sendConsorcioInvite');
+      var fnWA=firebase.functions().httpsCallable('sendWhatsAppInviteConsorcioCallable');
+      var emailsParaConvidar=convidados.filter(function(c){return c.email;});
+      if(emailsParaConvidar.length>0){
+        fnEmail({
+          participantes:convidados.filter(function(c){return c.email;}),
+          nomeAdmin:U.name||'Alguém',nomeGrupo:nome,valorParcela:valor,
+          numParticipantes:num,boloMensal:boloMensal,prazo:num,grupoId:grupoId
+        }).then(function(res){
+          if(res&&res.data&&res.data.ok){
+            var cnt=(res.data.results||[]).filter(function(x){return x.ok;}).length;
+            if(cnt>0)toast('📧 Convites enviados para '+cnt+' participante'+(cnt>1?'s':'')+'!','ok');
+          }
         }).catch(function(){});
       }
+      // WhatsApp para quem tem número
+      convidados.filter(function(c){return c.whatsapp;}).forEach(function(c){
+        fnWA({toPhone:c.whatsapp,nomeAdmin:U.name||'Alguém',toNome:c.nome,nomeGrupo:nome,valorParcela:valor,boloMensal:boloMensal,prazo:num}).catch(function(){});
+      });
     }
-  }).catch(function(e){toast('Erro: '+e.message,'erro');});}
+  }).catch(function(e){toast('Erro: '+e.message,'erro');});
+}
 function renderConsorcioGrupos(){var grid=document.getElementById('consorcioGruposGrid');if(!grid||!U||!U.uid)return;grid.innerHTML='<div style="text-align:center;padding:32px;color:var(--t3)">Carregando...</div>';db.collection('users').doc(U.uid).collection('consorcio_grupos').orderBy('createdAt','desc').get().then(function(snap){if(snap.empty){grid.innerHTML='<div class="ca-empty"><i data-lucide="users" style="width:44px;height:44px;color:var(--t3)"></i><p>Nenhum grupo criado ainda</p><p style="font-size:.78rem;color:var(--t3);max-width:260px;text-align:center;margin:0 auto">Crie um grupo entre amigos sem banco sem juros.</p><button class="btn btn-p" onclick="openConsorcioModal()" style="margin-top:14px;display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus" style="width:14px;height:14px"></i> Criar primeiro grupo</button></div>';if(typeof lucide!=='undefined')lucide.createIcons();return;}var html='';snap.forEach(function(doc){var d=doc.data();var gId=doc.id;var total=d.valorParcela*(d.numParticipantes||0);var parts=Array.isArray(d.participantes)?d.participantes:[];var pagaram=parts.filter(function(p){return p.statusMes==='pago';}).length;var inadim=parts.filter(function(p){return p.statusMes==='atrasado';}).length;var contemplados=parts.filter(function(p){return p.status==='contemplado';}).length;var modoIcon={sorteio:'shuffle',lance:'trending-up',rotativo:'list-ordered'}[d.modoContemplacao]||'shuffle';var stColor=d.status==='ativo'?'var(--green)':d.status==='pausado'?'var(--yellow)':'var(--t3)';html+='<div class="ca-card" onclick="openConsorcioDetalhe(\''+gId+'\')"><div class="ca-card-hd"><div class="ca-card-icon"><i data-lucide="users" style="width:16px;height:16px;color:#F59E0B"></i></div><div style="flex:1;min-width:0"><div class="ca-card-nome">'+escapeHtml(d.nome)+'</div><div style="font-size:.7rem;color:var(--t3);display:flex;align-items:center;gap:4px"><i data-lucide="'+modoIcon+'" style="width:10px;height:10px"></i>'+({sorteio:'Sorteio',lance:'Lance',rotativo:'Rotativo'}[d.modoContemplacao]||'Sorteio')+'</div></div><span style="font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.06);color:'+stColor+'">'+({ativo:'Ativo',pausado:'Pausado',finalizado:'Encerrado'}[d.status]||d.status)+'</span></div><div class="ca-card-kpis"><div class="ca-kpi"><div class="ca-kpi-label">Bolo/mes</div><div class="ca-kpi-val" style="color:#F59E0B">R$ '+_caFmt(total)+'</div></div><div class="ca-kpi"><div class="ca-kpi-label">Membros</div><div class="ca-kpi-val">'+d.numParticipantes+'</div></div><div class="ca-kpi"><div class="ca-kpi-label">Pagaram</div><div class="ca-kpi-val" style="color:'+(inadim>0?'var(--danger)':'var(--green)')+'">'+pagaram+'/'+parts.length+'</div></div><div class="ca-kpi"><div class="ca-kpi-label">Contemplados</div><div class="ca-kpi-val">'+contemplados+'/'+d.numParticipantes+'</div></div></div>'+(inadim>0?'<div class="ca-alert"><i data-lucide="alert-triangle" style="width:12px;height:12px"></i> '+inadim+' inadimplente'+(inadim>1?'s':'')+'</div>':'')+'<div class="ca-card-footer"><span style="font-size:.7rem;color:var(--t3)">Vence dia '+d.diaVencimento+' - prox: '+_caProxVenc(d.diaVencimento)+'</span><span style="font-size:.7rem;color:var(--vr)">Ver detalhes</span></div></div>';});grid.innerHTML=html;if(typeof lucide!=='undefined')lucide.createIcons();}).catch(function(){grid.innerHTML='<div style="text-align:center;padding:24px;color:var(--t3)">Erro ao carregar grupos.</div>';});}
 function openConsorcioDetalhe(gId){if(!U||!U.uid)return;var m=document.getElementById('consorcioDetalheModal');var body=document.getElementById('consorcioDetalheBody');if(!m||!body)return;body.innerHTML='<div style="text-align:center;padding:32px;color:var(--t3)">Carregando...</div>';m.style.display='flex';db.collection('users').doc(U.uid).collection('consorcio_grupos').doc(gId).get().then(function(snap){if(!snap.exists){body.innerHTML='Grupo nao encontrado.';return;}var d=snap.data();document.getElementById('consorcioDetalheTitulo').textContent=d.nome;window._caGrupoAtual={id:gId,data:d};_caRenderDetalhe(gId,d,body);if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},30);}).catch(function(e){body.innerHTML='Erro: '+e.message;});}
 function closeConsorcioDetalhe(){var m=document.getElementById('consorcioDetalheModal');if(m)m.style.display='none';}
@@ -18199,26 +18251,33 @@ function saveCrediAmigo(){
   var ref=db.collection('users').doc(U.uid).collection('crediamigo');
   (id?ref.doc(id).set(doc,{merge:true}):ref.add(doc)).then(function(){
     closeCrediAmigoModal();
-    toast((id?'Emprestimo atualizado!':'Emprestimo registrado!'),'ok');
+    toast((id?'Empréstimo atualizado!':'Empréstimo registrado! 🤝'),'ok');
     renderCaListas();
-    // Disparar e-mail de convite para o amigo (se tiver e-mail válido)
+    // Convites personalizados: e-mail + WhatsApp
     if(!id){
       var emailAmigo=document.getElementById('caEmailAmigo')?document.getElementById('caEmailAmigo').value.trim():'';
+      var waAmigo=(document.getElementById('caWhatsappAmigo')?document.getElementById('caWhatsappAmigo').value.trim():'').replace(/\D/g,'');
+      var nomeCredor=U.name||'Alguém';
+      var tipoEhCredor=_caEmprestimoTipo==='emprestei';
+      // E-mail
       if(emailAmigo&&emailAmigo.indexOf('@')>0){
-        var fnCa=firebase.functions().httpsCallable('sendCrediAmigoInvite');
-        fnCa({
-          emailAmigo:emailAmigo,
-          nomeCredor:U.name||'Alguém',
-          nomeDev:amigo,
-          valor:valor,
-          parcelas:p.n,
-          valorParcela:Math.round(p.parcela*100)/100,
-          tipoCredor:_caEmprestimoTipo==='emprestei'
-        }).then(function(res){
-          if(res&&res.data&&res.data.ok)toast('Convite enviado para '+emailAmigo+' 📧','ok');
+        var fnCaEmail=firebase.functions().httpsCallable('sendCrediAmigoInvite');
+        fnCaEmail({emailAmigo:emailAmigo,nomeCredor:nomeCredor,nomeDev:amigo,valor:valor,parcelas:p.n,valorParcela:Math.round(p.parcela*100)/100,tipoCredor:tipoEhCredor}).then(function(res){
+          if(res&&res.data&&res.data.ok)toast('📧 Convite enviado para '+amigo+'!','ok');
         }).catch(function(){});
       }
-    }
+      // WhatsApp
+      if(waAmigo){
+        var fnCaWA=firebase.functions().httpsCallable('sendWhatsAppInviteCrediAmigoCallable');
+        fnCaWA({toPhone:waAmigo,nomeCredor:nomeCredor,toNome:amigo,valor:valor,parcelas:p.n,valorParcela:Math.round(p.parcela*100)/100,tipoCredor:tipoEhCredor}).catch(function(){
+          // Fallback: wa.me
+          var txt=tipoEhCredor
+            ?encodeURIComponent(nomeCredor+' registrou que você deve R$ '+valor.toFixed(2).replace('.',',')+'.\n\nAcompanhe pelo Sibanki: sibanki.com.br')
+            :encodeURIComponent(nomeCredor+' registrou que você tem R$ '+valor.toFixed(2).replace('.',',')+' a receber.\n\nAcompanhe pelo Sibanki: sibanki.com.br');
+          window.open('https://wa.me/'+waAmigo+'?text='+txt,'_blank');
+        });
+      }
+    } // fim if(!id)
   }).catch(function(e){toast('Erro: '+e.message,'erro');});
 }
 
@@ -18436,3 +18495,25 @@ window.openCaDetalhe=openCaDetalhe;
     +'.ca-kpi .ca-kpi-val.red{color:var(--danger)}';
   document.head.appendChild(s);
 })();
+
+// ── Lista dinâmica de participantes no modal do Consórcio ──
+window.caAddParticipanteLine = function() {
+  var lista = document.getElementById('consorcioParticipantesLista');
+  if (!lista) return;
+  var idx = lista.querySelectorAll('.ca-invite-row').length;
+  var row = document.createElement('div');
+  row.className = 'ca-invite-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center';
+  row.innerHTML = '<input type="text" class="fi inv-nome" placeholder="Nome" style="font-size:.82rem">'
+    + '<input type="email" class="fi inv-email" placeholder="E-mail (opcional)" style="font-size:.82rem">'
+    + '<input type="tel" class="fi inv-wa" placeholder="WhatsApp (opcional)" style="font-size:.82rem">'
+    + '<button type="button" onclick="this.closest(\'.ca-invite-row\').remove()" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:1.1rem;padding:4px 8px;border-radius:6px;line-height:1" title="Remover">✕</button>';
+  lista.appendChild(row);
+};
+
+window.caInitParticipantesList = function() {
+  var lista = document.getElementById('consorcioParticipantesLista');
+  if (lista) lista.innerHTML = '';
+  caAddParticipanteLine();
+  caAddParticipanteLine();
+};

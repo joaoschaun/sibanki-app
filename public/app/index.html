@@ -3089,7 +3089,10 @@
       </div>
     </div>
     <div class="fg"><label class="fl">Amigo / Devedor</label><input type="text" id="caAmigo" class="fi" placeholder="Nome ou apelido"></div>
-    <div class="fg"><label class="fl" style="display:flex;align-items:center;gap:6px"><i data-lucide="mail" style="width:13px;height:13px"></i> E-mail do amigo <span style="font-size:.72rem;color:var(--t3);font-weight:400">(opcional — para enviar convite)</span></label><input type="email" id="caEmailAmigo" class="fi" placeholder="amigo@email.com"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label class="fl" style="display:flex;align-items:center;gap:5px;font-size:.82rem"><i data-lucide="mail" style="width:12px;height:12px"></i> E-mail <span style="color:var(--t3);font-weight:400">(opcional)</span></label><input type="email" id="caEmailAmigo" class="fi" placeholder="amigo@email.com"></div>
+      <div class="fg"><label class="fl" style="display:flex;align-items:center;gap:5px;font-size:.82rem"><i data-lucide="message-circle" style="width:12px;height:12px;color:#25D366"></i> WhatsApp <span style="color:var(--t3);font-weight:400">(opcional)</span></label><input type="tel" id="caWhatsappAmigo" class="fi" placeholder="+55 11 9 9999-9999"></div>
+    </div>
     <div class="ca-modal-row">
       <div class="fg"><label class="fl">Valor (R$)</label><input type="number" id="caValor" class="fi" placeholder="0,00" min="0" step="0.01" oninput="caCalcParcelas()"></div>
       <div class="fg"><label class="fl">Data</label><input type="date" id="caData" class="fi"></div>
@@ -3196,8 +3199,13 @@
       </select>
     </div>
     <div id="consorcioResumo" class="ca-resumo" style="margin-top:14px"></div>
-    <div class="fg" style="margin-top:14px"><label class="fl">Participantes (e-mails separados por vírgula)</label>
-      <textarea id="consorcioEmails" class="fi" rows="3" placeholder="amigo1@email.com, amigo2@email.com..."></textarea>
+    <!-- Participantes com nome, WhatsApp e e-mail -->
+    <div style="margin-top:14px">
+      <label class="fl" style="margin-bottom:10px">Participantes a convidar <span style="font-size:.75rem;color:var(--t3);font-weight:400">(opcional — preenchendo, enviaremos convite personalizado)</span></label>
+      <div id="consorcioParticipantesLista">
+        <!-- linhas geradas pelo JS -->
+      </div>
+      <button type="button" class="btn btn-sm" onclick="caAddParticipanteLine()" style="margin-top:8px;font-size:.75rem;display:inline-flex;align-items:center;gap:5px"><i data-lucide="user-plus" style="width:13px;height:13px"></i> Adicionar participante</button>
     </div>
 
     <!-- Opções avançadas (opcional) -->
@@ -3677,10 +3685,14 @@
 <option value="10-15">10-15 anos</option>
 </select>
 </div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+  <div class="fg"><label class="fl" style="font-size:.85em">Nome do convidado</label><input type="text" id="coupleNome" placeholder="Ex: Marcelo" class="fi" style="margin-top:6px;font-size:.85em"></div>
+  <div class="fg"><label class="fl" style="font-size:.85em;display:flex;align-items:center;gap:5px"><i data-lucide="message-circle" style="width:12px;height:12px;color:#25D366"></i> WhatsApp <span style="color:var(--t3);font-weight:400;font-size:.9em">(opcional)</span></label><input type="tel" id="coupleWhatsapp" placeholder="+55 11 9 9999-9999" class="fi" style="margin-top:6px;font-size:.85em"></div>
+</div>
 <label class="fl" style="font-size:.85em;margin-top:12px;display:block">E-mail</label>
 <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
-<input type="email" id="coupleEmail" placeholder="email@convidado.com" style="flex:1;min-width:200px;padding:10px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;color:var(--t1);font-size:.85em;outline:none" aria-label="E-mail do convidado">
-<button class="btn btn-r" onclick="sendFamilyInvite()" style="white-space:nowrap;display:inline-flex;align-items:center;gap:6px;font-size:.85em"><i data-lucide="send" style="width:14px;height:14px"></i> Enviar convite</button>
+  <input type="email" id="coupleEmail" placeholder="email@convidado.com" style="flex:1;min-width:200px;padding:10px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;color:var(--t1);font-size:.85em;outline:none" aria-label="E-mail do convidado">
+  <button class="btn btn-r" onclick="sendFamilyInvite()" style="white-space:nowrap;display:inline-flex;align-items:center;gap:6px;font-size:.85em"><i data-lucide="send" style="width:14px;height:14px"></i> Enviar convite</button>
 </div>
 <div id="coupleInviteStatus" style="margin-top:8px;font-size:.78em"></div>
 </div>
@@ -3731,10 +3743,14 @@
 <option value="10-15">10-15 anos</option>
 </select>
 </div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+  <div class="fg"><label class="fl" style="font-size:.85em">Nome do convidado</label><input type="text" id="famInviteNome" placeholder="Ex: Marcelo" class="fi" style="margin-top:6px;font-size:.85em"></div>
+  <div class="fg"><label class="fl" style="font-size:.85em;display:flex;align-items:center;gap:5px"><i data-lucide="message-circle" style="width:12px;height:12px;color:#25D366"></i> WhatsApp <span style="color:var(--t3);font-weight:400;font-size:.9em">(opcional)</span></label><input type="tel" id="famInviteWhatsapp" placeholder="+55 11 9 9999-9999" class="fi" style="margin-top:6px;font-size:.85em"></div>
+</div>
 <label class="fl" style="font-size:.85em;margin-top:12px;display:block">E-mail</label>
 <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
-<input type="email" id="famInviteEmail" placeholder="email@convidado.com" style="flex:1;min-width:200px;padding:10px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;color:var(--t1);font-size:.85em;outline:none" aria-label="E-mail do convidado">
-<button class="btn btn-r" onclick="sendFamilyInviteFromLinked()" style="white-space:nowrap;display:inline-flex;align-items:center;gap:6px;font-size:.85em"><i data-lucide="send" style="width:14px;height:14px"></i> Enviar convite</button>
+  <input type="email" id="famInviteEmail" placeholder="email@convidado.com" style="flex:1;min-width:200px;padding:10px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px;color:var(--t1);font-size:.85em;outline:none" aria-label="E-mail do convidado">
+  <button class="btn btn-r" onclick="sendFamilyInviteFromLinked()" style="white-space:nowrap;display:inline-flex;align-items:center;gap:6px;font-size:.85em"><i data-lucide="send" style="width:14px;height:14px"></i> Enviar convite</button>
 </div>
 <div id="famInviteStatus" style="margin-top:8px;font-size:.78em"></div>
 </div>

@@ -3,9 +3,11 @@
  * Variáveis: nomeConvidador, linkAceite, codigoConvite
  * Identidade: Sibanki - emojis e cores atualizadas
  */
-function getFamilyInviteEmailHtml(nomeConvidador, linkAceite, codigoConvite) {
+function getFamilyInviteEmailHtml(nomeConvidador, linkAceite, codigoConvite, nomeConvidado) {
   const esc = (s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const n = esc(nomeConvidador);
+  const nc = esc(nomeConvidado || "");
+  const saudacao = nc ? `Olá, <strong>${nc}</strong>! ` : "Olá! ";
   const link = esc(linkAceite);
   const code = esc(codigoConvite);
   return `<!DOCTYPE html>
@@ -34,7 +36,7 @@ function getFamilyInviteEmailHtml(nomeConvidador, linkAceite, codigoConvite) {
           </tr>
           <tr>
             <td style="background:#0d1b2a; padding:40px;">
-              <h2 style="color:#ffffff; margin:0 0 16px; font-size:22px; font-weight:600;">Olá! Você recebeu um convite especial 🎉</h2>
+              <h2 style="color:#ffffff; margin:0 0 16px; font-size:22px; font-weight:600;">${saudacao}Você recebeu um convite especial 🎉</h2>
               <p style="color:#90A4AE; font-size:15px; line-height:1.7; margin:0 0 32px;"><strong style="color:#ffffff;">${n}</strong> quer gerenciar as finanças junto com você no Sibanki — o app financeiro mais completo do Brasil. 💰</p>
               <hr style="border:none; border-top:1px solid #1A237E; margin:0 0 32px;">
               <h3 style="color:#4FC3F7; margin:0 0 16px; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:1.5px;">O que é o Sibanki?</h3>

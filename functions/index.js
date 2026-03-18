@@ -1,6 +1,7 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
+const fmtBRL = (v) => "R$ " + Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const fetch = require("node-fetch");
 const { fetchJson, fetchText } = require("./httpClient");
 const { logEvent, logError } = require("./logger");
@@ -170,7 +171,7 @@ exports.sendFamilyInviteEmail = functions.https.onCall(async (data, context) => 
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Faça login para enviar o convite.");
   }
-  const { inviteId, toEmail, fromName } = data || {};
+  const { inviteId, toEmail, fromName, toNome } = data || {};
   if (!inviteId || !toEmail) {
     throw new functions.https.HttpsError("invalid-argument", "inviteId e toEmail são obrigatórios.");
   }
@@ -192,6 +193,7 @@ exports.sendFamilyInviteEmail = functions.https.onCall(async (data, context) => 
   }
 
   const nomeConvidador = fromName || invite.fromName || "Seu parceiro(a)";
+  const nomeConvidado = toNome || invite.toNome || "";
   const inviteLink = APP_URL + "#invite=" + inviteId;
   const codigoConvite = invite.codigoConvite || genCodigoConvite();
 
@@ -199,8 +201,8 @@ exports.sendFamilyInviteEmail = functions.https.onCall(async (data, context) => 
     await db.collection("invites").doc(inviteId).update({ codigoConvite });
   }
 
-  const html = getFamilyInviteEmailHtml(nomeConvidador, inviteLink, codigoConvite);
-  const subject = nomeConvidador + " te convidou para gerenciar as finanças juntos no Sibanki 💑";
+  const html = getFamilyInviteEmailHtml(nomeConvidador, inviteLink, codigoConvite, nomeConvidado);
+  const subject = nomeConvidador + (nomeConvidado ? `, ${nomeConvidado},` : "") + " te convidou para gerenciar as finanças juntos no Sibanki 💑";
 
   try {
     const { Resend } = require("resend");
@@ -215,6 +217,15 @@ exports.sendFamilyInviteEmail = functions.https.onCall(async (data, context) => 
       logError("Resend error", { error });
       return { ok: false, message: error.message || "Falha ao enviar e-mail." };
     }
+    // Disparar WhatsApp se o convidado tiver telefone vinculado
+    try {
+      const inviteeSnap = await db.collection("users").where("email","==",toEmail).limit(1).get();
+      const inviteePhone = inviteeSnap.empty ? null : inviteeSnap.docs[0].data().whatsappPhone;
+      if (inviteePhone) {
+        await whatsappSvc.sendWhatsAppInviteFamilia(inviteePhone, nomeConvidador, inviteLink);
+        logEvent("sendFamilyInviteWA", { to: inviteePhone });
+      }
+    } catch (_) {}
     return { ok: true, messageId: sendData?.id };
   } catch (e) {
     logError("sendFamilyInviteEmail", e);
@@ -477,160 +488,174 @@ exports.proactiveInsightApi = functions.runWith(chatApiOptions).https.onCall(asy
 // =============================================
 // WHATSAPP BUSINESS (Cloud API) - MVP lançamento por mensagem
 // =============================================
+// =============================================
+// WEBHOOK WHATSAPP — bot completo v3
+// Lançamentos, consultor IA, saldo, resumo, metas, consórcio, credi amigo
+// =============================================
+const whatsappSvc = require("./services/whatsapp/whatsappService");
+
 exports.whatsappWebhook = functions.https.onRequest(async (req, res) => {
+  // Verificação do webhook (GET)
   if (req.method === "GET") {
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
     const challenge = req.query["hub.challenge"];
     if (mode === "subscribe" && token === WHATSAPP_VERIFY_TOKEN) {
-      res.status(200).send(challenge);
-      return;
+      return res.status(200).send(challenge);
     }
-    res.status(403).send("Forbidden");
-    return;
+    return res.status(403).send("Forbidden");
   }
-  if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+
+  // Responder imediatamente (Meta exige <5s)
   res.status(200).send("OK");
+
   const body = req.body;
-  const entry = body.entry && body.entry[0];
-  const changes = entry && entry.changes && entry.changes[0];
-  const value = changes && changes.value;
-  const messages = value && value.messages;
-  if (!messages || !messages[0]) return;
+  const entry = body?.entry?.[0];
+  const value = entry?.changes?.[0]?.value;
+  const messages = value?.messages;
+  if (!messages?.[0]) return;
+
   const msg = messages[0];
-  const from = msg.from;
-  const phone = String(from);
-  const text = (msg.text && msg.text.body) ? String(msg.text.body).trim() : "";
+  const from = String(msg.from);
+  const text = (msg.text?.body || "").trim();
   if (!text) return;
-  const phoneNumberId = value.metadata && value.metadata.phone_number_id ? value.metadata.phone_number_id : WHATSAPP_PHONE_NUMBER_ID;
-  const reply = (txt) => whatsappService.sendWhatsAppText(phoneNumberId, phone, txt);
-  const textLower = text.toLowerCase();
+  const phoneNumberId = value?.metadata?.phone_number_id || WHATSAPP_PHONE_NUMBER_ID;
+  const reply = (txt) => whatsappSvc.sendWhatsAppText(phoneNumberId, from, txt);
+  const tl = text.toLowerCase();
 
   try {
-    // ── 1. Vinculação por código de 6 dígitos ──
+    // ── 1. Vinculação por código 6 dígitos ──
     if (/^\d{6}$/.test(text)) {
       const codeDoc = await db.collection("whatsappCodes").doc(text).get();
       if (codeDoc.exists) {
         const { uid, expiresAt } = codeDoc.data();
-        if (expiresAt && new Date(expiresAt).getTime() > Date.now()) {
-          await db.collection("users").doc(uid).update({ whatsappPhone: phone, updated: new Date().toISOString() });
+        if (new Date(expiresAt).getTime() > Date.now()) {
+          await db.collection("users").doc(uid).update({ whatsappPhone: from, updated: new Date().toISOString() });
           await db.collection("whatsappCodes").doc(text).delete();
           const userDoc = await db.collection("users").doc(uid).get();
-          const nome = (userDoc.exists && userDoc.data().name) ? userDoc.data().name.split(" ")[0] : "você";
-          await reply(`✅ Oi ${nome}! WhatsApp vinculado ao Sibanki!\n\n🚀 *O que posso fazer por você:*\n\n📝 *Lançamentos rápidos*\n"Gastei 50 no mercado"\n"Recebi 2000 de salário"\n\n📊 *Ver resumo*\nEnvie: *resumo*\n\n💰 *Saldo das contas*\nEnvie: *saldo*\n\n❓ *Ajuda*\nEnvie: *ajuda*`);
+          const nome = userDoc.data()?.name?.split(" ")[0] || "você";
+          await reply(`✅ Olá *${nome}*! WhatsApp vinculado ao Sibanki com sucesso!\n\n🤖 *O que posso fazer:*\n\n📝 *Lançar despesa/receita*\n_"Gastei 80 no mercado"_\n_"Recebi 2000 de salário"_\n\n💬 *Consultor IA* — pergunte qualquer coisa sobre suas finanças\n_"Como estou esse mês?"_\n_"Onde estou gastando mais?"_\n\n📊 Comandos: *saldo · resumo · metas · consorcio · crediamigo · ajuda*`);
           return;
         }
       }
-      await reply("Código inválido ou expirado. Gere um novo no app: Configurações > WhatsApp.");
-      return;
+      return reply("❌ Código inválido ou expirado. Gere um novo no app: Configurações > WhatsApp.");
     }
 
-    // ── 2. Buscar usuário vinculado ──
-    const userSnap = await db.collection("users").where("whatsappPhone", "==", phone).limit(1).get();
+    // ── 2. Usuário vinculado? ──
+    const userSnap = await db.collection("users").where("whatsappPhone", "==", from).limit(1).get();
     if (userSnap.empty) {
-      await reply("📱 Para usar o Sibanki pelo WhatsApp:\n\n1. Abra o app Sibanki\n2. Vá em Configurações > WhatsApp\n3. Toque em *Gerar código*\n4. Envie o código de 6 dígitos aqui\n\nAcesse em: sibanki.com.br");
-      return;
+      return reply(`👋 Olá! Para usar o Sibanki pelo WhatsApp:\n\n1. Abra o app em *sibanki.com.br*\n2. Vá em ⚙️ Configurações > WhatsApp\n3. Toque em *Gerar código*\n4. Envie o código de 6 dígitos aqui`);
     }
     const uid = userSnap.docs[0].id;
     const userData = userSnap.docs[0].data();
-    const nomeUsuario = (userData.name || "").split(" ")[0] || "você";
+    const nome = (userData.name || "").split(" ")[0] || "você";
 
-    // ── 3. Comandos especiais ──
-    if (textLower === "ajuda" || textLower === "menu" || textLower === "oi" || textLower === "ola" || textLower === "olá") {
-      await reply(`👋 Oi ${nomeUsuario}! Sou o Sibanki Bot.\n\n📝 *Lançar despesa/receita:*\n"Gastei 80 no restaurante"\n"Recebi 1500 de freela"\n\n📊 *Ver resumo do mês:*\nEnvie: *resumo*\n\n💰 *Ver saldos:*\nEnvie: *saldo*\n\n🎯 *Ver metas:*\nEnvie: *metas*\n\n🤝 *Consórcio Amigos:*\nEnvie: *consorcio*\n\n💸 *Credi Amigo:*\nEnvie: *crediamigo*\n\n🔗 *Abrir app:*\nsibanki.com.br`);
-      return;
+    // ── 3. Comando: ajuda/menu ──
+    if (/^(oi|olá|ola|menu|ajuda|help|start)$/.test(tl)) {
+      return reply(`👋 Oi *${nome}*! Sou o assistente do Sibanki.\n\n📝 *Lançar gasto/receita:*\n"Gastei 80 no restaurante"\n"Recebi 1500 de freela"\n\n💬 *Consultor IA:*\nPergunte qualquer coisa sobre suas finanças!\n\n📊 *Comandos rápidos:*\n*saldo* — ver saldos das contas\n*resumo* — balanço do mês\n*metas* — progresso das metas\n*consorcio* — grupos ativos\n*crediamigo* — empréstimos ativos\n\n🔗 sibanki.com.br`);
     }
 
-    if (textLower === "saldo" || textLower === "saldos") {
-      const userDoc = await db.collection("users").doc(uid).get();
-      const d = userDoc.exists ? userDoc.data() : {};
+    // ── 4. Comando: saldo ──
+    if (/^(saldo|saldos|contas)$/.test(tl)) {
+      const d = userData;
       const contas = d.accounts || [];
       const balances = d.accountBalances || {};
-      if (!contas.length) { await reply("Nenhuma conta cadastrada. Acesse o app para adicionar contas."); return; }
-      const fmtBRL = (v) => "R$ " + Number(v||0).toLocaleString("pt-BR", {minimumFractionDigits:2});
+      if (!contas.length) return reply("Nenhuma conta cadastrada. Adicione no app Sibanki!");
       const total = contas.reduce((s, c) => s + (Number(balances[c]) || 0), 0);
-      const linhas = contas.map(c => `• ${c}: ${fmtBRL(balances[c] || 0)}`).join("\n");
-      await reply(`💰 *Saldos - ${nomeUsuario}*\n\n${linhas}\n\n📊 *Total: ${fmtBRL(total)}*`);
-      return;
+      const linhas = contas.map(c => `• ${c}: *${fmtBRL(balances[c] || 0)}*`).join("\n");
+      return reply(`💰 *Seus saldos, ${nome}:*\n\n${linhas}\n\n📊 *Total: ${fmtBRL(total)}*`);
     }
 
-    if (textLower === "resumo" || textLower === "resumo do mês" || textLower === "resumo mes") {
-      const userDoc = await db.collection("users").doc(uid).get();
-      const d = userDoc.exists ? userDoc.data() : {};
-      const entries = Array.isArray(d.entries) ? d.entries : [];
+    // ── 5. Comando: resumo ──
+    if (/^(resumo|balanço|balanco|mes|mês)$/.test(tl)) {
+      const entries = Array.isArray(userData.entries) ? userData.entries : [];
       const mes = new Date().toISOString().slice(0, 7);
-      const fmtBRL = (v) => "R$ " + Number(v||0).toLocaleString("pt-BR", {minimumFractionDigits:2});
-      const mesEntries = entries.filter(e => e.date && e.date.startsWith(mes) && !e.isTransfer && e.category !== "Transferencia");
+      const mesEntries = entries.filter(e => e.date?.startsWith(mes) && !e.isTransfer && e.category !== "Transferencia");
       const rec = mesEntries.filter(e => e.type === "receita").reduce((s, e) => s + (Number(e.value)||0), 0);
       const desp = mesEntries.filter(e => e.type === "despesa").reduce((s, e) => s + (Number(e.value)||0), 0);
       const saldo = rec - desp;
       const pct = rec > 0 ? Math.round(desp/rec*100) : 0;
+      const mesNome = new Date().toLocaleString("pt-BR", { month: "long" });
       const emoji = saldo >= 0 ? "✅" : "⚠️";
-      await reply(`📊 *Resumo de ${new Date().toLocaleString("pt-BR", {month:"long"})}*\n\n💚 Receitas: ${fmtBRL(rec)}\n🔴 Despesas: ${fmtBRL(desp)}\n${emoji} Saldo: ${fmtBRL(saldo)}\n📈 Uso da renda: ${pct}%\n\n${mesEntries.length} lançamentos no mês`);
-      return;
+      // Top 3 categorias
+      const catMap = {};
+      mesEntries.filter(e => e.type === "despesa").forEach(e => { catMap[e.category] = (catMap[e.category]||0) + Number(e.value); });
+      const topCats = Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([c,v])=>`  • ${c}: ${fmtBRL(v)}`).join("\n");
+      return reply(`📊 *Resumo de ${mesNome}*\n\n💚 Receitas: ${fmtBRL(rec)}\n🔴 Despesas: ${fmtBRL(desp)}\n${emoji} Saldo: *${fmtBRL(saldo)}*\n📈 Uso da renda: ${pct}%\n\n🏷 *Maiores gastos:*\n${topCats||"  Nenhum lançamento"}\n\n📝 ${mesEntries.length} lançamentos no mês`);
     }
 
-    if (textLower === "metas") {
-      const userDoc = await db.collection("users").doc(uid).get();
-      const d = userDoc.exists ? userDoc.data() : {};
-      const goals = Array.isArray(d.goals) ? d.goals : [];
-      if (!goals.length) { await reply("Nenhuma meta cadastrada. Crie metas no app Sibanki!"); return; }
-      const fmtBRL = (v) => "R$ " + Number(v||0).toLocaleString("pt-BR", {minimumFractionDigits:2});
-      const linhas = goals.slice(0, 5).map(g => {
-        const atual = Number(g.atual || g.current || g.saved) || 0;
-        const alvo = Number(g.alvo || g.target) || 1;
+    // ── 6. Comando: metas ──
+    if (/^(metas?|objetivos?)$/.test(tl)) {
+      const goals = Array.isArray(userData.goals) ? userData.goals : [];
+      if (!goals.length) return reply("Nenhuma meta cadastrada. Crie metas no app Sibanki! 🎯");
+      const linhas = goals.slice(0,5).map(g => {
+        const atual = Number(g.atual||g.current||g.saved||0);
+        const alvo = Number(g.alvo||g.target||1);
         const pct = Math.min(100, Math.round(atual/alvo*100));
-        const bar = "▓".repeat(Math.floor(pct/10)) + "░".repeat(10 - Math.floor(pct/10));
-        return `🎯 *${g.nome || g.name}*\n${bar} ${pct}%\n${fmtBRL(atual)} / ${fmtBRL(alvo)}`;
+        const bar = "▓".repeat(Math.floor(pct/10)) + "░".repeat(10-Math.floor(pct/10));
+        return `🎯 *${g.nome||g.name}*\n${bar} ${pct}%\n_${fmtBRL(atual)} de ${fmtBRL(alvo)}_`;
       }).join("\n\n");
-      await reply(`🎯 *Suas Metas*\n\n${linhas}`);
-      return;
+      return reply(`🎯 *Suas Metas*\n\n${linhas}`);
     }
 
-    if (textLower === "consorcio" || textLower === "consórcio") {
-      const grupos = await db.collection("users").doc(uid).collection("consorcio_grupos").where("status", "==", "ativo").limit(5).get();
-      if (grupos.empty) { await reply("Você não tem grupos de Consórcio Amigos ativos.\n\nCrie um no app: Menu > Social > Consórcio Amigos"); return; }
-      const fmtBRL = (v) => "R$ " + Number(v||0).toLocaleString("pt-BR", {minimumFractionDigits:2});
+    // ── 7. Comando: consórcio ──
+    if (/^(cons[oó]rcio|caixa)$/.test(tl)) {
+      const grupos = await db.collection("users").doc(uid).collection("consorcio_grupos").where("status","==","ativo").limit(5).get();
+      if (grupos.empty) return reply("Você não tem grupos de Consórcio Amigos ativos.\n\nCrie um no app: Menu > Social > Consórcio Amigos 🤝");
       const linhas = grupos.docs.map(d => {
         const g = d.data();
-        const total = (g.valorParcela||0) * (g.numParticipantes||0);
-        const parts = Array.isArray(g.participantes) ? g.participantes : [];
-        const pagaram = parts.filter(p => p.statusMes === "pago").length;
-        return `🤝 *${g.nome}*\nBolo: ${fmtBRL(total)} | Pagaram: ${pagaram}/${parts.length}\nVence: dia ${g.diaVencimento}`;
+        const bolo = (g.valorParcela||0)*(g.numParticipantes||0);
+        const parts = Array.isArray(g.participantes)?g.participantes:[];
+        const pagaram = parts.filter(p=>p.statusMes==="pago").length;
+        return `🤝 *${g.nome}*\nBolo: ${fmtBRL(bolo)} | Pagaram: ${pagaram}/${parts.length} | Dia ${g.diaVencimento}`;
       }).join("\n\n");
-      await reply(`🤝 *Consórcio Amigos*\n\n${linhas}\n\nAcesse o app para gerenciar:\nsibanki.com.br`);
-      return;
+      return reply(`🤝 *Consórcio Amigos*\n\n${linhas}\n\nGerencie no app: sibanki.com.br`);
     }
 
-    if (textLower === "crediamigo" || textLower === "credi amigo") {
-      const emprestimos = await db.collection("users").doc(uid).collection("crediamigo").where("status", "==", "ativo").limit(5).get();
-      if (emprestimos.empty) { await reply("Você não tem empréstimos ativos no Credi Amigo.\n\nRegistre no app: Menu > Social > Credi Amigo"); return; }
-      const fmtBRL = (v) => "R$ " + Number(v||0).toLocaleString("pt-BR", {minimumFractionDigits:2});
-      const linhas = emprestimos.docs.map(d => {
+    // ── 8. Comando: credi amigo ──
+    if (/^(credi\s?amigo|empréstimos?|emprestimos?)$/.test(tl)) {
+      const emps = await db.collection("users").doc(uid).collection("crediamigo").where("status","==","ativo").limit(5).get();
+      if (emps.empty) return reply("Você não tem empréstimos ativos no Credi Amigo.\n\nRegistre no app: Menu > Social > Credi Amigo 💸");
+      const linhas = emps.docs.map(d => {
         const e = d.data();
-        const restante = (e.valorTotal||0) - (e.valorPago||0);
-        const tipo = e.tipo === "emprestei" ? "📤 Emprestei para" : "📥 Recebi de";
-        return `${tipo} *${e.amigo}*\nRestante: ${fmtBRL(restante)} | ${e.numParcelas}x de ${fmtBRL(e.valorParcela)}`;
+        const rest = (e.valorTotal||0)-(e.valorPago||0);
+        const ico = e.tipo==="emprestei"?"📤":"📥";
+        return `${ico} *${e.amigo}* — ${fmtBRL(rest)} restante\n_${e.numParcelas}x de ${fmtBRL(e.valorParcela)}_`;
       }).join("\n\n");
-      await reply(`💸 *Credi Amigo*\n\n${linhas}\n\nAcesse o app para gerenciar:\nsibanki.com.br`);
-      return;
+      return reply(`💸 *Credi Amigo*\n\n${linhas}\n\nGerencie no app: sibanki.com.br`);
     }
 
-    // ── 4. Lançamento financeiro (padrão) ──
-    const parsed = await whatsappService.parseMessageToEntry(text);
-    if (!parsed) {
-      await reply(`Não entendi 🤔\n\nTente assim:\n"Gastei 80 no mercado"\n"Recebi 2000 de salário"\n\nOu envie *ajuda* para ver todos os comandos.`);
-      return;
+    // ── 9. Tentar lançamento financeiro ──
+    const parsed = await whatsappSvc.parseMessageToEntry(text);
+    if (parsed) {
+      await whatsappSvc.addEntryToUser(db, uid, parsed);
+      const ico = parsed.type==="receita"?"📈 +":"📉 -";
+      const valor = fmtBRL(parsed.value);
+      return reply(`✅ *Lançado!*\n\n${ico} ${valor}\n📂 ${parsed.category}\n📝 ${parsed.desc}\n📅 ${parsed.date}\n\nEnvie *resumo* para ver o balanço do mês. 💡`);
     }
-    await whatsappService.addEntryToUser(db, uid, parsed);
-    const tipo = parsed.type === "receita" ? "📈 +" : "📉 -";
-    const fmtBRL = "R$ " + parsed.value.toFixed(2).replace(".", ",");
-    await reply(`✅ *Lançado!*\n\n${tipo} ${fmtBRL}\n📂 ${parsed.category}\n📝 ${parsed.desc}\n📅 ${parsed.date}\n\nEnvie *resumo* para ver o balanço do mês.`);
+
+    // ── 10. Consultor IA — tudo que não foi reconhecido ──
+    const entries = Array.isArray(userData.entries) ? userData.entries : [];
+    const mes = new Date().toISOString().slice(0, 7);
+    const mesEntries = entries.filter(e => e.date?.startsWith(mes) && !e.isTransfer);
+    const rec = mesEntries.filter(e => e.type==="receita").reduce((s,e)=>s+Number(e.value||0),0);
+    const desp = mesEntries.filter(e => e.type==="despesa").reduce((s,e)=>s+Number(e.value||0),0);
+    const catMap = {};
+    mesEntries.filter(e=>e.type==="despesa").forEach(e=>{catMap[e.category]=(catMap[e.category]||0)+Number(e.value);});
+    const topCats = Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([c,v])=>`${c}: ${fmtBRL(v)}`).join(", ");
+    const contexto = `Nome: ${userData.name||"Usuário"}. Mês atual: receitas ${fmtBRL(rec)}, despesas ${fmtBRL(desp)}, saldo ${fmtBRL(rec-desp)}. Top categorias: ${topCats||"sem dados"}. Metas: ${(userData.goals||[]).length} cadastradas.`;
+
+    const resposta = await whatsappSvc.consultorIA(uid, text, contexto);
+    return reply(resposta);
+
   } catch (e) {
     logError("whatsappWebhook", e);
-    try { await reply("Ocorreu um erro. Tente de novo em instantes."); } catch (_) {}
+    try { await reply("Ocorreu um erro. Tente de novo em instantes. 🙏"); } catch (_) {}
   }
 });
+
+
 
 // =============================================
 // BRIEFING IA — insight personalizado pós-login
@@ -1096,15 +1121,41 @@ exports.registrarCliqueSolucao = functions.https.onCall(async (data, context) =>
 });
 
 // =============================================
+// CONVITE FAMÍLIA VIA WHATSAPP — callable
+// =============================================
+
+exports.sendWhatsAppInviteFamilia = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError("unauthenticated","Faça login.");
+  const { toPhone, nomeConvidador, toNome, linkConvite } = data || {};
+  if (!toPhone) throw new functions.https.HttpsError("invalid-argument","toPhone obrigatório.");
+  const APP_URL = process.env.APP_URL || "https://sibanki.com.br/app";
+  const link = linkConvite || APP_URL;
+  const nome = nomeConvidador || "Alguém";
+  const nomeConv = toNome || "";
+  const saudacao = nomeConv ? `Olá *${nomeConv}*! ` : "";
+  const msg = `👨‍👩‍👧 *Convite Sibanki — Modo Família*\n\n${saudacao}*${nome}* quer gerenciar as finanças junto com você no *Sibanki*! 💰\n\nCom o Modo Família vocês podem:\n✅ Ver saldos e gastos em conjunto\n✅ Definir metas familiares\n✅ Consultor IA financeiro compartilhado\n\n👇 Aceite o convite:\n${link}\n\n_Sibanki — Controle Financeiro Inteligente com IA_`;
+  try {
+    await whatsappSvc.sendWhatsAppText(null, toPhone, msg);
+    logEvent("sendWhatsAppInviteFamilia", { toPhone, nomeConvidador });
+    return { ok: true };
+  } catch(e) {
+    logError("sendWhatsAppInviteFamilia", e);
+    throw new functions.https.HttpsError("internal", e.message);
+  }
+});
+
+// =============================================
 // CONVITE CONSÓRCIO AMIGOS — e-mail para participantes
 // =============================================
 exports.sendConsorcioInvite = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Faça login para enviar convites.");
   }
-  const { emails, nomeAdmin, nomeGrupo, valorParcela, numParticipantes, boloMensal, prazo, grupoId } = data || {};
-  if (!emails || !emails.length || !nomeGrupo) {
-    throw new functions.https.HttpsError("invalid-argument", "emails e nomeGrupo são obrigatórios.");
+  const { emails, participantes, nomeAdmin, nomeGrupo, valorParcela, numParticipantes, boloMensal, prazo, grupoId } = data || {};
+  // Aceitar tanto array de emails simples quanto array de {nome, email, whatsapp}
+  const listaParticipantes = participantes || (emails ? emails.map(e => ({ email: e, nome: "", whatsapp: "" })) : []);
+  if (!listaParticipantes.length || !nomeGrupo) {
+    throw new functions.https.HttpsError("invalid-argument", "participantes e nomeGrupo são obrigatórios.");
   }
   const apiKey = process.env.RESEND_API_KEY || (functions.config().resend && functions.config().resend.api_key) || "";
   if (!apiKey) return { ok: false, error: "EMAIL_NOT_CONFIGURED" };
@@ -1115,7 +1166,9 @@ exports.sendConsorcioInvite = functions.https.onCall(async (data, context) => {
   const db = admin.firestore();
 
   const results = [];
-  for (const email of emails) {
+  for (const part of listaParticipantes) {
+    const email = typeof part === "string" ? part : (part.email || "");
+    const nomeConvite = typeof part === "string" ? "" : (part.nome || "");
     if (!email || email.indexOf("@") < 0) continue;
     // Criar registro de convite no Firestore
     const inviteRef = await db.collection("consorcio_invites").add({
@@ -1123,22 +1176,33 @@ exports.sendConsorcioInvite = functions.https.onCall(async (data, context) => {
       nomeGrupo,
       nomeAdmin,
       toEmail: email,
+      toNome: nomeConvite,
       fromUid: context.auth.uid,
       status: "pending",
       ts: admin.firestore.FieldValue.serverTimestamp(),
     });
     const link = `${APP_URL}/#consorcio_invite=${inviteRef.id}`;
+    // Template com saudação personalizada pelo nome
+    const saudacaoHtml = nomeConvite ? `<strong>${nomeConvite}</strong>, você foi` : "Você foi";
     const html = getConsorcioInviteEmailHtml(nomeAdmin, nomeGrupo, valorParcela, numParticipantes, boloMensal, prazo, link);
     try {
+      const assunto = nomeConvite
+        ? `${nomeConvite}, ${nomeAdmin} te convidou para um consórcio no Sibanki 🤝`
+        : `${nomeAdmin} te convidou para um consórcio no Sibanki 🤝`;
       const { error } = await resend.emails.send({
         from: process.env.RESEND_FROM || "Sibanki <noreply@sibanki.com.br>",
         to: [email],
-        subject: `${nomeAdmin} te convidou para um consórcio no Sibanki 🤝`,
+        subject: assunto,
         html,
       });
       results.push({ email, ok: !error, error: error?.message });
       logEvent("sendConsorcioInvite", { to: email, grupoId });
-    } catch (e) {
+      // WhatsApp paralelo ao e-mail
+      try {
+        const uSnap = await db.collection("users").where("email","==",email).limit(1).get();
+        const waPhone = uSnap.empty ? null : uSnap.docs[0].data().whatsappPhone;
+        if (waPhone) await whatsappSvc.sendWhatsAppInviteConsorcio(waPhone, nomeAdmin, nomeGrupo, valorParcela, boloMensal, prazo, link);
+      } catch (_) {}    } catch (e) {
       results.push({ email, ok: false, error: e.message });
       logError("sendConsorcioInvite", e);
     }
@@ -1194,6 +1258,48 @@ exports.sendCrediAmigoInvite = functions.https.onCall(async (data, context) => {
     return { ok: true, inviteId: inviteRef.id };
   } catch (e) {
     logError("sendCrediAmigoInvite", e);
+    throw new functions.https.HttpsError("internal", e.message);
+  }
+});
+
+// =============================================
+// CONVITE CONSÓRCIO VIA WHATSAPP — callable
+// =============================================
+exports.sendWhatsAppInviteConsorcioCallable = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Faça login.");
+  const { toPhone, nomeAdmin, toNome, nomeGrupo, valorParcela, boloMensal, prazo } = data || {};
+  if (!toPhone) throw new functions.https.HttpsError("invalid-argument", "toPhone obrigatório.");
+  const APP_URL = process.env.APP_URL || "https://sibanki.com.br/app";
+  const saudacao = toNome ? `Olá *${toNome}*! ` : "";
+  const msg = `🤝 *${saudacao}Você foi convidado para um Consórcio!*\n\n*${nomeAdmin}* criou o grupo *"${nomeGrupo}"* no Sibanki.\n\n💰 Contribuição: *${fmtBRL(valorParcela)}/mês*\n🎯 Bolo mensal: *${fmtBRL(boloMensal)}*\n📅 Duração: *${prazo} meses*\n\nComo funciona:\n• Todo mês todos contribuem\n• Sorteio auditável e transparente\n• Em ${prazo} meses todo mundo recebe!\n\n👇 Ver detalhes e participar:\n${APP_URL}\n\n_Sibanki — Consórcio entre amigos, sem banco e sem juros_`;
+  try {
+    await whatsappSvc.sendWhatsAppText(null, toPhone, msg);
+    logEvent("sendWhatsAppInviteConsorcioCallable", { toPhone, nomeGrupo });
+    return { ok: true };
+  } catch (e) {
+    logError("sendWhatsAppInviteConsorcioCallable", e);
+    throw new functions.https.HttpsError("internal", e.message);
+  }
+});
+
+// =============================================
+// CONVITE CREDI AMIGO VIA WHATSAPP — callable
+// =============================================
+exports.sendWhatsAppInviteCrediAmigoCallable = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Faça login.");
+  const { toPhone, nomeCredor, toNome, valor, parcelas, valorParcela, tipoCredor } = data || {};
+  if (!toPhone) throw new functions.https.HttpsError("invalid-argument", "toPhone obrigatório.");
+  const APP_URL = process.env.APP_URL || "https://sibanki.com.br/app";
+  const saudacao = toNome ? `Olá *${toNome}*! ` : "";
+  const msg = tipoCredor
+    ? `💸 *${saudacao}${nomeCredor} registrou um empréstimo para você*\n\nVocê deve *${fmtBRL(valor)}* para ${nomeCredor}${parcelas > 1 ? ` em ${parcelas}x de ${fmtBRL(valorParcela)}` : ""}.\n\nAcompanhe o acordo e receba lembretes no *Sibanki Credi Amigo* — grátis!\n\n👇 Ver meu acordo:\n${APP_URL}\n\n_Sibanki — Empréstimos entre amigos com transparência_`
+    : `💰 *${saudacao}${nomeCredor} registrou que você tem a receber*\n\nVocê tem *${fmtBRL(valor)} a receber* de ${nomeCredor}${parcelas > 1 ? ` em ${parcelas}x de ${fmtBRL(valorParcela)}` : ""}.\n\nAcompanhe no *Sibanki Credi Amigo* — grátis!\n\n👇 Ver meu acordo:\n${APP_URL}\n\n_Sibanki — Empréstimos entre amigos com transparência_`;
+  try {
+    await whatsappSvc.sendWhatsAppText(null, toPhone, msg);
+    logEvent("sendWhatsAppInviteCrediAmigoCallable", { toPhone, nomeCredor });
+    return { ok: true };
+  } catch (e) {
+    logError("sendWhatsAppInviteCrediAmigoCallable", e);
     throw new functions.https.HttpsError("internal", e.message);
   }
 });
