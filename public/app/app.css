@@ -152,11 +152,11 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 /* Lucide icons */
 .drawer-nav-item{display:flex;align-items:center;gap:12px;padding:12px 20px;font-size:.88rem;color:var(--t2);cursor:pointer;transition:all .15s ease;border-left:3px solid transparent;text-decoration:none;border-radius:0 12px 12px 0}
 .drawer-nav-item:hover{color:var(--t1);background:rgba(255,255,255,.04)}
-.drawer-nav-item.active{background:var(--vr);color:#fff!important;font-weight:700;border-left-color:transparent;box-shadow:0 4px 16px rgba(59,130,246,.35)}
-.drawer-nav-item.active .module-icon{background:rgba(255,255,255,.18)!important}
-.drawer-nav-item.active .module-icon [data-lucide]{color:#fff!important}
-.drawer-nav-item.active .dni-label{color:#fff}
-.drawer-nav-item.active .dni-desc{color:rgba(255,255,255,.65)!important}
+.drawer-nav-item.active{background:rgba(59,130,246,.14);color:var(--t1)!important;font-weight:700;border-left-color:var(--vr);border-left-width:3px}
+.drawer-nav-item.active .module-icon{background:rgba(59,130,246,.2)!important}
+.drawer-nav-item.active .module-icon [data-lucide]{color:var(--vr)!important}
+.drawer-nav-item.active .dni-label{color:var(--t1)}
+.drawer-nav-item.active .dni-desc{color:var(--t3)!important}
 /* Grupo que contém o item ativo: header fica levemente destacado */
 .drawer-nav-group:has(.drawer-nav-item.active) .drawer-nav-group-head{color:var(--t1);background:rgba(255,255,255,.03)}
 .drawer-nav-item .module-icon{flex-shrink:0;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center}
