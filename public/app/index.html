@@ -1,4 +1,4 @@
-﻿
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -49,7 +49,7 @@
 
 
 
-<link rel="stylesheet" href="app.css?v=20260318-sw-fix">
+<link rel="stylesheet" href="app.css?v=20260324-v8">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
@@ -290,7 +290,7 @@
 <!-- DRAWER (menu lateral) -->
 <aside class="drawer" id="drawer" role="navigation" aria-label="Menu principal">
 <button class="drawer-close-btn" id="drawerToggleBtn" onclick="event.stopPropagation();(window.innerWidth>=1024?toggleDrawer():closeDrawer())" aria-label="Fechar menu" type="button"><i data-lucide="x" style="width:22px;height:22px"></i><span class="drawer-expand-icon" style="display:none" aria-hidden="true"><i data-lucide="panel-right-open" style="width:20px;height:20px"></i></span></button>
-<div class="drawer-header" onclick="go('perfil',null);closeDrawer()" role="button" tabindex="0" title="Abrir Perfil" style="cursor:pointer">
+<div class="drawer-header" onmousedown="event.preventDefault();go('perfil',null);closeDrawer()" role="button" tabindex="0" title="Abrir Perfil" style="cursor:pointer">
 <div class="drawer-avatar" id="drawerAvatar"><span id="drawerAvatarInicial">U</span></div>
 <div class="drawer-user-name" id="drawerUserName">Usuário</div>
 <div class="drawer-user-email" id="drawerUserEmail">email@exemplo.com</div>
@@ -301,6 +301,7 @@
 <div class="drawer-nav-item active" data-go="dash"><div class="module-icon module-icon-dash"><i data-lucide="layout-dashboard"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_dashboard">Dashboard</span><span class="dni-desc">Visão geral</span></div></div>
 <div class="drawer-nav-item" data-go="contas"><div class="module-icon module-icon-contas"><i data-lucide="landmark"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_contas">Contas</span><span class="dni-desc">Saldos</span></div></div>
 <div class="drawer-nav-item" data-go="cartões"><div class="module-icon module-icon-cartoes"><i data-lucide="credit-card"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_cartoes">Cartões</span><span class="dni-desc">Faturas</span></div></div>
+<div class="drawer-nav-item" data-go="credito"><div class="module-icon module-icon-cartoes"><i data-lucide="wallet-cards"></i></div><div class="dni-text"><span class="dni-label">Crédito</span><span class="dni-desc">Hub consolidado</span></div></div>
 <div class="drawer-nav-item" data-go="lanc"><div class="module-icon module-icon-lanc"><i data-lucide="arrow-left-right"></i></div><div class="dni-text"><span class="dni-label" data-i18n="menu_lancamentos">Lançamentos</span><span class="dni-desc">Receitas e despesas</span></div></div>
 
 <div class="drawer-nav-group" id="drawerGroupPlanejamento">
@@ -377,7 +378,7 @@
 <!-- HEADER -->
 <div class="top top-header" id="topHeader">
 <div class="top-header-l">
-<button class="top-header-btn-menu" onclick="toggleDrawer()" aria-label="Abrir menu"><i data-lucide="menu"></i></button>
+<button class="top-header-btn-menu" onclick="toggleDrawer(event)" aria-label="Abrir menu"><i data-lucide="menu"></i></button>
 </div>
 <div class="top-header-c">
 <div class="top-header-logo sibanki-logo">
@@ -390,7 +391,7 @@
 <button onclick="toggleTheme()" id="themeBtn" class="top-header-icon-btn" style="display:inline-flex;align-items:center;justify-content:center" title="Alternar tema claro/escuro"><i data-lucide="sun" style="width:20px;height:20px"></i></button>
 <button class="notif-btn" onclick="toggleNP()" title="Notificações"><i data-lucide="bell"></i><span class="notif-badge" id="nBadge" style="display:none">0</span></button>
 <div class="avatar-dropdown-wrap">
-<div class="top-header-avatar" id="topHeaderAvatar" onclick="toggleAvatarDropdown(event)" role="button" tabindex="0" title="Menu da conta" aria-haspopup="true" aria-expanded="false" style="cursor:pointer"><span id="topHeaderAvatarInicial">U</span></div>
+<div class="top-header-avatar" id="topHeaderAvatar" onmousedown="event.preventDefault();toggleAvatarDropdown(event)" role="button" tabindex="0" title="Menu da conta" aria-haspopup="true" aria-expanded="false" style="cursor:pointer"><span id="topHeaderAvatarInicial">U</span></div>
 </div>
 </div>
 </div>
@@ -442,14 +443,14 @@
 <button class="dash-edit-panel-close" onclick="toggleDashboardEdit()" aria-label="Fechar"><i data-lucide="x" style="width:20px;height:20px"></i></button>
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px"><button class="dash-add-widget-btn" onclick="var p=document.getElementById('dashWidgetPicker');var c=document.getElementById('dashWidgetPickerClose');p.style.display=p.style.display==='none'?'flex':'none';if(c)c.style.display=p.style.display==='flex'?'inline-flex':'none';if(typeof window.refreshLucide==='function')window.refreshLucide();"><i data-lucide="plus-circle" style="width:16px;height:16px"></i> <span data-i18n="adicionar_widget">Adicionar Widget</span></button>
 <div id="dashWidgetPicker" class="dash-widget-picker" style="display:none"></div><button type="button" class="dash-widget-picker-close" id="dashWidgetPickerClose" onclick="document.getElementById('dashWidgetPicker').style.display='none';var cx=document.getElementById('dashWidgetPickerClose');if(cx)cx.style.display='none';" style="display:none"><i data-lucide="x" style="width:14px;height:14px"></i> <span data-i18n="fechar_lista">Fechar lista</span></button></div>
-<button class="dash-save-layout-btn" onclick="salvarLayoutDashboard();toggleDashboardEdit()"><i data-lucide="check" style="width:16px;height:16px"></i> <span data-i18n="salvar_layout">Salvar Layout</span></button>
-<button class="dash-reset-layout-btn" onclick="resetarLayoutDashboard();toggleDashboardEdit()"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i> <span data-i18n="resetar">Resetar</span></button>
+<button class="dash-save-layout-btn" onclick="salvarLayoutDashboard(true)"><i data-lucide="check" style="width:16px;height:16px"></i> <span data-i18n="salvar_layout">Salvar Layout</span></button>
+<button class="dash-reset-layout-btn" onclick="resetarLayoutDashboard(true)"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i> <span data-i18n="resetar">Resetar</span></button>
 </div>
 </div>
 
 <!-- TAB: LANÇAMENTOS -->
 <div id="lanc" class="tab">
-
+<div class="lanc-scroll-wrap">
 <!-- HEADER -->
 <div class="fin-header">
 <div class="fin-header-text">
@@ -491,6 +492,14 @@
 </div>
 <div class="cat-picker-dropdown" id="fCDropdown" role="listbox"></div>
 </div>
+</div>
+<div class="fg"><label data-i18n="e_recorrente">É recorrente?</label>
+<select id="fRecorrente" class="fi" aria-label="Tipo de lançamento" onchange="onRecorrenteChange(this.value)">
+<option value="nao">Não</option>
+<option value="sim">Sim</option>
+</select>
+<input type="hidden" id="fRecorrenciaDuracao" value="">
+<input type="hidden" id="fRecorrenciaFreq" value="mensal">
 </div>
 <div class="fg"><label>Forma de Pagamento</label>
 <select id="fPgto" class="fi" onchange="onChangePgto(this.value)">
@@ -600,7 +609,7 @@
 <select id="filM" onchange="rE()" class="fi lf-item"><option value="all">Todos</option><option value="1">Jan</option><option value="2">Fev</option><option value="3">Mar</option><option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
 <select id="filT" onchange="rE()" class="fi lf-item"><option value="all">Todos</option><option value="despesa">Despesas</option><option value="receita">Receitas</option></select>
 <select id="filA" onchange="rE()" class="fi lf-item"><option value="all">Todas Contas</option></select>
-<input type="text" id="filS" placeholder="Buscar..." oninput="rE()" class="fi lf-item" aria-label="Buscar avançado">
+<input type="text" id="filS" placeholder="Buscar..." oninput="debouncedRenderForSearch()" class="fi lf-item" aria-label="Buscar avançado">
 </div>
 <div class="lanc-filtros-row" style="margin-top:6px">
 <label class="lf-label">De:</label><input type="date" id="filDe" class="fi lf-item" style="width:130px" onchange="rE()">
@@ -625,6 +634,7 @@
 </div>
 </div>
 
+</div>
 </div>
 
 <!-- TAB: CARTOES DE CREDITO -->
@@ -719,8 +729,13 @@
 
 <!-- RESUMO GERAL -->
 <div style="margin-top:20px">
-<h3 style="font-size:.95em;color:var(--t2);margin-bottom:10px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="bar-chart-2" style="width:18px;height:18px"></i> Resumo Geral</h3>
+<h3 style="font-size:.95em;color:var(--t2);margin-bottom:10px;display:inline-flex;align-items:center;gap:8px"><i data-lucide="bar-chart-2" style="width:18px;height:18px"></i> Resumo dos Cartões</h3>
 <div id="cardsResumo" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
+</div>
+
+<!-- CTA HUB DE CREDITO -->
+<div style="margin-top:20px">
+<div id="cardsCreditHubCta" style="display:grid;gap:12px"></div>
 </div>
 
 <!-- MODAL CARTAO -->
@@ -763,6 +778,38 @@
 </div>
 </div>
 
+</div>
+
+</div>
+
+<!-- TAB: HUB DE CREDITO -->
+<div id="credito" class="tab">
+<div class="fin-header">
+<div class="fin-header-text">
+<h2 style="margin:0;font-size:1.2em;display:inline-flex;align-items:center;gap:10px"><i data-lucide="wallet-cards" style="width:26px;height:26px;color:var(--vr)"></i> Meu Crédito</h2>
+<p style="margin:4px 0 0;font-size:.82em;color:var(--t2)">Acompanhe limites, dívidas, renegociações e o plano ideal para organizar seu crédito.</p>
+</div>
+</div>
+
+<div id="creditHubOverview" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px"></div>
+<div id="creditHubCardsBlock" style="display:grid;gap:12px;margin-bottom:16px"></div>
+<div id="creditHubLoansBlock" style="display:grid;gap:12px;margin-bottom:16px"></div>
+<div id="creditHubActionPlan" style="display:grid;gap:12px;margin-bottom:16px"></div>
+<div id="creditHubOpportunities" style="display:grid;gap:12px;margin-bottom:16px"></div>
+<div id="creditHubEducation" style="display:grid;gap:12px;margin-bottom:16px"></div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+<h3 style="font-size:.95em;color:var(--t2);margin:0;display:inline-flex;align-items:center;gap:8px"><i data-lucide="wallet-cards" style="width:18px;height:18px"></i> Crédito Estruturado</h3>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button type="button" class="btn btn-o" onclick="openLegacyCreditAccountModal()" style="padding:8px 12px;font-size:.8em">Nova conta de crédito</button>
+<button type="button" class="btn btn-r" onclick="openLegacyCreditObligationModal()" style="padding:8px 12px;font-size:.8em">Nova obrigação</button>
+</div>
+</div>
+<p style="font-size:.8em;color:var(--t3);margin:0 0 12px">Cadastre empréstimos, financiamentos, parcelas e faturas que ainda não estão totalmente refletidos no app. Isso alimenta o consultor e a visão macro da sua vida financeira.</p>
+<div id="legacyCreditSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px"></div>
+<div id="legacyCreditRecommendations" style="display:grid;gap:10px;margin-bottom:12px"></div>
+<div id="legacyCreditAccountsList" style="display:grid;gap:10px;margin-bottom:12px"></div>
+<div id="legacyCreditObligationsList" style="display:grid;gap:10px"></div>
 </div>
 
 
@@ -1790,9 +1837,24 @@
 </div>
 </div>
 
-<!-- CARTEIRA FÍSICA - TELA DETALHE (substituída por modal Detalhes da conta) -->
-<div id="carteiraDetailWrap" class="carteira-detail-wrap" style="display:none">
+<!-- CONTA - TELA DETALHE COM IDENTIDADE DA INSTITUIÇÃO -->
+<div id="carteiraDetailWrap" class="carteira-detail-wrap">
 <button type="button" class="carteira-detail-back" onclick="closeCarteiraDetail()"><i data-lucide="arrow-left" style="width:20px;height:20px"></i> Voltar às contas</button>
+<div class="carteira-bank-hero" id="carteiraDetailHero">
+<div class="carteira-bank-hero-top">
+<div class="carteira-bank-hero-logo" id="carteiraDetailLogo"></div>
+<div class="carteira-bank-hero-copy">
+<div class="carteira-bank-hero-label">Acesso simulado da instituição</div>
+<div class="carteira-bank-hero-name" id="carteiraDetailNome">Conta</div>
+<div class="carteira-bank-hero-domain" id="carteiraDetailDominio">instituicao.com.br</div>
+<div class="carteira-bank-hero-type" id="carteiraDetailTipo">Conta corrente</div>
+</div>
+</div>
+<div class="carteira-bank-hero-balance">
+<span id="carteiraDetailSaldoHeroLabel">Saldo disponível</span>
+<strong id="carteiraDetailSaldoHero">R$ 0,00</strong>
+</div>
+</div>
 <div class="carteira-detail-tabs">
 <button type="button" class="carteira-detail-tab on" data-tab="visao" onclick="setCarteiraTab('visao')"><span data-i18n="visao_geral">Visão geral</span></button>
 <button type="button" class="carteira-detail-tab" data-tab="mov" onclick="setCarteiraTab('mov')"><span data-i18n="movimentacoes">Movimentações</span></button>
@@ -1800,17 +1862,30 @@
 <div class="carteira-detail-card">
 <div id="carteiraTabVisao" class="carteira-tab-content">
 <div class="carteira-detail-grid">
-<div class="carteira-detail-field"><span class="label">Saldo atual</span><div class="value" id="carteiraDetailSaldo">R$ 0,00</div></div>
-<div class="carteira-detail-field"><span class="label">Saldo previsto</span><div class="value" id="carteiraDetailPrevisto">R$ 0,00</div></div>
+<div class="carteira-detail-field"><span class="label">Saldo em conta</span><div class="value" id="carteiraDetailSaldo">R$ 0,00</div></div>
+<div class="carteira-detail-field"><span class="label">Disponível total</span><div class="value" id="carteiraDetailPrevisto">R$ 0,00</div></div>
+<div class="carteira-detail-field"><span class="label">Limite do cheque especial</span><div class="value" id="carteiraDetailChequeLimite">R$ 0,00</div></div>
+<div class="carteira-detail-field"><span class="label">Cheque especial usado</span><div class="value" id="carteiraDetailChequeUsado">R$ 0,00</div></div>
 <div class="carteira-detail-field"><span class="label"><span data-i18n="receitas_este_mes">Receitas este mês</span></span><div class="value" style="color:var(--green)" id="carteiraDetailRec">R$ 0,00</div></div>
 <div class="carteira-detail-field"><span class="label"><span data-i18n="despesas_este_mes">Despesas este mês</span></span><div class="value" style="color:var(--danger)" id="carteiraDetailDesp">R$ 0,00</div></div>
+<div class="carteira-detail-field"><span class="label"><span data-i18n="transferencias">Transferências no mês</span></span><div class="value" id="carteiraDetailTransf">0</div></div>
+<div class="carteira-detail-field"><span class="label">Cheque especial livre</span><div class="value" id="carteiraDetailChequeDisponivel">R$ 0,00</div></div>
+<div class="carteira-detail-field"><span class="label">Tipo de conta</span><div class="value" id="carteiraDetailTipoResumo">Conta corrente</div></div>
 </div>
 <div class="carteira-detail-actions">
-<button type="button" class="carteira-detail-btn carteira-detail-btn-o" onclick="closeCarteiraDetail();openWltTransfer()"><i data-lucide="arrow-left-right" style="width:18px;height:18px"></i> Transferir</button>
-<button type="button" class="carteira-detail-btn carteira-detail-btn-amber" onclick="closeCarteiraDetail();openWltAjuste('Carteira física')"><i data-lucide="wallet" style="width:18px;height:18px"></i> Reajuste de saldo</button>
+<button type="button" class="carteira-detail-btn carteira-detail-btn-o" onclick="openCarteiraDetailTransfer()"><i data-lucide="arrow-left-right" style="width:18px;height:18px"></i> Transferir</button>
+<button type="button" class="carteira-detail-btn carteira-detail-btn-amber" onclick="openCarteiraDetailAjuste()"><i data-lucide="wallet" style="width:18px;height:18px"></i> Reajuste de saldo</button>
+<button type="button" class="carteira-detail-btn carteira-detail-btn-p" onclick="openCarteiraDetailEditar()"><i data-lucide="pencil" style="width:18px;height:18px"></i> Editar conta</button>
 </div>
 </div>
 <div id="carteiraTabMov" class="carteira-tab-content" style="display:none">
+<div class="carteira-detail-mov-head">
+<div>
+<div class="carteira-detail-mov-label">Extrato recente</div>
+<div class="carteira-detail-mov-sub" id="carteiraDetailMovSub">Últimas movimentações da conta</div>
+</div>
+<button type="button" class="carteira-detail-btn carteira-detail-btn-o" style="padding:10px 16px" onclick="showBankExtratoModal(_carteiraDetailAcc)">Extrato rápido</button>
+</div>
 <div id="carteiraMovList"></div>
 </div>
 </div>
@@ -1925,6 +2000,16 @@
 <div class="fg" style="margin-bottom:12px"><label class="fl">Tipo de conta</label><select id="editarContaTipo" class="fi"><option value="Conta corrente">Conta corrente</option><option value="Poupança">Poupança</option><option value="Carteira">Carteira</option><option value="Investimento">Investimento</option><option value="Outros">Outros</option></select></div>
 <div class="fg" style="margin-bottom:12px"><label class="fl">Cor da conta</label><div class="editar-conta-cores" id="editarContaCores"></div></div>
 <div class="detalhes-conta-toggle" style="margin-bottom:12px"><label>Incluir na soma da tela inicial</label><input type="checkbox" id="editarContaIncluir" style="width:20px;height:20px;accent-color:var(--vr)"></div>
+<div class="fg conta-extra-box" style="margin-bottom:12px">
+<label class="conta-extra-toggle">
+<input type="checkbox" id="editarContaChequeCheck" onchange="toggleEditarContaCheque()" style="width:18px;height:18px;accent-color:var(--vr)"> Essa conta tem cheque especial?
+</label>
+<div id="editarContaChequeFields" class="conta-extra-fields" style="display:none">
+<div class="fg"><label class="fl">Limite do cheque especial (R$)</label><input type="number" id="editarContaChequeLimite" class="fi" placeholder="0,00" step="0.01" min="0"></div>
+<div class="fg"><label class="fl">Juros estimado (% ao mês)</label><input type="number" id="editarContaChequeJuros" class="fi" placeholder="Ex: 8.00" step="0.01" min="0"></div>
+</div>
+<div class="conta-extra-note">Ao salvar, esse limite passa a ser entendido automaticamente como crédito da instituição.</div>
+</div>
 <a href="#" onclick="event.preventDefault();closeEditarConta();openWltAjuste(_editarContaAcc);return false" style="color:var(--vr);font-size:.9rem;font-weight:600">REAJUSTE DE SALDO</a>
 <div class="reajuste-footer" style="margin-top:20px">
 <button type="button" class="carteira-detail-btn carteira-detail-btn-o" onclick="closeEditarConta()">Cancelar</button>
@@ -1988,6 +2073,18 @@
 <div class="fg"><label class="fl">Dia da cobrança (1 a 28)</label>
 <input type="number" id="wCestaDay" class="fi" placeholder="Ex: 5" min="1" max="28"></div>
 </div>
+</div>
+<div class="fg conta-extra-box" id="wChequeDiv" style="display:none">
+<label class="conta-extra-toggle">
+<input type="checkbox" id="wChequeCheck" onchange="toggleWltCheque()" style="width:18px;height:18px;accent-color:var(--vr)"> Essa conta tem cheque especial?
+</label>
+<div id="wChequeFields" class="conta-extra-fields" style="display:none">
+<div class="fg"><label class="fl">Limite do cheque especial (R$)</label>
+<input type="number" id="wChequeLimit" class="fi" placeholder="0,00" step="0.01" min="0"></div>
+<div class="fg"><label class="fl">Juros estimado (% ao mês)</label>
+<input type="number" id="wChequeRate" class="fi" placeholder="Ex: 8.00" step="0.01" min="0"></div>
+</div>
+<div class="conta-extra-note">O Sibanki vincula esse limite a esta conta e usa isso automaticamente no crédito estruturado.</div>
 </div>
 </div>
 <div class="card-modal-footer">
@@ -3545,12 +3642,48 @@
 
 
 
+<!-- Popup: duração da recorrência (nível raiz para sempre visível) -->
+<div id="recDuracaoPopup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10001;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)closeRecDuracaoPopup()">
+<div style="background:var(--card);border-radius:16px;padding:24px;width:100%;max-width:380px;border:1px solid rgba(59,130,246,.3);box-shadow:0 12px 40px rgba(0,0,0,.6)" onclick="event.stopPropagation()">
+<h3 style="margin:0 0 6px;font-size:1.05em;color:var(--t1);display:flex;align-items:center;gap:8px"><i data-lucide="repeat" style="width:20px;height:20px;color:var(--vr)"></i> <span data-i18n="rec_duracao_titulo">Configurar Recorrência</span></h3>
+<p style="font-size:.82em;color:var(--t2);margin:0 0 14px;line-height:1.5" data-i18n="rec_duracao_desc">Defina com que frequência e por quanto tempo esse lançamento se repete.</p>
+
+<!-- ✅ FIX Bug 1: Periodicidade adicionada ao popup -->
+<div style="margin-bottom:14px">
+<label style="display:block;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:6px">Periodicidade</label>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+<button type="button" class="rec-freq-btn" data-freq="mensal" onclick="selectRecFreq('mensal')" style="padding:7px 4px;border-radius:8px;border:1px solid var(--brd);background:var(--bg2);color:var(--t2);font-size:.78rem;cursor:pointer;transition:all .15s">Mensal</button>
+<button type="button" class="rec-freq-btn" data-freq="semanal" onclick="selectRecFreq('semanal')" style="padding:7px 4px;border-radius:8px;border:1px solid var(--brd);background:var(--bg2);color:var(--t2);font-size:.78rem;cursor:pointer;transition:all .15s">Semanal</button>
+<button type="button" class="rec-freq-btn" data-freq="quinzenal" onclick="selectRecFreq('quinzenal')" style="padding:7px 4px;border-radius:8px;border:1px solid var(--brd);background:var(--bg2);color:var(--t2);font-size:.78rem;cursor:pointer;transition:all .15s">Quinzenal</button>
+<button type="button" class="rec-freq-btn" data-freq="bimestral" onclick="selectRecFreq('bimestral')" style="padding:7px 4px;border-radius:8px;border:1px solid var(--brd);background:var(--bg2);color:var(--t2);font-size:.78rem;cursor:pointer;transition:all .15s">Bimestral</button>
+<button type="button" class="rec-freq-btn" data-freq="trimestral" onclick="selectRecFreq('trimestral')" style="padding:7px 4px;border-radius:8px;border:1px solid var(--brd);background:var(--bg2);color:var(--t2);font-size:.78rem;cursor:pointer;transition:all .15s">Trimestral</button>
+<button type="button" class="rec-freq-btn" data-freq="anual" onclick="selectRecFreq('anual')" style="padding:7px 4px;border-radius:8px;border:1px solid var(--brd);background:var(--bg2);color:var(--t2);font-size:.78rem;cursor:pointer;transition:all .15s">Anual</button>
+</div>
+</div>
+
+<div style="margin-bottom:16px">
+<label style="display:block;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:6px">Duração</label>
+<div style="display:flex;flex-direction:column;gap:6px">
+<button type="button" class="rec-duracao-btn" data-value="indeterminado" onclick="selectRecDuracao('indeterminado')"><i data-lucide="infinity" style="width:16px;height:16px"></i> <span data-i18n="rec_indeterminado">Indeterminado</span></button>
+<button type="button" class="rec-duracao-btn" data-value="3" onclick="selectRecDuracao('3')">3 <span data-i18n="meses">meses</span></button>
+<button type="button" class="rec-duracao-btn" data-value="6" onclick="selectRecDuracao('6')">6 <span data-i18n="meses">meses</span></button>
+<button type="button" class="rec-duracao-btn" data-value="12" onclick="selectRecDuracao('12')">12 <span data-i18n="meses">meses</span></button>
+<button type="button" class="rec-duracao-btn" data-value="24" onclick="selectRecDuracao('24')">24 <span data-i18n="meses">meses</span></button>
+<button type="button" class="rec-duracao-btn" data-value="36" onclick="selectRecDuracao('36')">36 <span data-i18n="meses">meses</span></button>
+</div>
+</div>
+<button type="button" class="btn btn-o" style="width:100%;margin-top:4px" onclick="closeRecDuracaoPopup()" data-i18n="cancelar">Cancelar</button>
+</div>
+</div>
+
 <div id="editMdl" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center">
 <div style="background:var(--c1);border-radius:16px;padding:24px;width:90%;max-width:420px">
 <h3 style="margin:0 0 16px"><span data-i18n="editar_lancamento">Editar Lançamento</span></h3>
 <div style="margin-bottom:10px"><label class="fl">Data</label><input type="date" id="edD" class="fi"></div>
 <div style="margin-bottom:10px"><label class="fl">Tipo</label><select id="edT" class="fi"><option value="despesa">Despesa</option><option value="receita">Receita</option></select></div>
 <div style="margin-bottom:10px"><label class="fl">Categoria</label><select id="edC" class="fi"></select></div>
+<div style="margin-bottom:10px"><label class="fl" data-i18n="e_recorrente">É recorrente?</label><select id="edRecorrente" class="fi" aria-label="Tipo de lançamento" onchange="onEdRecorrenteChange(this.value)"><option value="nao" data-i18n="nao">Não</option><option value="sim" data-i18n="sim">Sim</option></select></div>
+<div id="edRecDuracaoWrap" style="display:none;margin-bottom:10px"><label class="fl" data-i18n="rec_duracao_titulo">Tempo de recorrência</label><select id="edRecorrenciaDuracao" class="fi"><option value="indeterminado" data-i18n="rec_indeterminado">Indeterminado</option><option value="3">3 meses</option><option value="6">6 meses</option><option value="12">12 meses</option><option value="24">24 meses</option><option value="36">36 meses</option></select></div>
 <div style="margin-bottom:10px"><label class="fl">Valor</label><input type="number" id="edV" class="fi" step="0.01"></div>
 <div style="margin-bottom:10px"><label class="fl"><span data-i18n="descricao">Descrição</span></label><input type="text" id="edDe" class="fi"></div>
 <div style="margin-bottom:10px"><label class="fl">Conta</label><select id="edA" class="fi"></select></div>
@@ -3978,7 +4111,7 @@
 </div></div>
 
 
-<script src="app.js?v=20260318-sw-fix"></script>
+<script src="app.js?v=20260324-v8"></script>
 <!-- BRIEFING MODAL (pós-login) -->
 <div id="sibBriefingModal" class="sib-bf-ov" onclick="if(event.target===this)closeBriefing()" role="dialog" aria-modal="true" aria-labelledby="sibBriefTitle" style="display:none">
   <div class="sib-bf-box">
@@ -4002,8 +4135,9 @@
     </div>
   </div>
 </div>
-<!-- Avatar dropdown movido para body para escapar do backdrop-filter do top-header -->
-<div class="avatar-dropdown" id="avatarDropdown" role="menu">
+<!-- Portal fixo: garante que o dropdown fique sempre acima do header (evita corte na aba Lançamentos) -->
+<div id="avatarDropdownPortal" style="position:fixed;inset:0;z-index:999999;pointer-events:none">
+<div class="avatar-dropdown" id="avatarDropdown" role="menu" style="pointer-events:auto">
 <div class="avatar-dropdown-inner">
 <button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('perfil',null)"><i data-lucide="user"></i><span data-i18n="menu_perfil">Perfil</span></button>
 <button type="button" class="avatar-dropdown-item" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();go('config',null)"><i data-lucide="settings"></i><span data-i18n="menu_configuracoes">Configurações</span></button>
@@ -4012,6 +4146,30 @@
 <div class="avatar-dropdown-sep"></div>
 <button type="button" class="avatar-dropdown-item avatar-dropdown-item-sair" role="menuitem" onclick="closeAvatarDropdown();closeDrawer();doOut()"><i data-lucide="log-out"></i><span data-i18n="menu_sair">Sair</span></button>
 </div>
+</div>
+</div>
+<!-- Popup: duração da recorrência -->
+<div class="modal-overlay" id="recDuracaoPopup" style="display:none;z-index:10050">
+  <div class="modal-box" style="max-width:320px;text-align:center">
+    <h3 style="margin-top:0;font-size:1.1em"><i data-lucide="repeat" style="width:20px;height:20px;vertical-align:-4px;color:var(--vr)"></i> Periodicidade</h3>
+    <p style="font-size:0.85em;color:var(--t2);margin-bottom:16px">Selecione o prazo de duração e a frequência deste lançamento.</p>
+    
+    <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-bottom:12px">
+      <button type="button" class="rec-freq-btn" data-freq="semanal" onclick="selectRecFreq('semanal')" style="padding:6px 12px;border:1px solid var(--brd);background:var(--bg2);color:var(--t2);border-radius:16px;cursor:pointer;font-size:0.8em">Semanal</button>
+      <button type="button" class="rec-freq-btn" data-freq="mensal" onclick="selectRecFreq('mensal')" style="padding:6px 12px;border:1px solid var(--vr);background:var(--vr);color:#fff;font-weight:700;border-radius:16px;cursor:pointer;font-size:0.8em">Mensal</button>
+      <button type="button" class="rec-freq-btn" data-freq="anual" onclick="selectRecFreq('anual')" style="padding:6px 12px;border:1px solid var(--brd);background:var(--bg2);color:var(--t2);border-radius:16px;cursor:pointer;font-size:0.8em">Anual</button>
+    </div>
+
+    <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-bottom:16px">
+      <button type="button" class="rec-duracao-btn btn btn-out" data-value="indeterminado" onclick="selectRecDuracao('indeterminado')" style="flex:1;padding:6px">Fixo (Sempre)</button>
+      <button type="button" class="rec-duracao-btn btn btn-out" data-value="parcelado" onclick="selectRecDuracao('parcelado')" style="flex:1;padding:6px">Parcelado</button>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button type="button" class="btn btn-out" style="flex:1" onclick="closeRecDuracaoPopup()">Cancelar</button>
+      <button type="button" class="btn" style="flex:1;background:var(--vr);color:#fff;border:none" onclick="document.getElementById('recDuracaoPopup').style.display='none'">Confirmar</button>
+    </div>
+  </div>
 </div>
 </body>
 </html>

@@ -115,6 +115,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s}
 .drawer-overlay.show{opacity:1;visibility:visible}
 .drawer{position:fixed;top:0;left:0;width:280px;height:100vh;height:100dvh;background:linear-gradient(180deg,#0d1825 0%,#070d16 100%);border-right:1px solid rgba(255,255,255,.06);z-index:9999;transform:translateX(-100%);transition:transform .3s ease;overflow-y:auto;display:flex;flex-direction:column;box-shadow:4px 0 32px rgba(0,0,0,.6);backdrop-filter:blur(20px)}
+.drawer-transitioning .drawer{pointer-events:none}
 @media(min-width:1024px){
   /* Sidebar items mais compactos em desktop */
   .drawer-nav-item{padding:10px 16px;font-size:.84rem;border-radius:0 10px 10px 0;margin-right:10px}
@@ -195,12 +196,14 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
     transition:transform .3s ease,width .25s ease,min-width .25s ease;
   }
   .drawer-sidebar-mode .drawer-overlay{display:none}
-  /* Conteúdo — margem = largura exata da sidebar, sem gap */
-  .drawer-sidebar-mode #appContent{margin-left:260px;transition:margin-left .3s ease}
-  .drawer-sidebar-mode .app-content{margin-left:260px;transition:margin-left .3s ease}
+  /* Conteúdo — margem = largura exata da sidebar (via variável para manter em sync com JS) */
+  .drawer-sidebar-mode #appContent{margin-left:var(--sidebar-width,260px);transition:margin-left .3s ease}
+  .drawer-sidebar-mode .app-content{margin-left:var(--sidebar-width,260px);transition:margin-left .3s ease}
   .drawer-sidebar-mode .app-content .wrap{padding-left:20px;padding-right:20px;max-width:100%}
-  /* Top header acima da sidebar para o dropdown do avatar aparecer */
-  .drawer-sidebar-mode .top-header{z-index:10000}
+  /* Top header — fixed à direita da sidebar para nunca invadir; z-index para dropdown avatar */
+  .drawer-sidebar-mode .top-header{position:fixed;top:0;right:0;left:var(--sidebar-width,260px);z-index:10000;margin-left:0}
+  .drawer-sidebar-mode .top-header-c{min-width:0}
+  .drawer-sidebar-mode .app-content .wrap{padding-top:110px}
   .drawer-sidebar-mode .top-header-btn-menu{opacity:.45;pointer-events:auto}
   .drawer-sidebar-mode .top-header-btn-menu:hover{opacity:1}
   /* Nav pills — redundantes com sidebar */
@@ -215,8 +218,8 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 }
 @media(min-width:1280px){
   .drawer-sidebar-mode .drawer{width:280px}
-  .drawer-sidebar-mode #appContent{margin-left:280px}
-  .drawer-sidebar-mode .app-content{margin-left:280px}
+  .drawer-sidebar-mode #appContent{margin-left:var(--sidebar-width,280px)}
+  .drawer-sidebar-mode .app-content{margin-left:var(--sidebar-width,280px)}
 }
 
 /* ── DRAWER: MODO COLAPSADO (miniatura só ícones) em desktop ── */
@@ -229,7 +232,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
     overflow-y:auto;
   }
   .drawer-sidebar-mode.drawer-sidebar-collapsed #appContent,
-  .drawer-sidebar-mode.drawer-sidebar-collapsed .app-content{margin-left:72px}
+  .drawer-sidebar-mode.drawer-sidebar-collapsed .app-content{margin-left:var(--sidebar-width,72px)}
   .drawer-sidebar-mode.drawer-sidebar-collapsed .drawer-header{
     padding:12px 0;margin:0;border-radius:0;border-bottom:none;flex-direction:column;align-items:center;justify-content:center;min-height:56px
   }
@@ -268,7 +271,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 @media(min-width:1280px){
   .drawer-sidebar-mode.drawer-sidebar-collapsed .drawer{width:72px;min-width:72px}
   .drawer-sidebar-mode.drawer-sidebar-collapsed #appContent,
-  .drawer-sidebar-mode.drawer-sidebar-collapsed .app-content{margin-left:72px}
+  .drawer-sidebar-mode.drawer-sidebar-collapsed .app-content{margin-left:var(--sidebar-width,72px)}
 }
 
 /* Lucide icons */
@@ -432,10 +435,10 @@ body.light .lang-dropdown button:hover{background:rgba(79,140,255,.08)}
 .top-header-avatar:hover{transform:scale(1.05);box-shadow:0 0 12px rgba(79,140,255,.35)}
 .top-header-avatar img{width:100%;height:100%;object-fit:cover}
 .avatar-dropdown-wrap{position:relative;z-index:10100}
-.avatar-dropdown{position:fixed;min-width:220px;background:#0d1825;border:1px solid rgba(255,255,255,.1);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none;z-index:10250;overflow:hidden}
+.avatar-dropdown{position:fixed;min-width:220px;background:#0d1825;border:1px solid rgba(255,255,255,.1);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none;z-index:999999!important;overflow:hidden}
 .drawer-sidebar-mode .avatar-dropdown-wrap,.drawer-sidebar-mode .avatar-dropdown{z-index:10250}
 .avatar-dropdown.open{display:block}
-.avatar-dropdown-inner{max-height:min(70vh,320px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:6px 0;overscroll-behavior:contain;touch-action:pan-y}
+.avatar-dropdown-inner{max-height:min(70vh,320px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:12px 0;overscroll-behavior:contain;touch-action:pan-y}
 .avatar-dropdown-item{display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;border:none;background:transparent;color:var(--t1);font-size:.875rem;cursor:pointer;text-align:left;transition:background .15s}
 .avatar-dropdown-item:hover{background:var(--bg2)}
 .avatar-dropdown-item i{width:18px;height:18px;flex-shrink:0;color:var(--t2)}
@@ -519,7 +522,7 @@ body.light .avatar-dropdown-item-sair:hover{background:rgba(239,68,68,.08)}
 .widget-insight-text{font-size:.9rem;color:var(--t1);line-height:1.5;margin-bottom:12px;min-height:3.5em}
 .widget-insight-actions{display:flex;flex-wrap:wrap;gap:8px}
 .widget:hover{border-color:var(--brd2)}
-.widget-edit-mode .widget{box-shadow:0 0 0 2px var(--vr);cursor:move}
+.widget-edit-mode .widget{box-shadow:0 0 0 2px var(--vr);cursor:grab}
 .widget-edit-mode .widget:hover{border-color:var(--vr);box-shadow:0 0 0 2px rgba(76,123,244,.3)}
 .widget-drag-handle{position:absolute;top:12px;left:12px;width:28px;height:28px;display:none;align-items:center;justify-content:center;cursor:grab;color:var(--t2);z-index:2;border-radius:8px;background:rgba(255,255,255,.06)}
 .widget-drag-handle:active{cursor:grabbing}
@@ -2390,15 +2393,23 @@ body.light .fab-consultor-modal #fabConsultorInput{background:var(--bg2);border-
 .contas-card-name{flex:1;font-weight:700;font-size:.95rem;color:var(--t1);min-width:0}
 .contas-card-menu{background:none;border:none;color:var(--t3);cursor:pointer;padding:6px;border-radius:8px;line-height:1}
 /* Cards de contas — visual premium */
-.contas-card-brand{cursor:grab;user-select:none;border-radius:18px;border:1px solid rgba(255,255,255,.12);box-shadow:0 4px 20px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.04);transition:transform .25s ease,box-shadow .25s ease}
+.contas-card-brand{cursor:grab;user-select:none;border-radius:18px;border:1px solid rgba(255,255,255,.12);box-shadow:0 4px 20px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.04);transition:transform .25s ease,box-shadow .25s ease;overflow:hidden;min-height:176px}
 .contas-card-brand:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.08)}
 .contas-card-brand:active{cursor:grabbing}
 .contas-card-brand.sortable-ghost{opacity:.4;border:2px dashed var(--vr)!important;transform:scale(.98)}
 .contas-card-brand.sortable-chosen{box-shadow:0 12px 40px rgba(79,140,255,.35)!important;transform:translateY(-4px) scale(1.02);z-index:10}
+.contas-card-brand::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at top right,rgba(255,255,255,.24),transparent 34%),linear-gradient(180deg,rgba(255,255,255,.06),transparent 42%);pointer-events:none}
+.contas-card-brand > *{position:relative;z-index:1}
+.contas-card-brand-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.16);font-size:.64rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.contas-card-brand-watermark{position:absolute;right:16px;bottom:16px;font-size:3.5rem;font-weight:900;letter-spacing:-.06em;line-height:1;color:rgba(255,255,255,.10);pointer-events:none;user-select:none}
+.contas-card-title-wrap{flex:1;min-width:0}
+.contas-card-inst{font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.82);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.contas-card-domain{font-size:.75rem;color:rgba(255,255,255,.74);margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .contas-card-drag-hint{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:3px;opacity:0;transition:opacity .2s}
 .contas-card-drag-hint span{width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.4)}
 .contas-card-brand:hover .contas-card-drag-hint{opacity:1}
-.contas-card-menu:hover{color:var(--t1);background:rgba(255,255,255,.06)}
+.contas-card-brand .contas-card-logo{width:48px;height:48px;border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 10px 24px rgba(0,0,0,.18)}
+.contas-card-brand .contas-card-menu:hover{color:#fff;background:rgba(255,255,255,.12)}
 .contas-card-saldo{font-size:1.35rem;font-weight:800;margin-bottom:4px}
 .contas-card-saldo.positive{color:var(--green)}
 .contas-card-saldo.negative{color:var(--danger)}
@@ -2457,10 +2468,13 @@ body.light .contas-card{box-shadow:0 4px 20px rgba(0,0,0,.12);border-color:rgba(
 .contas-card.contas-card-brand .contas-card-saldo.positive{color:#fff}
 .contas-card.contas-card-brand .contas-card-saldo.negative{color:#fff}
 .contas-card.contas-card-brand .contas-card-prev{color:rgba(255,255,255,.9)}
+.contas-card.contas-card-brand .contas-card-domain{color:rgba(255,255,255,.74)}
 .contas-card.contas-card-brand .contas-card-foot a{color:rgba(255,255,255,.95)}
 /* Cards de contas com cor da marca: mantêm texto claro (estilo cartão) em ambos os temas */
+.contas-card.contas-card-brand .contas-card-inst{color:rgba(255,255,255,.82)}
 body.light .contas-card.contas-card-brand .contas-card-name{color:rgba(255,255,255,.95)}
 body.light .contas-card.contas-card-brand .contas-card-prev{color:rgba(255,255,255,.75)}
+body.light .contas-card.contas-card-brand .contas-card-domain{color:rgba(255,255,255,.72)}
 body.light .contas-card.contas-card-brand .contas-card-menu{color:rgba(255,255,255,.7)}
 body.light .contas-card.contas-card-brand .contas-card-menu:hover{color:#fff;background:rgba(255,255,255,.15)}
 body.light .contas-card.contas-card-brand .contas-card-foot a{color:rgba(255,255,255,.95)}
@@ -2541,22 +2555,40 @@ body.light #invCarteira select option{background:#FFFFFF;color:#0F172A}
 .card-fatura-body td{padding:10px 8px;border-bottom:1px solid rgba(255,255,255,.04)}
 .card-fatura-body tr:hover td{background:rgba(79,140,255,.03)}
 
-/* Carteira física - tela detalhe (modelo Meus dados) */
+/* Conta - tela detalhe com identidade da instituição */
 .carteira-detail-wrap{display:none;animation:fadeIn .4s}
 .carteira-detail-wrap.on{display:block}
 .carteira-detail-back{display:inline-flex;align-items:center;gap:8px;padding:8px 0;margin-bottom:16px;color:var(--t2);cursor:pointer;font-size:.9rem;font-weight:600;border:none;background:none}
 .carteira-detail-back:hover{color:var(--vr)}
+.carteira-detail-wrap{--detail-brand-primary:var(--vr);--detail-brand-secondary:#0F172A}
+.carteira-bank-hero{position:relative;overflow:hidden;border-radius:24px;padding:22px 22px 20px;margin-bottom:20px;color:#fff;box-shadow:0 16px 40px rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08)}
+.carteira-bank-hero::after{content:'';position:absolute;inset:auto -60px -80px auto;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.12);filter:blur(2px)}
+.carteira-bank-hero::before{content:'';position:absolute;left:-20px;top:-20px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08);filter:blur(14px)}
+.carteira-bank-hero-top{position:relative;z-index:1;display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.carteira-bank-hero-logo{width:56px;height:56px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.carteira-bank-hero-copy{min-width:0}
+.carteira-bank-hero-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.78);margin-bottom:4px}
+.carteira-bank-hero-name{font-size:1.35rem;font-weight:800;line-height:1.1;color:#fff;word-break:break-word}
+.carteira-bank-hero-domain{font-size:.78rem;color:rgba(255,255,255,.76);margin-top:5px;word-break:break-word}
+.carteira-bank-hero-type{font-size:.88rem;color:rgba(255,255,255,.9);margin-top:4px}
+.carteira-bank-hero-balance{position:relative;z-index:1;display:flex;flex-direction:column;gap:6px}
+.carteira-bank-hero-balance span{font-size:.8rem;color:rgba(255,255,255,.76);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.carteira-bank-hero-balance strong{font-size:2rem;line-height:1;font-weight:900;color:#fff}
 .carteira-detail-tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--brd)}
 .carteira-detail-tab{padding:12px 20px;font-size:.9rem;font-weight:600;color:var(--t3);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-1px;transition:all .2s}
 .carteira-detail-tab:hover{color:var(--t2)}
-.carteira-detail-tab.on{color:var(--vr);border-bottom-color:var(--vr)}
-.carteira-detail-card{background:var(--card);border:1px solid var(--brd);border-radius:20px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.2)}
-body.light .carteira-detail-card{background:#FFFFFF;border-color:rgba(15,23,42,.1);box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.carteira-detail-tab.on{color:var(--detail-brand-primary);border-bottom-color:var(--detail-brand-primary)}
+.carteira-detail-card{background:var(--card);border:1px solid var(--detail-brand-primary);border-radius:20px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.02)}
+.carteira-detail-mov-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.carteira-detail-mov-label{font-size:.76rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:4px}
+.carteira-detail-mov-sub{font-size:.92rem;color:var(--t2)}
+body.light .carteira-detail-card{background:#FFFFFF;border-color:var(--detail-brand-primary);box-shadow:0 4px 20px rgba(0,0,0,.08)}
 body.light .carteira-detail-back{color:#475569}
 body.light .carteira-detail-back:hover{color:var(--vr)}
+body.light .carteira-bank-hero{box-shadow:0 16px 32px rgba(15,23,42,.12)}
 body.light .carteira-detail-tab{color:#64748B}
 body.light .carteira-detail-tab:hover{color:#475569}
-body.light .carteira-detail-tab.on{color:var(--vr)}
+body.light .carteira-detail-tab.on{color:var(--detail-brand-primary)}
 body.light .carteira-detail-card .label{color:#64748B}
 body.light .carteira-detail-card .value{color:#0F172A}
 body.light .contas-sidebar{background:linear-gradient(180deg,#F8FAFC 0%,#FFFFFF 100%);border-color:rgba(15,23,42,.1)}
@@ -2566,8 +2598,9 @@ body.light #sibTourTooltip{background:#FFFFFF!important;border:1px solid rgba(15
 body.light .meta-card{background:linear-gradient(145deg,#FFFFFF,#F8FAFC)!important;border-color:rgba(15,23,42,.08)!important}
 body.light .badge-item{background:linear-gradient(145deg,#FFFFFF,#F8FAFC)!important;border-color:rgba(15,23,42,.08)!important}
 body.light .notif-panel{background:linear-gradient(180deg,#FFFFFF,#F8FAFC)!important;border-color:rgba(15,23,42,.08)!important}
-body.light .contas-card{background:#FFFFFF!important;border-color:rgba(15,23,42,.1)!important}
+body.light .contas-card:not(.contas-card-brand){background:#FFFFFF!important;border-color:rgba(15,23,42,.1)!important}
 body.light .contas-card:not(.contas-card-brand){box-shadow:0 2px 8px rgba(0,0,0,.06)!important}
+body.light .contas-card.contas-card-brand{border-color:rgba(255,255,255,.12)!important}
 body.light .cal-d{background:#FFFFFF!important;border-color:rgba(15,23,42,.08)!important}
 body.light .cal-sc{background:#FFFFFF!important;border-color:rgba(15,23,42,.08)!important}
 body.light .inv-tab{color:#475569}
@@ -2592,11 +2625,18 @@ body.light [id^="inv"]{background:var(--bg);}
 .carteira-detail-actions{margin-top:24px;display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap}
 .carteira-detail-btn{padding:12px 24px;border-radius:12px;font-weight:600;font-size:.9rem;cursor:pointer;transition:all .2s;border:none;display:inline-flex;align-items:center;gap:8px}
 .carteira-detail-btn-o{border:1px solid var(--brd);background:transparent;color:var(--t2)}
-.carteira-detail-btn-o:hover{background:var(--bg2);color:var(--t1)}
-.carteira-detail-btn-p{background:linear-gradient(135deg,var(--vr),#2563EB);color:#fff}
-.carteira-detail-btn-p:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(79,140,255,.35)}
+.carteira-detail-btn-o:hover{background:rgba(255,255,255,.08);color:#fff;border-color:var(--detail-brand-primary)}
+.carteira-detail-btn-p{background:linear-gradient(135deg,var(--detail-brand-primary),var(--detail-brand-secondary));color:#fff}
+.carteira-detail-btn-p:hover{transform:translateY(-1px);box-shadow:0 6px 20px color-mix(in srgb, var(--detail-brand-primary) 35%, transparent)}
 .carteira-detail-btn-amber{background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff}
 .carteira-detail-btn-amber:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(245,158,11,.35)}
+@media(max-width:640px){
+.carteira-bank-hero{padding:18px 18px 16px}
+.carteira-bank-hero-name{font-size:1.12rem}
+.carteira-bank-hero-balance strong{font-size:1.6rem}
+.carteira-detail-actions{justify-content:stretch}
+.carteira-detail-actions .carteira-detail-btn{width:100%;justify-content:center}
+}
 
 /* Reajuste de saldo - opções (modelo print2) */
 .reajuste-novo-saldo{font-size:1.5rem;font-weight:800;padding:14px 18px;border:2px solid var(--brd);border-radius:12px;background:var(--bg2);color:var(--t1);width:100%;box-sizing:border-box;margin-bottom:8px}
@@ -2634,6 +2674,11 @@ body.light [id^="inv"]{background:var(--bg);}
 .editar-conta-cor:hover,.editar-conta-cor.selected{border-color:#fff;box-shadow:0 0 0 2px var(--vr)}
 .tipo-conta-pill{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border:1px solid var(--brd);border-radius:12px;background:var(--bg2);color:var(--t1);cursor:pointer;font-weight:600;min-width:140px}
 .tipo-conta-pill:hover{border-color:var(--vr)}
+.conta-extra-box{margin-top:12px;padding-top:12px;border-top:1px solid var(--brd)}
+.conta-extra-toggle{display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:600;color:var(--t1)}
+.conta-extra-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.conta-extra-note{margin-top:10px;font-size:.8rem;line-height:1.5;color:var(--t2)}
+@media(max-width:640px){.conta-extra-fields{grid-template-columns:1fr}}
 
 
 /* ===== CENTRAL INTELIGENCIA FINANCEIRA ===== */
@@ -2895,8 +2940,9 @@ html,body{overflow-x:hidden;width:100%;max-width:100vw}
 *{box-sizing:border-box}
 .wrap{overflow-x:hidden;max-width:100vw}
 
-/* Tab content must scroll vertically */
-#lanc{overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 4px}
+/* Tab content must scroll vertically - overflow no wrapper interno para evitar stacking context que corta o dropdown */
+#lanc{overflow:visible;padding:0}
+.lanc-scroll-wrap{overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 4px}
 #lanc .fb{max-width:100%;overflow:visible;padding:14px!important}
 .lanc-sub,.lanc-sub-on{max-width:100%;overflow:visible}
 #lancFormBox.lanc-first-guide{box-shadow:0 0 0 2px var(--pri);animation:lancPulse 2s ease-in-out infinite}
@@ -2919,7 +2965,7 @@ html,body{overflow-x:hidden;width:100%;max-width:100vw}
 
 /* ===== MOBILE <= 520px: Stack to 1 column ===== */
 @media(max-width:520px){
-  #lanc{padding:0 2px}
+  .lanc-scroll-wrap{padding:0 2px}
   #lanc .fb{padding:12px 10px!important}
 
   /* FORCE 1 COLUMN - prevents any horizontal overflow */
@@ -2934,6 +2980,13 @@ html,body{overflow-x:hidden;width:100%;max-width:100vw}
 
   /* Labels */
   #lanc .fg label{font-size:.75em!important;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:3px}
+/* Popup duração recorrência */
+.rec-duracao-btn{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid var(--brd);border-radius:var(--rs);color:var(--t1);font-size:.9rem;font-weight:600;cursor:pointer;transition:.2s;text-align:left;font-family:var(--font-body)}
+.rec-duracao-btn:hover{background:rgba(59,130,246,.12);border-color:var(--brd2);color:var(--vr)}
+.rec-duracao-btn[data-selected="true"]{background:rgba(59,130,246,.15);border-color:var(--brd2);color:var(--vr)}
+/* ✅ FIX Bug 1: botões de frequência no popup de recorrência */
+.rec-freq-btn{font-family:var(--font-body);transition:all .15s;text-align:center}
+.rec-freq-btn:hover{background:rgba(59,130,246,.18)!important;border-color:var(--vr)!important;color:#fff!important}
 
   /* Inputs taller for touch */
   #lanc .fi{padding:12px 10px!important;font-size:.9em!important;border-radius:10px!important}
@@ -3905,3 +3958,10 @@ body.light .lv2-card-breve{background:#f8fafc}
 body.light .lv2-modal-box{background:#fff}
 body.light .lv2-calc{background:#f1f5f9}
 body.light .lv2-extrato{background:#fff}
+
+/* Prevent flicker on entry hover if icons do not load */
+.entry-item i[data-lucide], .entry-acts i[data-lucide] {
+  display: inline-block;
+  min-width: 1em;
+  min-height: 1em;
+}

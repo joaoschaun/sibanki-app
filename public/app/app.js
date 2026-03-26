@@ -1,4 +1,4 @@
-﻿(function(){
+(function(){
 var old1=localStorage.getItem('brapiToken');
 var old2=localStorage.getItem('vrt_b3_token');
 var cur=localStorage.getItem('vrt_b3token');
@@ -14,9 +14,10 @@ function init(){
 if(typeof lucide==='undefined'||!lucide.createIcons){setTimeout(init,200);return;}
 if(_orig)return;
 _orig=lucide.createIcons.bind(lucide);
-lucide.createIcons=function(){
+lucide.createIcons=function(opts){
 clearTimeout(_timer);
-_timer=setTimeout(function(){try{_orig();}catch(e){}},15);
+// ✅ FIX Bug 3: debounce aumentado de 15ms → 120ms para eliminar piscar dos ícones
+_timer=setTimeout(function(){try{var args = opts || {icons: lucide.icons || {}}; _orig(args);}catch(e){}},120);
 };
 }
 setTimeout(init,100);
@@ -472,6 +473,16 @@ accountCesta=d.accountCesta||{};
 accountMeta=d.accountMeta||{};
 recurrents=d.recurrents||[];
 cards=d.cards||[];
+creditAccounts=Array.isArray(d.creditAccounts)?d.creditAccounts:[];
+creditObligations=Array.isArray(d.creditObligations)?d.creditObligations:[];
+creditSnapshot=d.creditSnapshot&&typeof d.creditSnapshot==='object'?d.creditSnapshot:null;
+creditMonitoringHistory=Array.isArray(d.creditMonitoringHistory)?d.creditMonitoringHistory:[];
+if(U){
+U.creditAccounts=creditAccounts;
+U.creditObligations=creditObligations;
+U.creditSnapshot=creditSnapshot;
+U.creditMonitoringHistory=creditMonitoringHistory;
+}
 applyCartoesOrderFromStorage();
 commProfile=d.commProfile||null;
 userAvatarURL=d.avatarURL||null;
@@ -495,6 +506,8 @@ console.log('No existing data for user, starting fresh');
 entries=[];investments=[];achievements={};goals=[];budgets={};orcamentosByMonth={};
 userCats=defaultCats.slice();userAccs=['Carteira física'];
 accountBalances={};accountCesta={};accountMeta={};recurrents=[];cards=[];
+creditAccounts=[];creditObligations=[];creditSnapshot=null;
+creditMonitoringHistory=[];
 dashboardLayout=null;onboardingDone=false;
 }
 initUI();
@@ -540,9 +553,12 @@ var _saveDataDirty=false,_saveDataTimeout=null;
 function _persistData(){
 if(!U||!U.uid)return;
 _saveDataDirty=false;
+if(typeof syncAllAccountOverdraftCreditAccounts==='function')syncAllAccountOverdraftCreditAccounts();
 var data={
 entries:entries,investments:investments,achievements:achievements,
 goals:goals,budgets:budgets,orcamentosByMonth:orcamentosByMonth||{},categories:userCats,accounts:userAccs,accountBalances:accountBalances,accountCesta:accountCesta||{},accountMeta:accountMeta||{},recurrents:recurrents,cards:cards,
+creditAccounts:creditAccounts||[],creditObligations:creditObligations||[],creditSnapshot:buildLegacyCreditSnapshot(),creditMonitoringHistory:Array.isArray(creditMonitoringHistory)?creditMonitoringHistory:[],
+finScore:calcFinScore(),
 name:U.name,email:U.email,updated:new Date().toISOString(),avatarURL:userAvatarURL||null,commProfile:commProfile||null,commPosts:commPosts||[],commBookmarks:commBookmarks||[],
 investorProfile:typeof investorProfileData==='object'&&investorProfileData?investorProfileData:(function(){try{return JSON.parse(localStorage.getItem('vrt_investorProfile')||'null');}catch(e){return null;}})(),
 tourModulos:typeof tourModulos==='object'&&tourModulos?tourModulos:{}
@@ -585,6 +601,7 @@ if(!confirm(typeof t==='function'?t('confirm_ultima_apagar'):'Última confirmaç
 var emptyData={
 entries:[],investments:[],achievements:{},goals:[],budgets:{},orcamentosByMonth:{},
 categories:defaultCats.slice(),accounts:['Carteira física'],accountBalances:{},accountCesta:{},accountMeta:{},recurrents:[],cards:[],
+creditAccounts:[],creditObligations:[],creditSnapshot:null,creditMonitoringHistory:[],
 name:U.name,email:U.email,updated:new Date().toISOString(),commProfile:null,commPosts:[],commBookmarks:[],investorProfile:null
 };
 if(typeof dashboardLayout!=='undefined'&&dashboardLayout&&Array.isArray(dashboardLayout))emptyData.dashboardLayout=dashboardLayout;
@@ -592,6 +609,8 @@ db.collection('users').doc(U.uid).set(emptyData,{merge:true}).then(function(){
 entries=[];investments=[];achievements={};goals=[];budgets={};orcamentosByMonth={};
 userCats=defaultCats.slice();userAccs=['Carteira física'];
 accountBalances={};accountCesta={};accountMeta={};recurrents=[];cards=[];
+creditAccounts=[];creditObligations=[];creditSnapshot=null;
+creditMonitoringHistory=[];
 commProfile=null;commPosts=[];commBookmarks=[];investorProfileData=null;userAvatarURL=null;
 try{localStorage.removeItem('vrt_investorProfile');}catch(e){}
 if(typeof toast==='function')toast(typeof t==='function'?t('toast_dados_apagados'):'Dados apagados. Recomeçando do zero.','ok');
@@ -692,7 +711,12 @@ syncCatPickerTrigger();
 var dd=document.getElementById('fCDropdown');if(dd)dd.classList.remove('open');
 var tr=document.getElementById('fCTrigger');if(tr)tr.setAttribute('aria-expanded','false');
 }
-document.addEventListener('click',function(e){var dd=document.getElementById('fCDropdown');var tr=document.getElementById('fCTrigger');if(dd&&tr&&dd.classList.contains('open')&&!dd.contains(e.target)&&!tr.contains(e.target)){dd.classList.remove('open');if(tr)tr.setAttribute('aria-expanded','false');}});
+// ✅ FIX Bug 2: Guard impede adicionar listener duplicado a cada renderAll()
+// Exclui avatar e drawer para não interferir em cliques na aba Lançamentos
+if(!window._catPickerGlobalListenerAdded){
+window._catPickerGlobalListenerAdded=true;
+document.addEventListener('click',function(e){var dd=document.getElementById('fCDropdown');var tr=document.getElementById('fCTrigger');if(!dd||!tr||!dd.classList.contains('open'))return;if(dd.contains(e.target)||tr.contains(e.target))return;var av=document.getElementById('topHeaderAvatar');if(av&&av.contains(e.target))return;if(e.target.closest&&(e.target.closest('#drawer')||e.target.closest('.drawer-header')||e.target.closest('#avatarDropdown')))return;dd.classList.remove('open');tr.setAttribute('aria-expanded','false');});
+}
 
 function updateAccSelects(){
 var opts=userAccs.map(function(a){return '<option value="'+a+'">'+a+'</option>'}).join('');
@@ -707,15 +731,48 @@ function openModal(html){document.getElementById('modalContent').innerHTML=html;
 function closeModal(){if(window._fabConsultorRecognition&&typeof window._fabConsultorRecognition.abort==='function'){try{window._fabConsultorRecognition.abort();}catch(e){}}var ov=document.getElementById('modalOverlay');var box=document.getElementById('modalBox');if(ov){ov.classList.remove('show','modal-ia-lanc')}if(box){box.classList.remove('modal-ia-lanc')}}
 
 // DRAWER
-function toggleDrawer(){
+function toggleDrawer(ev){
+  if(ev && ev.stopPropagation) ev.stopPropagation();
 var d=document.getElementById('drawer');var o=document.getElementById('drawerOverlay');
 if(!d||!o)return;
 var isDesktop=window.innerWidth>=1024;
 if(isDesktop){
+// Em desktop, nunca deixar o overlay interceptar cliques.
+try{o.classList.remove('show');o.setAttribute('aria-hidden','true');}catch(z){}
 var body=document.body;
 body.classList.add('drawer-sidebar-mode');
 var collapsed=body.classList.toggle('drawer-sidebar-collapsed');
+// Aplicar margin-left com !important para garantir que não seja sobrescrito
+try{
+  var expandedLeft=(window.innerWidth>=1280)?280:260;
+  var collapsedLeft=72;
+  var targetLeft=collapsed?collapsedLeft:expandedLeft;
+  document.documentElement.style.setProperty('--sidebar-width',targetLeft+'px');
+  var appContent=document.getElementById('appContent');
+  if(appContent){
+    appContent.style.transition='none';
+    appContent.style.setProperty('margin-left',targetLeft+'px','important');
+    setTimeout(function(){if(appContent){appContent.style.transition='';appContent.style.removeProperty('margin-left')}},420);
+  }
+}catch(z){}
+// Guardar cliques durante a animação de largura/posição (desktop)
+try{
+  if(window._drawerAnimTimer) clearTimeout(window._drawerAnimTimer);
+  body.classList.add('drawer-transitioning');
+  window._drawerAnimTimer=setTimeout(function(){body.classList.remove('drawer-transitioning')},360);
+}catch(z){}
 try{localStorage.setItem('sibanki_drawer_open',collapsed?'0':'1');}catch(z){}
+// Se expandiu novamente (sai do colapsado), reabrir o grupo da aba ativa
+// para evitar estados onde itens parecem "sumidos" após alternar via hamburger.
+if(!collapsed){
+  try{
+    if(typeof syncDrawerActiveTab==='function'){
+      var active=document.querySelector('.drawer-nav-item.active');
+      var activeId=active?active.getAttribute('data-go'):null;
+      if(activeId) syncDrawerActiveTab(activeId);
+    }
+  }catch(e){}
+}
 var expandEl=document.querySelector('.drawer-expand-icon');
 if(expandEl&&typeof lucide!=='undefined'&&lucide.createIcons){lucide.createIcons();}
 var btn=document.getElementById('drawerToggleBtn');
@@ -730,7 +787,7 @@ try{localStorage.setItem('sibanki_drawer_groups','[]');}catch(z){}
 }
 }else{
 d.classList.toggle('open');var nowOpen=d.classList.contains('open');o.classList.toggle('show',nowOpen);o.setAttribute('aria-hidden',nowOpen?'false':'true');
-if(nowOpen){var hdr=document.getElementById('topHeader');if(hdr)o.style.top=hdr.getBoundingClientRect().bottom+'px';}
+if(nowOpen){var hdr=document.getElementById('topHeader');if(hdr)o.style.top=hdr.getBoundingClientRect().bottom+'px'}
 else{
 // Fechar todos os grupos ao recolher o drawer mobile via hamburger
 document.querySelectorAll('.drawer-nav-group.open').forEach(function(g){
@@ -747,8 +804,28 @@ function closeDrawer(){
 var d=document.getElementById('drawer');var o=document.getElementById('drawerOverlay');
 if(!d||!o)return;
 if(window.innerWidth>=1024){
+// Em desktop, remover overlay (caso tenha ficado do modo mobile).
+try{o.classList.remove('show');o.setAttribute('aria-hidden','true');}catch(z){}
 document.body.classList.add('drawer-sidebar-mode');
 document.body.classList.add('drawer-sidebar-collapsed');
+// Aplicar margin-left ao colapsar
+try{
+  var collapsedLeft=72;
+  document.documentElement.style.setProperty('--sidebar-width',collapsedLeft+'px');
+  var appContent=document.getElementById('appContent');
+  if(appContent){
+    appContent.style.transition='none';
+    appContent.style.setProperty('margin-left',collapsedLeft+'px','important');
+    setTimeout(function(){if(appContent){appContent.style.transition='';appContent.style.removeProperty('margin-left')}},420);
+  }
+}catch(z){}
+// Guardar cliques durante a animação (desktop)
+try{
+  var body=document.body;
+  if(window._drawerAnimTimer) clearTimeout(window._drawerAnimTimer);
+  body.classList.add('drawer-transitioning');
+  window._drawerAnimTimer=setTimeout(function(){body.classList.remove('drawer-transitioning')},360);
+}catch(z){}
 try{localStorage.setItem('sibanki_drawer_open','0');}catch(z){}
 }else{
 d.classList.remove('open');o.classList.remove('show');o.setAttribute('aria-hidden','true');
@@ -778,27 +855,37 @@ if(upgBtn)upgBtn.style.display=(typeof userPlan!=='undefined'&&(userPlan==='pro'
 function toggleAvatarDropdown(e){
 if(e)e.stopPropagation();
 var dd=document.getElementById('avatarDropdown');
-var av=document.getElementById('topHeaderAvatar');
+var av=e ? e.currentTarget : document.getElementById('topHeaderAvatar');
 if(!dd)return;
 var isOpen=dd.classList.toggle('open');
 if(av)av.setAttribute('aria-expanded',isOpen?'true':'false');
 if(isOpen){
-// Posicionamento fixo baseado na posição real do avatar no viewport
+// Garantir que o portal (dropdown dentro) esteja no final do body (evita corte na aba Lançamentos)
+var portal=document.getElementById('avatarDropdownPortal');
+if(portal)document.body.appendChild(portal);
+// Posicionamento fixo baseado na posição real do avatar
 var rect=av.getBoundingClientRect();
-var dropW=224; // min-width
+var dropW=224;
 var leftPos=rect.right-dropW;
 if(leftPos<8)leftPos=8;
-dd.style.top=(rect.bottom+8)+'px';
+dd.style.top=(rect.bottom+14)+'px';
 dd.style.left=leftPos+'px';
 dd.style.right='auto';
 setTimeout(function(){
-document.addEventListener('click',function _cad(ev){
-if(dd.contains(ev.target)||ev.target===av)return;
+function _close(ev){
+if(dd.contains(ev.target)||(av&&av.contains(ev.target)))return;
 if(ev.target.closest&&(ev.target.closest('#drawerToggleBtn')||ev.target.closest('#drawer')||ev.target.closest('.drawer-overlay')))return;
 closeAvatarDropdown();
-document.removeEventListener('click',_cad);
-});
-},10);
+}
+function _cleanup(){
+document.removeEventListener('mousedown',_close,true);
+document.removeEventListener('click',_close,true);
+window._avatarDropdownCleanup=null;
+}
+window._avatarDropdownCleanup=_cleanup;
+document.addEventListener('mousedown',_close,true);
+document.addEventListener('click',_close,true);
+},100);
 if(typeof lucide!=='undefined')lucide.createIcons();
 }
 }
@@ -807,6 +894,7 @@ var dd=document.getElementById('avatarDropdown');
 var av=document.getElementById('topHeaderAvatar');
 if(dd)dd.classList.remove('open');
 if(av)av.setAttribute('aria-expanded','false');
+if(typeof window._avatarDropdownCleanup==='function'){window._avatarDropdownCleanup();}
 }
 function syncDrawerActiveTab(id){
 var items=document.querySelectorAll('.drawer-nav-item');items.forEach(function(it){var goId=it.getAttribute('data-go');it.classList.toggle('active',goId===id);});
@@ -821,9 +909,14 @@ var g=document.getElementById(key);
 if(!g)return;
 // Se sidebar está colapsado, expandir antes de abrir o grupo
 if(document.body.classList.contains('drawer-sidebar-collapsed')){
+var expandedLeft=(window.innerWidth>=1280)?280:260;
+document.documentElement.style.setProperty('--sidebar-width',expandedLeft+'px');
 document.body.classList.remove('drawer-sidebar-collapsed');
 try{localStorage.setItem('sibanki_drawer_open','1');}catch(z){}
 var tBtn=document.getElementById('drawerToggleBtn');if(tBtn)tBtn.setAttribute('aria-label','Recolher menu');
+var appContent=document.getElementById('appContent');
+if(appContent){appContent.style.transition='none';appContent.style.setProperty('margin-left',expandedLeft+'px','important');setTimeout(function(){if(appContent)appContent.style.transition='';},400)}
+try{if(window._drawerAnimTimer)clearTimeout(window._drawerAnimTimer);document.body.classList.add('drawer-transitioning');window._drawerAnimTimer=setTimeout(function(){document.body.classList.remove('drawer-transitioning')},360);}catch(z){}
 }
 var isOpen=g.classList.toggle('open');
 var btn=g.querySelector('.drawer-nav-group-head');
@@ -846,6 +939,8 @@ if(window.innerWidth>=1024){
 var pref=localStorage.getItem('sibanki_drawer_open');
 var expanded=(pref===null)?true:(pref==='1');
 document.body.classList.add('drawer-sidebar-mode');
+var w=(window.innerWidth>=1280)?280:260;
+document.documentElement.style.setProperty('--sidebar-width',expanded?w+'px':'72px');
 if(!expanded){document.body.classList.add('drawer-sidebar-collapsed');var btn=document.getElementById('drawerToggleBtn');if(btn)btn.setAttribute('aria-label','Expandir menu');}
 }
 }
@@ -868,9 +963,12 @@ var pref=localStorage.getItem('sibanki_drawer_open');
 var expanded=(pref===null)?true:(pref==='1');
 document.body.classList.add('drawer-sidebar-mode');
 document.body.classList.toggle('drawer-sidebar-collapsed',!expanded);
+var w=(window.innerWidth>=1280)?280:260;
+document.documentElement.style.setProperty('--sidebar-width',expanded?w+'px':'72px');
 }else{
 document.body.classList.remove('drawer-sidebar-mode');
 document.body.classList.remove('drawer-sidebar-collapsed');
+document.documentElement.style.removeProperty('--sidebar-width');
 }
 });
 
@@ -914,15 +1012,116 @@ c.style.removeProperty('visibility');
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',bindPerfilTabs);}else{bindPerfilTabs();}
 var _perfilPrivState={analise:true,personalizacao:true,marketing:false,parceiros:false,relatorios:true};
 var _perfilAlertasState={login:true,senha:true,device:true,bloqueio:true,resumo:false};
-function calcFinScore(){
-if(typeof renderFinDiagnostic==='function'){
-var el=document.getElementById('finDiagnosticContainer');
-var tmp=false;
-if(el&&el.style.display==='none'){el.style.display='block';tmp=true;}
-renderFinDiagnostic();
-if(tmp&&el)el.style.display='none';
+var _lastFinScoreDetails=null;
+function getLegacyFinScoreDetails(){
+var now=new Date();
+var currentMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+var recentThreshold=new Date(now.getTime()-30*24*60*60*1000).toISOString().slice(0,10);
+var incomeMonth=0,expenseMonth=0,recentEntriesCount=0;
+var categoryTotals={};
+var monthlyExpenseByMonth={};
+entries.forEach(function(entry){
+if(!entry)return;
+var date=String(entry.date||'');
+var value=Number(entry.value||0);
+var isPending=entry.status==='pendente'||entry.status==='agendado';
+if(!entry.isTransfer&&!isPending&&date>=recentThreshold)recentEntriesCount++;
+if(!entry.isTransfer&&!isPending&&entry.type==='despesa'){
+var monthKey=date.substring(0,7);
+if(monthKey)monthlyExpenseByMonth[monthKey]=(monthlyExpenseByMonth[monthKey]||0)+value;
 }
-return window._lastFinScore||0;
+if(entry.isTransfer||isPending||date.substring(0,7)!==currentMonth)return;
+if(entry.type==='receita')incomeMonth+=value;
+else if(entry.type==='despesa'){
+expenseMonth+=value;
+var cat=entry.category||'Outros';
+categoryTotals[cat]=(categoryTotals[cat]||0)+value;
+}
+});
+var savingsRatePct=incomeMonth>0?(((incomeMonth-expenseMonth)/incomeMonth)*100):(expenseMonth>0?-100:0);
+var hasCashflowData=incomeMonth>0||expenseMonth>0;
+var savingsPts=!hasCashflowData?0:savingsRatePct>=20?30:savingsRatePct>=10?24:savingsRatePct>=0?18:savingsRatePct>=-10?10:0;
+var expenseMonths=Object.keys(monthlyExpenseByMonth).map(function(key){return monthlyExpenseByMonth[key];}).filter(function(value){return value>0;});
+var avgMonthlyExpense=expenseMonths.length?expenseMonths.reduce(function(sum,value){return sum+value;},0)/expenseMonths.length:expenseMonth;
+var availableBalance=0;
+for(var i=0;i<userAccs.length;i++){
+var acc=userAccs[i];
+if(accountMeta[acc]&&accountMeta[acc].incluirNaSoma===false)continue;
+availableBalance+=Number(getAccBal(acc).atual||0);
+}
+var reserveMonths=avgMonthlyExpense>0?(availableBalance/avgMonthlyExpense):0;
+var reservePts=avgMonthlyExpense<=0?6:reserveMonths>=6?20:reserveMonths>=3?14:reserveMonths>=1?8:reserveMonths>0?4:0;
+var trackedBudgets=Object.keys(budgets||{}).filter(function(cat){return Number(budgets[cat]||0)>0;});
+var overBudgetRatio=null;
+if(trackedBudgets.length){
+var overBudgetCount=0;
+trackedBudgets.forEach(function(cat){
+if(Number(categoryTotals[cat]||0)>Number(budgets[cat]||0))overBudgetCount++;
+});
+overBudgetRatio=overBudgetCount/trackedBudgets.length;
+}
+var budgetPts=overBudgetRatio===null?8:overBudgetRatio<=0?15:overBudgetRatio<=0.25?11:overBudgetRatio<=0.5?7:2;
+var creditSnapshotLocal=typeof buildLegacyCreditSnapshot==='function'?buildLegacyCreditSnapshot():null;
+var creditLevel=creditSnapshotLocal&&creditSnapshotLocal.pressureLevel?creditSnapshotLocal.pressureLevel:'controlado';
+var creditPts=!creditSnapshotLocal?10:creditLevel==='critico'?0:creditLevel==='elevado'?5:creditLevel==='atencao'?10:15;
+var goalPts=4;
+var avgGoalProgress=0;
+if(Array.isArray(goals)&&goals.length){
+avgGoalProgress=goals.reduce(function(sum,goal){
+var target=Number(goal.target||goal.alvo||0);
+var current=Number(goal.current||goal.atual||goal.saved||0);
+var pct=target>0?Math.min(1,current/target):0;
+return sum+pct;
+},0)/goals.length;
+goalPts=Math.max(0,Math.min(10,Math.round(avgGoalProgress*10)));
+}
+var consistencyPts=recentEntriesCount>=12?10:recentEntriesCount>=6?8:recentEntriesCount>=3?5:recentEntriesCount>=1?2:0;
+function iconFor(pts,max){
+var ratio=max>0?(pts/max):0;
+if(ratio>=0.8)return '&#9989;';
+if(ratio>=0.4)return '&#9888;&#65039;';
+return '&#10060;';
+}
+var criteria=[
+{name:'Taxa de poupança do mês'+(incomeMonth>0?' ('+savingsRatePct.toFixed(0)+'%)':''),pts:savingsPts,max:30,icon:iconFor(savingsPts,30)},
+{name:'Reserva de emergência'+(avgMonthlyExpense>0?' ('+reserveMonths.toFixed(1)+' meses)':' (sem base suficiente)'),pts:reservePts,max:20,icon:iconFor(reservePts,20)},
+{name:'Aderência ao orçamento'+(overBudgetRatio===null?' (sem orçamento configurado)':overBudgetRatio<=0?' (dentro do planejado)':' ('+Math.round(overBudgetRatio*100)+'% acima do previsto)'),pts:budgetPts,max:15,icon:iconFor(budgetPts,15)},
+{name:'Pressão de crédito ('+String(creditLevel).toUpperCase()+')',pts:creditPts,max:15,icon:iconFor(creditPts,15)},
+{name:'Metas financeiras'+(goals.length?' ('+Math.round(avgGoalProgress*100)+'% médio)':' (não definidas)'),pts:goalPts,max:10,icon:iconFor(goalPts,10)},
+{name:'Consistência dos lançamentos ('+recentEntriesCount+' nos últimos 30 dias)',pts:consistencyPts,max:10,icon:iconFor(consistencyPts,10)}
+];
+var recommendations=[];
+if(savingsPts<24)recommendations.push('Melhore sua taxa de poupança no mês. O ideal do score oficial é guardar pelo menos 10% da renda e buscar 20% quando possível.');
+if(reservePts<14)recommendations.push('Fortaleça sua reserva de emergência. O objetivo é acumular pelo menos 3 meses de despesas e evoluir para 6 meses.');
+if(budgetPts<11)recommendations.push('Seus gastos estão fugindo do planejado. Revise categorias acima do orçamento para recuperar controle.');
+if(creditPts<10)recommendations.push('A pressão de crédito está pesando no score. Priorize reduzir uso de limite, renegociar parcelas caras ou reorganizar vencimentos.');
+if(goalPts<7)recommendations.push('Transforme seus objetivos em metas claras no app. O score melhora quando existe progresso financeiro consistente e mensurável.');
+if(consistencyPts<8)recommendations.push('Registre mais movimentações recentes. O score fica mais confiável quando o Sibanki enxerga sua rotina atual.');
+var score=criteria.reduce(function(sum,item){return sum+item.pts;},0);
+score=Math.max(0,Math.min(100,score));
+var title=score>=80?'Excelente! Finanças saudáveis':score>=60?'Boa base financeira':score>=40?'Atenção necessária':'Situação crítica';
+var subtitle=score>=80?'Seu caixa, reserva e disciplina estão bem alinhados.':score>=60?'Você está em boa direção, mas ainda há pontos claros para fortalecer.':score>=40?'Sua estrutura atual pede correções práticas para ganhar estabilidade.':'O momento pede reorganização imediata de caixa, orçamento e crédito.';
+return{
+score:score,
+criteria:criteria,
+recommendations:recommendations,
+title:title,
+subtitle:subtitle,
+meta:{
+savingsRatePct:savingsRatePct,
+reserveMonths:reserveMonths,
+avgMonthlyExpense:avgMonthlyExpense,
+availableBalance:availableBalance,
+creditPressure:creditLevel,
+recentEntriesCount:recentEntriesCount
+}
+};
+}
+function calcFinScore(){
+var details=getLegacyFinScoreDetails();
+_lastFinScoreDetails=details;
+window._lastFinScore=details.score;
+return details.score;
 }
 function renderPerfilSegurancaPrivacidade(){return;// removida: abas usam HTML estático
 
@@ -1211,7 +1410,7 @@ setTimeout(function(){startModuleTour('invest');},500);
 setTimeout(openInvestorProfilePopup,400);
 }
 }
-if(id==='metas'||id==='lanc'||id==='orçamento'||id==='cartões'||id==='contas'||id==='ia'||id==='config'||id==='casal'||id==='calendario'||id==='conq'){
+if(id==='metas'||id==='lanc'||id==='orçamento'||id==='cartões'||id==='credito'||id==='contas'||id==='ia'||id==='config'||id==='casal'||id==='calendario'||id==='conq'){
 var mid=id;
 if(!tourModulos[mid]&&typeof startModuleTour==='function'&&typeof getModuleTourSteps==='function'&&getModuleTourSteps(mid).length>0){
 setTimeout(function(){startModuleTour(mid);},600);
@@ -1231,6 +1430,7 @@ if(admin)admin.style.display='block';
 }
 
 var t=document.querySelectorAll('.tab');for(var i=0;i<t.length;i++){t[i].classList.remove('on');t[i].style.animation='none';t[i].style.display=''}
+document.body.setAttribute('data-tab',id);
 if(id!=='invest'&&typeof showInvSub==='function'){var _subs=["invOverview","invCarteira","invAnalise","invProventos","invSimuladores","invPerfil"];_subs.forEach(function(s){var _el=document.getElementById(s);if(_el){_el.classList.remove("active");_el.style.setProperty("display","none","important");}});var _c=document.getElementById("invCarteira");if(_c){_c.classList.add("active");_c.style.setProperty("display","block","important");}var _tabs=["invTabCarteira","invTabAnalise","invTabProventos","invTabSimuladores","invTabPerfil"];_tabs.forEach(function(tid){var _tb=document.getElementById(tid);if(_tb)_tb.classList.remove("active");});var _ct=document.getElementById("invTabCarteira");if(_ct)_ct.classList.add("active");}
 var tb=document.getElementById(id);if(!tb){console.warn('Tab not found: '+id);return;}tb.offsetHeight;tb.style.animation='slideUp2 .5s cubic-bezier(.16,1,.3,1)';tb.classList.add('on');
 if(typeof syncDrawerActiveTab==='function')syncDrawerActiveTab(id);
@@ -1378,6 +1578,105 @@ else desp+=e.value;
 return {ini:ini,rec:rec,desp:desp,atual:ini+rec-desp};
 }
 
+function getMonthlyRateToAnnualPct(rate){
+var monthly=Math.max(0,Number(rate||0));
+if(!(monthly>0))return 0;
+return Math.round(((Math.pow(1+(monthly/100),12)-1)*100)*100)/100;
+}
+
+function getAccountOverdraftState(acc){
+var meta=(accountMeta&&accountMeta[acc])?accountMeta[acc]:{};
+var balance=Number((typeof getAccBal==='function'&&acc)?getAccBal(acc).atual:0)||0;
+var limit=Math.max(0,Number(meta.chequeEspecialLimite||0));
+var rate=Math.max(0,Number(meta.chequeEspecialJurosPct||0));
+var enabled=!!(meta.temChequeEspecial&&limit>0);
+var used=enabled?Math.min(limit,Math.max(0,-balance)):0;
+var available=enabled?Math.max(0,limit-used):0;
+var availableTotal=enabled?Math.max(0,balance+limit):balance;
+var estimatedMonthlyCost=(enabled&&used>0&&rate>0)?Math.round((used*(rate/100))*100)/100:0;
+return{
+enabled:enabled,
+limit:Math.round(limit*100)/100,
+rate:Math.round(rate*100)/100,
+used:Math.round(used*100)/100,
+available:Math.round(available*100)/100,
+availableTotal:Math.round(availableTotal*100)/100,
+estimatedMonthlyCost:estimatedMonthlyCost
+};
+}
+
+function setAccountOverdraftMeta(acc,enabled,limit,rate){
+if(!acc)return;
+if(typeof accountMeta!=='object'||!accountMeta)accountMeta={};
+if(!accountMeta[acc])accountMeta[acc]={};
+var meta=accountMeta[acc];
+var safeLimit=Math.round(Math.max(0,Number(limit||0))*100)/100;
+var safeRate=Math.round(Math.max(0,Number(rate||0))*100)/100;
+if(enabled&&safeLimit>0){
+meta.temChequeEspecial=true;
+meta.chequeEspecialLimite=safeLimit;
+meta.chequeEspecialJurosPct=safeRate;
+}else{
+delete meta.temChequeEspecial;
+delete meta.chequeEspecialLimite;
+delete meta.chequeEspecialJurosPct;
+}
+}
+
+function getAccountOverdraftCreditId(acc){
+return 'account-overdraft:'+String(acc||'');
+}
+
+function syncAccountOverdraftCreditAccount(acc){
+if(!acc)return;
+if(!Array.isArray(creditAccounts))creditAccounts=[];
+var overdraft=getAccountOverdraftState(acc);
+var entryId=getAccountOverdraftCreditId(acc);
+var idx=creditAccounts.findIndex(function(item){
+return item&&String(item.id)===entryId;
+});
+if(!overdraft.enabled){
+if(idx>=0)creditAccounts.splice(idx,1);
+return;
+}
+var brand=typeof getBankBrandMeta==='function'?getBankBrandMeta(acc):{officialName:acc};
+var existing=idx>=0?creditAccounts[idx]:{};
+var item={
+id:entryId,
+label:'Cheque especial',
+institution:brand.officialName||acc,
+kind:'cheque especial',
+source:'account_overdraft',
+linkedAccount:acc,
+limitTotal:Math.round(Number(overdraft.limit||0)*100)/100,
+balanceUsed:Math.round(Number(overdraft.used||0)*100)/100,
+monthlyInstallment:Math.round(Number(overdraft.estimatedMonthlyCost||0)*100)/100,
+interestRatePct:Math.round(Number(overdraft.rate||0)*100)/100,
+cetAnnualPct:getMonthlyRateToAnnualPct(overdraft.rate||0),
+nextDueDate:'',
+nextDueAmount:0,
+active:true,
+strategy:existing.strategy||null,
+strategyUpdatedAt:existing.strategyUpdatedAt||null,
+monitoringHistory:Array.isArray(existing.monitoringHistory)?existing.monitoringHistory:[],
+updatedAt:new Date().toISOString()
+};
+if(idx>=0)creditAccounts[idx]=item;
+else creditAccounts.push(item);
+}
+
+function syncAllAccountOverdraftCreditAccounts(){
+if(!Array.isArray(creditAccounts))creditAccounts=[];
+var validAccounts=Array.isArray(userAccs)?userAccs.slice():[];
+creditAccounts=creditAccounts.filter(function(item){
+if(!item||item.source!=='account_overdraft')return true;
+return validAccounts.indexOf(item.linkedAccount)>=0;
+});
+validAccounts.forEach(function(acc){
+syncAccountOverdraftCreditAccount(acc);
+});
+}
+
 
 function setBalance(){
 var acc=document.getElementById('balAcc').value;
@@ -1420,6 +1719,7 @@ var DASHBOARD_WIDGETS=[
 {id:'receitas-despesas',title:'Receitas vs Despesas',size:'medium',iconName:'bar-chart-2'},
 {id:'progresso-metas',title:'Progresso das Metas',size:'medium',iconName:'target'},
 {id:'orcamento',title:'Orçamento do Mês',size:'full',iconName:'chart-pie'},
+{id:'plano-credito',title:'Plano de Crédito',size:'full',iconName:'wallet-cards'},
 {id:'contas',title:'Contas',size:'medium',iconName:'landmark'},
 {id:'proximos-vencimentos',title:'Próximos Vencimentos',size:'medium',iconName:'credit-card'},
 {id:'conquistas',title:'Conquistas Recentes',size:'medium',iconName:'trophy'},
@@ -1430,7 +1730,7 @@ var DASHBOARD_WIDGETS=[
 var DEFAULT_DASHBOARD_LAYOUT=[
 {id:'insight',ordem:0,visivel:true},{id:'evolucao-financeira',ordem:1,visivel:true},{id:'despesas-categoria',ordem:2,visivel:true},
 {id:'ultimos-lancamentos',ordem:3,visivel:true},{id:'orcamento',ordem:4,visivel:true},
-{id:'progresso-metas',ordem:5,visivel:true},{id:'proximos-vencimentos',ordem:6,visivel:true}
+{id:'plano-credito',ordem:5,visivel:true},{id:'progresso-metas',ordem:6,visivel:true},{id:'proximos-vencimentos',ordem:7,visivel:true}
 ];
 function getDashboardLayout(){
 var L=dashboardLayout&&Array.isArray(dashboardLayout)&&dashboardLayout.length>0?dashboardLayout:DEFAULT_DASHBOARD_LAYOUT;
@@ -1479,7 +1779,7 @@ h+='<div style="margin-bottom:10px"><div style="font-size:.8em;margin-bottom:4px
 });
 if(gl.length===0)h+='<p style="color:var(--t2);font-size:.85em">Nenhuma meta cadastrada</p>';
 }else if(widgetId==='insight'){
-h='<div id="insightDoDiaCard" class="widget-insight-wrap"><div class="widget-insight-icon"><i data-lucide="bot" style="width:28px;height:28px;color:#4C7BF4"></i></div><div class="widget-insight-title">INSIGHT DO DIA</div><div id="insightDoDiaText" class="widget-insight-text">Carregando...</div><div class="widget-insight-actions"><button type="button" class="btn btn-r" onclick="renderInsightDoDia(true)" style="font-size:.8rem;padding:6px 12px">Novo insight</button><button type="button" class="btn" onclick="go(\'ia\',null)" style="font-size:.8rem;padding:6px 12px;background:transparent;border:1px solid var(--brd);color:var(--t2);border-radius:8px;cursor:pointer">Ver no Consultor IA</button></div></div>';
+h='<div id="insightDoDiaCard" class="widget-insight-wrap"><div class="widget-insight-icon"><i data-lucide="bot" style="width:28px;height:28px;color:#4C7BF4"></i></div><div class="widget-insight-title">INSIGHT DO DIA</div><div id="insightDoDiaText" class="widget-insight-text">Carregando...</div><div class="widget-insight-actions"><button type="button" class="btn btn-r" onclick="renderInsightDoDia(true)" style="font-size:.8rem;padding:6px 12px">Novo insight</button><button type="button" class="btn" onclick="openLegacyInsightConsultor()" style="font-size:.8rem;padding:6px 12px;background:transparent;border:1px solid var(--brd);color:var(--t2);border-radius:8px;cursor:pointer">Ver no Consultor IA</button></div></div>';
 }else if(widgetId==='contas'){
 var saldoContas=0;for(var sc=0;sc<userAccs.length;sc++){var bx=getAccBal(userAccs[sc]);saldoContas+=bx.atual;}
 h='<div class="widget-label">Saldo em Contas</div><div class="widget-value" style="color:'+(saldoContas>=0?'var(--green)':'var(--danger)')+'">'+fmtVal(saldoContas)+'</div><div style="font-size:.8em;color:var(--t2);margin-top:4px">'+userAccs.length+' conta(s)</div>';
@@ -1490,6 +1790,7 @@ var proximos=[];cards.forEach(function(c){var faturas=c.faturas||[];faturas.forE
 entries.filter(function(e){return e.status==='pendente'&&e.date>=hoje&&e.date<=ate}).forEach(function(e){proximos.push({tipo:'Conta',nome:e.desc,valor:e.value,data:e.date});});
 proximos.sort(function(a,b){return a.data.localeCompare(b.data)});
 h='<div class="widget-label">Próximos 7 dias</div>';
+h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0 10px;font-size:.76em;color:var(--t2)"><span>'+(proximos.length?proximos.length+' item(ns) exigem atenção':'Nenhum vencimento crítico agora')+'</span>'+(proximos.some(function(p){return p.tipo==="Fatura";})?'<button type="button" class="btn btn-o" onclick="go(\'credito\',null)" style="padding:5px 9px;font-size:.74em">Abrir hub</button>':'')+'</div>';
 proximos.slice(0,5).forEach(function(p){h+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--brd);font-size:.85em"><span>'+escapeHtml(p.nome)+'</span><span style="font-weight:700;color:var(--vr)">'+fmtVal(p.valor)+'</span></div>';});
 if(proximos.length===0)h+='<p style="color:var(--t2);font-size:.85em">Nada a vencer</p>';
 }else if(widgetId==='orcamento'){
@@ -1499,6 +1800,49 @@ keys.slice(0,5).forEach(function(cat){var lim=orc[cat]||0;var usado=mesE.filter(
 h+='<div style="margin-bottom:10px"><div style="font-size:.8em;margin-bottom:4px">'+escapeHtml(cat)+'</div><div style="height:6px;background:var(--bg2);border-radius:6px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:'+(p>90?'var(--danger)':p>70?'var(--alerta)':'var(--green)')+';border-radius:6px"></div></div><div style="font-size:.7em;color:var(--t2)">'+fmtVal(usado)+' / '+fmtVal(lim)+'</div></div>';
 });
 if(keys.length===0)h+='<p style="color:var(--t2);font-size:.85em">Nenhum orçamento definido</p>';
+}else if(widgetId==='plano-credito'){
+var creditPlan=buildLegacyCreditActionPlan();
+var creditItems=buildLegacyCreditRecommendations().items||[];
+var creditMonitor=typeof getLegacyCreditMonitoringData==='function'?getLegacyCreditMonitoringData():{items:[],stalled:[],pendingRenegotiation:[],progressed:[]};
+var creditMonitorMap={};
+creditMonitor.items.forEach(function(entry){if(entry&&entry.item&&entry.item.id!=null)creditMonitorMap[String(entry.item.id)]=entry;});
+var creditExposureDeltaColor=creditMonitor.weeklyExposureDelta<0?'var(--green)':creditMonitor.weeklyExposureDelta>0?'var(--vr)':'var(--t1)';
+h='<div class="widget-label">Plano de Crédito</div>';
+h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0 12px;font-size:.76em;color:var(--t2)"><span>'+(creditMonitor.reviewDue&&creditMonitor.reviewDue.length?'Existe revisão vencida no plano':'Centralize cartões, dívidas e ações no hub')+'</span><button type="button" class="btn btn-o" onclick="go(\'credito\',null)" style="padding:5px 9px;font-size:.74em">Abrir hub</button></div>';
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px">'+
+'<div style="padding:10px;background:var(--bg2);border-radius:10px"><div style="font-size:.75em;color:var(--t2)">Saldo disponível</div><div style="font-weight:800;color:var(--t1);margin-top:4px">'+fmtVal(creditPlan.availableCash||0)+'</div></div>'+
+'<div style="padding:10px;background:var(--bg2);border-radius:10px"><div style="font-size:.75em;color:var(--t2)">Faixa segura</div><div style="font-weight:800;color:var(--blue);margin-top:4px">'+fmtVal(creditPlan.safeBudget||0)+'</div></div>'+
+'<div style="padding:10px;background:var(--bg2);border-radius:10px"><div style="font-size:.75em;color:var(--t2)">Itens com estratégia</div><div style="font-weight:800;color:var(--purple);margin-top:4px">'+creditItems.filter(function(entry){return entry.item&&entry.item.strategy&&entry.item.strategy.type;}).length+'</div></div>'+
+'<div style="padding:10px;background:var(--bg2);border-radius:10px"><div style="font-size:.75em;color:var(--t2)">Pendentes / parados</div><div style="font-weight:800;color:'+(creditMonitor.pendingRenegotiation.length||creditMonitor.stalled.length?'var(--yellow)':'var(--green)')+';margin-top:4px">'+(creditMonitor.pendingRenegotiation.length+creditMonitor.stalled.length)+'</div></div>'+
+'<div style="padding:10px;background:var(--bg2);border-radius:10px"><div style="font-size:.75em;color:var(--t2)">Revisões vencidas</div><div style="font-weight:800;color:'+((creditMonitor.reviewDue&&creditMonitor.reviewDue.length)?'var(--yellow)':'var(--green)')+';margin-top:4px">'+(((creditMonitor.reviewDue&&creditMonitor.reviewDue.length)||0))+'</div></div>'+
+'<div style="padding:10px;background:var(--bg2);border-radius:10px"><div style="font-size:.75em;color:var(--t2)">Variação recente</div><div style="font-weight:800;color:'+creditExposureDeltaColor+';margin-top:4px">'+(creditMonitor.weeklyExposureDelta>0?'+':'')+fmtVal(creditMonitor.weeklyExposureDelta||0)+'</div></div>'+
+'</div>';
+if(creditItems.length===0){
+  h+='<p style="color:var(--t2);font-size:.85em">Cadastre crédito estruturado no Hub de Crédito para acompanhar um plano aqui.</p>';
+}else{
+  h+='<div style="padding:12px;background:rgba(255,255,255,.03);border:1px solid var(--brd);border-radius:12px;margin-bottom:10px;font-size:.8em;color:var(--t2)">'+
+  '<b style="color:var(--t1)">Rotina automática:</b> '+(creditMonitor.stalled.length>0?creditMonitor.stalled.length+' estratégia(s) sem avanço relevante. ':'Nenhuma estratégia travada agora. ')+(creditMonitor.pendingRenegotiation.length>0?creditMonitor.pendingRenegotiation.length+' renegociação(ões) aguardando decisão. ':'')+((creditMonitor.reviewDue&&creditMonitor.reviewDue.length)?creditMonitor.reviewDue.length+' revisão(ões) vencida(s). ':'')+(creditMonitor.progressed.length>0?creditMonitor.progressed.length+' item(ns) já mostram melhora frente à base.':'')+
+  '</div>';
+  creditItems.slice(0,3).forEach(function(entry){
+    var item=entry.item||{};
+    var strategyLabel=getLegacyCreditStrategyLabel(item)||'Sem estratégia definida';
+    var relief=Number(item.strategy&&item.strategy.estimatedMonthlyRelief||0);
+    var monitor=creditMonitorMap[String(item.id)]||null;
+    var followUpLabel=monitor?(monitor.reviewDue?'Revisão vencida':monitor.pendingRenegotiation?'Pendente há '+monitor.daysSinceUpdate+' dias':monitor.stalled?'Parado há '+Math.max(monitor.daysSinceLastMove||0,monitor.daysSinceUpdate||0)+' dias':(monitor.exposureReductionPct>0||monitor.monthlyReductionPct>0)?'Melhora de '+Math.max(monitor.exposureReductionPct||0,monitor.monthlyReductionPct||0)+'%':(monitor.daysToReview!=null&&monitor.daysToReview>0)?'Revisar em '+monitor.daysToReview+' dias':'Em acompanhamento'):'Em acompanhamento';
+    var followUpColor=monitor?(monitor.reviewDue?'var(--yellow)':monitor.pendingRenegotiation?'var(--yellow)':monitor.stalled?'var(--vr)':(monitor.exposureReductionPct>0||monitor.monthlyReductionPct>0)?'var(--green)':'var(--t1)'):'var(--t1)';
+    h+='<div style="padding:12px;background:var(--bg2);border-radius:12px;border:1px solid var(--brd);margin-bottom:10px">'+
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">'+
+    '<div><div style="font-weight:800;color:var(--t1)">'+escapeHtml(item.label||'Crédito')+'</div><div style="font-size:.78em;color:var(--t3);margin-top:4px">Prioridade: '+escapeHtml(entry.meta.label||'Baixa')+' · Estratégia: '+escapeHtml(strategyLabel)+'</div></div>'+
+    '<button type="button" class="btn btn-o" onclick="go(\'credito\',null)" style="padding:6px 10px;font-size:.75em">Abrir hub</button>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:10px;font-size:.8em">'+
+    '<div><div style="color:var(--t3)">Parcela</div><div style="font-weight:700;color:var(--t1)">'+fmtVal(item.monthlyInstallment||0)+'</div></div>'+
+    '<div><div style="color:var(--t3)">Alívio estimado</div><div style="font-weight:700;color:'+(relief>0?'var(--green)':'var(--t1)')+'">'+fmtVal(relief)+'</div></div>'+
+    '<div><div style="color:var(--t3)">Próxima ação</div><div style="font-weight:700;color:var(--t1)">'+escapeHtml(strategyLabel)+'</div></div>'+
+    '<div><div style="color:var(--t3)">Acompanhamento</div><div style="font-weight:700;color:'+followUpColor+'">'+escapeHtml(followUpLabel)+'</div></div>'+
+    '</div></div>';
+  });
+}
 }else if(widgetId==='conquistas'){
 var ach=achievements||{};var keys=Object.keys(ach).slice(-4).reverse();
 h='<div class="widget-label">Conquistas Recentes</div>';
@@ -1626,13 +1970,17 @@ dragClass:'widget-dragging',
 placeholder:'widget-placeholder',
 filter:'.widget-remove-btn',
 preventOnFilter:true,
+delayOnTouchOnly:false,
+delay:1000,
+touchStartThreshold:12,
 onEnd:function(){salvarLayoutDashboard();}
 });
 }
-function toggleDashboardEdit(){
+function setDashboardEditMode(enabled){
 var grid=document.getElementById('dashboardGrid');var panel=document.getElementById('dashEditPanel');var btn=document.getElementById('dashEditBtn');
 if(!grid)return;
-var isEdit=grid.classList.toggle('widget-edit-mode');
+var isEdit=typeof enabled==='boolean'?enabled:!grid.classList.contains('widget-edit-mode');
+grid.classList.toggle('widget-edit-mode',isEdit);
 panel.classList.toggle('show',isEdit);btn.textContent=isEdit?'Concluir Edição':'Editar Dashboard';
 if(isEdit){
 initDashboardSortable();
@@ -1640,10 +1988,14 @@ var picker=document.getElementById('dashWidgetPicker');var current=getDashboardL
 picker.innerHTML=DASHBOARD_WIDGETS.filter(function(w){return current.indexOf(w.id)<0}).map(function(w){return '<span onclick="adicionarWidgetDashboard(\''+w.id+'\')"><i data-lucide="'+(w.iconName||'circle')+'"></i> '+w.title+'</span>'}).join('');
 if(typeof window.refreshLucide==='function')lucide.createIcons();
 }else{
+if(window._dashSortable){window._dashSortable.destroy();window._dashSortable=null;}
 var pickerEl=document.getElementById('dashWidgetPicker');var closeEl=document.getElementById('dashWidgetPickerClose');
 if(pickerEl)pickerEl.style.display='none';if(closeEl)closeEl.style.display='none';
 renderDashboardWidgets();
 }
+}
+function toggleDashboardEdit(){
+setDashboardEditMode();
 }
 function removerWidgetDashboard(id){
 var L=dashboardLayout&&dashboardLayout.length?dashboardLayout.slice():getDashboardLayout().map(function(w){return Object.assign({},w)});
@@ -1659,18 +2011,22 @@ L.push({id:id,ordem:L.length,visivel:true});
 dashboardLayout=L;
 renderDashboardWidgets();
 }
-async function salvarLayoutDashboard(){
+async function salvarLayoutDashboard(closeEditor){
 var grid=document.getElementById('dashboardGrid');if(!grid||!U||!U.uid)return;
 var widgets=[];grid.querySelectorAll('.widget').forEach(function(el,i){var id=el.dataset.widgetId;if(id)widgets.push({id:id,ordem:i,visivel:true});});
 dashboardLayout=widgets;
-renderDashboardWidgets();
-if(grid.classList.contains('widget-edit-mode'))initDashboardSortable();
-try{await db.collection('users').doc(U.uid).update({dashboardLayout:widgets,layoutAtualizadoEm:firebase.firestore.FieldValue.serverTimestamp()});toast(typeof t==='function'?t('toast_layout_salvo'):'Layout salvo!','ok');}catch(e){toast((typeof t==='function'?t('toast_erro_salvar'):'Erro ao salvar: ')+e.message,'err');}
+if(closeEditor===true)setDashboardEditMode(false);
+try{
+await db.collection('users').doc(U.uid).update({dashboardLayout:widgets,layoutAtualizadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+toast(typeof t==='function'?t('toast_layout_salvo'):'Layout salvo!','ok');
+}catch(e){
+toast((typeof t==='function'?t('toast_erro_salvar'):'Erro ao salvar: ')+e.message,'err');
 }
-function resetarLayoutDashboard(){
+}
+function resetarLayoutDashboard(closeEditor){
 dashboardLayout=DEFAULT_DASHBOARD_LAYOUT.slice();
 renderDashboardWidgets();
-salvarLayoutDashboard();
+salvarLayoutDashboard(closeEditor===true);
 toast(typeof t==='function'?t('toast_layout_resetado'):'Layout resetado','ok');
 }
 /* Unificado: máx 1 card de promo visível por vez */
@@ -1728,6 +2084,9 @@ edId=id;
 document.getElementById('edD').value=e.date;
 document.getElementById('edT').value=e.type;
 document.getElementById('edC').innerHTML=userCats.map(function(c){return '<option value="'+c+'"'+(c===e.category?' selected':'')+'>'+c+'</option>'}).join('');
+var edRec=document.getElementById('edRecorrente');if(edRec)edRec.value=e.recorrente?'sim':'nao';
+var edRecDurWrap=document.getElementById('edRecDuracaoWrap');if(edRecDurWrap)edRecDurWrap.style.display=e.recorrente?'block':'none';
+var edRecDur=document.getElementById('edRecorrenciaDuracao');if(edRecDur)edRecDur.value=e.recorrenciaDuracao||'indeterminado';
 document.getElementById('edV').value=e.value;
 document.getElementById('edDe').value=e.desc||'';
 document.getElementById('edA').innerHTML=userAccs.map(function(a){return '<option value="'+a+'"'+(a===e.account?' selected':'')+'>'+a+'</option>'}).join('');
@@ -1746,6 +2105,8 @@ if(!v||v<=0){toast(typeof t==='function'?t('toast_valor_invalido'):'Valor invál
 entries[i].date=document.getElementById('edD').value;
 entries[i].type=document.getElementById('edT').value;
 entries[i].category=document.getElementById('edC').value;
+var edRec=document.getElementById('edRecorrente');entries[i].recorrente=edRec?edRec.value==='sim':!!entries[i].recorrente;
+var edRecDur=document.getElementById('edRecorrenciaDuracao');if(entries[i].recorrente&&edRecDur)entries[i].recorrenciaDuracao=edRecDur.value||null;else if(!entries[i].recorrente)entries[i].recorrenciaDuracao=null;
 entries[i].value=Math.round(v*100)/100;
 entries[i].desc=document.getElementById('edDe').value.trim()||entries[i].category;
 entries[i].account=document.getElementById('edA').value;
@@ -1791,6 +2152,9 @@ var w2=document.getElementById('wTfTo');if(w2)w2.innerHTML=opts;
 
 var recurrents=[];
 var cards=[];
+var creditAccounts=[];
+var creditObligations=[];
+var creditSnapshot=null;
 function addRc(){
 var t=document.getElementById('rcT').value;
 var de=document.getElementById('rcDe').value.trim();
@@ -1885,7 +2249,7 @@ var sibTourSteps=[
 {selector:'#virtFab',title:'Lançamento Rápido',body:'Este botão está em todas as telas. Use para lançar gastos e receitas em segundos — ou fale por voz e a IA interpreta automaticamente.'},
 {selector:'.notif-btn',title:'Alertas Inteligentes',body:'Sua IA monitora suas finanças 24h. Você recebe alertas quando um orçamento estourar, uma conta vencer ou uma oportunidade aparecer.'},
 {selector:'#topHeaderAvatar',title:'Score Financeiro',body:'Seu score vai de 0 a 100 e mede sua saúde financeira. Quanto mais você lançar, mais preciso ele fica. Meta: chegar ao Score 100! 🎯'},
-{selector:'#sibPrimeirosPassos',title:'Seus Primeiros Passos',body:'Complete esses passos para aproveitar o Sibanki ao máximo. Cada item concluído melhora seu score e desbloqueia recursos da IA.',last:true}
+{selector:'#sibPrimeirosPassos',title:'Seus Primeiros Passos',body:'Complete esses passos para aproveitar o Sibanki ao máximo. Eles deixam sua organização mais completa, melhoram a leitura da IA e ampliam seu uso do sistema.',last:true}
 ];
 var sibTourIndex=0;
 var _sibTourState=null;
@@ -2409,19 +2773,32 @@ var totalRec=entries.filter(function(e){return new Date(e.date+'T12:00:00').getM
 if(totalRec>0&&totalDesp/totalRec>0.9){
 alerts.push({type:'warn',msg:'&#128176; Você já gastou '+(totalDesp/totalRec*100).toFixed(0)+'% da receita do mês!'});
 }
+var creditMonitor=typeof getLegacyCreditMonitoringData==='function'?getLegacyCreditMonitoringData():{stalled:[],pendingRenegotiation:[]};
+if(creditMonitor.reviewDue&&creditMonitor.reviewDue.length){
+var dueReviewItem=creditMonitor.reviewDue[0];
+alerts.push({type:'warn',msg:'&#128197; Revisão do plano de '+(dueReviewItem.item.label||'crédito')+' já venceu. Hora de atualizar a estratégia.',action:'credito',actionLabel:'Abrir hub'});
+}
+if(creditMonitor.pendingRenegotiation&&creditMonitor.pendingRenegotiation.length){
+var pendingItem=creditMonitor.pendingRenegotiation[0];
+alerts.push({type:'warn',msg:'&#129309; Renegociação planejada de '+(pendingItem.item.label||'crédito')+' está parada há '+pendingItem.daysSinceUpdate+' dias.',action:'credito',actionLabel:'Ver plano'});
+}
+if(creditMonitor.stalled&&creditMonitor.stalled.length){
+var stalledItem=creditMonitor.stalled[0];
+alerts.push({type:'danger',msg:'&#128680; Estratégia de '+(stalledItem.item.label||'crédito')+' sem avanço há '+Math.max(stalledItem.daysSinceLastMove||0,stalledItem.daysSinceUpdate||0)+' dias.',action:'credito',actionLabel:'Revisar agora'});
+}
 cards.forEach(function(c){
 var diasFecha=getDiasParaFecha(c);
 if(diasFecha<=3){
 var bm=getBillingMonth(c,new Date().toISOString().split('T')[0]);
 var fat=c.purchases.filter(function(p){return p.billingMonth===bm}).reduce(function(s,p){return s+p.value},0);
-alerts.push({type:'danger',msg:'&#128179; Fatura do '+c.name+' fecha em '+diasFecha+' dia'+(diasFecha>1?'s':'')+'! Total: R$ '+fat.toFixed(2)});
+alerts.push({type:'danger',msg:'&#128179; Fatura do '+c.name+' fecha em '+diasFecha+' dia'+(diasFecha>1?'s':'')+'! Total: R$ '+fat.toFixed(2),action:'credito',actionLabel:'Ver hub'});
 }else if(diasFecha<=7){
-alerts.push({type:'warn',msg:'&#128179; Fatura do '+c.name+' fecha em '+diasFecha+' dias'});
+alerts.push({type:'warn',msg:'&#128179; Fatura do '+c.name+' fecha em '+diasFecha+' dias',action:'credito',actionLabel:'Ver hub'});
 }
 var bm2=getBillingMonth(c,new Date().toISOString().split('T')[0]);
 var fat2=c.purchases.filter(function(p){return p.billingMonth===bm2}).reduce(function(s,p){return s+p.value},0);
 if(fat2/c.limit>=0.9){
-alerts.push({type:'danger',msg:'&#128680; '+c.name+': '+Math.round(fat2/c.limit*100)+'% do limite usado!'});
+alerts.push({type:'danger',msg:'&#128680; '+c.name+': '+Math.round(fat2/c.limit*100)+'% do limite usado!',action:'credito',actionLabel:'Ir ao hub'});
 }
 });
 var ab=document.getElementById('alertBar');
@@ -2431,7 +2808,7 @@ ab.style.display='block';
 ab.innerHTML=alerts.map(function(a){
 var bg=a.type==='danger'?'rgba(239,68,68,.15)':'rgba(234,179,8,.15)';
 var brd=a.type==='danger'?'rgba(79,140,255,.3)':'rgba(234,179,8,.3)';
-return '<div style="padding:10px 14px;background:'+bg+';border:1px solid '+brd+';border-radius:10px;margin-bottom:6px;font-size:.88em">'+a.msg+'</div>';
+return '<div style="padding:10px 14px;background:'+bg+';border:1px solid '+brd+';border-radius:10px;margin-bottom:6px;font-size:.88em;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span>'+a.msg+'</span>'+(a.action?'<button type="button" class="btn btn-o" onclick="go(\''+a.action+'\',null)" style="padding:6px 10px;font-size:.74em">'+escapeHtml(a.actionLabel||'Abrir')+'</button>':'')+'</div>';
 }).join('');
 }
 
@@ -2542,7 +2919,14 @@ var rec=_e.filter(function(e){return e.account===a&&e.type==='receita'}).reduce(
 var desp=_e.filter(function(e){return e.account===a&&e.type==='despesa'}).reduce(function(s,e){return s+e.value},0);
 accBals[a]=init+rec-desp;
 });
-var accStr=Object.keys(accBals).map(function(a){return a+': R$'+accBals[a].toFixed(2)}).join(', ');
+var accStr=Object.keys(accBals).map(function(a){
+var overdraft=getAccountOverdraftState(a);
+var base=a+': saldo R$'+accBals[a].toFixed(2);
+if(overdraft.enabled){
+base+=' | cheque especial R$'+Number(overdraft.limit||0).toFixed(2)+' (usado R$'+Number(overdraft.used||0).toFixed(2)+', livre R$'+Number(overdraft.available||0).toFixed(2)+')';
+}
+return base;
+}).join(', ');
 
 var months={};
 _e.forEach(function(e){
@@ -2582,6 +2966,594 @@ pct_gasto:recM>0?Math.round(despM/recM*100):0
 console.error('getFinancialContext error:',err);
 return{receita_mes:0,despesa_mes:0,saldo_mes:0,receita_total:0,despesa_total:0,saldo_total:0,top_categorias:'Erro ao carregar',cat_totals:{},metas:'',investimentos:'',investimentos_enriquecido:'',orçamentos:'',contas:'',cartoes:'',tendencia_meses:'',recorrentes:'',total_lancamentos:0,pct_gasto:0};
 }
+}
+
+function getLegacyFinancialProfile(ctx){
+if(!ctx)ctx=getFinancialContext();
+var persistedCredit=buildLegacyCreditSnapshot();
+var remoteCredit=(typeof U!=='undefined'&&U&&U.creditSnapshot)?U.creditSnapshot:null;
+var _cards=(typeof cards!=='undefined'&&cards)?cards:[];
+var activeCards=_cards.filter(function(c){return c&&c.active!==false;});
+var now=new Date();
+var monthRef=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+var totalLimit=0,totalUsed=0,highUtilizationCards=0,dueSoonAmount=0,dueSoonCount=0;
+var todayStr=now.toISOString().split('T')[0];
+var in7Days=new Date(now);in7Days.setDate(in7Days.getDate()+7);
+var in7DaysStr=in7Days.toISOString().split('T')[0];
+activeCards.forEach(function(c){
+totalLimit+=Number(c.limit||0);
+var purchases=Array.isArray(c.purchases)?c.purchases:[];
+var currentUsed=purchases.filter(function(p){return (p.billingMonth||'').indexOf(monthRef)===0;}).reduce(function(s,p){return s+Number(p.value||0);},0);
+totalUsed+=currentUsed;
+if(Number(c.limit||0)>0&&currentUsed/Number(c.limit||0)>=0.6)highUtilizationCards++;
+var faturas=Array.isArray(c.faturas)?c.faturas:[];
+faturas.forEach(function(f){
+var venc=f&&f.vencimento?String(f.vencimento):'';
+if(!venc||venc<todayStr||venc>in7DaysStr)return;
+dueSoonCount++;
+dueSoonAmount+=Number(f.total||0);
+});
+});
+var cardPct=totalLimit>0?Math.round(totalUsed/totalLimit*100):0;
+var availableLimit=Math.max(0,totalLimit-totalUsed);
+var budgetCount=0,overBudgetCount=0;
+try{
+var _b=(typeof budgets!=='undefined'&&budgets)?budgets:{};
+Object.keys(_b).forEach(function(cat){
+var budgetVal=Number(_b[cat]||0);
+if(!(budgetVal>0))return;
+budgetCount++;
+var spent=ctx&&ctx.cat_totals&&ctx.cat_totals[cat]?Number(ctx.cat_totals[cat]):0;
+if(spent>budgetVal)overBudgetCount++;
+});
+}catch(e){}
+var openFinanceAtivo=!!((typeof U!=='undefined'&&U&&U.openBankingAtivo)||(typeof window!=='undefined'&&window._userOpenFinanceAtivo));
+var healthLevel='saudavel';
+if((ctx.saldo_mes||0)<0||cardPct>=85)healthLevel='critico';
+else if((ctx.pct_gasto||0)>=100||overBudgetCount>=2||cardPct>=60)healthLevel='pressao';
+else if((ctx.pct_gasto||0)>=85||!openFinanceAtivo)healthLevel='atencao';
+var monthlyDebtCommitment=0;
+try{
+var _rc=(typeof recurrents!=='undefined'&&recurrents)?recurrents:[];
+_rc.forEach(function(r){
+if(!r||r.active===false||r.type!=='despesa')return;
+var txt=String((r.category||'')+' '+(r.desc||'')).toLowerCase();
+txt=txt.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+if(/emprest|financ|consign|parcela|credito|divida|cartao|rotativo/.test(txt))monthlyDebtCommitment+=Number(r.value||0);
+});
+}catch(e){}
+if(persistedCredit){
+totalLimit=Math.max(Number(persistedCredit.totalLimit||0),totalLimit);
+totalUsed=Math.max(Number(persistedCredit.totalUsed||0),totalUsed);
+availableLimit=Math.max(Number(persistedCredit.availableLimit||0),availableLimit);
+cardPct=Math.max(Number(persistedCredit.cardUtilizationPct||0),cardPct);
+dueSoonAmount=Math.max(Number(persistedCredit.dueSoonAmount||0),dueSoonAmount);
+dueSoonCount=Math.max(Number(persistedCredit.dueSoonCount||0),dueSoonCount);
+highUtilizationCards=Math.max(Number(persistedCredit.highUtilizationAccounts||0),highUtilizationCards);
+monthlyDebtCommitment=Math.max(Number(persistedCredit.monthlyDebtCommitment||0),monthlyDebtCommitment);
+}
+if(remoteCredit){
+totalLimit=Math.max(Number(remoteCredit.totalLimit||0),totalLimit);
+totalUsed=Math.max(Number(remoteCredit.totalUsed||0),totalUsed);
+availableLimit=Math.max(Number(remoteCredit.availableLimit||0),availableLimit);
+cardPct=Math.max(Number(remoteCredit.cardUtilizationPct||0),cardPct);
+dueSoonAmount=Math.max(Number(remoteCredit.dueSoonAmount||0),dueSoonAmount);
+dueSoonCount=Math.max(Number(remoteCredit.dueSoonCount||0),dueSoonCount);
+highUtilizationCards=Math.max(Number(remoteCredit.highUtilizationAccounts||0),highUtilizationCards);
+monthlyDebtCommitment=Math.max(Number(remoteCredit.monthlyDebtCommitment||0),monthlyDebtCommitment);
+}
+var creditPressureLevel=String((persistedCredit&&persistedCredit.pressureLevel)||(remoteCredit&&remoteCredit.pressureLevel)||'').trim();
+if(!creditPressureLevel){
+if(cardPct>=85||(dueSoonAmount>0&&ctx&&ctx.saldo_mes!==undefined&&Number(ctx.saldo_mes||0)<Number(dueSoonAmount||0)))creditPressureLevel='critico';
+else if(cardPct>=60||monthlyDebtCommitment>=1000)creditPressureLevel='elevado';
+else if(cardPct>=35||monthlyDebtCommitment>0)creditPressureLevel='atencao';
+else creditPressureLevel='controlado';
+}
+
+function buildLegacyCreditSnapshot(){
+if(typeof syncAllAccountOverdraftCreditAccounts==='function')syncAllAccountOverdraftCreditAccounts();
+var _cards=Array.isArray(cards)?cards:[];
+var _accounts=Array.isArray(creditAccounts)?creditAccounts:[];
+var _obligations=Array.isArray(creditObligations)?creditObligations:[];
+var ctx=typeof getFinancialContext==='function'?getFinancialContext():null;
+var now=new Date();
+var monthRef=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+var todayStr=now.toISOString().split('T')[0];
+var in7Days=new Date(now);in7Days.setDate(in7Days.getDate()+7);
+var in7DaysStr=in7Days.toISOString().split('T')[0];
+var totalLimit=0,totalUsed=0,highUtilizationAccounts=0,dueSoonAmount=0,dueSoonCount=0,monthlyDebtCommitment=0;
+_cards.filter(function(c){return c&&c.active!==false;}).forEach(function(c){
+var limit=Number(c.limit||0);
+var purchases=Array.isArray(c.purchases)?c.purchases:[];
+var used=purchases.filter(function(p){return (p.billingMonth||'').indexOf(monthRef)===0;}).reduce(function(s,p){return s+Number(p.value||0);},0);
+totalLimit+=limit;
+totalUsed+=used;
+if(limit>0&&used/limit>=0.6)highUtilizationAccounts++;
+var faturas=Array.isArray(c.faturas)?c.faturas:[];
+faturas.forEach(function(f){
+var venc=f&&f.vencimento?String(f.vencimento):'';
+var amount=Number((f&&f.total)||0);
+if(!venc||venc<todayStr||venc>in7DaysStr||!(amount>0))return;
+dueSoonCount++;
+dueSoonAmount+=amount;
+});
+});
+_accounts.filter(function(a){return a&&a.active!==false;}).forEach(function(a){
+var limit=Number(a.limitTotal||a.totalLimit||0);
+var used=Number(a.balanceUsed||a.totalUsed||0);
+var monthly=Number(a.monthlyInstallment||0);
+var dueDate=String(a.nextDueDate||a.dueDate||'');
+var dueAmount=Number(a.nextDueAmount||a.amountDue||a.monthlyInstallment||0);
+totalLimit+=limit;
+totalUsed+=used;
+if(limit>0&&used/limit>=0.6)highUtilizationAccounts++;
+if(monthly>0)monthlyDebtCommitment+=monthly;
+if(dueDate&&dueDate>=todayStr&&dueDate<=in7DaysStr&&dueAmount>0){
+dueSoonCount++;
+dueSoonAmount+=dueAmount;
+}
+});
+_obligations.filter(function(o){return o&&o.active!==false;}).forEach(function(o){
+var monthly=Number(o.monthlyInstallment||o.amount||0);
+var dueDate=String(o.nextDueDate||o.dueDate||'');
+var dueAmount=Number(o.nextDueAmount||o.monthlyInstallment||o.amount||0);
+if(monthly>0)monthlyDebtCommitment+=monthly;
+if(dueDate&&dueDate>=todayStr&&dueDate<=in7DaysStr&&dueAmount>0){
+dueSoonCount++;
+dueSoonAmount+=dueAmount;
+}
+});
+var availableLimit=Math.max(0,totalLimit-totalUsed);
+var cardUtilizationPct=totalLimit>0?Math.round(totalUsed/totalLimit*100):0;
+var pressureLevel='controlado';
+if(cardUtilizationPct>=85||(dueSoonAmount>0&&ctx&&Number(ctx.saldo_mes||0)<Number(dueSoonAmount||0)))pressureLevel='critico';
+else if(cardUtilizationPct>=60||monthlyDebtCommitment>=1000)pressureLevel='elevado';
+else if(cardUtilizationPct>=35||monthlyDebtCommitment>0)pressureLevel='atencao';
+var snapshot={
+totalLimit:Math.round(totalLimit*100)/100,
+totalUsed:Math.round(totalUsed*100)/100,
+availableLimit:Math.round(availableLimit*100)/100,
+cardUtilizationPct:cardUtilizationPct,
+highUtilizationAccounts:highUtilizationAccounts,
+dueSoonAmount:Math.round(dueSoonAmount*100)/100,
+dueSoonCount:dueSoonCount,
+monthlyDebtCommitment:Math.round(monthlyDebtCommitment*100)/100,
+pressureLevel:pressureLevel
+};
+creditSnapshot=snapshot;
+if(U){
+U.creditAccounts=creditAccounts;
+U.creditObligations=creditObligations;
+U.creditSnapshot=snapshot;
+}
+return snapshot;
+}
+var journeyStage='pronto-para-crescer';
+if((ctx.total_lancamentos||0)<5)journeyStage='primeiros-passos';
+else if(healthLevel==='critico'||healthLevel==='pressao')journeyStage='pressionado';
+else if(!openFinanceAtivo)journeyStage='organizando-base';
+else if(!(typeof investments!=='undefined'&&investments&&investments.length))journeyStage='estabilizando';
+var nextActions=[];
+if(!openFinanceAtivo)nextActions.push('conectar-open-finance');
+if(cardPct>=60)nextActions.push('revisar-credito');
+if(overBudgetCount>0)nextActions.push('ajustar-orcamento');
+if(String(ctx.metas||'').indexOf('Nenhuma meta')===0)nextActions.push('criar-meta');
+if(nextActions.length===0)nextActions.push('aprofundar-consultoria');
+var topSignals=[];
+if((ctx.saldo_mes||0)<0)topSignals.push('saldo-mensal-negativo');
+if((ctx.pct_gasto||0)>=100)topSignals.push('despesa-superando-receita');
+if(cardPct>=60)topSignals.push('uso-elevado-do-limite');
+if(overBudgetCount>0)topSignals.push('orcamento-sob-pressao');
+if(!openFinanceAtivo)topSignals.push('open-finance-nao-conectado');
+return{
+monthRef:monthRef,
+healthLevel:healthLevel,
+journeyStage:journeyStage,
+cardUtilizationPct:cardPct,
+totalCardLimit:Math.round(totalLimit*100)/100,
+estimatedCardUsage:Math.round(totalUsed*100)/100,
+availableLimit:Math.round(availableLimit*100)/100,
+highUtilizationCards:highUtilizationCards,
+dueSoonAmount:Math.round(dueSoonAmount*100)/100,
+dueSoonCount:dueSoonCount,
+monthlyDebtCommitment:Math.round(monthlyDebtCommitment*100)/100,
+pressureLevel:creditPressureLevel,
+overBudgetCount:overBudgetCount,
+budgetCount:budgetCount,
+hasOpenFinance:openFinanceAtivo,
+nextBestActions:nextActions.slice(0,3),
+topSignals:topSignals.slice(0,5)
+};
+}
+
+function buildLegacyCreditSnapshot(){
+if(typeof syncAllAccountOverdraftCreditAccounts==='function')syncAllAccountOverdraftCreditAccounts();
+var _cards=Array.isArray(cards)?cards:[];
+var _accounts=Array.isArray(creditAccounts)?creditAccounts:[];
+var _obligations=Array.isArray(creditObligations)?creditObligations:[];
+var ctx=typeof getFinancialContext==='function'?getFinancialContext():null;
+var now=new Date();
+var monthRef=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+var todayStr=now.toISOString().split('T')[0];
+var in7Days=new Date(now);in7Days.setDate(in7Days.getDate()+7);
+var in7DaysStr=in7Days.toISOString().split('T')[0];
+var totalLimit=0,totalUsed=0,highUtilizationAccounts=0,dueSoonAmount=0,dueSoonCount=0,monthlyDebtCommitment=0;
+_cards.filter(function(c){return c&&c.active!==false;}).forEach(function(c){
+var limit=Number(c.limit||0);
+var purchases=Array.isArray(c.purchases)?c.purchases:[];
+var used=purchases.filter(function(p){return (p.billingMonth||'').indexOf(monthRef)===0;}).reduce(function(s,p){return s+Number(p.value||0);},0);
+totalLimit+=limit;
+totalUsed+=used;
+if(limit>0&&used/limit>=0.6)highUtilizationAccounts++;
+var faturas=Array.isArray(c.faturas)?c.faturas:[];
+faturas.forEach(function(f){
+var venc=f&&f.vencimento?String(f.vencimento):'';
+var amount=Number((f&&f.total)||0);
+if(!venc||venc<todayStr||venc>in7DaysStr||!(amount>0))return;
+dueSoonCount++;
+dueSoonAmount+=amount;
+});
+});
+_accounts.filter(function(a){return a&&a.active!==false;}).forEach(function(a){
+var limit=Number(a.limitTotal||a.totalLimit||0);
+var used=Number(a.balanceUsed||a.totalUsed||0);
+var monthly=Number(a.monthlyInstallment||0);
+var dueDate=String(a.nextDueDate||a.dueDate||'');
+var dueAmount=Number(a.nextDueAmount||a.amountDue||a.monthlyInstallment||0);
+totalLimit+=limit;
+totalUsed+=used;
+if(limit>0&&used/limit>=0.6)highUtilizationAccounts++;
+if(monthly>0)monthlyDebtCommitment+=monthly;
+if(dueDate&&dueDate>=todayStr&&dueDate<=in7DaysStr&&dueAmount>0){
+dueSoonCount++;
+dueSoonAmount+=dueAmount;
+}
+});
+_obligations.filter(function(o){return o&&o.active!==false;}).forEach(function(o){
+var monthly=Number(o.monthlyInstallment||o.amount||0);
+var dueDate=String(o.nextDueDate||o.dueDate||'');
+var dueAmount=Number(o.nextDueAmount||o.monthlyInstallment||o.amount||0);
+if(monthly>0)monthlyDebtCommitment+=monthly;
+if(dueDate&&dueDate>=todayStr&&dueDate<=in7DaysStr&&dueAmount>0){
+dueSoonCount++;
+dueSoonAmount+=dueAmount;
+}
+});
+var availableLimit=Math.max(0,totalLimit-totalUsed);
+var cardUtilizationPct=totalLimit>0?Math.round(totalUsed/totalLimit*100):0;
+var pressureLevel='controlado';
+if(cardUtilizationPct>=85||(dueSoonAmount>0&&ctx&&Number(ctx.saldo_mes||0)<Number(dueSoonAmount||0)))pressureLevel='critico';
+else if(cardUtilizationPct>=60||monthlyDebtCommitment>=1000)pressureLevel='elevado';
+else if(cardUtilizationPct>=35||monthlyDebtCommitment>0)pressureLevel='atencao';
+var snapshot={
+totalLimit:Math.round(totalLimit*100)/100,
+totalUsed:Math.round(totalUsed*100)/100,
+availableLimit:Math.round(availableLimit*100)/100,
+cardUtilizationPct:cardUtilizationPct,
+highUtilizationAccounts:highUtilizationAccounts,
+dueSoonAmount:Math.round(dueSoonAmount*100)/100,
+dueSoonCount:dueSoonCount,
+monthlyDebtCommitment:Math.round(monthlyDebtCommitment*100)/100,
+pressureLevel:pressureLevel
+};
+creditSnapshot=snapshot;
+if(U){
+U.creditAccounts=creditAccounts;
+U.creditObligations=creditObligations;
+U.creditSnapshot=snapshot;
+}
+return snapshot;
+}
+
+function getLegacyCreditPriorityMeta(item){
+var rate=Number(item&&item.interestRatePct||0);
+var cet=Number(item&&item.cetAnnualPct||0);
+var utilization=0;
+if(Number(item&&item.limitTotal||0)>0)utilization=(Number(item.balanceUsed||0)/Number(item.limitTotal||1))*100;
+if(item&&item.source==='account_overdraft'&&Number(item.balanceUsed||0)<=0){
+return{score:0,label:'Baixa',color:'var(--green)',reason:'limite disponivel sem uso'};
+}
+var dueDate=String(item&&((item.nextDueDate||item.dueDate)||''));
+var todayStr=new Date().toISOString().split('T')[0];
+var dueSoon=!!(dueDate&&dueDate>=todayStr&&dueDate<=new Date(Date.now()+7*24*60*60*1000).toISOString().split('T')[0]);
+var score=0;
+if(rate>=8)score+=5;else if(rate>=5)score+=4;else if(rate>=3)score+=3;else if(rate>0)score+=1;
+if(cet>=120)score+=4;else if(cet>=60)score+=3;else if(cet>=30)score+=2;else if(cet>0)score+=1;
+if(utilization>=85)score+=4;else if(utilization>=60)score+=3;else if(utilization>=35)score+=1;
+if(dueSoon)score+=2;
+if(Number(item&&item.monthlyInstallment||0)>=1000)score+=2;
+var label='Baixa';
+var color='var(--green)';
+if(score>=10){label='Alta';color='var(--vr)';}
+else if(score>=6){label='Media';color='var(--yellow)';}
+else if(score>=3){label='Moderada';color='var(--blue)';}
+var reason=[];
+if(item&&item.source==='account_overdraft'&&Number(item.balanceUsed||0)>0)reason.push('cheque especial em uso');
+if(rate>0)reason.push('juros '+rate.toFixed(2)+'%/m');
+if(cet>0)reason.push('CET '+cet.toFixed(2)+'% a.a.');
+if(utilization>=60)reason.push('uso '+Math.round(utilization)+'%');
+if(dueSoon)reason.push('vence em ate 7 dias');
+if(Number(item&&item.monthlyInstallment||0)>0)reason.push('parcela R$ '+Number(item.monthlyInstallment||0).toFixed(2));
+return{score:score,label:label,color:color,reason:reason.slice(0,3).join(' · ')};
+}
+
+function buildLegacyCreditRecommendations(){
+if(typeof syncAllAccountOverdraftCreditAccounts==='function')syncAllAccountOverdraftCreditAccounts();
+var items=[];
+var accs=Array.isArray(creditAccounts)?creditAccounts:[];
+var obs=Array.isArray(creditObligations)?creditObligations:[];
+accs.forEach(function(item){
+if(!item||item.active===false)return;
+items.push({kind:'conta',item:item,meta:getLegacyCreditPriorityMeta(item)});
+});
+obs.forEach(function(item){
+if(!item||item.active===false)return;
+items.push({kind:'obrigacao',item:item,meta:getLegacyCreditPriorityMeta(item)});
+});
+items.sort(function(a,b){return b.meta.score-a.meta.score;});
+var recs=[];
+items.slice(0,3).forEach(function(entry){
+var item=entry.item;
+var meta=entry.meta;
+var label=item.label||'credito';
+if(meta.score>=10){
+recs.push('Priorize renegociar ou amortizar "'+label+'" agora. Motivos: '+(meta.reason||'custo elevado')+'.');
+}else if(meta.score>=6){
+recs.push('Revise "'+label+'" nas proximas decisoes de caixa. Foco em reduzir custo e parcela mensal.');
+}else if(meta.score>=3){
+recs.push('Monitore "'+label+'" e evite aumentar o saldo enquanto houver outras prioridades mais caras.');
+}
+});
+if(recs.length===0&&items.length>0)recs.push('Seu credito estruturado parece controlado. Mantenha os vencimentos em dia e compare custos antes de contratar novo limite.');
+if(items.length===0)recs.push('Cadastre emprestimos, financiamentos e limites para o consultor montar uma estrategia de reorganizacao mais precisa.');
+return{items:items,recommendations:recs};
+}
+
+function getLegacyAvailableCash(){
+var total=0;
+var accs=Array.isArray(userAccs)?userAccs:[];
+for(var i=0;i<accs.length;i++){
+var acc=accs[i];
+if(accountMeta[acc]&&accountMeta[acc].incluirNaSoma===false)continue;
+try{total+=Number(getAccBal(acc).atual||0);}catch(e){}
+}
+return Math.round(total*100)/100;
+}
+
+function getLegacyCreditExposure(item){
+if(!item)return 0;
+var exposure=Math.max(
+Number(item.outstandingBalance||0),
+Number(item.balanceUsed||0),
+Number(item.nextDueAmount||0),
+Number(item.monthlyInstallment||0)
+);
+return Math.round(exposure*100)/100;
+}
+
+function estimateLegacyCreditMonthlyRelief(item,payment){
+var exposure=Math.max(getLegacyCreditExposure(item),0.01);
+var monthly=Number(item&&item.monthlyInstallment||0);
+var rate=Number(item&&item.interestRatePct||0);
+if(monthly>0){
+return Math.round(Math.min(monthly,monthly*(payment/exposure))*100)/100;
+}
+if(rate>0){
+return Math.round((payment*(rate/100))*100)/100;
+}
+return 0;
+}
+
+function buildLegacyCreditActionPlan(){
+var data=buildLegacyCreditRecommendations();
+var items=data.items||[];
+var availableCash=getLegacyAvailableCash();
+var safeBudget=Math.round(Math.max(0,availableCash*0.3)*100)/100;
+var aggressiveBudget=Math.round(Math.max(0,availableCash*0.6)*100)/100;
+var todayStr=new Date().toISOString().split('T')[0];
+var next7=new Date(Date.now()+7*24*60*60*1000).toISOString().split('T')[0];
+var urgentDue=items.find(function(entry){
+var dueDate=String(entry.item.nextDueDate||entry.item.dueDate||'');
+return dueDate&&dueDate>=todayStr&&dueDate<=next7;
+})||null;
+var priority=items[0]||null;
+var actions=[];
+if(urgentDue){
+var urgentValue=Math.min(
+Number(urgentDue.item.nextDueAmount||urgentDue.item.monthlyInstallment||0),
+Math.max(0,availableCash)
+);
+if(urgentValue>0){
+actions.push({
+type:'due_soon',
+label:'Cobrir vencimento próximo',
+item:urgentDue.item,
+amount:Math.round(urgentValue*100)/100,
+relief:estimateLegacyCreditMonthlyRelief(urgentDue.item,urgentValue)
+});
+}
+}
+if(priority&&safeBudget>0){
+var amortizeValue=Math.min(getLegacyCreditExposure(priority.item),safeBudget);
+if(amortizeValue>0){
+actions.push({
+type:'safe_amortization',
+label:'Amortização segura',
+item:priority.item,
+amount:Math.round(amortizeValue*100)/100,
+relief:estimateLegacyCreditMonthlyRelief(priority.item,amortizeValue)
+});
+}
+}
+if(priority&&aggressiveBudget>safeBudget&&aggressiveBudget>0){
+var aggressiveValue=Math.min(getLegacyCreditExposure(priority.item),aggressiveBudget);
+if(aggressiveValue>0){
+actions.push({
+type:'aggressive_amortization',
+label:'Amortização forte',
+item:priority.item,
+amount:Math.round(aggressiveValue*100)/100,
+relief:estimateLegacyCreditMonthlyRelief(priority.item,aggressiveValue)
+});
+}
+}
+var renegotiateCandidates=items.filter(function(entry){return entry.meta.score>=6;}).slice(0,3);
+return{
+availableCash:availableCash,
+safeBudget:safeBudget,
+aggressiveBudget:aggressiveBudget,
+priority:priority,
+urgentDue:urgentDue,
+renegotiateCandidates:renegotiateCandidates,
+actions:actions
+};
+}
+
+function getLegacyCreditConsultorReply(txt){
+var raw=String(txt||'').trim();
+if(!raw)return null;
+var q=raw.toLowerCase();
+q=q.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+var hasCreditIntent=/credito|divida|dividas|quit|quitar|renegoci|parcela|parcela|cet|juros|emprest|financ|limite|rotativo|acompanhamento|progresso|andamento|estrategia/.test(q);
+if(!hasCreditIntent)return null;
+var data=buildLegacyCreditRecommendations();
+var actionPlan=buildLegacyCreditActionPlan();
+var monitoring=getLegacyCreditMonitoringData();
+var items=data.items||[];
+if(items.length===0){
+return '💳 <b>Ainda não tenho crédito estruturado suficiente para analisar.</b><br><br>Cadastre empréstimos, financiamentos, limites e parcelas na seção <b>Crédito Estruturado</b> para eu dizer o que quitar primeiro, o que renegociar e qual dívida está mais cara.<div style="margin-top:12px"><button type="button" class="btn btn-o" onclick="go(\'credito\',null)" style="padding:7px 12px;font-size:.78em">Abrir Hub de Crédito</button></div>';
+}
+var top=items[0]||null;
+var expensive=items.slice().sort(function(a,b){
+var ar=Math.max(Number(a.item.interestRatePct||0),Number(a.item.cetAnnualPct||0)/12);
+var br=Math.max(Number(b.item.interestRatePct||0),Number(b.item.cetAnnualPct||0)/12);
+return br-ar;
+})[0]||null;
+var monthly=items.slice().sort(function(a,b){return Number(b.item.monthlyInstallment||0)-Number(a.item.monthlyInstallment||0);})[0]||null;
+var dueSoon=items.find(function(entry){
+var dueDate=String(entry.item.nextDueDate||entry.item.dueDate||'');
+var todayStr=new Date().toISOString().split('T')[0];
+var next7=new Date(Date.now()+7*24*60*60*1000).toISOString().split('T')[0];
+return dueDate&&dueDate>=todayStr&&dueDate<=next7;
+})||null;
+if(/o que quitar primeiro|qual quitar primeiro|qual divida pagar primeiro|prioridade|pagar primeiro/.test(q)){
+var topList=items.slice(0,3).map(function(entry,idx){
+return (idx+1)+'. <b>'+escapeHtml(entry.item.label||'Crédito')+'</b> - prioridade '+entry.meta.label+' ('+escapeHtml(entry.meta.reason||'sem detalhes')+')';
+}).join('<br>');
+return '🎯 <b>Minha ordem sugerida de prioridade hoje:</b><br><br>'+topList+'<br><br>Regra prática: ataque primeiro o que combina <b>juros/CET alto</b>, <b>uso elevado do limite</b> e <b>vencimento próximo</b>.'+renderLegacyCreditConsultorButtons(top.item&&top.item.id,actionPlan.safeBudget);
+}
+if(/vale renegociar|renegociar|renegociacao|renegociacao/.test(q)){
+var renegItems=items.filter(function(entry){return entry.meta.score>=6;}).slice(0,3);
+if(renegItems.length===0){
+return '🤝 <b>No momento, eu não vejo uma urgência clara de renegociação.</b><br><br>Seu crédito estruturado parece mais controlado. Ainda assim, vale comparar custo efetivo e tentar reduzir juros se surgir oferta melhor.<div style="margin-top:12px"><button type="button" class="btn btn-o" onclick="go(\'credito\',null)" style="padding:7px 12px;font-size:.78em">Abrir Hub de Crédito</button></div>';
+}
+return '🤝 <b>Sim, vale revisar renegociação nestes casos:</b><br><br>'+renegItems.map(function(entry){
+return '• <b>'+escapeHtml(entry.item.label||'Crédito')+'</b>: '+escapeHtml(entry.meta.reason||'custo relevante');
+}).join('<br>')+'<br><br>Busque: menor parcela, menor CET e troca de dívida cara por linha mais barata.'+renderLegacyCreditConsultorButtons(renegItems[0]&&renegItems[0].item&&renegItems[0].item.id,actionPlan.safeBudget);
+}
+if(/divida mais cara|credito mais caro|qual esta mais cara|mais caro|maior juros|maior cet/.test(q)){
+if(!expensive){
+return '💸 <b>Não encontrei uma dívida claramente mais cara.</b>';
+}
+return '💸 <b>A dívida/linha mais cara hoje parece ser:</b><br><br><b>'+escapeHtml(expensive.item.label||'Crédito')+'</b><br>Juros: <b>'+Number(expensive.item.interestRatePct||0).toFixed(2)+'%/m</b><br>CET: <b>'+Number(expensive.item.cetAnnualPct||0).toFixed(2)+'% a.a.</b><br><br>Se houver caixa, essa é uma boa candidata para renegociar ou amortizar antes das demais.'+renderLegacyCreditConsultorButtons(expensive.item&&expensive.item.id,actionPlan.safeBudget);
+}
+if(/parcela pesa mais|maior parcela|qual parcela pesa mais|compromisso mensal/.test(q)){
+if(!monthly){
+return '📉 <b>Não encontrei parcelas mensais relevantes no crédito estruturado.</b>';
+}
+return '📉 <b>O maior peso mensal hoje é:</b><br><br><b>'+escapeHtml(monthly.item.label||'Crédito')+'</b> com parcela de <b>R$ '+Number(monthly.item.monthlyInstallment||0).toFixed(2)+'</b>.<br><br>Se isso estiver pressionando seu caixa, faz sentido buscar redução de parcela ou troca por custo menor.'+renderLegacyCreditConsultorButtons(monthly.item&&monthly.item.id,monthly.item&&monthly.item.monthlyInstallment);
+}
+if(/vence primeiro|vencimento|vence em breve|proximo vencimento/.test(q)){
+if(!dueSoon){
+return '📅 <b>Não achei vencimentos críticos nos próximos 7 dias</b> dentro do crédito estruturado.<div style="margin-top:12px"><button type="button" class="btn btn-o" onclick="go(\'credito\',null)" style="padding:7px 12px;font-size:.78em">Abrir Hub de Crédito</button></div>';
+}
+return '📅 <b>O crédito mais urgente por vencimento é:</b><br><br><b>'+escapeHtml(dueSoon.item.label||'Crédito')+'</b><br>Vence em: <b>'+escapeHtml(dueSoon.item.nextDueDate||dueSoon.item.dueDate||'-')+'</b><br>Valor previsto: <b>R$ '+Number(dueSoon.item.nextDueAmount||dueSoon.item.monthlyInstallment||0).toFixed(2)+'</b>.'+renderLegacyCreditConsultorButtons(dueSoon.item&&dueSoon.item.id,dueSoon.item&&dueSoon.item.nextDueAmount);
+}
+if(/analise meu credito|analisar meu credito|como esta meu credito|situacao do credito/.test(q)){
+return '🧠 <b>Resumo do seu crédito estruturado:</b><br><br>• Pressão atual: <b>'+escapeHtml((buildLegacyCreditSnapshot().pressureLevel||'controlado').toUpperCase())+'</b><br>• Dívida mensal: <b>R$ '+Number(buildLegacyCreditSnapshot().monthlyDebtCommitment||0).toFixed(2)+'</b><br>• Saldo disponível hoje: <b>R$ '+Number(actionPlan.availableCash||0).toFixed(2)+'</b><br>• Prioridade alta: <b>'+items.filter(function(entry){return entry.meta.score>=10;}).length+'</b> item(ns)<br>• Estratégias paradas: <b>'+monitoring.stalled.length+'</b><br>• Renegociações pendentes: <b>'+monitoring.pendingRenegotiation.length+'</b><br>• Revisões vencidas: <b>'+((monitoring.reviewDue&&monitoring.reviewDue.length)||0)+'</b><br>• Itens com progresso: <b>'+monitoring.progressed.length+'</b><br>• Variação recente da exposição: <b>'+(monitoring.weeklyExposureDelta>0?'+':'')+'R$ '+Number(monitoring.weeklyExposureDelta||0).toFixed(2)+'</b><br><br>'+data.recommendations.map(function(text){return '• '+escapeHtml(text);}).join('<br>')+'<div style="margin-top:12px"><button type="button" class="btn btn-o" onclick="go(\'credito\',null)" style="padding:7px 12px;font-size:.78em">Abrir Hub de Crédito</button></div>';
+}
+if(/acompanhamento|progresso|andamento|estrategia parada|plano de credito|rotina do credito/.test(q)){
+var stalledText=monitoring.stalled.slice(0,2).map(function(entry){
+return '• <b>'+escapeHtml(entry.item.label||'Crédito')+'</b>: sem avanço há '+Math.max(entry.daysSinceLastMove||0,entry.daysSinceUpdate||0)+' dias';
+}).join('<br>');
+var pendingText=monitoring.pendingRenegotiation.slice(0,2).map(function(entry){
+return '• <b>'+escapeHtml(entry.item.label||'Crédito')+'</b>: renegociação planejada há '+entry.daysSinceUpdate+' dias';
+}).join('<br>');
+var progressText=monitoring.progressed.slice(0,2).map(function(entry){
+return '• <b>'+escapeHtml(entry.item.label||'Crédito')+'</b>: melhora de '+Math.max(entry.exposureReductionPct||0,entry.monthlyReductionPct||0)+'%';
+}).join('<br>');
+var reviewText=(monitoring.reviewDue||[]).slice(0,2).map(function(entry){
+return '• <b>'+escapeHtml(entry.item.label||'Crédito')+'</b>: revisão já venceu';
+}).join('<br>');
+return '📌 <b>Acompanhamento do seu plano de crédito</b><br><br>• Estratégias paradas: <b>'+monitoring.stalled.length+'</b><br>• Renegociações pendentes: <b>'+monitoring.pendingRenegotiation.length+'</b><br>• Revisões vencidas: <b>'+((monitoring.reviewDue&&monitoring.reviewDue.length)||0)+'</b><br>• Itens com progresso: <b>'+monitoring.progressed.length+'</b><br>• Variação recente da exposição: <b>'+(monitoring.weeklyExposureDelta>0?'+':'')+'R$ '+Number(monitoring.weeklyExposureDelta||0).toFixed(2)+'</b><br><br>'+(stalledText?'<b>Parados</b><br>'+stalledText+'<br><br>':'')+(pendingText?'<b>Pendentes</b><br>'+pendingText+'<br><br>':'')+(reviewText?'<b>Revisar agora</b><br>'+reviewText+'<br><br>':'')+(progressText?'<b>Melhoras</b><br>'+progressText+'<br><br>':'')+'Se quiser, eu posso te dizer <b>"o que quitar primeiro"</b> ou <b>"como reorganizar minhas dívidas"</b>.<div style="margin-top:12px"><button type="button" class="btn btn-o" onclick="go(\'credito\',null)" style="padding:7px 12px;font-size:.78em">Abrir Hub de Crédito</button></div>';
+}
+if(/com meu saldo|com o saldo|quanto posso quitar|simular quitacao|simular quita|quitar com meu caixa|o que consigo quitar/.test(q)){
+if(!(actionPlan.availableCash>0)){
+return '💰 <b>Hoje eu não vejo saldo disponível positivo para simular quitação.</b><br><br>Nesse cenário, a melhor jogada é focar em <b>renegociação</b>, alongamento de prazo e proteção dos vencimentos mais próximos.<div style="margin-top:12px"><button type="button" class="btn btn-o" onclick="go(\'credito\',null)" style="padding:7px 12px;font-size:.78em">Abrir Hub de Crédito</button></div>';
+}
+var lines=actionPlan.actions.map(function(action){
+return '• <b>'+escapeHtml(action.label)+'</b> em <b>'+escapeHtml(action.item.label||'Crédito')+'</b>: usar <b>R$ '+Number(action.amount||0).toFixed(2)+'</b>'+(action.relief>0?' e aliviar cerca de <b>R$ '+Number(action.relief||0).toFixed(2)+'/mês</b>':'');
+}).join('<br>');
+if(!lines){
+lines='• Com o saldo atual, eu priorizaria manter liquidez e atacar apenas vencimentos imediatos.';
+}
+return '💰 <b>Simulação rápida com seu caixa atual</b><br><br>Saldo disponível: <b>R$ '+Number(actionPlan.availableCash||0).toFixed(2)+'</b><br>Faixa segura para amortizar agora: <b>R$ '+Number(actionPlan.safeBudget||0).toFixed(2)+'</b><br>Faixa mais agressiva: <b>R$ '+Number(actionPlan.aggressiveBudget||0).toFixed(2)+'</b><br><br>'+lines+renderLegacyCreditConsultorButtons(actionPlan.actions[0]&&actionPlan.actions[0].item&&actionPlan.actions[0].item.id,actionPlan.actions[0]&&actionPlan.actions[0].amount);
+}
+if(/como reorganizar|minhas dividas|meu credito|plano de acao|plano para dividas|o que fazer agora/.test(q)){
+var renegText=(actionPlan.renegotiateCandidates||[]).slice(0,2).map(function(entry){
+return '• Renegociar <b>'+escapeHtml(entry.item.label||'Crédito')+'</b> por causa de '+escapeHtml(entry.meta.reason||'custo alto');
+}).join('<br>');
+var firstAction=actionPlan.actions[0]
+?('• Usar <b>R$ '+Number(actionPlan.actions[0].amount||0).toFixed(2)+'</b> em <b>'+escapeHtml(actionPlan.actions[0].item.label||'Crédito')+'</b>'+(actionPlan.actions[0].relief>0?' para tentar aliviar <b>R$ '+Number(actionPlan.actions[0].relief||0).toFixed(2)+'/mês</b>':''))
+:'• Proteger primeiro os vencimentos mais próximos';
+return '🧭 <b>Plano simples de reorganização hoje</b><br><br>'+firstAction+'<br>'+(renegText||'• Comparar custo total das dívidas antes de contratar novo crédito')+'<br>• Evitar aumentar limite caro enquanto houver item com prioridade alta.'+renderLegacyCreditConsultorButtons(actionPlan.priority&&actionPlan.priority.item&&actionPlan.priority.item.id,actionPlan.safeBudget);
+}
+if(top){
+return '💳 <b>Encontrei itens relevantes no seu crédito estruturado.</b><br><br>Hoje eu olharia primeiro para <b>'+escapeHtml(top.item.label||'Crédito')+'</b> porque ele aparece com prioridade <b>'+escapeHtml(top.meta.label)+'</b> ('+escapeHtml(top.meta.reason||'custo/pressão')+').<br><br>Você pode me perguntar também: <b>"o que quitar primeiro?"</b>, <b>"com meu saldo o que consigo quitar?"</b> ou <b>"como reorganizar minhas dívidas?"</b>.'+renderLegacyCreditConsultorButtons(top.item&&top.item.id,actionPlan.safeBudget);
+}
+return null;
+}
+
+function buildLegacyAdvisorSnapshot(ctx){
+if(!ctx)ctx=getFinancialContext();
+var profile=getLegacyFinancialProfile(ctx);
+var creditAdvice=buildLegacyCreditRecommendations();
+var creditActionPlan=buildLegacyCreditActionPlan();
+return[
+'Perfil consolidado:',
+'Saúde financeira: '+profile.healthLevel,
+'Estágio da jornada: '+profile.journeyStage,
+'% da receita gasta: '+(ctx.pct_gasto||0)+'%',
+'Uso estimado do limite: '+(profile.cardUtilizationPct||0)+'%',
+'Pressão de crédito: '+(profile.pressureLevel||'controlado'),
+'Faturas em 7 dias: R$ '+Number(profile.dueSoonAmount||0).toFixed(2),
+'Compromisso mensal com dívidas: R$ '+Number(profile.monthlyDebtCommitment||0).toFixed(2),
+'Saldo disponivel para simular quitacao: R$ '+Number(creditActionPlan.availableCash||0).toFixed(2),
+'Faixa segura de amortizacao agora: R$ '+Number(creditActionPlan.safeBudget||0).toFixed(2),
+'Recomendacoes de crédito: '+(creditAdvice.recommendations.join(' | ')||'nenhuma'),
+'Open Finance ativo: '+(profile.hasOpenFinance?'sim':'não'),
+'Próximas ações sugeridas: '+(profile.nextBestActions.join(', ')||'nenhuma'),
+'Sinais principais: '+(profile.topSignals.join(', ')||'nenhum')
+].join('\n');
+}
+
+function trackLegacyPlatformEvent(name,payload){
+try{
+if(!U||!U.uid||typeof firebase==='undefined'||!firebase.functions)return;
+var fn=firebase.functions().httpsCallable('trackPlatformEvent');
+fn({name:name,payload:payload||{}}).catch(function(){});
+}catch(e){}
+}
+
+function openLegacyInsightConsultor(){
+trackLegacyPlatformEvent('insight_cta_clicked',{source:'legacy_widget_insight',mode:'legado',target:'ia'});
+if(typeof go==='function')go('ia',null);
+}
+
+function openProactiveInsightTarget(tabId,relevanceScore){
+trackLegacyPlatformEvent('insight_cta_clicked',{source:'legacy_proactive_card',mode:'proactive',target:tabId||'metas',relevanceScore:typeof relevanceScore==='number'?Math.round(relevanceScore):null});
+try{closeDrawer();}catch(e){}
+if(typeof go==='function')go(tabId||'metas',null);
 }
 
 function buildPrompt(tipo,ctx){
@@ -2696,7 +3668,13 @@ else if(tabId==='orçamento')tabId='orçamento';else if(tabId==='orcamento')tabI
 else if(tabId==='lancamentos'||tabId==='lancamento')tabId='lanc';
 var acao=(insight.acao_sugerida||'').trim()||(typeof t==='function'?t('ver_metas'):'Ver metas');
 el.style.display='block';
-el.innerHTML='<div class="dash-insight-proativo-card"><div class="dash-insight-proativo-hd"><i data-lucide="sparkles" style="width:18px;height:18px;color:var(--accent)"></i><span>Consultor IA</span></div><div class="dash-insight-proativo-title">'+escapeHtml(insight.insight_curto)+'</div><div class="dash-insight-proativo-detalhe">'+escapeHtml(insight.detalhe||'')+'</div><div class="dash-insight-proativo-actions"><button type="button" class="btn btn-b btn-sm dash-insight-proativo-btn" onclick="closeDrawer();go(\''+String(tabId).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\',null)">'+escapeHtml(acao)+'</button><span class="dash-insight-proativo-feedback"><span class="fab-feedback-btn" onclick="saveProactiveInsightFeedback(1)" title="Útil" aria-label="Útil"><i data-lucide="thumbs-up" style="width:16px;height:16px"></i></span><span class="fab-feedback-btn" onclick="saveProactiveInsightFeedback(-1)" title="Não útil" aria-label="Não útil"><i data-lucide="thumbs-down" style="width:16px;height:16px"></i></span></span></div></div>';
+var rel=typeof insight.relevancia_score==='number'?Math.round(insight.relevancia_score):null;
+var proactiveKey='proactive:'+String(insight.insight_curto||'')+':'+String(tabId||'metas');
+if(window._lastTrackedProactiveInsightKey!==proactiveKey){
+window._lastTrackedProactiveInsightKey=proactiveKey;
+trackLegacyPlatformEvent('insight_shown',{source:'legacy_proactive_card',mode:'proactive',target:tabId,relevanceScore:rel});
+}
+el.innerHTML='<div class="dash-insight-proativo-card"><div class="dash-insight-proativo-hd"><i data-lucide="sparkles" style="width:18px;height:18px;color:var(--accent)"></i><span>Consultor IA</span></div><div class="dash-insight-proativo-title">'+escapeHtml(insight.insight_curto)+'</div><div class="dash-insight-proativo-detalhe">'+escapeHtml(insight.detalhe||'')+'</div><div class="dash-insight-proativo-actions"><button type="button" class="btn btn-b btn-sm dash-insight-proativo-btn" onclick="openProactiveInsightTarget(\''+String(tabId).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\','+(rel===null?'null':rel)+')">'+escapeHtml(acao)+'</button><span class="dash-insight-proativo-feedback"><span class="fab-feedback-btn" onclick="saveProactiveInsightFeedback(1)" title="Útil" aria-label="Útil"><i data-lucide="thumbs-up" style="width:16px;height:16px"></i></span><span class="fab-feedback-btn" onclick="saveProactiveInsightFeedback(-1)" title="Não útil" aria-label="Não útil"><i data-lucide="thumbs-down" style="width:16px;height:16px"></i></span></span></div></div>';
 if(typeof lucide!=='undefined'&&lucide.createIcons)lucide.createIcons();
 }
 
@@ -3019,18 +3997,7 @@ var salM=recM-despM;
 
 var h=now.getHours();
 var saud=h<6?'Boa madrugada':h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
-var nota=10;
-var pctGasto=recM>0?Math.round(despM/recM*100):(despM>0?999:0);
-// Sem receita + com despesa = situação crítica (trata como 999% de gasto)
-if(recM===0&&despM>0)nota-=5;
-else if(pctGasto>100)nota-=4;else if(pctGasto>80)nota-=2;else if(pctGasto>60)nota-=1;
-// Penalidade extra: despesa muito maior que receita
-if(recM>0&&pctGasto>150)nota-=2;
-if(investments.length===0)nota-=1;if(goals.length===0)nota-=1;if(Object.keys(budgets).length===0)nota-=1;
-nota=Math.max(1,Math.min(10,nota));
-window._lastFinScore=nota*10;
-var scoreNum=nota*10;
-var scoreCor=scoreNum>=70?'#22C55E':scoreNum>=40?'#EAB308':'#EF4444';
+var scoreNum=calcFinScore();
 var userName=(U&&U.name)||'Usuário';
 var labelEl=document.getElementById('dashGreetLabel');
 if(labelEl)labelEl.textContent=saud;
@@ -3404,23 +4371,692 @@ dEl.innerHTML=h;
 function renderCardsResumo(){
 var rEl=document.getElementById('cardsResumo');
 if(!rEl)return;
-if(cards.length===0){rEl.innerHTML='';return}
-var now=new Date();
-var totalLimite=0,totalUsado=0;
+if(cards.length===0&&(!Array.isArray(creditAccounts)||creditAccounts.length===0)&&(!Array.isArray(creditObligations)||creditObligations.length===0)){rEl.innerHTML='';return}
 var h='';
-cards.forEach(function(c){
-var bm=getBillingMonth(c,now.toISOString().split('T')[0]);
-var fat=c.purchases.filter(function(p){return p.billingMonth===bm}).reduce(function(s,p){return s+p.value},0);
-totalLimite+=c.limit;
-totalUsado+=fat;
-});
-var totalDisp=totalLimite-totalUsado;
-var pctTotal=totalLimite>0?Math.round(totalUsado/totalLimite*100):0;
+var creditProfile=typeof getLegacyFinancialProfile==='function'?getLegacyFinancialProfile():null;
+var totalLimite=(creditProfile&&creditProfile.totalCardLimit)||0;
+var totalUsado=(creditProfile&&creditProfile.estimatedCardUsage)||0;
+var totalDisp=(creditProfile&&creditProfile.availableLimit)||0;
+var pctTotal=(creditProfile&&creditProfile.cardUtilizationPct)||0;
+var pressureColor=creditProfile&&creditProfile.pressureLevel==='critico'?'var(--vr)':creditProfile&&creditProfile.pressureLevel==='elevado'?'var(--yellow)':creditProfile&&creditProfile.pressureLevel==='atencao'?'var(--blue)':'var(--green)';
 h+='<div style="padding:14px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.78em;color:var(--t2)">Limite Total</div><div style="font-size:1.3em;font-weight:800;color:var(--blue);margin-top:4px">R$ '+totalLimite.toFixed(2)+'</div></div>';
 h+='<div style="padding:14px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.78em;color:var(--t2)">Total Utilizado</div><div style="font-size:1.3em;font-weight:800;color:var(--vr);margin-top:4px">R$ '+totalUsado.toFixed(2)+'</div></div>';
 h+='<div style="padding:14px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.78em;color:var(--t2)">Disponível Total</div><div style="font-size:1.3em;font-weight:800;color:var(--green);margin-top:4px">R$ '+totalDisp.toFixed(2)+'</div></div>';
 h+='<div style="padding:14px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.78em;color:var(--t2)">% Comprometido</div><div style="font-size:1.3em;font-weight:800;color:'+(pctTotal>=80?'var(--vr)':pctTotal>=50?'var(--yellow)':'var(--green)')+';margin-top:4px">'+pctTotal+'%</div></div>';
+h+='<div style="padding:14px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.78em;color:var(--t2)">Faturas em 7 dias</div><div style="font-size:1.3em;font-weight:800;color:var(--yellow);margin-top:4px">R$ '+((creditProfile&&creditProfile.dueSoonAmount)||0).toFixed(2)+'</div><div style="font-size:.72em;color:var(--t2);margin-top:4px">'+((creditProfile&&creditProfile.dueSoonCount)||0)+' vencimento(s)</div></div>';
+h+='<div style="padding:14px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.78em;color:var(--t2)">Pressão de Crédito</div><div style="font-size:1.1em;font-weight:800;color:'+pressureColor+';margin-top:4px">'+String((creditProfile&&creditProfile.pressureLevel)||'controlado').toUpperCase()+'</div><div style="font-size:.72em;color:var(--t2);margin-top:4px">Dívida mensal: R$ '+((creditProfile&&creditProfile.monthlyDebtCommitment)||0).toFixed(2)+'</div></div>';
+h+='<div style="padding:14px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.78em;color:var(--t2)">Cartões acima de 60%</div><div style="font-size:1.3em;font-weight:800;color:'+pressureColor+';margin-top:4px">'+((creditProfile&&creditProfile.highUtilizationCards)||0)+'</div><div style="font-size:.72em;color:var(--t2);margin-top:4px">Uso elevado do limite</div></div>';
 rEl.innerHTML=h;
+}
+
+function renderCardsCreditHubCta(){
+var el=document.getElementById('cardsCreditHubCta');
+if(!el)return;
+var profile=typeof getLegacyFinancialProfile==='function'?getLegacyFinancialProfile():null;
+var monitoring=typeof getLegacyCreditMonitoringData==='function'?getLegacyCreditMonitoringData():{stalled:[],pendingRenegotiation:[],reviewDue:[]};
+var nextAction=monitoring.reviewDue&&monitoring.reviewDue.length?'Revisar estrategia vencida agora':monitoring.pendingRenegotiation&&monitoring.pendingRenegotiation.length?'Validar renegociacao pendente':monitoring.stalled&&monitoring.stalled.length?'Retomar item parado':'Consolidar todo o credito no hub';
+el.innerHTML='<div style="padding:16px;background:linear-gradient(135deg,rgba(76,123,244,.12),rgba(124,92,252,.12));border:1px solid rgba(76,123,244,.2);border-radius:16px">'+
+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">'+
+'<div><div style="font-size:.75em;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">Hub de Crédito</div><div style="font-size:1.05em;font-weight:800;color:var(--t1);margin-top:4px">Veja cartões, dívidas e plano de ação em um único lugar</div><div style="font-size:.82em;color:var(--t2);margin-top:8px;line-height:1.6">Pressão atual: <b style="color:var(--t1)">'+escapeHtml(String((profile&&profile.pressureLevel)||'controlado').toUpperCase())+'</b> · Próxima ação: <b style="color:var(--t1)">'+escapeHtml(nextAction)+'</b></div></div>'+
+'<button type="button" class="btn btn-r" onclick="go(\'credito\',null)" style="padding:10px 14px;font-size:.82em">Abrir Hub de Crédito</button>'+
+'</div>'+
+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px">'+
+'<div style="padding:10px;background:rgba(255,255,255,.45);border-radius:12px"><div style="font-size:.75em;color:var(--t2)">Compromisso mensal</div><div style="font-weight:800;color:var(--t1);margin-top:4px">'+fmtVal((profile&&profile.monthlyDebtCommitment)||0)+'</div></div>'+
+'<div style="padding:10px;background:rgba(255,255,255,.45);border-radius:12px"><div style="font-size:.75em;color:var(--t2)">Pendentes</div><div style="font-weight:800;color:'+((monitoring.pendingRenegotiation&&monitoring.pendingRenegotiation.length)?'var(--yellow)':'var(--t1)')+';margin-top:4px">'+Number(monitoring.pendingRenegotiation&&monitoring.pendingRenegotiation.length||0)+'</div></div>'+
+'<div style="padding:10px;background:rgba(255,255,255,.45);border-radius:12px"><div style="font-size:.75em;color:var(--t2)">Revisões vencidas</div><div style="font-weight:800;color:'+((monitoring.reviewDue&&monitoring.reviewDue.length)?'var(--yellow)':'var(--t1)')+';margin-top:4px">'+Number(monitoring.reviewDue&&monitoring.reviewDue.length||0)+'</div></div>'+
+'</div></div>';
+}
+
+function renderLegacyCreditHub(){
+var overviewEl=document.getElementById('creditHubOverview');
+var cardsEl=document.getElementById('creditHubCardsBlock');
+var loansEl=document.getElementById('creditHubLoansBlock');
+var actionPlanEl=document.getElementById('creditHubActionPlan');
+var opportunitiesEl=document.getElementById('creditHubOpportunities');
+var educationEl=document.getElementById('creditHubEducation');
+if(!overviewEl||!cardsEl||!loansEl||!actionPlanEl||!opportunitiesEl||!educationEl)return;
+var profile=typeof getLegacyFinancialProfile==='function'?getLegacyFinancialProfile():null;
+var snapshot=buildLegacyCreditSnapshot();
+var monitoring=getLegacyCreditMonitoringData();
+var actionPlan=buildLegacyCreditActionPlan();
+var recommendations=buildLegacyCreditRecommendations();
+var creditItems=recommendations.items||[];
+var topLoans=creditItems.filter(function(entry){
+var kind=String(entry&&entry.item&&entry.item.kind||'').toLowerCase();
+return kind.indexOf('emprest')>=0||kind.indexOf('financi')>=0||kind.indexOf('parcel')>=0||kind.indexOf('consign')>=0||String(entry&&entry.type||'').toLowerCase()==='obligation';
+}).slice(0,3);
+var pressureColor=snapshot.pressureLevel==='critico'?'var(--vr)':snapshot.pressureLevel==='elevado'?'var(--yellow)':snapshot.pressureLevel==='atencao'?'var(--blue)':'var(--green)';
+var nextBestActions=profile&&Array.isArray(profile.nextBestActions)?profile.nextBestActions:[];
+var topSignals=profile&&Array.isArray(profile.topSignals)?profile.topSignals:[];
+var journeyNowTitle=monitoring.reviewDue&&monitoring.reviewDue.length?'Revisar agora':(actionPlan.urgentDue&&actionPlan.urgentDue.item?'Proteger vencimento':'Organizar prioridade');
+var journeyNowDesc=monitoring.reviewDue&&monitoring.reviewDue.length?'Existem estratégias vencidas que precisam de revisão imediata no plano.':(actionPlan.urgentDue&&actionPlan.urgentDue.item?((actionPlan.urgentDue.item.label||'Crédito')+' vence em breve e deve ser protegido antes das outras decisões.'):(actionPlan.priority&&actionPlan.priority.item?('O item mais sensível hoje é '+(actionPlan.priority.item.label||'seu crédito prioritário')+'.'):'Cadastre itens para o hub começar a ordenar sua jornada.'));
+var journeyLaterTitle=topSignals.indexOf('uso-elevado-do-limite')>=0?'Reduzir pressão do limite':(topAction&&topAction.relief>0?'Buscar alívio mensal':'Acompanhar evolução');
+var journeyLaterDesc=topSignals.indexOf('uso-elevado-do-limite')>=0?'Depois da urgência, reduza uso relativo do limite e o peso mensal das linhas mais caras.':(topAction&&topAction.relief>0?('Se a ação for aplicada, o alívio estimado é de '+fmtVal(topAction.relief||0)+' por mês.'):'Use o hub para acompanhar revisão, pendências e progresso do plano de crédito.');
+var journeyOpportunityTitle=snapshot.pressureLevel==='critico'||snapshot.pressureLevel==='elevado'?'Oportunidade: renegociação':'Oportunidade: aumento de limite';
+var journeyOpportunityDesc=snapshot.pressureLevel==='critico'||snapshot.pressureLevel==='elevado'?'Seu momento pede trocar pressão por previsibilidade, reduzindo parcela e custo total.':'Com o crédito mais controlado, pode fazer sentido avaliar limite adicional para ganhar folga operacional.';
+var journeySignalText=(nextBestActions.length?nextBestActions.join(' · '):(topSignals.length?topSignals.join(' · '):'Sem sinais adicionais agora'));
+overviewEl.innerHTML=
+'<div style="grid-column:1/-1;padding:18px;background:linear-gradient(135deg,rgba(76,123,244,.16),rgba(124,92,252,.14));border-radius:18px;border:1px solid rgba(76,123,244,.18)">'+
+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap">'+
+'<div><div style="font-size:.78em;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">Jornada do seu crédito</div><div style="font-size:1.35em;font-weight:900;color:var(--t1);margin-top:6px">Pressão '+escapeHtml(String(snapshot.pressureLevel||'controlado').toUpperCase())+' com foco em '+escapeHtml(journeyNowTitle.toLowerCase())+'</div><div style="font-size:.84em;color:var(--t2);margin-top:8px;line-height:1.6">Sinais do momento: <b style="color:var(--t1)">'+escapeHtml(journeySignalText)+'</b></div></div>'+
+'<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-r" onclick="go(\'credito\',null)" style="padding:8px 12px;font-size:.8em">Executar no hub</button><button type="button" class="btn btn-o" onclick="go(\'ia\',null);setTimeout(function(){var q=document.getElementById(\'iaQ\');if(q){q.value=\'qual a melhor estrategia de credito para mim agora?\';q.focus();}},300)" style="padding:8px 12px;font-size:.8em">Validar com consultor</button></div>'+
+'</div>'+
+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px">'+
+'<div style="padding:14px;background:rgba(255,255,255,.38);border-radius:14px"><div style="font-size:.75em;color:var(--t2)">Limite disponível</div><div style="font-size:1.3em;font-weight:900;color:var(--t1);margin-top:4px">'+fmtVal((profile&&profile.availableLimit)||0)+'</div><div style="margin-top:10px;height:10px;background:rgba(255,255,255,.45);border-radius:999px;overflow:hidden"><div style="height:100%;width:'+Math.min(100,Number(profile&&profile.cardUtilizationPct||0))+'%;background:'+pressureColor+'"></div></div><div style="display:flex;justify-content:space-between;gap:10px;font-size:.75em;color:var(--t2);margin-top:8px"><span>'+Number(profile&&profile.cardUtilizationPct||0)+'% utilizado</span><span>Total usado: '+fmtVal((profile&&profile.estimatedCardUsage)||0)+'</span></div></div>'+
+'<div style="padding:14px;background:rgba(255,255,255,.38);border-radius:14px"><div style="font-size:.75em;color:var(--t2)">Compromisso mensal</div><div style="font-size:1.3em;font-weight:900;color:'+pressureColor+';margin-top:4px">'+fmtVal((profile&&profile.monthlyDebtCommitment)||0)+'</div><div style="font-size:.75em;color:var(--t2);margin-top:8px">Próximos vencimentos: <b style="color:var(--t1)">'+fmtVal((profile&&profile.dueSoonAmount)||0)+'</b></div><div style="font-size:.75em;color:var(--t2);margin-top:4px">'+Number(profile&&profile.dueSoonCount||0)+' vencimento(s) em 7 dias</div></div>'+
+'<div style="padding:14px;background:rgba(255,255,255,.38);border-radius:14px"><div style="font-size:.75em;color:var(--t2)">Pendências do plano</div><div style="font-size:1.3em;font-weight:900;color:var(--t1);margin-top:4px">'+Number(monitoring.pendingRenegotiation&&monitoring.pendingRenegotiation.length||0)+' / '+Number(monitoring.reviewDue&&monitoring.reviewDue.length||0)+'</div><div style="font-size:.75em;color:var(--t2);margin-top:8px">Pendentes / revisões vencidas</div><div style="font-size:.75em;color:var(--t2);margin-top:4px">Parados: <b style="color:var(--t1)">'+Number(monitoring.stalled&&monitoring.stalled.length||0)+'</b></div></div>'+
+'</div></div>'+
+'<div style="padding:14px;background:var(--bg2);border-radius:14px;border:1px solid var(--brd)"><div style="font-size:.75em;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">Agora</div><div style="font-size:1.02em;font-weight:800;color:var(--t1);margin-top:6px">'+escapeHtml(journeyNowTitle)+'</div><div style="font-size:.8em;color:var(--t2);line-height:1.6;margin-top:8px">'+escapeHtml(journeyNowDesc)+'</div></div>'+
+'<div style="padding:14px;background:var(--bg2);border-radius:14px;border:1px solid var(--brd)"><div style="font-size:.75em;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">Depois</div><div style="font-size:1.02em;font-weight:800;color:var(--t1);margin-top:6px">'+escapeHtml(journeyLaterTitle)+'</div><div style="font-size:.8em;color:var(--t2);line-height:1.6;margin-top:8px">'+escapeHtml(journeyLaterDesc)+'</div></div>'+
+'<div style="padding:14px;background:var(--bg2);border-radius:14px;border:1px solid var(--brd)"><div style="font-size:.75em;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">Oportunidade</div><div style="font-size:1.02em;font-weight:800;color:var(--t1);margin-top:6px">'+escapeHtml(journeyOpportunityTitle)+'</div><div style="font-size:.8em;color:var(--t2);line-height:1.6;margin-top:8px">'+escapeHtml(journeyOpportunityDesc)+'</div></div>';
+var currentCard=Array.isArray(cards)&&cards.length?cards[0]:null;
+var currentBilling=currentCard?((currentCard.purchases||[]).filter(function(p){return p.billingMonth===getBillingMonth(currentCard,new Date().toISOString().split('T')[0]);}).reduce(function(s,p){return s+p.value;},0)):0;
+cardsEl.innerHTML='<div style="padding:16px;background:var(--bg2);border-radius:16px;border:1px solid var(--brd)">'+
+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">'+
+'<div><div style="font-size:.72em;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;font-weight:800">Etapa 1 · Curto prazo</div><div style="font-size:.78em;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-top:6px">Cartões de crédito</div><div style="font-size:1.05em;font-weight:800;color:var(--t1);margin-top:4px">'+(currentCard?escapeHtml(currentCard.name||'Cartão principal'):'Nenhum cartão cadastrado')+'</div><div style="font-size:.82em;color:var(--t2);margin-top:8px">'+(currentCard?'Aqui você controla a pressão imediata da fatura e do limite disponível.':'Cadastre um cartão para acompanhar fatura, limite e compras.')+'</div></div>'+
+'<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-o" onclick="go(\'cartões\',null)" style="padding:8px 12px;font-size:.8em">Ir para Cartões</button>'+(currentCard?'<button type="button" class="btn btn-r" onclick="go(\'cartões\',null);setTimeout(function(){cardSubTab(\'cst-fatura\',document.querySelector(\'.card-pill:nth-child(3)\'));},250)" style="padding:8px 12px;font-size:.8em">Ver fatura</button>':'<button type="button" class="btn btn-r" onclick="go(\'cartões\',null);setTimeout(function(){openCardModal();},250)" style="padding:8px 12px;font-size:.8em">Adicionar cartão</button>')+'</div>'+
+'</div>'+
+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px">'+
+'<div style="padding:10px;background:rgba(255,255,255,.04);border-radius:12px"><div style="font-size:.75em;color:var(--t2)">Fatura atual</div><div style="font-weight:800;color:var(--t1);margin-top:4px">'+fmtVal(currentBilling)+'</div></div>'+
+'<div style="padding:10px;background:rgba(255,255,255,.04);border-radius:12px"><div style="font-size:.75em;color:var(--t2)">Limite disponível</div><div style="font-weight:800;color:'+((currentCard&&Number(currentCard.limit||0)-currentBilling>=0)?'var(--green)':'var(--vr)')+';margin-top:4px">'+fmtVal(currentCard?Math.max(0,Number(currentCard.limit||0)-currentBilling):0)+'</div></div>'+
+'<div style="padding:10px;background:rgba(255,255,255,.04);border-radius:12px"><div style="font-size:.75em;color:var(--t2)">Cartões acima de 60%</div><div style="font-weight:800;color:'+pressureColor+';margin-top:4px">'+Number(profile&&profile.highUtilizationCards||0)+'</div></div>'+
+'</div></div>';
+loansEl.innerHTML='<div style="padding:16px;background:var(--bg2);border-radius:16px;border:1px solid var(--brd)">'+
+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">'+
+'<div><div style="font-size:.72em;color:var(--purple);text-transform:uppercase;letter-spacing:.08em;font-weight:800">Etapa 2 · Médio prazo</div><div style="font-size:.78em;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-top:6px">Empréstimos e financiamentos</div><div style="font-size:1.05em;font-weight:800;color:var(--t1);margin-top:4px">'+(topLoans.length?topLoans.length+' item(ns) relevante(s) agora':'Nenhum empréstimo ou financiamento estruturado em destaque')+'</div><div style="font-size:.82em;color:var(--t2);margin-top:8px">'+(topLoans.length?'Depois de estabilizar o curto prazo, reorganize contratos caros e longos por prioridade.':'Cadastre obrigações para consolidar parcelas, juros, CET e vencimentos no hub.')+'</div></div>'+
+'<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-o" onclick="openLegacyCreditObligationModal()" style="padding:8px 12px;font-size:.8em">Nova obrigação</button><button type="button" class="btn btn-r" onclick="openLegacyCreditAccountModal()" style="padding:8px 12px;font-size:.8em">Nova linha de crédito</button></div>'+
+'</div>'+
+(topLoans.length?'<div style="display:grid;gap:10px;margin-top:14px">'+topLoans.map(function(entry){
+var item=entry.item||{};
+var relief=Number(item.strategy&&item.strategy.estimatedMonthlyRelief||0);
+return '<div style="padding:12px;background:rgba(255,255,255,.04);border-radius:12px;border:1px solid var(--brd)">'+
+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">'+
+'<div><div style="font-weight:800;color:var(--t1)">'+escapeHtml(item.label||'Crédito')+'</div><div style="font-size:.78em;color:var(--t3);margin-top:4px">'+escapeHtml(item.institution||'Instituição não informada')+' · '+escapeHtml(item.kind||'obrigacao')+'</div><div style="font-size:.76em;color:'+entry.meta.color+';font-weight:700;margin-top:6px">Prioridade: '+escapeHtml(entry.meta.label||'Baixa')+'</div></div>'+
+'<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-o" onclick="openLegacyCreditEntryFromAssistant(\''+String(item.id||'').replace(/'/g,"\\'")+'\')" style="padding:6px 10px;font-size:.75em">Abrir</button><button type="button" class="btn btn-o" onclick="openLegacyCreditRenegotiationModal(\''+String(item.id||'').replace(/'/g,"\\'")+'\')" style="padding:6px 10px;font-size:.75em">Renegociar</button><button type="button" class="btn btn-r" onclick="openLegacyCreditAmortizationModal(\''+String(item.id||'').replace(/'/g,"\\'")+'\',\'\')" style="padding:6px 10px;font-size:.75em">Amortizar</button></div>'+
+'</div>'+
+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:10px;font-size:.8em">'+
+'<div><div style="color:var(--t3)">Parcela</div><div style="font-weight:700;color:var(--t1)">'+fmtVal(item.monthlyInstallment||0)+'</div></div>'+
+'<div><div style="color:var(--t3)">Próximo venc.</div><div style="font-weight:700;color:var(--t1)">'+escapeHtml(item.nextDueDate||'-')+'</div></div>'+
+'<div><div style="color:var(--t3)">Juros / CET</div><div style="font-weight:700;color:var(--t1)">'+Number(item.interestRatePct||0).toFixed(2)+'% / '+Number(item.cetAnnualPct||0).toFixed(2)+'%</div></div>'+
+'<div><div style="color:var(--t3)">Alívio possível</div><div style="font-weight:700;color:'+(relief>0?'var(--green)':'var(--t1)')+'">'+fmtVal(relief)+'</div></div>'+
+'</div></div>';
+}).join('')+'</div>':'')+
+'</div>';
+var topAction=actionPlan.actions&&actionPlan.actions[0]?actionPlan.actions[0]:null;
+var operationalActionTitle=monitoring.reviewDue&&monitoring.reviewDue.length?'Revisar estratégia vencida':topAction?topAction.label+' em '+(topAction.item&&topAction.item.label||'Crédito principal'):(actionPlan.priority&&actionPlan.priority.item?'Organizar '+(actionPlan.priority.item.label||'crédito prioritário'):'Montar plano inicial');
+var operationalActionDesc=monitoring.reviewDue&&monitoring.reviewDue.length?'Existe pelo menos um item que já passou do momento de revisão e precisa ser atualizado no plano.':topAction&&topAction.type==='due_soon'?'Priorize proteger o próximo vencimento antes de ampliar limite ou assumir nova parcela.':topAction&&topAction.relief>0?'Você já tem espaço para gerar alívio mensal sem desorganizar o caixa.':'Cadastre contas e obrigações para o Sibanki sugerir a melhor ordem de ataque.';
+var commercialActionTitle=snapshot.pressureLevel==='critico'||snapshot.pressureLevel==='elevado'?'Oferta mais coerente agora: renegociação':'Oportunidade coerente agora: aumento de limite';
+var commercialActionDesc=snapshot.pressureLevel==='critico'||snapshot.pressureLevel==='elevado'?'Seu cenário atual pede redução de pressão mensal, não expansão de limite caro.':'Com pressão mais controlada, faz sentido avaliar ganho de limite para reduzir uso relativo e aumentar folga.';
+var commercialActionButton=snapshot.pressureLevel==='critico'||snapshot.pressureLevel==='elevado'?'Ver renegociação':'Ver aumento de limite';
+actionPlanEl.innerHTML='<div style="padding:16px;background:var(--bg2);border-radius:16px;border:1px solid var(--brd)"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div style="font-size:.78em;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">Plano de ação</div><div style="font-size:1.05em;font-weight:800;color:var(--t1);margin-top:4px">'+escapeHtml(operationalActionTitle)+'</div><div style="font-size:.82em;color:var(--t2);margin-top:8px;line-height:1.6">'+escapeHtml(operationalActionDesc)+'</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-o" onclick="go(\'ia\',null);setTimeout(function(){var q=document.getElementById(\'iaQ\');if(q){q.value=\'como reorganizar minhas dívidas?\';q.focus();}},300)" style="padding:8px 12px;font-size:.8em">Ver no consultor</button><button type="button" class="btn btn-r" onclick="go(\'credito\',null)" style="padding:8px 12px;font-size:.8em">Atualizar no hub</button></div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px">'+
+'<div style="padding:10px;background:rgba(255,255,255,.04);border-radius:12px"><div style="font-size:.75em;color:var(--t2)">Faixa segura</div><div style="font-weight:800;color:var(--blue);margin-top:4px">'+fmtVal(actionPlan.safeBudget||0)+'</div></div>'+
+'<div style="padding:10px;background:rgba(255,255,255,.04);border-radius:12px"><div style="font-size:.75em;color:var(--t2)">Renegociações pendentes</div><div style="font-weight:800;color:'+((monitoring.pendingRenegotiation&&monitoring.pendingRenegotiation.length)?'var(--yellow)':'var(--t1)')+';margin-top:4px">'+Number(monitoring.pendingRenegotiation&&monitoring.pendingRenegotiation.length||0)+'</div></div>'+
+'<div style="padding:10px;background:rgba(255,255,255,.04);border-radius:12px"><div style="font-size:.75em;color:var(--t2)">Revisões vencidas</div><div style="font-weight:800;color:'+((monitoring.reviewDue&&monitoring.reviewDue.length)?'var(--yellow)':'var(--t1)')+';margin-top:4px">'+Number(monitoring.reviewDue&&monitoring.reviewDue.length||0)+'</div></div>'+
+'<div style="padding:10px;background:rgba(255,255,255,.04);border-radius:12px"><div style="font-size:.75em;color:var(--t2)">Variação recente</div><div style="font-weight:800;color:'+(monitoring.weeklyExposureDelta<0?'var(--green)':monitoring.weeklyExposureDelta>0?'var(--vr)':'var(--t1)')+';margin-top:4px">'+(monitoring.weeklyExposureDelta>0?'+':'')+fmtVal(monitoring.weeklyExposureDelta||0)+'</div></div>'+
+'</div>'+(topAction?'<div style="margin-top:14px;font-size:.82em;color:var(--t2)">Sugestão imediata: usar <b style="color:var(--t1)">'+fmtVal(topAction.amount||0)+'</b>'+(topAction.relief>0?' para buscar alivio de <b style="color:var(--green)">'+fmtVal(topAction.relief)+'/mês</b>':'')+'.</div>':'')+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px"><div style="padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(76,123,244,.12),rgba(76,123,244,.05));border:1px solid rgba(76,123,244,.18)"><div style="font-size:.75em;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">Próxima ação operacional</div><div style="font-size:1em;font-weight:800;color:var(--t1);margin-top:6px">'+escapeHtml(operationalActionTitle)+'</div><div style="font-size:.8em;color:var(--t2);line-height:1.6;margin-top:8px">'+escapeHtml(operationalActionDesc)+'</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn btn-r" onclick="go(\'credito\',null)" style="padding:8px 12px;font-size:.78em">Executar no hub</button>'+(topAction&&topAction.item?'<button type="button" class="btn btn-o" onclick="openLegacyCreditEntryFromAssistant(\''+String(topAction.item.id||'').replace(/'/g,"\\'")+'\')" style="padding:8px 12px;font-size:.78em">Abrir item</button>':'')+'</div></div><div style="padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(124,92,252,.12),rgba(124,92,252,.05));border:1px solid rgba(124,92,252,.18)"><div style="font-size:.75em;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">Próxima oportunidade Sibanki</div><div style="font-size:1em;font-weight:800;color:var(--t1);margin-top:6px">'+escapeHtml(commercialActionTitle)+'</div><div style="font-size:.8em;color:var(--t2);line-height:1.6;margin-top:8px">'+escapeHtml(commercialActionDesc)+'</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn btn-r" onclick="go(\'solucoes-credito\',null)" style="padding:8px 12px;font-size:.78em">'+escapeHtml(commercialActionButton)+'</button><button type="button" class="btn btn-o" onclick="go(\'ia\',null);setTimeout(function(){var q=document.getElementById(\'iaQ\');if(q){q.value=\'qual a melhor estrategia de credito para mim agora?\';q.focus();}},300)" style="padding:8px 12px;font-size:.78em">Validar com consultor</button></div></div></div></div>';
+var primaryOfferTitle=snapshot.pressureLevel==='critico'||snapshot.pressureLevel==='elevado'?'Renegociar dívidas':'Pedir aumento de limite';
+var primaryOfferDesc=snapshot.pressureLevel==='critico'||snapshot.pressureLevel==='elevado'?'Junte parcelas caras e reduza a pressão mensal do crédito.':'Solicite revisão do seu limite com base no uso atual do cartão.';
+opportunitiesEl.innerHTML='<div style="padding:16px;background:var(--bg2);border-radius:16px;border:1px solid var(--brd)"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div style="font-size:.72em;color:var(--green);text-transform:uppercase;letter-spacing:.08em;font-weight:800">Etapa 3 · Próxima decisão</div><div style="font-size:.78em;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-top:6px">Para você</div><div style="font-size:1.02em;font-weight:800;color:var(--t1);margin-top:4px">Depois de organizar o crédito, escolha a próxima alavanca</div><div style="font-size:.82em;color:var(--t2);margin-top:8px;line-height:1.6">Aqui entram ofertas, consolidação e ajuda assistida para transformar organização em ação.</div></div><button type="button" class="btn btn-o" onclick="go(\'solucoes-credito\',null)" style="padding:8px 12px;font-size:.8em">Ver soluções</button></div><div style="display:grid;gap:10px;margin-top:14px"><button type="button" class="btn btn-o" onclick="go(\'solucoes-credito\',null)" style="justify-content:space-between;padding:12px 14px;font-size:.82em"><span><b>'+escapeHtml(primaryOfferTitle)+'</b><br><span style="font-weight:400;color:var(--t2)">'+escapeHtml(primaryOfferDesc)+'</span></span><span>→</span></button><button type="button" class="btn btn-o" onclick="go(\'solucoes-credito\',null)" style="justify-content:space-between;padding:12px 14px;font-size:.82em"><span><b>Consolidar dívidas</b><br><span style="font-weight:400;color:var(--t2)">Avalie juntar compromissos em uma estratégia mais previsível.</span></span><span>→</span></button><button type="button" class="btn btn-o" onclick="go(\'ia\',null);setTimeout(function(){var q=document.getElementById(\'iaQ\');if(q){q.value=\'como reorganizar minhas dívidas?\';q.focus();}},300)" style="justify-content:space-between;padding:12px 14px;font-size:.82em"><span><b>Montar estratégia com o consultor</b><br><span style="font-weight:400;color:var(--t2)">Receba orientação guiada antes de contratar novo crédito.</span></span><span>→</span></button></div></div>';
+educationEl.innerHTML='<div style="padding:16px;background:var(--bg2);border-radius:16px;border:1px solid var(--brd)"><div style="font-size:.78em;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">Dicas Sibanki</div><div style="display:grid;gap:10px;margin-top:12px">'+(recommendations.recommendations||[]).slice(0,2).map(function(text){return '<div style="padding:12px;border-radius:12px;background:rgba(255,255,255,.04);font-size:.82em;color:var(--t2);line-height:1.55">• '+escapeHtml(text)+'</div>';}).join('')+'<div style="padding:12px;border-radius:12px;background:rgba(255,255,255,.04);font-size:.82em;color:var(--t2);line-height:1.55">• Use o hub para separar <b style="color:var(--t1)">limite disponível</b> de <b style="color:var(--t1)">dinheiro em conta</b>. Crédito é capacidade emprestada, não caixa.</div><button type="button" class="btn btn-o" onclick="go(\'dicas\',null)" style="padding:10px 12px;font-size:.8em">Ver educação financeira</button></div></div>';
+}
+
+function renderLegacyCreditStructured(){
+var summaryEl=document.getElementById('legacyCreditSummary');
+var recommendationsEl=document.getElementById('legacyCreditRecommendations');
+var accountsEl=document.getElementById('legacyCreditAccountsList');
+var obligationsEl=document.getElementById('legacyCreditObligationsList');
+if(!summaryEl||!recommendationsEl||!accountsEl||!obligationsEl)return;
+var snapshot=buildLegacyCreditSnapshot();
+var recommendationData=buildLegacyCreditRecommendations();
+var monitoringData=typeof getLegacyCreditMonitoringData==='function'?getLegacyCreditMonitoringData():{items:[],stalled:[],pendingRenegotiation:[],progressed:[]};
+var monitoringMap={};
+monitoringData.items.forEach(function(entry){if(entry&&entry.item&&entry.item.id!=null)monitoringMap[String(entry.item.id)]=entry;});
+var accs=Array.isArray(creditAccounts)?creditAccounts:[];
+var obs=Array.isArray(creditObligations)?creditObligations:[];
+var highPriorityCount=recommendationData.items.filter(function(entry){return entry.meta.score>=10;}).length;
+var pressureColor=snapshot.pressureLevel==='critico'?'var(--vr)':snapshot.pressureLevel==='elevado'?'var(--yellow)':snapshot.pressureLevel==='atencao'?'var(--blue)':'var(--green)';
+var exposureDeltaColor=monitoringData.weeklyExposureDelta<0?'var(--green)':monitoringData.weeklyExposureDelta>0?'var(--vr)':'var(--t1)';
+summaryEl.innerHTML=
+'<div style="padding:12px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.75em;color:var(--t2)">Contas estruturadas</div><div style="font-size:1.2em;font-weight:800;color:var(--blue);margin-top:4px">'+accs.length+'</div></div>'+
+'<div style="padding:12px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.75em;color:var(--t2)">Obrigações</div><div style="font-size:1.2em;font-weight:800;color:var(--yellow);margin-top:4px">'+obs.length+'</div></div>'+
+'<div style="padding:12px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.75em;color:var(--t2)">Dívida mensal</div><div style="font-size:1.2em;font-weight:800;color:'+pressureColor+';margin-top:4px">R$ '+Number(snapshot.monthlyDebtCommitment||0).toFixed(2)+'</div></div>'+
+'<div style="padding:12px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.75em;color:var(--t2)">Pressão</div><div style="font-size:1.05em;font-weight:800;color:'+pressureColor+';margin-top:4px">'+String(snapshot.pressureLevel||'controlado').toUpperCase()+'</div></div>'+
+'<div style="padding:12px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.75em;color:var(--t2)">Prioridade alta</div><div style="font-size:1.05em;font-weight:800;color:'+(highPriorityCount>0?'var(--vr)':'var(--green)')+';margin-top:4px">'+highPriorityCount+'</div></div>'+
+'<div style="padding:12px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.75em;color:var(--t2)">Pendentes</div><div style="font-size:1.05em;font-weight:800;color:'+(monitoringData.pendingRenegotiation.length>0?'var(--yellow)':'var(--green)')+';margin-top:4px">'+monitoringData.pendingRenegotiation.length+'</div></div>'+
+'<div style="padding:12px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.75em;color:var(--t2)">Em progresso</div><div style="font-size:1.05em;font-weight:800;color:'+(monitoringData.progressed.length>0?'var(--green)':'var(--t1)')+';margin-top:4px">'+monitoringData.progressed.length+'</div></div>'+
+'<div style="padding:12px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.75em;color:var(--t2)">Revisões vencidas</div><div style="font-size:1.05em;font-weight:800;color:'+(monitoringData.reviewDue&&monitoringData.reviewDue.length>0?'var(--yellow)':'var(--green)')+';margin-top:4px">'+((monitoringData.reviewDue&&monitoringData.reviewDue.length)||0)+'</div></div>'+
+'<div style="padding:12px;background:var(--bg2);border-radius:12px;text-align:center"><div style="font-size:.75em;color:var(--t2)">Variação recente</div><div style="font-size:1.05em;font-weight:800;color:'+exposureDeltaColor+';margin-top:4px">'+(monitoringData.weeklyExposureDelta>0?'+':'')+'R$ '+Number(monitoringData.weeklyExposureDelta||0).toFixed(2)+'</div></div>';
+recommendationsEl.innerHTML='<div style="display:grid;gap:12px">'+
+'<div style="padding:14px;background:rgba(76,123,244,.08);border:1px solid rgba(76,123,244,.18);border-radius:12px"><div style="font-size:.84em;font-weight:800;color:var(--t1);margin-bottom:8px">Recomendações automáticas</div><div style="display:grid;gap:8px">'+recommendationData.recommendations.map(function(text){return '<div style="font-size:.82em;color:var(--t2);line-height:1.5">• '+escapeHtml(text)+'</div>';}).join('')+'</div></div>'+
+'<div style="padding:14px;background:rgba(255,255,255,.03);border:1px solid var(--brd);border-radius:12px"><div style="font-size:.84em;font-weight:800;color:var(--t1);margin-bottom:8px">Acompanhamento contínuo</div>'+
+'<div style="display:grid;gap:8px;font-size:.82em;color:var(--t2)">'+
+'<div>• Estratégias paradas: <b style="color:'+(monitoringData.stalled.length>0?'var(--vr)':'var(--green)')+'">'+monitoringData.stalled.length+'</b></div>'+
+'<div>• Renegociações aguardando decisão: <b style="color:'+(monitoringData.pendingRenegotiation.length>0?'var(--yellow)':'var(--green)')+'">'+monitoringData.pendingRenegotiation.length+'</b></div>'+
+'<div>• Itens com melhora visível: <b style="color:'+(monitoringData.progressed.length>0?'var(--green)':'var(--t1)')+'">'+monitoringData.progressed.length+'</b></div>'+
+'<div>• Revisões vencidas agora: <b style="color:'+((monitoringData.reviewDue&&monitoringData.reviewDue.length>0)?'var(--yellow)':'var(--green)')+'">'+((monitoringData.reviewDue&&monitoringData.reviewDue.length)||0)+'</b></div>'+
+'<div>• Variação recente da exposição: <b style="color:'+exposureDeltaColor+'">'+(monitoringData.weeklyExposureDelta>0?'+':'')+'R$ '+Number(monitoringData.weeklyExposureDelta||0).toFixed(2)+'</b></div>'+
+'</div></div></div>';
+if(accs.length===0){
+accountsEl.innerHTML='<div style="padding:14px;background:var(--bg2);border:1px dashed var(--brd);border-radius:12px;color:var(--t2);font-size:.84em">Nenhuma conta de crédito estruturada ainda. Use para limite rotativo, cheque especial, crédito pessoal ou outra linha com limite disponível.</div>';
+}else{
+accountsEl.innerHTML=accs.map(function(item){
+var meta=getLegacyCreditPriorityMeta(item);
+var monitor=monitoringMap[String(item.id)]||null;
+var followUpLabel=monitor?(monitor.reviewDue?'Revisão vencida agora':monitor.pendingRenegotiation?'Renegociação pendente há '+monitor.daysSinceUpdate+' dias':monitor.stalled?'Sem avanço há '+Math.max(monitor.daysSinceLastMove||0,monitor.daysSinceUpdate||0)+' dias':(monitor.exposureReductionPct>0||monitor.monthlyReductionPct>0)?'Melhora de '+Math.max(monitor.exposureReductionPct||0,monitor.monthlyReductionPct||0)+'%':(monitor.daysToReview!=null&&monitor.daysToReview>0)?'Revisar em '+monitor.daysToReview+' dias':'Acompanhando'):'';
+var followUpColor=monitor?(monitor.reviewDue?'var(--yellow)':monitor.pendingRenegotiation?'var(--yellow)':monitor.stalled?'var(--vr)':(monitor.exposureReductionPct>0||monitor.monthlyReductionPct>0)?'var(--green)':'var(--t3)'):'var(--t3)';
+return '<div style="padding:14px;background:var(--bg2);border-radius:12px;border:1px solid var(--brd)">'+
+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">'+
+'<div><div style="font-weight:800;color:var(--t1)">'+escapeHtml(item.label||'Conta de crédito')+'</div><div style="font-size:.78em;color:var(--t3);margin-top:3px">'+escapeHtml(item.institution||'Instituição não informada')+' · '+escapeHtml(item.kind||'credito')+'</div><div style="font-size:.75em;color:'+meta.color+';font-weight:700;margin-top:6px">Prioridade sugerida: '+meta.label+(meta.reason?' · '+escapeHtml(meta.reason):'')+'</div>'+(followUpLabel?'<div style="font-size:.75em;color:'+followUpColor+';font-weight:700;margin-top:6px">Acompanhamento: '+escapeHtml(followUpLabel)+'</div>':'')+'</div>'+
+'<div style="font-size:.75em;color:var(--blue);font-weight:700;margin-top:6px">'+(getLegacyCreditStrategyLabel(item)?'Estratégia: '+escapeHtml(getLegacyCreditStrategyLabel(item)):'')+'</div></div>'+
+'<div style="display:flex;gap:6px"><button type="button" class="btn btn-o" onclick="openLegacyCreditAccountModal(\''+String(item.id||'').replace(/'/g,"\\'")+'\')" style="padding:6px 10px;font-size:.75em">Editar</button><button type="button" class="btn btn-o" onclick="deleteLegacyCreditAccount(\''+String(item.id||'').replace(/'/g,"\\'")+'\')" style="padding:6px 10px;font-size:.75em;color:var(--vr)">Excluir</button></div>'+
+'</div>'+
+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px;font-size:.82em">'+
+'<div><div style="color:var(--t3)">Limite</div><div style="font-weight:700;color:var(--t1)">R$ '+Number(item.limitTotal||0).toFixed(2)+'</div></div>'+
+'<div><div style="color:var(--t3)">Usado</div><div style="font-weight:700;color:var(--vr)">R$ '+Number(item.balanceUsed||0).toFixed(2)+'</div></div>'+
+'<div><div style="color:var(--t3)">Parcela mensal</div><div style="font-weight:700;color:var(--yellow)">R$ '+Number(item.monthlyInstallment||0).toFixed(2)+'</div></div>'+
+'<div><div style="color:var(--t3)">Juros / CET</div><div style="font-weight:700;color:var(--t1)">'+Number(item.interestRatePct||0).toFixed(2)+'% / '+Number(item.cetAnnualPct||0).toFixed(2)+'%</div></div>'+
+'<div><div style="color:var(--t3)">Próximo venc.</div><div style="font-weight:700;color:var(--t1)">'+escapeHtml(item.nextDueDate||'-')+'</div></div>'+
+'</div></div>';
+}).join('');
+}
+if(obs.length===0){
+obligationsEl.innerHTML='<div style="padding:14px;background:var(--bg2);border:1px dashed var(--brd);border-radius:12px;color:var(--t2);font-size:.84em">Nenhuma obrigação cadastrada. Registre empréstimos, financiamentos, parcelamentos ou dívidas fora dos cartões para a visão macro ficar mais real.</div>';
+}else{
+obligationsEl.innerHTML=obs.map(function(item){
+var meta=getLegacyCreditPriorityMeta(item);
+var monitor=monitoringMap[String(item.id)]||null;
+var followUpLabel=monitor?(monitor.reviewDue?'Revisão vencida agora':monitor.pendingRenegotiation?'Renegociação pendente há '+monitor.daysSinceUpdate+' dias':monitor.stalled?'Sem avanço há '+Math.max(monitor.daysSinceLastMove||0,monitor.daysSinceUpdate||0)+' dias':(monitor.exposureReductionPct>0||monitor.monthlyReductionPct>0)?'Melhora de '+Math.max(monitor.exposureReductionPct||0,monitor.monthlyReductionPct||0)+'%':(monitor.daysToReview!=null&&monitor.daysToReview>0)?'Revisar em '+monitor.daysToReview+' dias':'Acompanhando'):'';
+var followUpColor=monitor?(monitor.reviewDue?'var(--yellow)':monitor.pendingRenegotiation?'var(--yellow)':monitor.stalled?'var(--vr)':(monitor.exposureReductionPct>0||monitor.monthlyReductionPct>0)?'var(--green)':'var(--t3)'):'var(--t3)';
+return '<div style="padding:14px;background:var(--bg2);border-radius:12px;border:1px solid var(--brd)">'+
+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">'+
+'<div><div style="font-weight:800;color:var(--t1)">'+escapeHtml(item.label||'Obrigação')+'</div><div style="font-size:.78em;color:var(--t3);margin-top:3px">'+escapeHtml(item.institution||'Instituição não informada')+' · '+escapeHtml(item.kind||'divida')+'</div><div style="font-size:.75em;color:'+meta.color+';font-weight:700;margin-top:6px">Prioridade sugerida: '+meta.label+(meta.reason?' · '+escapeHtml(meta.reason):'')+'</div>'+(followUpLabel?'<div style="font-size:.75em;color:'+followUpColor+';font-weight:700;margin-top:6px">Acompanhamento: '+escapeHtml(followUpLabel)+'</div>':'')+'</div>'+
+'<div style="font-size:.75em;color:var(--blue);font-weight:700;margin-top:6px">'+(getLegacyCreditStrategyLabel(item)?'Estratégia: '+escapeHtml(getLegacyCreditStrategyLabel(item)):'')+'</div></div>'+
+'<div style="display:flex;gap:6px"><button type="button" class="btn btn-o" onclick="openLegacyCreditObligationModal(\''+String(item.id||'').replace(/'/g,"\\'")+'\')" style="padding:6px 10px;font-size:.75em">Editar</button><button type="button" class="btn btn-o" onclick="deleteLegacyCreditObligation(\''+String(item.id||'').replace(/'/g,"\\'")+'\')" style="padding:6px 10px;font-size:.75em;color:var(--vr)">Excluir</button></div>'+
+'</div>'+
+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px;font-size:.82em">'+
+'<div><div style="color:var(--t3)">Saldo devedor</div><div style="font-weight:700;color:var(--t1)">R$ '+Number(item.outstandingBalance||0).toFixed(2)+'</div></div>'+
+'<div><div style="color:var(--t3)">Parcela mensal</div><div style="font-weight:700;color:var(--yellow)">R$ '+Number(item.monthlyInstallment||0).toFixed(2)+'</div></div>'+
+'<div><div style="color:var(--t3)">Juros / CET</div><div style="font-weight:700;color:var(--t1)">'+Number(item.interestRatePct||0).toFixed(2)+'% / '+Number(item.cetAnnualPct||0).toFixed(2)+'%</div></div>'+
+'<div><div style="color:var(--t3)">Próximo venc.</div><div style="font-weight:700;color:var(--t1)">'+escapeHtml(item.nextDueDate||'-')+'</div></div>'+
+'<div><div style="color:var(--t3)">Próximo valor</div><div style="font-weight:700;color:var(--vr)">R$ '+Number(item.nextDueAmount||item.monthlyInstallment||0).toFixed(2)+'</div></div>'+
+'</div></div>';
+}).join('');
+}
+if(typeof lucide!=='undefined')lucide.createIcons();
+}
+
+function openLegacyCreditAccountModal(id){
+var item=(Array.isArray(creditAccounts)?creditAccounts:[]).find(function(x){return String(x.id)===String(id);})||{};
+if(item&&item.source==='account_overdraft'&&item.linkedAccount){
+closeModal();
+if(typeof go==='function')go('contas',null);
+setTimeout(function(){
+if(typeof openEditarConta==='function')openEditarConta(item.linkedAccount);
+},120);
+toast('Edite o cheque especial diretamente na conta vinculada.','info');
+return;
+}
+window._editingLegacyCreditAccountId=item.id||null;
+var html='<div style="padding:4px 2px 2px">'+
+'<h3 style="margin:0 0 12px">Conta de crédito</h3>'+
+'<p style="font-size:.82em;color:var(--t3);margin:0 0 14px">Use para limites rotativos e linhas de crédito com utilização atual.</p>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+'<div style="grid-column:1/-1"><label class="fl">Nome</label><input id="lcAccLabel" class="fi" value="'+escapeHtml(item.label||'')+'" placeholder="Ex: Limite pessoal Nubank"></div>'+
+'<div><label class="fl">Instituição</label><input id="lcAccInstitution" class="fi" value="'+escapeHtml(item.institution||'')+'" placeholder="Ex: Nubank"></div>'+
+'<div><label class="fl">Tipo</label><select id="lcAccKind" class="fi"><option value="credito_rotativo">Crédito rotativo</option><option value="limite_pessoal">Limite pessoal</option><option value="cheque_especial">Cheque especial</option><option value="outro">Outro</option></select></div>'+
+'<div><label class="fl">Limite total (R$)</label><input id="lcAccLimit" class="fi" inputmode="decimal" value="'+Number(item.limitTotal||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">Valor usado (R$)</label><input id="lcAccUsed" class="fi" inputmode="decimal" value="'+Number(item.balanceUsed||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">Parcela mensal (R$)</label><input id="lcAccMonthly" class="fi" inputmode="decimal" value="'+Number(item.monthlyInstallment||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">Juros ao mês (%)</label><input id="lcAccRate" class="fi" inputmode="decimal" value="'+Number(item.interestRatePct||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">CET ao ano (%)</label><input id="lcAccCet" class="fi" inputmode="decimal" value="'+Number(item.cetAnnualPct||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">Próximo vencimento</label><input id="lcAccDueDate" type="date" class="fi" value="'+escapeHtml(item.nextDueDate||'')+'"></div>'+
+'<div><label class="fl">Próximo valor (R$)</label><input id="lcAccDueAmount" class="fi" inputmode="decimal" value="'+Number(item.nextDueAmount||0).toFixed(2)+'"></div>'+
+'</div>'+
+'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button type="button" class="btn btn-o" onclick="closeModal()">Cancelar</button><button type="button" class="btn btn-r" onclick="saveLegacyCreditAccount()">Salvar conta</button></div>'+
+'</div>';
+openModal(html);
+var kindEl=document.getElementById('lcAccKind');if(kindEl)kindEl.value=item.kind||'credito_rotativo';
+}
+
+function saveLegacyCreditAccount(){
+var labelEl=document.getElementById('lcAccLabel');
+if(!labelEl||!labelEl.value.trim()){toast('Informe um nome para a conta de crédito.','err');return;}
+var item={
+id:window._editingLegacyCreditAccountId||Date.now(),
+label:labelEl.value.trim(),
+institution:(document.getElementById('lcAccInstitution')||{}).value||'',
+kind:(document.getElementById('lcAccKind')||{}).value||'credito_rotativo',
+limitTotal:pf('lcAccLimit'),
+balanceUsed:pf('lcAccUsed'),
+monthlyInstallment:pf('lcAccMonthly'),
+interestRatePct:pf('lcAccRate'),
+cetAnnualPct:pf('lcAccCet'),
+nextDueDate:(document.getElementById('lcAccDueDate')||{}).value||'',
+nextDueAmount:pf('lcAccDueAmount'),
+active:true,
+updatedAt:new Date().toISOString()
+};
+var list=Array.isArray(creditAccounts)?creditAccounts.slice():[];
+var idx=list.findIndex(function(x){return String(x.id)===String(item.id);});
+if(idx>=0)list[idx]=item;else list.push(item);
+creditAccounts=list;
+buildLegacyCreditSnapshot();
+saveData();
+renderCardsResumo();
+renderLegacyCreditStructured();
+closeModal();
+toast(idx>=0?'Conta de crédito atualizada!':'Conta de crédito adicionada!','ok');
+}
+
+function deleteLegacyCreditAccount(id){
+var item=(Array.isArray(creditAccounts)?creditAccounts:[]).find(function(x){return String(x.id)===String(id);})||null;
+if(item&&item.source==='account_overdraft'){
+toast('Esse cheque especial e sincronizado pela conta bancaria. Remova ou edite direto na conta.','info');
+return;
+}
+if(!confirm('Excluir esta conta de crédito estruturada?'))return;
+creditAccounts=(Array.isArray(creditAccounts)?creditAccounts:[]).filter(function(x){return String(x.id)!==String(id);});
+buildLegacyCreditSnapshot();
+saveData();
+renderCardsResumo();
+renderLegacyCreditStructured();
+toast('Conta de crédito removida.','ok');
+}
+
+function openLegacyCreditObligationModal(id){
+var item=(Array.isArray(creditObligations)?creditObligations:[]).find(function(x){return String(x.id)===String(id);})||{};
+window._editingLegacyCreditObligationId=item.id||null;
+var html='<div style="padding:4px 2px 2px">'+
+'<h3 style="margin:0 0 12px">Obrigação de crédito</h3>'+
+'<p style="font-size:.82em;color:var(--t3);margin:0 0 14px">Use para empréstimos, financiamentos, parcelamentos e dívidas fora dos cartões.</p>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+'<div style="grid-column:1/-1"><label class="fl">Nome</label><input id="lcObLabel" class="fi" value="'+escapeHtml(item.label||'')+'" placeholder="Ex: Financiamento do carro"></div>'+
+'<div><label class="fl">Instituição</label><input id="lcObInstitution" class="fi" value="'+escapeHtml(item.institution||'')+'" placeholder="Ex: Banco Inter"></div>'+
+'<div><label class="fl">Tipo</label><select id="lcObKind" class="fi"><option value="emprestimo">Empréstimo</option><option value="financiamento">Financiamento</option><option value="parcelamento">Parcelamento</option><option value="consignado">Consignado</option><option value="outro">Outro</option></select></div>'+
+'<div><label class="fl">Saldo devedor (R$)</label><input id="lcObOutstanding" class="fi" inputmode="decimal" value="'+Number(item.outstandingBalance||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">Parcela mensal (R$)</label><input id="lcObMonthly" class="fi" inputmode="decimal" value="'+Number(item.monthlyInstallment||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">Juros ao mês (%)</label><input id="lcObRate" class="fi" inputmode="decimal" value="'+Number(item.interestRatePct||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">CET ao ano (%)</label><input id="lcObCet" class="fi" inputmode="decimal" value="'+Number(item.cetAnnualPct||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">Próximo vencimento</label><input id="lcObDueDate" type="date" class="fi" value="'+escapeHtml(item.nextDueDate||'')+'"></div>'+
+'<div><label class="fl">Próximo valor (R$)</label><input id="lcObDueAmount" class="fi" inputmode="decimal" value="'+Number(item.nextDueAmount||0).toFixed(2)+'"></div>'+
+'</div>'+
+'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button type="button" class="btn btn-o" onclick="closeModal()">Cancelar</button><button type="button" class="btn btn-r" onclick="saveLegacyCreditObligation()">Salvar obrigação</button></div>'+
+'</div>';
+openModal(html);
+var kindEl=document.getElementById('lcObKind');if(kindEl)kindEl.value=item.kind||'emprestimo';
+}
+
+function saveLegacyCreditObligation(){
+var labelEl=document.getElementById('lcObLabel');
+if(!labelEl||!labelEl.value.trim()){toast('Informe um nome para a obrigação.','err');return;}
+var item={
+id:window._editingLegacyCreditObligationId||Date.now(),
+label:labelEl.value.trim(),
+institution:(document.getElementById('lcObInstitution')||{}).value||'',
+kind:(document.getElementById('lcObKind')||{}).value||'emprestimo',
+outstandingBalance:pf('lcObOutstanding'),
+monthlyInstallment:pf('lcObMonthly'),
+interestRatePct:pf('lcObRate'),
+cetAnnualPct:pf('lcObCet'),
+nextDueDate:(document.getElementById('lcObDueDate')||{}).value||'',
+nextDueAmount:pf('lcObDueAmount'),
+active:true,
+updatedAt:new Date().toISOString()
+};
+var list=Array.isArray(creditObligations)?creditObligations.slice():[];
+var idx=list.findIndex(function(x){return String(x.id)===String(item.id);});
+if(idx>=0)list[idx]=item;else list.push(item);
+creditObligations=list;
+buildLegacyCreditSnapshot();
+saveData();
+renderCardsResumo();
+renderLegacyCreditStructured();
+closeModal();
+toast(idx>=0?'Obrigação atualizada!':'Obrigação adicionada!','ok');
+}
+
+function deleteLegacyCreditObligation(id){
+if(!confirm('Excluir esta obrigação estruturada?'))return;
+creditObligations=(Array.isArray(creditObligations)?creditObligations:[]).filter(function(x){return String(x.id)!==String(id);});
+buildLegacyCreditSnapshot();
+saveData();
+renderCardsResumo();
+renderLegacyCreditStructured();
+toast('Obrigação removida.','ok');
+}
+
+function findLegacyCreditEntryById(id){
+var entryId=String(id||'');
+var accIdx=(Array.isArray(creditAccounts)?creditAccounts:[]).findIndex(function(x){return String(x.id)===entryId;});
+if(accIdx>=0)return{kind:'account',item:creditAccounts[accIdx],index:accIdx};
+var obIdx=(Array.isArray(creditObligations)?creditObligations:[]).findIndex(function(x){return String(x.id)===entryId;});
+if(obIdx>=0)return{kind:'obligation',item:creditObligations[obIdx],index:obIdx};
+return null;
+}
+
+function persistLegacyCreditState(){
+buildLegacyCreditSnapshot();
+syncLegacyCreditHistory();
+saveData();
+if(typeof renderCardsResumo==='function')renderCardsResumo();
+if(typeof renderLegacyCreditStructured==='function')renderLegacyCreditStructured();
+if(typeof renderAll==='function')renderAll();
+}
+
+function markLegacyCreditStrategy(id,type,payload){
+var entry=findLegacyCreditEntryById(id);
+if(!entry||!entry.item)return false;
+var currentExposure=getLegacyCreditExposure(entry.item);
+var currentMonthly=Number(entry.item.monthlyInstallment||0);
+entry.item.strategy=Object.assign({},entry.item.strategy||{},{
+type:type||'monitorar',
+status:'ativa',
+updatedAt:new Date().toISOString(),
+baselineExposure:Number((entry.item.strategy&&entry.item.strategy.baselineExposure)!=null?entry.item.strategy.baselineExposure:currentExposure),
+baselineMonthly:Number((entry.item.strategy&&entry.item.strategy.baselineMonthly)!=null?entry.item.strategy.baselineMonthly:currentMonthly)
+},payload||{});
+entry.item.updatedAt=new Date().toISOString();
+persistLegacyCreditState();
+return true;
+}
+
+function getLegacyCreditStrategyLabel(item){
+var strategy=item&&item.strategy?item.strategy:null;
+if(!strategy||!strategy.type)return '';
+if(strategy.type==='amortizacao_em_execucao')return 'Amortização em execução';
+if(strategy.type==='renegociacao_planejada')return 'Renegociação planejada';
+if(strategy.type==='renegociado_aplicado')return 'Renegociação aplicada';
+if(strategy.type==='monitorar')return 'Monitorar';
+return String(strategy.type||'').replace(/_/g,' ');
+}
+
+function getLegacyCreditReviewDays(strategyType){
+if(strategyType==='renegociacao_planejada')return 7;
+if(strategyType==='amortizacao_em_execucao')return 14;
+if(strategyType==='renegociado_aplicado')return 21;
+if(strategyType==='monitorar')return 21;
+return 14;
+}
+
+function ensureLegacyCreditStrategyReview(item){
+if(!item||!item.strategy||!item.strategy.type)return;
+var strategy=item.strategy;
+var baseDate=strategy.updatedAt||item.updatedAt||new Date().toISOString();
+if(!strategy.nextReviewAt){
+var reviewAt=new Date(baseDate);
+reviewAt.setDate(reviewAt.getDate()+getLegacyCreditReviewDays(strategy.type));
+strategy.nextReviewAt=reviewAt.toISOString();
+}
+}
+
+function buildLegacyCreditMonitoringItems(){
+var data=buildLegacyCreditRecommendations();
+var now=Date.now();
+var ONE_DAY=24*60*60*1000;
+return (data.items||[]).filter(function(entry){return entry.item&&entry.item.strategy&&entry.item.strategy.type;}).map(function(entry){
+var item=entry.item||{};
+var strategy=item.strategy||{};
+var updatedAtMs=strategy.updatedAt?new Date(strategy.updatedAt).getTime():(item.updatedAt?new Date(item.updatedAt).getTime():now);
+var lastAmortizationMs=strategy.lastAmortizationAt?new Date(strategy.lastAmortizationAt).getTime():updatedAtMs;
+var daysSinceUpdate=Math.max(0,Math.floor((now-updatedAtMs)/ONE_DAY));
+var daysSinceLastMove=Math.max(0,Math.floor((now-lastAmortizationMs)/ONE_DAY));
+var baselineExposure=Number(strategy.baselineExposure!=null?strategy.baselineExposure:getLegacyCreditExposure(item));
+var currentExposure=Number(getLegacyCreditExposure(item));
+var baselineMonthly=Number(strategy.baselineMonthly!=null?strategy.baselineMonthly:Number(item.monthlyInstallment||0));
+var currentMonthly=Number(item.monthlyInstallment||0);
+var exposureReduction=baselineExposure>0?Math.max(0,baselineExposure-currentExposure):0;
+var exposureReductionPct=baselineExposure>0?Math.round((exposureReduction/baselineExposure)*100):0;
+var monthlyReduction=baselineMonthly>0?Math.max(0,baselineMonthly-currentMonthly):0;
+var monthlyReductionPct=baselineMonthly>0?Math.round((monthlyReduction/baselineMonthly)*100):0;
+var stalled=false;
+var pendingRenegotiation=false;
+ensureLegacyCreditStrategyReview(item);
+var nextReviewAt=strategy.nextReviewAt?new Date(strategy.nextReviewAt).getTime():0;
+var reviewDue=nextReviewAt>0&&nextReviewAt<=now;
+var daysToReview=nextReviewAt>0?Math.ceil((nextReviewAt-now)/ONE_DAY):null;
+if(strategy.type==='renegociacao_planejada'&&daysSinceUpdate>=7)pendingRenegotiation=true;
+if(strategy.type==='amortizacao_em_execucao'&&daysSinceLastMove>=14&&exposureReductionPct<5)stalled=true;
+if(strategy.type==='monitorar'&&daysSinceUpdate>=21)stalled=true;
+if(strategy.type==='renegociado_aplicado'&&daysSinceUpdate>=21&&monthlyReductionPct<5)stalled=true;
+return Object.assign({},entry,{
+daysSinceUpdate:daysSinceUpdate,
+daysSinceLastMove:daysSinceLastMove,
+baselineExposure:baselineExposure,
+currentExposure:currentExposure,
+exposureReduction:exposureReduction,
+exposureReductionPct:exposureReductionPct,
+baselineMonthly:baselineMonthly,
+currentMonthly:currentMonthly,
+monthlyReduction:monthlyReduction,
+monthlyReductionPct:monthlyReductionPct,
+stalled:stalled,
+pendingRenegotiation:pendingRenegotiation,
+reviewDue:reviewDue,
+nextReviewAt:strategy.nextReviewAt||'',
+daysToReview:daysToReview
+});
+});
+}
+
+function syncLegacyCreditHistory(force){
+var monitored=buildLegacyCreditMonitoringItems();
+var snapshot=buildLegacyCreditSnapshot();
+var todayKey=new Date().toISOString().split('T')[0];
+var totalExposure=0;
+monitored.forEach(function(entry){
+totalExposure+=Number(entry.currentExposure||0);
+if(entry.item&&entry.item.strategy)ensureLegacyCreditStrategyReview(entry.item);
+});
+var summary={
+date:todayKey,
+totalExposure:Math.round(totalExposure*100)/100,
+monthlyDebtCommitment:Math.round(Number(snapshot.monthlyDebtCommitment||0)*100)/100,
+strategyCount:monitored.length,
+stalledCount:monitored.filter(function(entry){return entry.stalled;}).length,
+pendingRenegotiationCount:monitored.filter(function(entry){return entry.pendingRenegotiation;}).length,
+progressedCount:monitored.filter(function(entry){return entry.exposureReductionPct>=5||entry.monthlyReductionPct>=5;}).length
+};
+var history=Array.isArray(creditMonitoringHistory)?creditMonitoringHistory.slice():[];
+var last=history.length?history[history.length-1]:null;
+if(force||!last||last.date!==todayKey){
+history.push(summary);
+}else{
+history[history.length-1]=Object.assign({},last,summary);
+}
+if(history.length>16)history=history.slice(history.length-16);
+creditMonitoringHistory=history;
+if(U)U.creditMonitoringHistory=history;
+return history;
+}
+
+function getLegacyCreditMonitoringData(){
+var monitored=buildLegacyCreditMonitoringItems();
+var history=syncLegacyCreditHistory();
+var previous=history.length>=2?history[history.length-2]:null;
+var latest=history.length?history[history.length-1]:null;
+var weeklyExposureDelta=previous&&latest?Math.round((Number(latest.totalExposure||0)-Number(previous.totalExposure||0))*100)/100:0;
+var weeklyDebtDelta=previous&&latest?Math.round((Number(latest.monthlyDebtCommitment||0)-Number(previous.monthlyDebtCommitment||0))*100)/100:0;
+return{
+items:monitored,
+stalled:monitored.filter(function(entry){return entry.stalled;}),
+pendingRenegotiation:monitored.filter(function(entry){return entry.pendingRenegotiation;}),
+progressed:monitored.filter(function(entry){return entry.exposureReductionPct>=5||entry.monthlyReductionPct>=5;}),
+reviewDue:monitored.filter(function(entry){return entry.reviewDue;}),
+history:history,
+weeklyExposureDelta:weeklyExposureDelta,
+weeklyDebtDelta:weeklyDebtDelta
+};
+}
+
+function renderLegacyCreditConsultorButtons(id,suggestedAmount){
+var escapedId=String(id||'').replace(/'/g,"\\'");
+var amountAttr=suggestedAmount&&suggestedAmount>0?String(Number(suggestedAmount).toFixed(2)).replace(/'/g,"\\'"):'';
+return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+'<button type="button" class="btn btn-o" onclick="go(\'credito\',null)" style="padding:7px 12px;font-size:.78em">Abrir Hub de Crédito</button>'+
+'<button type="button" class="btn btn-o" onclick="openLegacyCreditEntryFromAssistant(\''+escapedId+'\')" style="padding:7px 12px;font-size:.78em">Abrir item</button>'+
+'<button type="button" class="btn btn-r" onclick="openLegacyCreditAmortizationModal(\''+escapedId+'\',\''+amountAttr+'\')" style="padding:7px 12px;font-size:.78em">Registrar amortização</button>'+
+'<button type="button" class="btn btn-o" onclick="openLegacyCreditRenegotiationModal(\''+escapedId+'\')" style="padding:7px 12px;font-size:.78em">Simular renegociação</button>'+
+'</div>';
+}
+
+function reopenFabConsultorAfterCreditAction(message){
+if(!window._fabConsultorHistory||!window._fabConsultorHistory.length)return;
+setTimeout(function(){
+try{
+openModalConsultorFAB();
+if(message)addFabConsultorMsg('ai',message);
+}catch(e){}
+},80);
+}
+
+function openLegacyCreditEntryFromAssistant(id){
+var entry=findLegacyCreditEntryById(id);
+if(!entry){toast('Item de crédito não encontrado.','err');return;}
+if(entry.kind==='account')openLegacyCreditAccountModal(id);
+else openLegacyCreditObligationModal(id);
+}
+
+function openLegacyCreditAmortizationModal(id,suggestedAmount){
+var entry=findLegacyCreditEntryById(id);
+if(!entry||!entry.item){toast('Item de crédito não encontrado.','err');return;}
+window._legacyCreditAmortizationTargetId=String(id);
+var item=entry.item;
+var title=entry.kind==='account'?'Amortizar conta de crédito':'Amortizar obrigação';
+var currentExposure=entry.kind==='account'?Number(item.balanceUsed||0):Number(item.outstandingBalance||0);
+var suggested=Number(suggestedAmount||0);
+if(!(suggested>0))suggested=Math.min(currentExposure,Math.max(0,getLegacyAvailableCash()*0.3));
+var availableAccounts=(Array.isArray(userAccs)?userAccs:[]).filter(function(acc){return !(accountMeta[acc]&&accountMeta[acc].incluirNaSoma===false);});
+var html='<div style="padding:4px 2px 2px">'+
+'<h3 style="margin:0 0 12px">'+title+'</h3>'+
+'<p style="font-size:.82em;color:var(--t3);margin:0 0 14px">Item: <b>'+escapeHtml(item.label||'Crédito')+'</b><br>Saldo/exposição atual: <b>R$ '+currentExposure.toFixed(2)+'</b></p>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+'<div><label class="fl">Valor da amortização (R$)</label><input id="legacyCreditAmortAmount" class="fi" inputmode="decimal" value="'+Number(suggested||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">Conta para registrar saída</label><select id="legacyCreditAmortAccount" class="fi"><option value="">Não descontar de conta agora</option>'+availableAccounts.map(function(acc){return '<option value="'+escapeHtml(acc)+'">'+escapeHtml(acc)+'</option>';}).join('')+'</select></div>'+
+'</div>'+
+'<p style="font-size:.78em;color:var(--t3);margin:12px 0 0">Se escolher uma conta, o sistema registra também uma despesa de amortização para refletir no caixa.</p>'+
+'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button type="button" class="btn btn-o" onclick="closeModal();reopenFabConsultorAfterCreditAction()">Cancelar</button><button type="button" class="btn btn-r" onclick="saveLegacyCreditAmortization()">Confirmar amortização</button></div>'+
+'</div>';
+openModal(html);
+}
+
+function saveLegacyCreditAmortization(){
+var id=window._legacyCreditAmortizationTargetId;
+var entry=findLegacyCreditEntryById(id);
+if(!entry||!entry.item){toast('Item de crédito não encontrado.','err');return;}
+var amount=pf('legacyCreditAmortAmount');
+if(!(amount>0)){toast('Informe um valor válido para amortizar.','err');return;}
+var item=entry.item;
+var account=(document.getElementById('legacyCreditAmortAccount')||{}).value||'';
+if(account){
+var accBal=getAccBal(account).atual;
+if(Number(accBal||0)<amount){toast('Saldo insuficiente nessa conta para registrar a saída.','err');return;}
+if(typeof entries==='undefined')entries=[];
+entries.push({
+id:Date.now(),
+date:new Date().toISOString().split('T')[0],
+type:'despesa',
+desc:'[Amortização] '+(item.label||'Crédito'),
+category:'Outros',
+value:Math.round(amount*100)/100,
+account:account,
+status:'pago',
+formaPgto:'Amortização',
+tags:['credito','amortizacao']
+});
+}
+var beforeExposure=entry.kind==='account'?Number(item.balanceUsed||0):Number(item.outstandingBalance||0);
+var ratio=beforeExposure>0?Math.max(0,(beforeExposure-amount)/beforeExposure):0;
+var relief=estimateLegacyCreditMonthlyRelief(item,amount);
+if(entry.kind==='account'){
+item.balanceUsed=Math.max(0,Math.round((Number(item.balanceUsed||0)-amount)*100)/100);
+}else{
+item.outstandingBalance=Math.max(0,Math.round((Number(item.outstandingBalance||0)-amount)*100)/100);
+}
+if(Number(item.nextDueAmount||0)>0)item.nextDueAmount=Math.max(0,Math.round((Number(item.nextDueAmount||0)-Math.min(amount,Number(item.nextDueAmount||0)))*100)/100);
+if(Number(item.monthlyInstallment||0)>0&&beforeExposure>0)item.monthlyInstallment=Math.max(0,Math.round((Number(item.monthlyInstallment||0)*ratio)*100)/100);
+item.updatedAt=new Date().toISOString();
+markLegacyCreditStrategy(id,'amortizacao_em_execucao',{lastAmortizationAmount:Math.round(amount*100)/100,lastAmortizationAt:new Date().toISOString(),estimatedMonthlyRelief:relief});
+closeModal();
+reopenFabConsultorAfterCreditAction('✅ <b>Amortização registrada.</b><br><br>Item: <b>'+escapeHtml(item.label||'Crédito')+'</b><br>Valor amortizado: <b>R$ '+Number(amount||0).toFixed(2)+'</b>'+(account?'<br>Conta usada: <b>'+escapeHtml(account)+'</b>':'')+(relief>0?'<br>Alívio mensal estimado: <b>R$ '+Number(relief||0).toFixed(2)+'</b>':''));
+toast('Amortização registrada com sucesso!','ok');
+}
+
+function openLegacyCreditRenegotiationModal(id){
+var entry=findLegacyCreditEntryById(id);
+if(!entry||!entry.item){toast('Item de crédito não encontrado.','err');return;}
+window._legacyCreditRenegotiationTargetId=String(id);
+var item=entry.item;
+var html='<div style="padding:4px 2px 2px">'+
+'<h3 style="margin:0 0 12px">Simular renegociação</h3>'+
+'<p style="font-size:.82em;color:var(--t3);margin:0 0 14px">Item: <b>'+escapeHtml(item.label||'Crédito')+'</b></p>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+'<div><label class="fl">Parcela atual (R$)</label><input id="legacyCreditSimCurrentMonthly" class="fi" inputmode="decimal" value="'+Number(item.monthlyInstallment||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">Nova parcela (R$)</label><input id="legacyCreditSimNewMonthly" class="fi" inputmode="decimal" value="'+Number(item.monthlyInstallment||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">Juros atuais (%/m)</label><input id="legacyCreditSimCurrentRate" class="fi" inputmode="decimal" value="'+Number(item.interestRatePct||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">Novos juros (%/m)</label><input id="legacyCreditSimNewRate" class="fi" inputmode="decimal" value="'+Number(item.interestRatePct||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">CET atual (% a.a.)</label><input id="legacyCreditSimCurrentCet" class="fi" inputmode="decimal" value="'+Number(item.cetAnnualPct||0).toFixed(2)+'"></div>'+
+'<div><label class="fl">Novo CET (% a.a.)</label><input id="legacyCreditSimNewCet" class="fi" inputmode="decimal" value="'+Number(item.cetAnnualPct||0).toFixed(2)+'"></div>'+
+'</div>'+
+'<div id="legacyCreditSimResult" style="margin-top:14px;padding:12px;background:var(--bg2);border-radius:12px;color:var(--t2);font-size:.82em">Preencha os novos valores e clique em simular.</div>'+
+'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button type="button" class="btn btn-o" onclick="closeModal();reopenFabConsultorAfterCreditAction()">Fechar</button><button type="button" class="btn btn-r" onclick="runLegacyCreditRenegotiationSimulation()">Simular</button></div>'+
+'</div>';
+openModal(html);
+}
+
+function runLegacyCreditRenegotiationSimulation(){
+var currentMonthly=pf('legacyCreditSimCurrentMonthly');
+var newMonthly=pf('legacyCreditSimNewMonthly');
+var currentRate=pf('legacyCreditSimCurrentRate');
+var newRate=pf('legacyCreditSimNewRate');
+var currentCet=pf('legacyCreditSimCurrentCet');
+var newCet=pf('legacyCreditSimNewCet');
+var resultEl=document.getElementById('legacyCreditSimResult');
+if(!resultEl)return;
+var id=window._legacyCreditRenegotiationTargetId;
+var monthlyDiff=Math.round((currentMonthly-newMonthly)*100)/100;
+var rateDiff=Math.round((currentRate-newRate)*100)/100;
+var cetDiff=Math.round((currentCet-newCet)*100)/100;
+var yearlyCash=Math.round((monthlyDiff*12)*100)/100;
+var verdict=monthlyDiff>0||rateDiff>0||cetDiff>0
+?'✅ A proposta simulada parece melhorar sua estrutura.'
+:'⚠️ A proposta simulada não mostra ganho claro.';
+resultEl.innerHTML='<div style="font-weight:800;color:var(--t1);margin-bottom:8px">'+verdict+'</div>'+
+'<div>Alívio mensal estimado: <b>R$ '+monthlyDiff.toFixed(2)+'</b></div>'+
+'<div>Alívio de caixa em 12 meses: <b>R$ '+yearlyCash.toFixed(2)+'</b></div>'+
+'<div>Redução de juros: <b>'+rateDiff.toFixed(2)+' p.p./m</b></div>'+
+'<div>Redução de CET: <b>'+cetDiff.toFixed(2)+' p.p./a.a.</b></div>'+
+'<div style="margin-top:8px;color:var(--t3)">Compare também custo total, prazo e flexibilidade antes de fechar a renegociação.</div>'+
+'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button type="button" class="btn btn-o" onclick="markLegacyCreditStrategy(\''+String(id||'').replace(/'/g,"\\'")+'\',\'renegociacao_planejada\',{estimatedMonthlyRelief:'+Number(monthlyDiff||0).toFixed(2)+',targetMonthly:'+Number(newMonthly||0).toFixed(2)+',targetRate:'+Number(newRate||0).toFixed(2)+',targetCet:'+Number(newCet||0).toFixed(2)+'});closeModal();reopenFabConsultorAfterCreditAction(\'📝 <b>Estratégia marcada:</b> renegociação planejada.\')">Marcar estratégia</button><button type="button" class="btn btn-r" onclick="applyLegacyCreditRenegotiation()">Aplicar no cadastro</button></div>';
+}
+
+function applyLegacyCreditRenegotiation(){
+var id=window._legacyCreditRenegotiationTargetId;
+var entry=findLegacyCreditEntryById(id);
+if(!entry||!entry.item){toast('Item de crédito não encontrado.','err');return;}
+var currentMonthly=pf('legacyCreditSimCurrentMonthly');
+var newMonthly=pf('legacyCreditSimNewMonthly');
+var currentRate=pf('legacyCreditSimCurrentRate');
+var newRate=pf('legacyCreditSimNewRate');
+var currentCet=pf('legacyCreditSimCurrentCet');
+var newCet=pf('legacyCreditSimNewCet');
+var monthlyDiff=Math.round((currentMonthly-newMonthly)*100)/100;
+entry.item.monthlyInstallment=Math.max(0,newMonthly);
+entry.item.interestRatePct=Math.max(0,newRate);
+entry.item.cetAnnualPct=Math.max(0,newCet);
+entry.item.updatedAt=new Date().toISOString();
+markLegacyCreditStrategy(id,'renegociado_aplicado',{
+estimatedMonthlyRelief:monthlyDiff,
+previousMonthly:currentMonthly,
+previousRate:currentRate,
+previousCet:currentCet,
+targetMonthly:newMonthly,
+targetRate:newRate,
+targetCet:newCet,
+appliedAt:new Date().toISOString()
+});
+closeModal();
+reopenFabConsultorAfterCreditAction('✅ <b>Renegociação aplicada no cadastro.</b><br><br>Novo valor mensal: <b>R$ '+Number(newMonthly||0).toFixed(2)+'</b><br>Novos juros: <b>'+Number(newRate||0).toFixed(2)+'%/m</b><br>Novo CET: <b>'+Number(newCet||0).toFixed(2)+'% a.a.</b>'+(monthlyDiff>0?'<br>Alívio mensal estimado: <b>R$ '+Number(monthlyDiff||0).toFixed(2)+'</b>':''));
+toast('Renegociação aplicada com sucesso!','ok');
 }
 
 
@@ -3533,6 +5169,11 @@ if(!U||!U.uid){card.style.display='none';return;}
 var msg=getInsightDoDia(forceNew?{shuffle:true}:{});
 textEl.textContent=msg;
 card.style.display='block';
+var trackKey='legacy:'+new Date().toISOString().split('T')[0]+':'+msg;
+if(window._lastTrackedInsightKey!==trackKey){
+window._lastTrackedInsightKey=trackKey;
+trackLegacyPlatformEvent('insight_shown',{source:'legacy_widget_insight',mode:'legado',today:new Date().toISOString().split('T')[0],hasOpenTrigger:(typeof entries!=='undefined'&&entries&&entries.length>0)});
+}
 }
 
 var _raLast=0,_raTimer=null;
@@ -3555,13 +5196,14 @@ else if(tabId==='metas'){metasIaTipLoaded=false;rMetas();if(typeof updateDashMet
 else if(tabId==='orçamento'){rOrc();}
 else if(tabId==='contas'){renderCarteira();}
 else if(tabId==='cartões'||tabId==='cartoes'){renderCards();renderFatura();}
+else if(tabId==='credito'){renderLegacyCreditHub();renderLegacyCreditStructured();}
 else if(tabId==='conq'){rBadges();checkAch();}
 else if(tabId==='rel'){rRel();}
 else if(tabId==='dicas'){rDicas();}
 else if(tabId==='calendario'){if(typeof renderCalendario==='function')renderCalendario();else if(typeof rCal==='function')rCal();}
 else if(tabId==='casal'||tabId==='familia'){/* família: sem re-render pesado, dados carregados por listeners próprios */}
 else if(tabId==='ia'||tabId==='config'||tabId==='comunidade'){if(tabId==='ia'&&typeof markPrimeiroPassoIa==='function')markPrimeiroPassoIa();}
-else{rE();rCharts();rDicas();rBadges();rRel();rInv();try{renderPortfolio();}catch(e){}rMetas();rOrc();checkAch();renderCarteira();renderDashW();renderInsightDoDia();rnRc();checkAlerts();renderDashPremium();renderNewCharts();renderCards();renderFatura();}
+else{rE();rCharts();rDicas();rBadges();rRel();rInv();try{renderPortfolio();}catch(e){}rMetas();rOrc();checkAch();renderCarteira();renderDashW();renderInsightDoDia();rnRc();checkAlerts();renderDashPremium();renderNewCharts();renderCards();renderFatura();renderLegacyCreditHub();renderLegacyCreditStructured();}
 rnRc();
 try{bldN();}catch(x){}
 if(typeof updateDrawerUser==='function')updateDrawerUser();
@@ -3606,9 +5248,13 @@ kRel.innerHTML=
 '<div class="dash-stat-card dash-stat-invest" onclick="openKpiModal(\'investido\')"><div class="dash-stat-head"><div class="dash-stat-icon dash-stat-icon-accent"><i data-lucide="trending-up"></i></div><span class="dash-stat-badge dash-stat-badge-pos">'+(hide?'•••':chInv)+'</span></div><div class="dash-stat-label">Investimentos</div><div class="dash-stat-value">'+f(totalInvAtual)+'</div><div class="dash-stat-accent"></div></div>'+
 '</div>';
 var tips=getSmartTips().filter(function(t){var s=(t.title||'')+(t.text||'');return !/importe|importar|extrato|nubank|inter|itaú|c6/i.test(s);});
-if(tips.length>0){var t=tips[0];
-var tb=document.getElementById('tipBanner');if(tb)tb.innerHTML='<div class="tip-card '+t.color+'" style="margin-bottom:16px"><b>'+t.title+'</b> - '+t.text+'</div>'}
-else{var tb=document.getElementById('tipBanner');if(tb)tb.innerHTML='';}
+var tb=document.getElementById('tipBanner');if(!tb){}else if(tips.length>0){
+var t=tips[0];
+var isDeficitBanner=/Atenção ao Saldo|Despesas superam receitas/i.test((t.title||'')+(t.text||''));
+if(isDeficitBanner&&tips.length>1){t=tips[1];}
+if(isDeficitBanner&&tips.length===1){tb.innerHTML='';}
+else{tb.innerHTML='<div class="tip-card '+t.color+'" style="margin-bottom:16px"><b>'+t.title+'</b> - '+t.text+'</div>';}
+}else{tb.innerHTML='';}
 if(typeof window.refreshLucide==='function')lucide.createIcons();
 }
 function drawSparklineSaldo(){
@@ -3710,11 +5356,67 @@ if(contaSel){contaSel.disabled=false;contaSel.style.opacity='';}
 }
 }
 
+function onRecorrenteChange(val){
+if(val==='sim'){
+var pop=document.getElementById('recDuracaoPopup');
+// ✅ FIX Bug 1: resetar seleção de freq ao abrir popup
+if(pop){
+selectRecFreq('mensal');// destaca "Mensal" por padrão
+pop.style.display='flex';
+if(typeof lucide!=='undefined')lucide.createIcons();
+}
+}else{
+var h=document.getElementById('fRecorrenciaDuracao');if(h)h.value='';
+var hf=document.getElementById('fRecorrenciaFreq');if(hf)hf.value='mensal';
+}
+}
+// ✅ FIX Bug 1: nova função para selecionar periodicidade
+function selectRecFreq(freq){
+var hf=document.getElementById('fRecorrenciaFreq');if(hf)hf.value=freq;
+document.querySelectorAll('.rec-freq-btn').forEach(function(b){
+var sel=b.getAttribute('data-freq')===freq;
+b.style.background=sel?'var(--vr)':'var(--bg2)';
+b.style.color=sel?'#fff':'var(--t2)';
+b.style.borderColor=sel?'var(--vr)':'var(--brd)';
+b.style.fontWeight=sel?'700':'400';
+});
+}
+function selectRecDuracao(val){
+var h=document.getElementById('fRecorrenciaDuracao');if(h)h.value=val;
+document.querySelectorAll('.rec-duracao-btn').forEach(function(b){
+var sel=b.getAttribute('data-value')===val;
+b.setAttribute('data-selected',sel?'true':'false');
+// destaque visual
+b.style.background=sel?'var(--vr)':'';
+b.style.color=sel?'#fff':'';
+b.style.borderColor=sel?'var(--vr)':'';
+});
+// ✅ FIX Bug 1: só fecha se também tiver frequência selecionada
+var hf=document.getElementById('fRecorrenciaFreq');
+if(!hf||!hf.value)selectRecFreq('mensal');
+var pop=document.getElementById('recDuracaoPopup');if(pop)pop.style.display='none';
+}
+function closeRecDuracaoPopup(){
+var pop=document.getElementById('recDuracaoPopup');if(pop)pop.style.display='none';
+var sel=document.getElementById('fRecorrente');if(sel)sel.value='nao';
+var h=document.getElementById('fRecorrenciaDuracao');if(h)h.value='';
+// ✅ FIX Bug 1: limpar frequência ao cancelar
+var hf=document.getElementById('fRecorrenciaFreq');if(hf)hf.value='mensal';
+}
+function onEdRecorrenteChange(val){
+var wrap=document.getElementById('edRecDuracaoWrap');if(wrap)wrap.style.display=val==='sim'?'block':'none';
+}
+
 function addE(){
 var date=document.getElementById('fD').value,type=document.getElementById('fT').value;
 var cat=document.getElementById('fC').value,val=pf('fV');
 var desc=document.getElementById('fDe').value.trim(),acc=document.getElementById('fA').value;
 var tags=document.getElementById('fTags')?document.getElementById('fTags').value.trim():'';
+var recorrente=document.getElementById('fRecorrente')?document.getElementById('fRecorrente').value:'nao';
+var recorrenciaDuracao=document.getElementById('fRecorrenciaDuracao')?document.getElementById('fRecorrenciaDuracao').value:'';
+// ✅ FIX Bug 1: lê a frequência selecionada no popup
+var recorrenciaFreq=document.getElementById('fRecorrenciaFreq')?document.getElementById('fRecorrenciaFreq').value:'mensal';
+if(recorrente==='sim'&&!recorrenciaDuracao){toast(typeof t==='function'?t('toast_selecione_duracao_rec'):'Selecione o tempo de recorrência','err');return}
 if(!date||!val||val<=0){toast(typeof t==='function'?t('toast_preencha_data_valor'):'Preencha data e valor!','err');return}
 var status=document.getElementById('fStatus')?document.getElementById('fStatus').value:'pago';
 var pgto=document.getElementById('fPgto')?document.getElementById('fPgto').value:'';
@@ -3734,7 +5436,7 @@ for(var p=0;p<parcelas;p++){
 var d2=new Date(date+'T12:00:00');d2.setMonth(d2.getMonth()+p);
 var pDate=d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');
 card.purchases.push({id:purchaseId+p,purchaseId:purchaseId,desc:(desc||cat)+(parcelas>1?' ('+(p+1)+'/'+parcelas+')':''),category:cat,value:valParc,totalValue:val,parcela:p+1,totalParcelas:parcelas,date:pDate,billingMonth:getBillingMonth(card,pDate)});
-entries.push({id:purchaseId+p,cardPurchaseId:purchaseId,type:'despesa',desc:'['+card.name+'] '+(desc||cat)+(parcelas>1?' ('+(p+1)+'/'+parcelas+')':''),value:valParc,category:cat,date:pDate,tags:['cartão',card.name.toLowerCase()],account:card.name,status:'pendente',formaPgto:'cartao'});
+entries.push({id:purchaseId+p,cardPurchaseId:purchaseId,type:'despesa',desc:'['+card.name+'] '+(desc||cat)+(parcelas>1?' ('+(p+1)+'/'+parcelas+')':''),value:valParc,category:cat,date:pDate,tags:['cartão',card.name.toLowerCase()],account:card.name,status:'pendente',formaPgto:'cartao',recorrente:recorrente==='sim',recorrenciaDuracao:recorrente==='sim'?recorrenciaDuracao:null,recorrenciaFreq:recorrente==='sim'?recorrenciaFreq:'mensal'});
 }
 saveData();clrF();renderAll();
 toast(parcelas>1?(desc||cat)+' em '+parcelas+'x de R$ '+valParc.toFixed(2).replace('.',',')+'  no '+card.name:'Lançado no '+card.name,'ok');
@@ -3742,7 +5444,7 @@ if(typeof renderPrimeirosPassos==='function')renderPrimeirosPassos();
 return;
 }
 
-var newEntry={id:Date.now(),date:date,type:type,desc:desc||cat,category:cat,value:Math.round(val*100)/100,account:acc,tags:tags,status:status,formaPgto:pgto};
+var newEntry={id:Date.now(),date:date,type:type,desc:desc||cat,category:cat,value:Math.round(val*100)/100,account:acc,tags:tags,status:status,formaPgto:pgto,recorrente:recorrente==='sim',recorrenciaDuracao:recorrente==='sim'?recorrenciaDuracao:null,recorrenciaFreq:recorrente==='sim'?recorrenciaFreq:'mensal'};
 entries.push(newEntry);
 saveData();clrF();renderAll();
 var _lancFb=document.getElementById('lancFormBox');if(_lancFb)_lancFb.style.display='none';
@@ -3763,6 +5465,10 @@ var fp=document.getElementById('fPgto');if(fp)fp.value='';
 var row=document.getElementById('fPgtoCartaoRow');if(row)row.style.display='none';
 var fp2=document.getElementById('fPgtoParc');if(fp2)fp2.value='1';
 var fA=document.getElementById('fA');if(fA){fA.disabled=false;fA.style.opacity='';}
+var fRec=document.getElementById('fRecorrente');if(fRec)fRec.value='nao';
+var fRecDur=document.getElementById('fRecorrenciaDuracao');if(fRecDur)fRecDur.value='';
+// ✅ FIX Bug 1: resetar frequência ao limpar formulário
+var fRecFreq=document.getElementById('fRecorrenciaFreq');if(fRecFreq)fRecFreq.value='mensal';
 }
 
 var _rEPage=0,_rEPageSize=50;
@@ -3829,7 +5535,10 @@ var from=_rEPage*_rEPageSize+1,to=Math.min((_rEPage+1)*_rEPageSize,total);
 pagEl.innerHTML='<span>Mostrando '+from+'-'+to+' de '+total+'</span><div style="display:flex;gap:6px"><button type="button" class="btn btn-o btn-sm" '+(_rEPage<=0?'disabled':'')+' onclick="setREPage('+(_rEPage-1)+')">← Anterior</button><button type="button" class="btn btn-o btn-sm" '+(_rEPage>=maxPage?'disabled':'')+' onclick="setREPage('+(_rEPage+1)+')">Próxima →</button></div>';
 }
 }
-if(typeof lucide!=='undefined')lucide.createIcons();
+if(typeof lucide!=='undefined') {
+  try { lucide.createIcons({ icons: lucide.icons || {} }); }
+  catch(e) { lucide.createIcons(); }
+}
 }
 
 // INVESTIMENTOS
@@ -5294,11 +7003,16 @@ function toggleLancForm(btn){
   for(var i=0;i<subs.length;i++) subs[i].classList.remove('lanc-sub-on');
   var novo = document.getElementById('lancSub_novo');
   if(novo) novo.classList.add('lanc-sub-on');
-  // Toggle form
-  var isOpen = fb.style.display !== 'none';
+  
+  // Directly check inline style or assume closed if none
+  var isOpen = (fb.style.display === 'block' || fb.style.display === 'flex');
+  
+  // If we are coming from another tab via "Lançar", we just want to OPEN it, not toggle it closed.
+  // The bug is that clicking "Lançar" when already in the tab toggles it, but we want it to just OPEN
+  // if it's closed, or TOGGLE if it's open.
   fb.style.display = isOpen ? 'none' : 'block';
   if(btn) btn.classList.toggle('lp-on', !isOpen);
-  if(!isOpen && typeof window.refreshLucide === 'function') lucide.createIcons();
+  if(!isOpen && typeof window.refreshLucide === 'function' && typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
 }
 
 /* ===== TIPO TOGGLE (Despesa/Receita) ===== */
@@ -5905,6 +7619,10 @@ if(cards.length===0){
 carousel.innerHTML='<div style="text-align:center;color:var(--t2);padding:24px;min-width:200px">Nenhum cartão cadastrado.</div><div class="card-novo-cartao" onclick="openCardModal()" role="button" tabindex="0"><div class="card-novo-cartao-icon"><i data-lucide="plus" style="width:24px;height:24px;color:#4C7BF4"></i></div><div class="card-novo-cartao-txt">Adicionar cartão</div><div class="card-novo-cartao-sub">Crédito, débito ou pré-pago</div></div>';
 if(typeof lucide!=='undefined')lucide.createIcons();
 updateCardSelects();
+renderCardsResumo();
+renderCardsCreditHubCta();
+renderLegacyCreditHub();
+renderLegacyCreditStructured();
 if(typeof popImpCardSel==='function')popImpCardSel();
 return;
 }
@@ -5976,6 +7694,9 @@ if(typeof lucide!=='undefined')lucide.createIcons();
 if(cl)cl.style.display='none';
 updateCardSelects();
 renderCardsResumo();
+renderCardsCreditHubCta();
+renderLegacyCreditHub();
+renderLegacyCreditStructured();
 if(typeof popImpCardSel==='function')popImpCardSel();
 }
 
@@ -6196,6 +7917,93 @@ if(url)return '<span class="wlt-bank-logo-wrap" style="display:inline-flex;align
 return '<span class="wlt-bank-initial" style="width:'+size+'px;height:'+size+'px;min-width:'+size+'px;min-height:'+size+'px;border-radius:10px;background:'+color+';color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:'+Math.round(size*0.45)+'px;font-weight:800;flex-shrink:0">'+initial+'</span>';
 }
 
+function getBankBrandMeta(accName){
+var norm=function(s){return (s||'').toLowerCase().trim();};
+var normKey=function(s){
+return (s||'')
+.toLowerCase()
+.normalize('NFD')
+.replace(/[\u0300-\u036f]/g,'')
+.replace(/[^a-z0-9]/g,'');
+};
+var brandPalette={
+nubank:{primary:'#8A05BE',secondary:'#5A189A'},
+inter:{primary:'#FF7A00',secondary:'#C95C00'},
+itau:{primary:'#EC7000',secondary:'#003399'},
+bradesco:{primary:'#CC092F',secondary:'#8A0B24'},
+santander:{primary:'#EC0000',secondary:'#A30014'},
+bb:{primary:'#003399',secondary:'#FFCC00'},
+caixa:{primary:'#005CA9',secondary:'#F39200'},
+c6:{primary:'#111111',secondary:'#2B2B2B'},
+btg:{primary:'#1B1B1B',secondary:'#0F5B8D'},
+xp:{primary:'#111111',secondary:'#2A2A2A'},
+picpay:{primary:'#21C25E',secondary:'#128C42'},
+mercadopago:{primary:'#009EE3',secondary:'#0057B8'},
+neon:{primary:'#00CFFF',secondary:'#0086C9'},
+will:{primary:'#1A1A1A',secondary:'#FFDD00'},
+pagbank:{primary:'#00B94A',secondary:'#006B2A'}
+};
+var accNorm=norm(accName);
+var accKey=normKey(accName);
+var isCarteira=accNorm==='carteira física'||accNorm==='carteira fisica';
+if(isCarteira){
+var walletColor=getBankColor(accName);
+return {
+key:'wallet',
+known:false,
+isCarteira:true,
+officialName:'Carteira física',
+badge:'Caixa local',
+domainText:'dinheiro em espécie',
+watermark:'CF',
+primaryColor:walletColor,
+secondaryColor:'#7C2D12',
+logoHtml:getBankLogoHtml(accName,44)
+};
+}
+var bankKey=_nomeToBankKey[accNorm]||null;
+var banco=null;
+if(bankKey&&LOGOS_BANCOS[bankKey])banco=LOGOS_BANCOS[bankKey];
+if(!banco){
+for(var mapKey in _nomeToBankKey){
+if(normKey(mapKey)===accKey){bankKey=_nomeToBankKey[mapKey];banco=LOGOS_BANCOS[bankKey]||null;break;}
+}
+}
+if(!banco){
+for(var k in LOGOS_BANCOS){
+if(norm(LOGOS_BANCOS[k].nome)===accNorm||normKey(LOGOS_BANCOS[k].nome)===accKey){bankKey=k;banco=LOGOS_BANCOS[k];break;}
+}
+}
+if(banco){
+var palette=brandPalette[bankKey]||{};
+return {
+key:bankKey||'outro',
+known:true,
+isCarteira:false,
+officialName:banco.nome||accName,
+badge:'Instituição oficial',
+domainText:(banco.dominio||'').replace(/^www\./,''),
+watermark:getCardIniciais(banco.nome||accName),
+primaryColor:palette.primary||banco.cor||getBankColor(accName),
+secondaryColor:palette.secondary||banco.fundo||banco.cor||'#0F172A',
+logoHtml:getBancoLogoImgHtml(banco,44)
+};
+}
+var fallbackColor=getBankColor(accName);
+return {
+key:'outro',
+known:false,
+isCarteira:false,
+officialName:accName,
+badge:'Conta',
+domainText:'instituição personalizada',
+watermark:getBankInitial(accName),
+primaryColor:fallbackColor,
+secondaryColor:'#0F172A',
+logoHtml:getBankLogoHtml(accName,44)
+};
+}
+
 function renderWltBankList(filter){
 var list=document.getElementById('wltBankList');
 var sel=document.getElementById('wBankSel');
@@ -6226,6 +8034,11 @@ var check=document.getElementById('wCestaCheck');
 var fields=document.getElementById('wCestaFields');
 if(fields)fields.style.display=check&&check.checked?'grid':'none';
 }
+function toggleWltCheque(){
+var check=document.getElementById('wChequeCheck');
+var fields=document.getElementById('wChequeFields');
+if(fields)fields.style.display=check&&check.checked?'grid':'none';
+}
 function selectWltQuickAdd(bankId,el){
 document.getElementById('wBankSel').value=bankId;
 wBankChg();
@@ -6243,6 +8056,8 @@ document.getElementById('wBankSel').value='';
 document.getElementById('wCustDiv').style.display='none';
 document.getElementById('wBalDiv').style.display='none';
 document.getElementById('wCestaDiv').style.display='none';
+var chequeDiv=document.getElementById('wChequeDiv');
+if(chequeDiv)chequeDiv.style.display='none';
 document.querySelectorAll('.wlt-quick-add-card').forEach(function(el){el.classList.remove('selected')});
 var searchEl=document.getElementById('wltBankSearch');
 if(searchEl){searchEl.value='';}
@@ -6251,7 +8066,11 @@ document.getElementById('wNewBal').value='';
 var cestaCheck=document.getElementById('wCestaCheck');if(cestaCheck)cestaCheck.checked=false;
 document.getElementById('wCestaVal').value='';
 document.getElementById('wCestaDay').value='';
+var chequeCheck=document.getElementById('wChequeCheck');if(chequeCheck)chequeCheck.checked=false;
+var chequeLimit=document.getElementById('wChequeLimit');if(chequeLimit)chequeLimit.value='';
+var chequeRate=document.getElementById('wChequeRate');if(chequeRate)chequeRate.value='';
 toggleWltCesta();
+toggleWltCheque();
 renderWltBankList('');
 m.classList.add('show');
 setTimeout(function(){if(searchEl)searchEl.focus();if(typeof lucide!=='undefined')lucide.createIcons()},200);
@@ -6331,35 +8150,75 @@ function closeWltPanel(id){
 var ov=id==='wltTransferPanel'?document.getElementById('wltTransferModalOv'):id==='wltAjustePanel'?document.getElementById('wltAjusteModalOv'):null;
 if(ov)ov.classList.remove('show');
 }
-function openCarteiraDetail(){
+function openCarteiraDetail(acc,tab){
 var w=document.getElementById('carteiraDetailWrap');
 var m=document.getElementById('contasMainWrap');
 var acts=document.querySelector('.wlt-actions');
 if(w&&m){w.classList.add('on');m.style.display='none';if(acts)acts.style.display='none'}
-var acc='Carteira física';
-var b=getAccBal(acc);
+_carteiraDetailAcc=acc||_carteiraDetailAcc||'Carteira física';
+var accName=_carteiraDetailAcc;
+var meta=accountMeta[accName]||{};
+var brand=getBankBrandMeta(accName);
+var color=brand.known?brand.primaryColor:((meta.cor)||brand.primaryColor||getBankColor(accName));
+var secondaryColor=brand.secondaryColor||'#0F172A';
+var tipo=meta.tipo||(((accName||'').toLowerCase().replace(/\s+/g,' ')==='carteira física')?'Carteira':'Conta corrente');
+var b=getAccBal(accName);
+var overdraft=getAccountOverdraftState(accName);
 var now=new Date();
 var mes=(now.getMonth()+1).toString().padStart(2,'0');
 var prefix=now.getFullYear()+'-'+mes;
-var recM=0,despM=0;
-entries.forEach(function(e){if(e.account===acc&&e.date&&e.date.startsWith(prefix)){if(e.type==='receita')recM+=e.value;else despM+=e.value}});
+var recM=0,despM=0,transfM=0;
+entries.forEach(function(e){
+if(e.account!==accName||!e.date||!e.date.startsWith(prefix))return;
+if(e.isTransfer)transfM++;
+else if(e.type==='receita')recM+=e.value;
+else despM+=e.value;
+});
+var hero=document.getElementById('carteiraDetailHero');
+if(w){
+w.style.setProperty('--detail-brand-primary',color);
+w.style.setProperty('--detail-brand-secondary',secondaryColor);
+}
+if(hero)hero.style.background='linear-gradient(135deg,'+color+' 0%,'+secondaryColor+' 100%)';
+var heroLogo=document.getElementById('carteiraDetailLogo');
+if(heroLogo)heroLogo.innerHTML=brand.logoHtml||(typeof getBankLogoHtml==='function'?getBankLogoHtml(accName,48):'');
+var heroNome=document.getElementById('carteiraDetailNome');
+if(heroNome)heroNome.textContent=brand.officialName||accName;
+var heroDomain=document.getElementById('carteiraDetailDominio');
+if(heroDomain)heroDomain.textContent=brand.domainText||'instituição financeira';
+var heroTipo=document.getElementById('carteiraDetailTipo');
+if(heroTipo)heroTipo.textContent=(brand.officialName&&brand.officialName!==accName?(accName+' · '):'')+tipo;
+var heroSaldoLabel=document.getElementById('carteiraDetailSaldoHeroLabel');
+if(heroSaldoLabel)heroSaldoLabel.textContent=overdraft.enabled?'Disponível com cheque especial':'Saldo disponível';
+var heroSaldo=document.getElementById('carteiraDetailSaldoHero');
+if(heroSaldo)heroSaldo.textContent='R$ '+(overdraft.enabled?overdraft.availableTotal:b.atual).toFixed(2).replace('.',',');
 document.getElementById('carteiraDetailSaldo').textContent='R$ '+b.atual.toFixed(2).replace('.',',');
-document.getElementById('carteiraDetailPrevisto').textContent='R$ '+b.atual.toFixed(2).replace('.',',');
+document.getElementById('carteiraDetailPrevisto').textContent='R$ '+(overdraft.enabled?overdraft.availableTotal:b.atual).toFixed(2).replace('.',',');
+document.getElementById('carteiraDetailChequeLimite').textContent=overdraft.enabled?'R$ '+overdraft.limit.toFixed(2).replace('.',','):'R$ 0,00';
+document.getElementById('carteiraDetailChequeUsado').textContent=overdraft.enabled?'R$ '+overdraft.used.toFixed(2).replace('.',','):'R$ 0,00';
+document.getElementById('carteiraDetailChequeDisponivel').textContent=overdraft.enabled?'R$ '+overdraft.available.toFixed(2).replace('.',','):'R$ 0,00';
 document.getElementById('carteiraDetailRec').textContent='R$ '+recM.toFixed(2).replace('.',',');
 document.getElementById('carteiraDetailDesp').textContent='R$ '+despM.toFixed(2).replace('.',',');
-var movList=document.getElementById('carteiraTabMov');
+document.getElementById('carteiraDetailTransf').textContent=String(transfM);
+document.getElementById('carteiraDetailTipoResumo').textContent=tipo;
+var movSub=document.getElementById('carteiraDetailMovSub');
+if(movSub)movSub.textContent='Últimas movimentações de '+accName;
+var movList=document.getElementById('carteiraMovList');
 if(movList){
-var accEntries=entries.filter(function(e){return e.account===acc}).sort(function(a,b){return (b.date||'').localeCompare(a.date||'')});
+var accEntries=entries.filter(function(e){return e.account===accName}).sort(function(a,b){return (b.date||'').localeCompare(a.date||'')});
 var h='';
 for(var i=0;i<Math.min(20,accEntries.length);i++){
 var e=accEntries[i];
-var s=e.type==='receita'?'+':'';
-var c=e.type==='receita'?'var(--green)':'var(--danger)';
-h+='<div class="wlt-ext-row"><span class="wlt-ext-date">'+(e.date||'').split('-').reverse().join('/')+'</span><span class="wlt-ext-desc">'+(e.desc||'')+'</span><span class="wlt-ext-val" style="color:'+c+'">'+s+'R$ '+(e.value||0).toFixed(2).replace('.',',')+'</span></div>';
+var isIn=e.type==='receita';
+var isTransfer=!!e.isTransfer;
+var s=isIn?'+':'-';
+var c=isTransfer?'var(--vr)':(isIn?'var(--green)':'var(--danger)');
+var subtitulo=isTransfer?'Transferência':(isIn?'Entrada':'Saída');
+h+='<div class="wlt-ext-row" style="gap:12px;align-items:flex-start"><div style="flex:1;min-width:0"><div class="wlt-ext-date" style="min-width:auto;margin-bottom:4px">'+(e.date||'').split('-').reverse().join('/')+'</div><div class="wlt-ext-desc" style="margin:0;font-weight:600">'+escapeHtml(e.desc||'Movimentação')+'</div><div style="font-size:.75rem;color:var(--t3);margin-top:3px">'+subtitulo+'</div></div><span class="wlt-ext-val" style="color:'+c+'">'+s+'R$ '+(e.value||0).toFixed(2).replace('.',',')+'</span></div>';
 }
 movList.innerHTML=h||'<div style="padding:24px;text-align:center;color:var(--t3)">Nenhuma movimentação</div>';
 }
-setCarteiraTab('visao');
+setCarteiraTab(tab||'visao');
 if(typeof lucide!=='undefined')lucide.createIcons();
 }
 function closeCarteiraDetail(){
@@ -6368,9 +8227,26 @@ var m=document.getElementById('contasMainWrap');
 var acts=document.querySelector('.wlt-actions');
 if(w&&m){w.classList.remove('on');m.style.display='';if(acts)acts.style.display='flex'}
 }
+function openCarteiraDetailTransfer(){
+var acc=_carteiraDetailAcc;
+closeCarteiraDetail();
+openWltTransfer();
+setTimeout(function(){var from=document.getElementById('wTfFrom');if(from&&acc)from.value=acc;},80);
+}
+function openCarteiraDetailAjuste(){
+var acc=_carteiraDetailAcc;
+closeCarteiraDetail();
+openWltAjuste(acc);
+}
+function openCarteiraDetailEditar(){
+var acc=_carteiraDetailAcc;
+closeCarteiraDetail();
+openEditarConta(acc);
+}
 
 var _detalhesContaAcc='';
 var _editarContaAcc='';
+var _carteiraDetailAcc='Carteira física';
 var ACC_CORES=['#4C7BF4','#8B5CF6','#22C55E','#F59E0B','#6B7280'];
 
 function openDetalhesConta(acc){
@@ -6440,6 +8316,11 @@ var corAtual=meta.cor||getBankColor(_editarContaAcc);
 var coresList=ACC_CORES.indexOf(corAtual)>=0?ACC_CORES:ACC_CORES.concat([corAtual]);
 coresEl.innerHTML=coresList.map(function(c){return '<div class="editar-conta-cor'+(c===corAtual?' selected':'')+'" style="background:'+c+'" data-cor="'+c+'" onclick="selectEditarContaCor(this)"></div>'}).join('');
 document.getElementById('editarContaIncluir').checked=meta.incluirNaSoma!==false;
+var chequeAtivo=!!(meta.temChequeEspecial&&Number(meta.chequeEspecialLimite||0)>0);
+document.getElementById('editarContaChequeCheck').checked=chequeAtivo;
+document.getElementById('editarContaChequeLimite').value=chequeAtivo?Number(meta.chequeEspecialLimite||0).toFixed(2):'';
+document.getElementById('editarContaChequeJuros').value=chequeAtivo&&Number(meta.chequeEspecialJurosPct||0)>0?Number(meta.chequeEspecialJurosPct||0).toFixed(2):'';
+toggleEditarContaCheque();
 ov.classList.add('show');
 setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons()},100);
 }
@@ -6451,6 +8332,11 @@ function closeEditarConta(){
 var ov=document.getElementById('editarContaModalOv');
 if(ov)ov.classList.remove('show');
 }
+function toggleEditarContaCheque(){
+var check=document.getElementById('editarContaChequeCheck');
+var fields=document.getElementById('editarContaChequeFields');
+if(fields)fields.style.display=check&&check.checked?'grid':'none';
+}
 function saveEditarConta(){
 if(!_editarContaAcc)return;
 var novoNome=document.getElementById('editarContaNome').value.trim();
@@ -6460,6 +8346,9 @@ meta.tipo=document.getElementById('editarContaTipo').value;
 var corEl=document.querySelector('#editarContaCores .editar-conta-cor.selected');
 meta.cor=corEl?corEl.getAttribute('data-cor'):getBankColor(_editarContaAcc);
 meta.incluirNaSoma=document.getElementById('editarContaIncluir').checked;
+var chequeEnabled=!!document.getElementById('editarContaChequeCheck').checked;
+var chequeLimit=parseFloat((document.getElementById('editarContaChequeLimite').value||'0').replace(',','.'))||0;
+var chequeRate=parseFloat((document.getElementById('editarContaChequeJuros').value||'0').replace(',','.'))||0;
 if(novoNome!==_editarContaAcc){
 var idx=userAccs.indexOf(_editarContaAcc);
 if(idx>=0){
@@ -6481,6 +8370,7 @@ accountMeta[_editarContaAcc]=meta;
 }else{
 accountMeta[_editarContaAcc]=meta;
 }
+setAccountOverdraftMeta(_editarContaAcc,chequeEnabled,chequeLimit,chequeRate);
 saveData();renderCarteira();renderDashW();closeEditarConta();toast(typeof t==='function'?t('toast_conta_atualizada'):'Conta atualizada!','ok');
 }
 
@@ -6507,7 +8397,7 @@ for(var i=0;i<all.length;i++){all[i].classList.remove('wlt-active')}
 if(el)el.classList.add('wlt-active');
 var s1=document.getElementById('wTfFrom');
 if(s1)s1.value=accName;
-showBankExtratoModal(accName);
+openCarteiraDetail(accName);
 }
 
 function showWltExtrato(accName){
@@ -6579,22 +8469,29 @@ for(var i=0;i<accsOrder.length;i++){
 var acc=accsOrder[i];
 var b=getAccBal(acc);
 if(!(accountMeta[acc]&&accountMeta[acc].incluirNaSoma===false))total+=b.atual;
-var color=(accountMeta[acc]&&accountMeta[acc].cor)||getBankColor(acc);
+var brand=getBankBrandMeta(acc);
+var color=brand.known?brand.primaryColor:((accountMeta[acc]&&accountMeta[acc].cor)||brand.primaryColor||getBankColor(acc));
+var secondaryColor=brand.secondaryColor||'#0F172A';
 var safeAcc=acc.replace(/'/g,"\\'").replace(/"/g,'&quot;');
 var saldoCls=b.atual>=0?'positive':'negative';
 var saldoStr='R$ '+b.atual.toFixed(2).replace(".",",");
 var isCarteira=(acc||'').toLowerCase().replace(/\s+/g,' ')==='carteira física';
-var cardClick=' onclick="event.stopPropagation();showBankExtratoModal(\''+safeAcc+'\')" role="button" tabindex="0" style="cursor:pointer"';
-h+='<div class="contas-card contas-card-brand" style="background:linear-gradient(135deg,'+color+','+color+'dd);border-color:rgba(255,255,255,.12)"'+cardClick+'>';
+var displayInstitution=brand.officialName||acc;
+var displayDomain=brand.domainText||'instituição financeira';
+h+='<div class="contas-card contas-card-brand'+(brand.known?' contas-card-brand-known':'')+(isCarteira?' contas-card-wallet':'')+'" data-bank-key="'+escapeHtml(brand.key||'outro').replace(/"/g,'&quot;')+'" data-acc="'+escapeHtml(acc).replace(/"/g,'&quot;')+'" role="button" tabindex="0" style="--brand-color:'+color+';--brand-secondary:'+secondaryColor+';background:linear-gradient(135deg,'+color+' 0%,'+secondaryColor+' 100%);border-color:rgba(255,255,255,.12);cursor:pointer">';
+h+='<div class="contas-card-brand-chip">'+escapeHtml(brand.badge||'Instituição')+'</div>';
+h+='<div class="contas-card-brand-watermark">'+escapeHtml(brand.watermark||getBankInitial(acc))+'</div>';
 h+='<div class="contas-card-top">';
-h+='<div class="contas-card-logo" style="background:rgba(255,255,255,.25)">'+getBankLogoHtml(acc,40)+'</div>';
-h+='<span class="contas-card-name">'+escapeHtml(acc)+'</span>';
+h+='<div class="contas-card-logo" style="background:rgba(255,255,255,.16)">'+brand.logoHtml+'</div>';
+h+='<div class="contas-card-title-wrap"><div class="contas-card-inst">'+escapeHtml(displayInstitution)+'</div><span class="contas-card-name">'+escapeHtml(acc)+'</span></div>';
 h+='<button type="button" class="contas-card-menu" onclick="event.stopPropagation();toggleContasCardMenu(this,\''+safeAcc+'\')" title="Opções"><i data-lucide="more-vertical" style="width:18px;height:18px"></i></button>';
 h+='</div>';
 h+='<div class="contas-card-saldo '+saldoCls+'">'+saldoStr+'</div>';
+h+='<div class="contas-card-domain">'+escapeHtml(displayDomain)+'</div>';
 h+='<div class="contas-card-prev">Saldo previsto: '+saldoStr+'</div>';
 h+='<div class="contas-card-foot">';
-h+='<a href="#" onclick="event.preventDefault();event.stopPropagation();showBankExtratoModal(\''+safeAcc+'\')">Ver extrato</a>';
+h+='<a href="#" data-action="open-account" data-acc="'+escapeHtml(acc).replace(/"/g,'&quot;')+'">Acessar conta</a>';
+h+='<a href="#" data-action="open-account-mov" data-acc="'+escapeHtml(acc).replace(/"/g,'&quot;')+'">Movimentações</a>';
 h+='</div>';
 h+='</div>';
 }
@@ -6602,6 +8499,7 @@ grid.innerHTML=novaCard+h;
 if(sidebarAtual){sidebarAtual.textContent='R$ '+total.toFixed(2).replace(".",",");sidebarAtual.className='contas-sidebar-value '+(total>=0?'positive':'negative');}
 if(sidebarPrevisto){sidebarPrevisto.textContent='R$ '+total.toFixed(2).replace(".",",");sidebarPrevisto.className='contas-sidebar-value '+(total>=0?'positive':'negative');}
 if(typeof lucide!=='undefined')lucide.createIcons();
+bindContasCardInteractions(grid);
 renderBalAccSelect();
 popTfSels();
 setTimeout(function(){initContasSortable(grid);},60);
@@ -6702,6 +8600,44 @@ menu.innerHTML=
 document.body.appendChild(menu);
 if(typeof lucide!=='undefined')lucide.createIcons();
 document.addEventListener('click',function closeHMenu(ev){if(!menu.contains(ev.target)&&ev.target!==btn){menu.remove();document.removeEventListener('click',closeHMenu);}});
+}
+
+function bindContasCardInteractions(grid){
+if(!grid)return;
+grid.querySelectorAll('.contas-card-brand').forEach(function(card){
+if(card.dataset.bound==='1')return;
+card.dataset.bound='1';
+var acc=card.getAttribute('data-acc')||'';
+card.addEventListener('click',function(ev){
+if(ev.target&&ev.target.closest('.contas-card-menu'))return;
+if(ev.target&&ev.target.closest('[data-action]'))return;
+openCarteiraDetail(acc);
+});
+card.addEventListener('keydown',function(ev){
+if(ev.key==='Enter'||ev.key===' '){
+ev.preventDefault();
+openCarteiraDetail(acc);
+}
+});
+});
+grid.querySelectorAll('[data-action="open-account"]').forEach(function(link){
+if(link.dataset.bound==='1')return;
+link.dataset.bound='1';
+link.addEventListener('click',function(ev){
+ev.preventDefault();
+ev.stopPropagation();
+openCarteiraDetail(link.getAttribute('data-acc')||'');
+});
+});
+grid.querySelectorAll('[data-action="open-account-mov"]').forEach(function(link){
+if(link.dataset.bound==='1')return;
+link.dataset.bound='1';
+link.addEventListener('click',function(ev){
+ev.preventDefault();
+ev.stopPropagation();
+openCarteiraDetail(link.getAttribute('data-acc')||'','mov');
+});
+});
 }
 
 /* ── Drag-to-reorder Contas ── */
@@ -7691,72 +9627,12 @@ var diagList=document.getElementById('finDiagList');
 var recomBox=document.getElementById('finRecomBox');
 var recomList=document.getElementById('finRecomList');
 if(!diagList)return;
-
-var score=0;var maxScore=100;
-var criteria=[];
-var recomendacoes=[];
-var now=new Date();
-var curM=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-var trM=0,tdM=0;
-entries.forEach(function(e){
-if(e.date&&e.date.substring(0,7)===curM){
-if(e.type==='despesa')tdM+=e.value;else trM+=e.value;
-}
-});
-
-/* 1. Tem orçamento (15pts) */
-var hasBudget=typeof budgets!=='undefined'&&Object.keys(budgets).length>0;
-criteria.push({name:'Orçamento definido',pts:hasBudget?15:0,max:15,icon:hasBudget?'&#9989;':'&#10060;'});
-if(!hasBudget)recomendacoes.push('Defina orçamentos por categoria na aba Orçamento para controlar melhor seus gastos.');
-
-/* 2. Lançamentos em dia (10pts) */
-var hasEntries=entries.length>=5;
-criteria.push({name:'Lançamentos em dia (5+)',pts:hasEntries?10:0,max:10,icon:hasEntries?'&#9989;':'&#10060;'});
-if(!hasEntries)recomendacoes.push('Lance pelo menos 5 transações para ter uma visão clara das suas finanças.');
-
-/* 3. Saldo positivo (15pts) */
-var saldoOk=trM>tdM;
-criteria.push({name:'Receitas > Despesas este mês',pts:saldoOk?15:(trM>0?5:0),max:15,icon:saldoOk?'&#9989;':(trM>0?'&#9888;&#65039;':'&#10060;')});
-if(!saldoOk&&trM>0)recomendacoes.push('Suas despesas superam as receitas. Revise gastos não essenciais para inverter isso.');
-
-/* 4. Taxa de economia > 20% (15pts) */
-var taxaEcon=trM>0?((trM-tdM)/trM*100):0;
-var econPts=taxaEcon>=20?15:taxaEcon>=10?10:taxaEcon>=5?5:0;
-criteria.push({name:'Taxa de economia >= 20%'+(trM>0?' (atual: '+taxaEcon.toFixed(0)+'%)':''),pts:econPts,max:15,icon:econPts>=15?'&#9989;':econPts>=5?'&#9888;&#65039;':'&#10060;'});
-if(econPts<15)recomendacoes.push('Tente guardar pelo menos 20% da renda. Atualmente você guarda '+taxaEcon.toFixed(0)+'%.');
-
-/* 5. Reserva de emergência (15pts) */
-var md=getMD();var mks=Object.keys(md).sort();
-var avgGasto=0;
-mks.forEach(function(k){avgGasto+=md[k].d});
-avgGasto=mks.length>0?avgGasto/mks.length:tdM;
-var reservaIdeal=avgGasto*6;
-var totalPat=0;
-for(var k=0;k<userAccs.length;k++){var _ak=userAccs[k];if(accountMeta[_ak]&&accountMeta[_ak].incluirNaSoma===false)continue;var b=getAccBal(_ak);totalPat+=b.atual}
-var reservaPct=reservaIdeal>0?(totalPat/reservaIdeal*100):0;
-var reservaPts=reservaPct>=100?15:reservaPct>=50?10:reservaPct>=25?5:0;
-criteria.push({name:'Reserva de emergência (6 meses)',pts:reservaPts,max:15,icon:reservaPts>=15?'&#9989;':reservaPts>=5?'&#9888;&#65039;':'&#10060;'});
-if(reservaPts<15)recomendacoes.push('Complete sua reserva de emergência. Meta: R$ '+reservaIdeal.toFixed(0)+'. Você tem '+reservaPct.toFixed(0)+'%.');
-
-/* 6. Investimentos (10pts) */
-var hasInv=(typeof investments!=='undefined'&&investments.length>0)||entries.some(function(e){return e.category==='Investimentos'});
-criteria.push({name:'Tem investimentos',pts:hasInv?10:0,max:10,icon:hasInv?'&#9989;':'&#10060;'});
-if(!hasInv)recomendacoes.push('Comece a investir! Mesmo R$ 50/mes em Tesouro Selic já é um ótimo início.');
-
-/* 7. Diversificacao (10pts) */
-var numAccs=userAccs.length;
-var divPts=numAccs>=3?10:numAccs>=2?5:0;
-criteria.push({name:'Diversificação de contas (3+)',pts:divPts,max:10,icon:divPts>=10?'&#9989;':divPts>=5?'&#9888;&#65039;':'&#10060;'});
-if(divPts<10)recomendacoes.push('Diversifique usando pelo menos 3 contas/instituições financeiras.');
-
-/* 8. Metas definidas (10pts) */
-var hasMetas=typeof goals!=='undefined'&&goals.length>0;
-criteria.push({name:'Metas financeiras definidas',pts:hasMetas?10:0,max:10,icon:hasMetas?'&#9989;':'&#10060;'});
-if(!hasMetas)recomendacoes.push('Defina metas na aba Metas. Ter objetivos claros aumenta sua motivação e disciplina.');
-
-/* Total */
-criteria.forEach(function(c){score+=c.pts});
-window._lastFinScore=score;
+var details=getLegacyFinScoreDetails();
+_lastFinScoreDetails=details;
+window._lastFinScore=details.score;
+var score=details.score;
+var criteria=details.criteria||[];
+var recomendacoes=details.recommendations||[];
 
 /* Render score */
 var arc=document.getElementById('finScoreArc');
@@ -7772,8 +9648,8 @@ arc.style.stroke=color;
 },100);
 }
 if(num)num.textContent=score;
-if(title)title.textContent=score>=80?'Excelente! Finanças saudáveis':score>=60?'Bom, mas pode melhorar':score>=40?'Atenção necessária':'Situação crítica';
-if(sub)sub.textContent=score>=80?'Continue assim! Você está no caminho certo.':score>=60?'Algumas áreas precisam de atenção.':score>=40?'Revise as recomendações abaixo para melhorar.':'Foque nas recomendações urgentes abaixo.';
+if(title)title.textContent=details.title;
+if(sub)sub.textContent=details.subtitle;
 
 /* Render criteria */
 var h='';
@@ -7792,7 +9668,7 @@ recomBox.style.display='block';
 recomList.innerHTML=recomendacoes.map(function(r){return '<div class="fin-recom">&#128161; '+r+'</div>'}).join('');
 }else{
 recomBox.style.display='block';
-recomList.innerHTML='<div class="fin-recom" style="text-align:center;color:#22C55E">&#127881; Parabéns! Você atingiu todas as metas do diagnóstico!</div>';
+recomList.innerHTML='<div class="fin-recom" style="text-align:center;color:#22C55E">&#127881; Excelente momento financeiro. Continue mantendo essa consistência.</div>';
 }
 }
 
@@ -7823,6 +9699,7 @@ if(mb)mb.style.width=Math.min(100,((data.monthlyCount||0)/(data.monthlyLimit||20
 /* ── next block ── */
 
 var nList=[];
+var creditMonitoringHistory=[];
 function toggleNP(){
 var p=document.getElementById('nPanel');
 var o=document.getElementById('nOv');
@@ -7846,9 +9723,9 @@ var cd=c.closeDay||25;var dd=new Date(cy,cm,cd);if(dd<now)dd.setMonth(dd.getMont
 var dias=Math.ceil((dd-now)/(86400000));
 var bm=typeof getBillingMonth==='function'?getBillingMonth(c,now.toISOString().split('T')[0]):'';
 var fat=0;if(c.purchases)c.purchases.forEach(function(p){if(p.billingMonth===bm)fat+=p.value});
-if(dias<=3)nList.push({id:'cc'+c.id,lucide:'credit-card',tp:'danger',tit:'Fatura Fechando!',txt:c.name+' fecha em '+dias+' dia(s)! Total: R$ '+fat.toFixed(2)});
-else if(dias<=7)nList.push({id:'c7'+c.id,lucide:'credit-card',tp:'warn',tit:'Fatura Próxima',txt:c.name+' fecha em '+dias+' dias. Total: R$ '+fat.toFixed(2)});
-if(c.limit>0&&fat/c.limit>=0.9)nList.push({id:'cl'+c.id,lucide:'alert-triangle',tp:'danger',tit:'Limite Quase Esgotado!',txt:c.name+': '+Math.round(fat/c.limit*100)+'% usado'});
+if(dias<=3)nList.push({id:'cc'+c.id,lucide:'credit-card',tp:'danger',tit:'Fatura Fechando!',txt:c.name+' fecha em '+dias+' dia(s)! Total: R$ '+fat.toFixed(2),act:'credito',actLabel:'Abrir hub'});
+else if(dias<=7)nList.push({id:'c7'+c.id,lucide:'credit-card',tp:'warn',tit:'Fatura Próxima',txt:c.name+' fecha em '+dias+' dias. Total: R$ '+fat.toFixed(2),act:'credito',actLabel:'Abrir hub'});
+if(c.limit>0&&fat/c.limit>=0.9)nList.push({id:'cl'+c.id,lucide:'alert-triangle',tp:'danger',tit:'Limite Quase Esgotado!',txt:c.name+': '+Math.round(fat/c.limit*100)+'% usado',act:'credito',actLabel:'Ir ao hub'});
 if(c.temAnuidade&&c.anuidade&&c.anuidade.valorAnual>0){
 var prox=c.anuidade.proximaCobranca;var dProx=prox?new Date(prox):new Date(cy,c.anuidade.mesCobranca-1,15);if(dProx<=now)dProx.setFullYear(dProx.getFullYear()+1);
 var diasAnu=Math.ceil((dProx-now)/(86400000));var val=typeof c.anuidade.valorAnual==='number'?c.anuidade.valorAnual.toFixed(2):String(c.anuidade.valorAnual);
@@ -7893,6 +9770,25 @@ if(dR<=5&&dR>0&&rM>0){var lm=(rM-dM)/dR;if(lm>0)nList.push({id:'me',lucide:'cale
 var tx=rM>0?Math.round((rM-dM)/rM*100):0;
 if(tx>=20)nList.push({id:'sr',lucide:'star',tp:'success',tit:'Poupança Excelente!',txt:'Você poupa '+tx+'% da renda!'});
 
+var creditMonitor=typeof getLegacyCreditMonitoringData==='function'?getLegacyCreditMonitoringData():{stalled:[],pendingRenegotiation:[],progressed:[]};
+if(creditMonitor.reviewDue&&creditMonitor.reviewDue.length){
+var reviewEntry=creditMonitor.reviewDue[0];
+nList.push({id:'cr'+String(reviewEntry.item.id||'0'),lucide:'calendar-clock',tp:'warn',tit:'Revisão do crédito vencida',txt:(reviewEntry.item.label||'Crédito')+' precisa de revisão agora para validar a estratégia.',act:'credito',actLabel:'Revisar no hub'});
+}
+if(creditMonitor.pendingRenegotiation&&creditMonitor.pendingRenegotiation.length){
+var pendingEntry=creditMonitor.pendingRenegotiation[0];
+nList.push({id:'cp'+String(pendingEntry.item.id||'0'),lucide:'handshake',tp:'warn',tit:'Renegociação pendente',txt:(pendingEntry.item.label||'Crédito')+' está com estratégia planejada há '+pendingEntry.daysSinceUpdate+' dias. Revise e aplique se fizer sentido.',act:'credito',actLabel:'Ver plano'});
+}
+if(creditMonitor.stalled&&creditMonitor.stalled.length){
+var stalledEntry=creditMonitor.stalled[0];
+nList.push({id:'cs'+String(stalledEntry.item.id||'0'),lucide:'hourglass',tp:'danger',tit:'Plano de crédito parado',txt:(stalledEntry.item.label||'Crédito')+' está sem avanço relevante há '+Math.max(stalledEntry.daysSinceLastMove||0,stalledEntry.daysSinceUpdate||0)+' dias.',act:'credito',actLabel:'Revisar agora'});
+}
+if(creditMonitor.progressed&&creditMonitor.progressed.length){
+var progressedEntry=creditMonitor.progressed[0];
+var progressPct=Math.max(progressedEntry.exposureReductionPct||0,progressedEntry.monthlyReductionPct||0);
+if(progressPct>=10)nList.push({id:'cg'+String(progressedEntry.item.id||'0'),lucide:'badge-check',tp:'success',tit:'Progresso no crédito',txt:(progressedEntry.item.label||'Crédito')+' já melhorou cerca de '+progressPct+'% frente à base da estratégia.',act:'credito',actLabel:'Abrir hub'});
+}
+
 var ri=JSON.parse(localStorage.getItem('vrt_nr')||'{}');
 nList.forEach(function(n){if(ri[n.id])n.rd=true});
 nList.sort(function(a,b){var o={danger:0,warn:1,success:2,info:3};if(a.rd!==b.rd)return a.rd?1:-1;return(o[a.tp]||3)-(o[b.tp]||3)});
@@ -7920,7 +9816,7 @@ for(var i=0;i<visible.length;i++){var n=visible[i];var nIdx=nList.indexOf(n);var
 h+='<div class="notif-it'+(n.rd?'':' unread')+'" style="background:'+(cs[n.tp]||cs.info)+';border-color:'+(bs[n.tp]||bs.info)+'" onclick="mNR('+nIdx+')">';
 h+='<div style="display:flex;align-items:start;gap:12px"><div class="notif-iw"><i data-lucide="'+ic+'" style="width:24px;height:24px"></i></div><div class="notif-ct">';
 h+='<div class="notif-tt">'+n.tit+'</div><div class="notif-tx">'+n.txt+'</div>';
-h+='<div class="notif-tm"><i data-lucide="clock" style="width:12px;height:12px;vertical-align:middle;margin-right:4px"></i>Agora</div></div></div></div>';}
+h+='<div class="notif-tm" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span><i data-lucide="clock" style="width:12px;height:12px;vertical-align:middle;margin-right:4px"></i>Agora</span>'+(n.act?'<button type="button" class="btn btn-o" onclick="event.stopPropagation();mNR('+nIdx+');go(\''+n.act+'\',null)" style="padding:5px 9px;font-size:.72em">'+escapeHtml(n.actLabel||'Abrir')+'</button>':'')+'</div></div></div></div>';}
 bd.innerHTML=h;
 if(typeof window.refreshLucide==='function')lucide.createIcons();
 }
@@ -12052,8 +13948,11 @@ loadWatchlist();
 
 // Register SW (cache-first) - usa arquivo sw.js para evitar erro de blob: em alguns hosts
 if('serviceWorker' in navigator){
-var swPath='/app/sw.js';
-navigator.serviceWorker.register(swPath,{scope:'/app/'}).then(function(){console.log('SW OK')}).catch(function(e){if(e&&e.message&&e.message.indexOf('blob')===-1)console.warn('SW:',e.message);});
+var swPath='/app/sw.js?v=20260324-v8';
+navigator.serviceWorker.register(swPath,{scope:'/app/'}).then(function(reg){
+if(reg&&typeof reg.update==='function')reg.update();
+console.log('SW OK');
+}).catch(function(e){if(e&&e.message&&e.message.indexOf('blob')===-1)console.warn('SW:',e.message);});
 }
 
 // Install prompt
@@ -12983,9 +14882,10 @@ ref.set({userMessage:ctx.userMessage||'',contextStr:(ctx.contextStr||'').substri
 function openModalConsultorFAB(){
 try{
 if(!document.getElementById('modalContent')){if(typeof toast==='function')toast(typeof t==='function'?t('toast_erro_abrir'):'Erro ao abrir. Recarregue a página.','err');return;}
+trackLegacyPlatformEvent('advisor_opened',{source:'legacy_fab',journeyStage:getLegacyFinancialProfile().journeyStage,healthLevel:getLegacyFinancialProfile().healthLevel,hasOpenFinance:getLegacyFinancialProfile().hasOpenFinance});
 var welcome='';
 if(window._fabConsultorHistory.length===0){
-var welcomeText='**Consultor Financeiro Sibanki**\n\nSeu assistente para controle financeiro. Você pode:\n• **Lançar** receitas e despesas (ex: "almoço 45", "recebi 3000 salário")\n• **Adicionar, editar ou excluir** contas e cartões\n• **Criar metas** e **definir orçamentos** por categoria\n• **Tirar dúvidas** sobre finanças e sobre o uso do app\n\nDigite ou use o microfone para falar.';
+var welcomeText='**Consultor Financeiro Sibanki**\n\nSeu assistente para controle financeiro. Você pode:\n• **Lançar** receitas e despesas (ex: "almoço 45", "recebi 3000 salário")\n• **Adicionar, editar ou excluir** contas e cartões\n• **Criar metas** e **definir orçamentos** por categoria\n• **Analisar crédito**: o que quitar primeiro, renegociação, dívida mais cara e simulação com seu saldo\n• **Tirar dúvidas** sobre finanças e sobre o uso do app\n\nDigite ou use o microfone para falar.';
 window._fabConsultorHistory.push({role:'ai',content:welcomeText,time:Date.now()});
 }
 var historyHtml=window._fabConsultorHistory.map(function(m){
@@ -12993,7 +14893,7 @@ var c=m.role==='user'?m.content:(m.content.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
 var iconLucide=m.role==='ai'?'message-circle':'user';
 return '<div class="fab-consultor-msg '+m.role+'">'+c+'<div class="fab-msg-time"><i data-lucide="'+iconLucide+'" style="width:12px;height:12px;vertical-align:middle;margin-right:4px"></i>'+new Date(m.time).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'</div></div>';
 }).join('');
-var html='<div class="fab-consultor-modal"><div class="fab-consultor-header"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="message-circle" style="width:22px;height:22px;color:#4C7BF4;flex-shrink:0"></i><div><div class="fab-consultor-title">Consultor Financeiro Sibanki</div><div class="fab-consultor-sub">Assistente completo: lançamentos, contas, cartões, metas e dúvidas</div></div></div><button type="button" class="fab-consultor-close" onclick="closeModal()" aria-label="Fechar"><i data-lucide="x" style="width:20px;height:20px"></i></button></div><div class="fab-consultor-pills"><span class="fab-consultor-pill" onclick="var i=document.getElementById(\'fabConsultorInput\');if(i){i.value=\'almoço 45\';i.focus()}">almoço 45</span><span class="fab-consultor-pill" onclick="var i=document.getElementById(\'fabConsultorInput\');if(i){i.value=\'quanto gastei no mês?\';i.focus()}">quanto gastei?</span><span class="fab-consultor-pill" onclick="var i=document.getElementById(\'fabConsultorInput\');if(i){i.value=\'como funciona metas?\';i.focus()}">como funciona metas?</span></div><div class="fab-consultor-history" id="fabConsultorHistory">'+historyHtml+'</div><div class="fab-consultor-input-wrap"><textarea id="fabConsultorInput" placeholder="Digite ou fale..." rows="1" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();fabConsultorSend();}"></textarea><button type="button" class="fab-consultor-mic" id="fabConsultorMicBtn" onclick="fabConsultorStartVoice()" aria-label="Falar"><i data-lucide="mic" style="width:20px;height:20px"></i></button><button type="button" class="fab-consultor-send" onclick="fabConsultorSend()" aria-label="Enviar"><i data-lucide="arrow-up" style="width:20px;height:20px"></i></button></div></div>';
+var html='<div class="fab-consultor-modal"><div class="fab-consultor-header"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="message-circle" style="width:22px;height:22px;color:#4C7BF4;flex-shrink:0"></i><div><div class="fab-consultor-title">Consultor Financeiro Sibanki</div><div class="fab-consultor-sub">Assistente completo: lançamentos, contas, cartões, metas, crédito e dúvidas</div></div></div><button type="button" class="fab-consultor-close" onclick="closeModal()" aria-label="Fechar"><i data-lucide="x" style="width:20px;height:20px"></i></button></div><div class="fab-consultor-pills"><span class="fab-consultor-pill" onclick="var i=document.getElementById(\'fabConsultorInput\');if(i){i.value=\'almoço 45\';i.focus()}">almoço 45</span><span class="fab-consultor-pill" onclick="var i=document.getElementById(\'fabConsultorInput\');if(i){i.value=\'quanto gastei no mês?\';i.focus()}">quanto gastei?</span><span class="fab-consultor-pill" onclick="var i=document.getElementById(\'fabConsultorInput\');if(i){i.value=\'o que quitar primeiro?\';i.focus()}">o que quitar primeiro?</span><span class="fab-consultor-pill" onclick="var i=document.getElementById(\'fabConsultorInput\');if(i){i.value=\'com meu saldo o que consigo quitar?\';i.focus()}">com meu saldo?</span><span class="fab-consultor-pill" onclick="var i=document.getElementById(\'fabConsultorInput\');if(i){i.value=\'como reorganizar minhas dívidas?\';i.focus()}">reorganizar dívidas</span></div><div class="fab-consultor-history" id="fabConsultorHistory">'+historyHtml+'</div><div class="fab-consultor-input-wrap"><textarea id="fabConsultorInput" placeholder="Digite ou fale..." rows="1" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();fabConsultorSend();}"></textarea><button type="button" class="fab-consultor-mic" id="fabConsultorMicBtn" onclick="fabConsultorStartVoice()" aria-label="Falar"><i data-lucide="mic" style="width:20px;height:20px"></i></button><button type="button" class="fab-consultor-send" onclick="fabConsultorSend()" aria-label="Enviar"><i data-lucide="arrow-up" style="width:20px;height:20px"></i></button></div></div>';
 openModal(html);
 var ov=document.getElementById('modalOverlay');var box=document.getElementById('modalBox');
 if(ov)ov.classList.add('modal-ia-lanc');if(box)box.classList.add('modal-ia-lanc');
@@ -13018,6 +14918,194 @@ _fabConsultorRecognition.onerror=function(e){if(btn)btn.classList.remove('listen
 _fabConsultorRecognition.onresult=function(e){var t=e.results[0][0].transcript||'';if(t.trim()){inp.value=(inp.value?inp.value+' ':'')+t;inp.focus();}if(btn)btn.classList.remove('listening');};
 _fabConsultorRecognition.start();
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENTRY WIZARD — Lançamento guiado (exige campos obrigatórios antes de salvar)
+   Estado em memória: window._fabWizard = { step, partial, context }
+   ═══════════════════════════════════════════════════════════════════════════ */
+var _fabWizardCatRules=[
+  {cats:['Alimentação'],rx:/mercado|supermercado|ifood|delivery|restaurante|lanche|almoço|almoco|jantar|cafe|café|refeição|refeicao|padaria|pizza|hamburguer|mcdonalds|burger|sushi|comida|açaí|acai|feira|hortifruti/i},
+  {cats:['Transporte'],rx:/uber|99pop|cabify|taxi|táxi|combustível|combustivel|gasolina|etanol|ônibus|onibus|metro|metrô|passagem|estacionamento|pedágio|pedagio/i},
+  {cats:['Moradia'],rx:/aluguel|condomínio|condominio|luz|energia|água|agua|gás|gas|internet|net|vivo|claro|oi|tim|iptu/i},
+  {cats:['Saúde'],rx:/farmácia|farmacia|drogaria|remédio|remedio|médico|medico|consulta|exame|hospital|dentista|psicólogo/i},
+  {cats:['Bem-estar'],rx:/academia|gym|pilates|yoga|corrida|natação|personal|spa|salão|salao|beleza|manicure/i},
+  {cats:['Educação'],rx:/escola|faculdade|curso|mensalidade|livro|apostila|matrícula|matricula|aula/i},
+  {cats:['Lazer'],rx:/cinema|teatro|show|netflix|streaming|spotify|amazon|disney|jogo|viagem|hotel|passeio/i},
+  {cats:['Assinaturas'],rx:/netflix|spotify|amazon prime|disney|hbo|apple|icloud|dropbox|assinatura/i},
+  {cats:['Salário'],rx:/salário|salario|pagamento recebido|pró-labore|remuneração/i},
+  {cats:['Freela'],rx:/freela|freelance|projeto|serviço prestado|honorários|consultoria/i},
+  {cats:['Imprevisto'],rx:/imprevisto|emergência|emergencia|conserto|reparo|multa/i},
+];
+var _fabWizardFormas=['Dinheiro','Pix','Débito','Crédito','Boleto','Transferência'];
+
+function _fabWizDetectCat(desc){
+  if(!desc)return null;
+  for(var i=0;i<_fabWizardCatRules.length;i++){
+    if(_fabWizardCatRules[i].rx.test(desc))return _fabWizardCatRules[i].cats[0];
+  }
+  return null;
+}
+function _fabWizDetectPgto(txt){
+  var t=(txt||'').toLowerCase();
+  if(/\bpix\b/.test(t))return'Pix';
+  if(/\bdébito\b|\bdebit/.test(t))return'Débito';
+  if(/\bcrédito\b|\bcredito\b|\bparcel/.test(t))return'Crédito';
+  if(/\bdinheiro\b|\bcash\b|\bespécie\b/.test(t))return'Dinheiro';
+  if(/\bboleto\b/.test(t))return'Boleto';
+  if(/\btransferência\b|\btransf\b/.test(t))return'Transferência';
+  return null;
+}
+function _fabWizDetectType(txt){
+  var t=(txt||'').toLowerCase();
+  if(/\b(recebi|ganhei|salário|salario|entrada|venda|freela|pix recebido|depósito)\b/.test(t))return'receita';
+  return'despesa';
+}
+function _fabWizExtractValue(txt){
+  var m=(txt||'').replace(/\s+/g,' ').match(/(?:R\$\s*)?(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?|\d+(?:[.,]\d{2})?)/);
+  if(!m)return null;
+  var v=parseFloat(m[1].replace(/\./g,'').replace(',','.'));
+  return isNaN(v)||v<=0?null:Math.round(v*100)/100;
+}
+
+function _fabWizQCat(cats){
+  var list=(cats||userCats||[]).slice(0,12);
+  var opts=list.map(function(c,i){return (i+1)+'. '+c;}).join('<br>');
+  return '📂 <b>Qual categoria?</b><br><br>'+opts+'<br><br>Digite o número ou o nome.';
+}
+function _fabWizQAcc(accs){
+  var opts=accs.map(function(a,i){return (i+1)+'. '+a;}).join('<br>');
+  return '🏦 <b>Em qual conta foi?</b><br><br>'+opts+'<br><br>Digite o número ou o nome.';
+}
+function _fabWizQPgto(){
+  var opts=_fabWizardFormas.map(function(f,i){return (i+1)+'. '+f;}).join('<br>');
+  return '💳 <b>Como foi pago?</b><br><br>'+opts+'<br><br>Digite o número ou a forma.';
+}
+function _fabWizQConfirm(e){
+  var tipo=e.type==='receita'?'📈 Receita':'📉 Despesa';
+  var fmt=function(v){return'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});};
+  return '✅ <b>Confirmar lançamento:</b><br><br>'+tipo+': <b>'+fmt(e.value)+'</b><br>📝 '+(e.desc||'—')+'<br>📂 '+e.category+(e.type==='despesa'?'<br>💳 '+(e.formaPgto||'—'):'')+'<br>🏦 '+e.account+'<br>📅 '+e.date+'<br><br>Responda <b>1</b> para confirmar ou <b>2</b> para cancelar.';
+}
+
+function _fabWizResolve(field,answer,ctx){
+  var a=(answer||'').trim();
+  var n=parseInt(a,10);
+  if(field==='category'){
+    var cats=ctx&&ctx.cats?ctx.cats:(userCats&&userCats.length?userCats:[]);
+    if(!isNaN(n)&&n>=1&&n<=cats.length)return cats[n-1];
+    var exact=cats.find(function(c){return c.toLowerCase()===a.toLowerCase();});
+    if(exact)return exact;
+    if(a.length>=3){var p=cats.find(function(c){return c.toLowerCase().indexOf(a.toLowerCase())>=0;});if(p)return p;}
+    return null;
+  }
+  if(field==='account'){
+    var accs=ctx&&ctx.accounts?ctx.accounts:(userAccs&&userAccs.length?userAccs:['Carteira física']);
+    if(!isNaN(n)&&n>=1&&n<=accs.length)return accs[n-1];
+    var ex=accs.find(function(c){return c.toLowerCase()===a.toLowerCase();});if(ex)return ex;
+    if(a.length>=2){var pp=accs.find(function(c){return c.toLowerCase().indexOf(a.toLowerCase())>=0;});if(pp)return pp;}
+    return null;
+  }
+  if(field==='formaPgto'){
+    if(!isNaN(n)&&n>=1&&n<=_fabWizardFormas.length)return _fabWizardFormas[n-1];
+    var em=_fabWizardFormas.find(function(f){return f.toLowerCase()===a.toLowerCase();});if(em)return em;
+    var dp=_fabWizDetectPgto(a);if(dp)return dp;
+    return null;
+  }
+  if(field==='confirm'){
+    if(a==='1'||/^(sim|s|yes|confirmar|ok)$/i.test(a))return'yes';
+    if(a==='2'||/^(não|nao|n|no|cancel|cancelar)$/i.test(a))return'no';
+    return null;
+  }
+  return null;
+}
+
+function _fabWizStart(partial){
+  var e={
+    type:partial.type||_fabWizDetectType(partial.desc||''),
+    value:partial.value,
+    desc:(partial.desc||'').substring(0,80),
+    category:partial.category||null,
+    account:null,
+    formaPgto:partial.formaPgto||null,
+    date:partial.date||new Date().toISOString().slice(0,10)
+  };
+  var accs=(typeof userAccs!=='undefined'&&userAccs&&userAccs.length)?userAccs:['Carteira física'];
+  var cats=(typeof userCats!=='undefined'&&userCats&&userCats.length)?userCats:[];
+  // etapa 1: categoria
+  if(!e.category){
+    var dc=_fabWizDetectCat(e.desc);
+    if(dc){e.category=dc;}
+    else{window._fabWizard={step:'category',partial:e,context:{cats:cats}};return _fabWizQCat(cats);}
+  }
+  // etapa 2: conta
+  if(accs.length===1){e.account=accs[0];}
+  else if(!e.account){window._fabWizard={step:'account',partial:e,context:{accounts:accs}};return _fabWizQAcc(accs);}
+  // etapa 3: forma de pagamento (só despesas)
+  if(e.type==='despesa'&&!e.formaPgto){
+    var dpg=_fabWizDetectPgto(e.desc);
+    if(dpg){e.formaPgto=dpg;}
+    else{window._fabWizard={step:'formaPgto',partial:e,context:{}};return _fabWizQPgto();}
+  }
+  // etapa 4: confirmação
+  window._fabWizard={step:'confirm',partial:e,context:{}};
+  return _fabWizQConfirm(e);
+}
+
+function _fabWizContinue(userAnswer){
+  var wiz=window._fabWizard;
+  if(!wiz||!wiz.step)return null;
+  var answer=_fabWizResolve(wiz.step,userAnswer,wiz.context||{});
+  if(answer===null){
+    return '⚠️ Não entendi. Por favor, escolha uma das opções:<br><br>'+_fabWizCurrentQ();
+  }
+  if(wiz.step==='confirm'){
+    if(answer==='no'){window._fabWizard=null;return'❌ Lançamento cancelado. Pode enviar um novo quando quiser!';}
+    // salvar lançamento
+    var e=wiz.partial;
+    window._fabWizard=null;
+    var newEntry={id:Date.now(),type:e.type,date:e.date,desc:e.desc||e.category,category:e.category,value:e.value,account:e.account||'Carteira física',status:'pago',formaPgto:e.formaPgto||''};
+    entries.push(newEntry);saveData();
+    if(typeof renderAll==='function')setTimeout(function(){try{renderAll();}catch(ex){}},300);
+    if(typeof checkBadges==='function')setTimeout(function(){try{checkBadges();}catch(ex){}},500);
+    if(typeof checkProactiveConsultor==='function')setTimeout(function(){checkProactiveConsultor(newEntry);},500);
+    var ico=e.type==='receita'?'📈 +':'📉 -';
+    var fmt=function(v){return'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});};
+    return '✅ <b>Lançado com sucesso!</b><br><br>'+ico+' '+fmt(e.value)+'<br>📂 '+e.category+'<br>💳 '+(e.formaPgto||'—')+'<br>🏦 '+e.account;
+  }
+  // avançar partial
+  var updated=Object.assign({},wiz.partial);
+  updated[wiz.step]=answer;
+  var accs=(typeof userAccs!=='undefined'&&userAccs&&userAccs.length)?userAccs:['Carteira física'];
+  var cats=(typeof userCats!=='undefined'&&userCats&&userCats.length)?userCats:[];
+  var steps=['category','account','formaPgto','confirm'];
+  var idx=steps.indexOf(wiz.step);
+  for(var i=idx+1;i<steps.length;i++){
+    var step=steps[i];
+    if(step==='account'){if(!updated.account){if(accs.length===1){updated.account=accs[0];continue;}else{window._fabWizard={step:'account',partial:updated,context:{accounts:accs}};return _fabWizQAcc(accs);}}}
+    if(step==='formaPgto'){if(updated.type==='despesa'&&!updated.formaPgto){window._fabWizard={step:'formaPgto',partial:updated,context:{}};return _fabWizQPgto();}}
+    if(step==='confirm'){window._fabWizard={step:'confirm',partial:updated,context:{}};return _fabWizQConfirm(updated);}
+  }
+  window._fabWizard=null;
+  return null;
+}
+
+function _fabWizCurrentQ(){
+  var wiz=window._fabWizard;
+  if(!wiz)return'';
+  if(wiz.step==='category')return _fabWizQCat(wiz.context&&wiz.context.cats);
+  if(wiz.step==='account')return _fabWizQAcc(wiz.context&&wiz.context.accounts);
+  if(wiz.step==='formaPgto')return _fabWizQPgto();
+  if(wiz.step==='confirm')return _fabWizQConfirm(wiz.partial);
+  return'';
+}
+
+function _fabWizIsLancamento(txt){
+  var v=_fabWizExtractValue(txt);
+  if(!v||v<=0)return false;
+  // Verificar se tem uma descrição além do valor
+  var sem=txt.replace(/(?:R\$\s*)?[\d.,]+\s*(reais?)?/gi,'').trim();
+  return sem.length>0;
+}
+
 function fabConsultorSend(){
 var inp=document.getElementById('fabConsultorInput');
 var hist=document.getElementById('fabConsultorHistory');
@@ -13026,6 +15114,34 @@ var txt=(inp.value||'').trim();
 if(!txt){if(typeof toast==='function')toast(typeof t==='function'?t('toast_pergunta_vazia'):'Digite uma mensagem','err');return;}
 addFabConsultorMsg('user',txt);
 inp.value='';
+
+/* ── WIZARD: se há lançamento em andamento, responder à pergunta pendente ── */
+if(window._fabWizard&&window._fabWizard.step){
+  var wizReply=_fabWizContinue(txt);
+  if(wizReply!==null){addFabConsultorMsg('ai',wizReply);if(typeof lucide!=='undefined'&&lucide.createIcons)lucide.createIcons();return;}
+}
+/* ── WIZARD: tentar iniciar novo lançamento se mensagem contiver valor ── */
+if(!window._fabWizard&&_fabWizIsLancamento(txt)){
+  var val=_fabWizExtractValue(txt);
+  if(val&&val>0){
+    var tpD=_fabWizDetectType(txt);
+    var descD=txt.replace(/(?:R\$\s*)?[\d.,]+\s*(reais?)?/gi,'').replace(/(recebi|ganhei|gastei|paguei|comprei|foi)/gi,'').trim();
+    if(!descD)descD=tpD==='receita'?'Receita':'Despesa';
+    var partial={type:tpD,value:val,desc:descD,formaPgto:_fabWizDetectPgto(txt)||null};
+    var wizQ=_fabWizStart(partial);
+    addFabConsultorMsg('ai',wizQ);
+    if(typeof lucide!=='undefined'&&lucide.createIcons)lucide.createIcons();
+    return;
+  }
+}
+
+var localCreditReply=typeof getLegacyCreditConsultorReply==='function'?getLegacyCreditConsultorReply(txt):null;
+if(localCreditReply){
+  addFabConsultorMsg('ai',localCreditReply);
+  if(typeof lucide!=='undefined'&&lucide.createIcons)lucide.createIcons();
+  return;
+}
+
 var loadingEl=document.createElement('div');
 loadingEl.className='fab-consultor-loading';
 loadingEl.id='fabConsultorLoading';
@@ -13039,20 +15155,26 @@ var ld=document.getElementById('fabConsultorLoading');
 if(ld)ld.remove();
 if(done){addFabConsultorMsg('ai',msg);if(typeof toast==='function')toast(typeof t==='function'?t('toast_pronto'):'Pronto!','ok');return;}
 var ctx=typeof getFinancialContext==='function'?getFinancialContext():{};
+var profile=typeof getLegacyFinancialProfile==='function'?getLegacyFinancialProfile(ctx):null;
 var contextStr='Receita mensal: R$'+(ctx.receita_mes||0).toFixed(2)+'\nDespesa mensal: R$'+(ctx.despesa_mes||0).toFixed(2)+'\nSaldo: R$'+((ctx.receita_mes||0)-(ctx.despesa_mes||0)).toFixed(2)+'\n';
 if(ctx.top_categorias)contextStr+='Categorias: '+ctx.top_categorias+'\n';
 if(ctx.metas)contextStr+='Metas: '+ctx.metas+'\n';
 if(ctx.contas)contextStr+='Contas: '+ctx.contas+'\n';
+if(typeof buildLegacyAdvisorSnapshot==='function')contextStr+=buildLegacyAdvisorSnapshot(ctx)+'\n';
+trackLegacyPlatformEvent('advisor_message_sent',{source:'legacy_fab',messageLength:txt.length,journeyStage:profile&&profile.journeyStage?profile.journeyStage:null,healthLevel:profile&&profile.healthLevel?profile.healthLevel:null,topSignals:profile&&profile.topSignals?profile.topSignals:[],nextBestActions:profile&&profile.nextBestActions?profile.nextBestActions:[]});
+var startedAt=Date.now();
 try{
 var fn=firebase.functions().httpsCallable('chatApi');
 fn({message:txt,context:contextStr}).then(function(res){
 var data=res&&res.data?res.data:{};var rawReply=(data.reply||'').trim();var reply=rawReply.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
 addFabConsultorMsg('ai',reply);
 addFabConsultorFeedbackButtons({userMessage:txt,contextStr:contextStr,aiReply:rawReply});
+trackLegacyPlatformEvent('advisor_reply_received',{source:'legacy_fab',latencyMs:Date.now()-startedAt,replyLength:rawReply.length,journeyStage:profile&&profile.journeyStage?profile.journeyStage:null});
 }).catch(function(err){
 var code=(err&&err.code)||'';var msg=(err&&err.message)||'Erro ao conectar. Tente novamente.';
 if(code==='functions/resource-exhausted'||/quota|limite|rate limit/i.test(msg))msg='Limite de uso do consultor por hoje atingido. Tente em alguns minutos ou amanhã.';
 addFabConsultorMsg('ai','<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;display:inline-block;margin-right:6px"></i>'+msg);
+trackLegacyPlatformEvent('advisor_reply_failed',{source:'legacy_fab',code:code||'unknown',messageLength:txt.length,journeyStage:profile&&profile.journeyStage?profile.journeyStage:null});
 if(typeof lucide!=='undefined'&&lucide.createIcons)lucide.createIcons();
 });
 }catch(e){addFabConsultorMsg('ai','<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;display:inline-block;margin-right:6px"></i>'+e.message);if(typeof lucide!=='undefined'&&lucide.createIcons)lucide.createIcons();}
@@ -13285,7 +15407,8 @@ var valorStr=numMatch[1].replace(',','.');
 var valor=parseFloat(valorStr);
 if(isNaN(valor)||valor<=0){return null;}
 var desc=(t.substring(0,numMatch.index)||t).trim()||'Lançamento';
-return {type:'despesa',value:valor,desc:desc,category:'Alimentação'};
+var catAuto=typeof _fabWizDetectCat==='function'?(_fabWizDetectCat(desc)||'Outros'):'Outros';
+return {type:'despesa',value:valor,desc:desc,category:catAuto};
 }
 
 /* ── next block ── */
@@ -14626,7 +16749,14 @@ setTimeout(hookFamily,3000);
 function wBankChg(){
 var s=document.getElementById('wBankSel');
 var d=document.getElementById('wCustDiv');
+var hasSelection=!!(s&&s.value);
 d.style.display=s.value==='__custom__'?'block':'none';
+var balDiv=document.getElementById('wBalDiv');
+if(balDiv)balDiv.style.display=hasSelection?'block':'none';
+var cestaDiv=document.getElementById('wCestaDiv');
+if(cestaDiv)cestaDiv.style.display=hasSelection?'block':'none';
+var chequeDiv=document.getElementById('wChequeDiv');
+if(chequeDiv)chequeDiv.style.display=hasSelection?'block':'none';
 }
 function wAddBank(){
 var s=document.getElementById('wBankSel');
@@ -14645,6 +16775,10 @@ toast('Conta '+nm+' j\u00e1 existe!','err');return;
 var bl=parseFloat(document.getElementById('wNewBal').value)||0;
 userAccs.push(nm);
 if(bl!==0){accountBalances[nm]=bl;}
+var chequeCheck=document.getElementById('wChequeCheck');
+var chequeLimit=document.getElementById('wChequeLimit');
+var chequeRate=document.getElementById('wChequeRate');
+setAccountOverdraftMeta(nm,!!(chequeCheck&&chequeCheck.checked),parseFloat((chequeLimit&&chequeLimit.value)||0)||0,parseFloat((chequeRate&&chequeRate.value)||0)||0);
 var cestaCheck=document.getElementById('wCestaCheck');
 var cestaVal=document.getElementById('wCestaVal');
 var cestaDay=document.getElementById('wCestaDay');
@@ -14669,15 +16803,23 @@ s.value='';
 document.getElementById('wCustDiv').style.display='none';
 document.getElementById('wBalDiv').style.display='none';
 document.getElementById('wCestaDiv').style.display='none';
+var chequeDiv=document.getElementById('wChequeDiv');
+if(chequeDiv)chequeDiv.style.display='none';
 document.getElementById('wCustName').value='';
 document.getElementById('wNewBal').value='';
 if(cestaCheck)cestaCheck.checked=false;
 if(cestaVal)cestaVal.value='';
 if(cestaDay)cestaDay.value='';
+if(chequeCheck)chequeCheck.checked=false;
+if(chequeLimit)chequeLimit.value='';
+if(chequeRate)chequeRate.value='';
 toggleWltCesta();
+toggleWltCheque();
 var msg='\u2705 Conta <b>'+nm+'</b> adicionada!';
 if(bl!==0){msg+=' Saldo: R$ '+bl.toFixed(2);}
 if(accountCesta[nm]){msg+=' Cesta: R$ '+accountCesta[nm].value.toFixed(2)+'/m\u00eas (dia '+accountCesta[nm].day+')';}
+var overdraftState=getAccountOverdraftState(nm);
+if(overdraftState.enabled){msg+=' Cheque especial: R$ '+overdraftState.limit.toFixed(2);}
 document.getElementById('wAddMsg').innerHTML='<span style="color:#22C55E">'+msg+'</span>';
 setTimeout(function(){document.getElementById('wAddMsg').innerHTML='';},4000);
 toast('Conta '+nm+' adicionada!','ok');
@@ -14851,7 +16993,15 @@ y:{grid:{color:gridColor},ticks:{color:txtColor,font:{size:11},callback:function
 function delAccount(acc){
 if(!confirm('Excluir a conta "'+acc+'"? O saldo será zerado.')){return;}
 var idx=userAccs.indexOf(acc);
-if(idx>=0){userAccs.splice(idx,1);delete accountBalances[acc];saveData();renderCarteira();toast('Conta "'+acc+'" excluída','ok');}
+if(idx>=0){
+userAccs.splice(idx,1);
+delete accountBalances[acc];
+if(typeof accountMeta==='object'&&accountMeta[acc]!==undefined)delete accountMeta[acc];
+if(typeof accountCesta==='object'&&accountCesta[acc]!==undefined)delete accountCesta[acc];
+saveData();
+renderCarteira();
+toast('Conta "'+acc+'" excluída','ok');
+}
 }
 
 // Salvar tokens de APIs
@@ -16459,6 +18609,39 @@ function renderAlertBar() {
         flashes.push({ type: 'ok', msg: 'Meta "' + (g.nome || g.name || 'Meta') + '" está a ' + Math.round((1 - pct) * 100) + '% de ser concluída!', hint: 'Continue assim!', tab: 'metas', delay: 1200 });
       }
     });
+  }
+
+  // Crédito estruturado → flash discreto para estratégia travada
+  if (typeof getLegacyCreditMonitoringData === 'function') {
+    var creditMonitor = getLegacyCreditMonitoringData();
+    if (creditMonitor.reviewDue && creditMonitor.reviewDue.length) {
+      var reviewEntry = creditMonitor.reviewDue[0];
+      flashes.push({
+        type: 'mid',
+        msg: 'Revisão do plano de ' + (reviewEntry.item.label || 'crédito') + ' venceu',
+        hint: 'Vale atualizar a estratégia agora',
+        tab: 'cartões',
+        delay: 2200
+      });
+    } else if (creditMonitor.pendingRenegotiation && creditMonitor.pendingRenegotiation.length) {
+      var pendingEntry = creditMonitor.pendingRenegotiation[0];
+      flashes.push({
+        type: 'mid',
+        msg: 'Renegociação de ' + (pendingEntry.item.label || 'crédito') + ' aguarda revisão',
+        hint: 'Estratégia planejada há ' + pendingEntry.daysSinceUpdate + ' dias',
+        tab: 'cartões',
+        delay: 2200
+      });
+    } else if (creditMonitor.stalled && creditMonitor.stalled.length) {
+      var stalledEntry = creditMonitor.stalled[0];
+      flashes.push({
+        type: 'bad',
+        msg: 'Plano de ' + (stalledEntry.item.label || 'crédito') + ' está parado',
+        hint: 'Sem avanço relevante há ' + Math.max(stalledEntry.daysSinceLastMove || 0, stalledEntry.daysSinceUpdate || 0) + ' dias',
+        tab: 'cartões',
+        delay: 2200
+      });
+    }
   }
 
   // Lançar com delay escalonado

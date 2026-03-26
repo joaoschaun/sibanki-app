@@ -1,4 +1,4 @@
-var CACHE_NAME='sibanki-v9';
+var CACHE_NAME='sibanki-v14';
 self.addEventListener('install',function(e){self.skipWaiting();});
 self.addEventListener('activate',function(e){
   e.waitUntil(
