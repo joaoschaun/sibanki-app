@@ -86,11 +86,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#05080d] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#0a0f18] border border-white/10 rounded-2xl p-8 shadow-xl">
+    <div className="min-h-screen bg-si-bg flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-si-card border border-si-border-md rounded-2xl p-8 shadow-xl">
         <h1 className="text-2xl font-bold text-center mb-2">Sibanki</h1>
-        <p className="text-zinc-500 text-sm text-center mb-1">Controle financeiro com IA</p>
-        <p className="text-zinc-500 text-xs text-center mb-8">
+        <p className="text-si-5 text-sm text-center mb-1">Controle financeiro com IA</p>
+        <p className="text-si-5 text-xs text-center mb-8">
           {registerMode ? 'Crie sua conta para começar.' : 'Entre para acessar seus dados.'}
         </p>
 
@@ -119,13 +119,13 @@ export default function Login() {
                     placeholder="E-mail da sua conta"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
                     required
                   />
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold disabled:opacity-50"
+                    className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold disabled:opacity-50"
                   >
                     {loading ? 'Enviando...' : 'Enviar link de redefinição'}
                   </button>
@@ -135,7 +135,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => { setForgotMode(false); setForgotSent(false); setForgotError(''); }}
-              className="w-full text-center text-zinc-500 text-sm hover:text-zinc-300"
+              className="w-full text-center text-si-5 text-sm hover:text-si-3"
             >
               Voltar ao login
             </button>
@@ -153,7 +153,7 @@ export default function Login() {
                   placeholder="E-mail"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
                   required
                 />
                 <input
@@ -161,13 +161,13 @@ export default function Login() {
                   placeholder="Senha (mín. 6 caracteres)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
                   required
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold disabled:opacity-50"
+                  className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold disabled:opacity-50"
                 >
                   {loading ? 'Criando...' : 'Criar conta'}
                 </button>
@@ -176,7 +176,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => { setRegisterMode(false); setRegisterDone(false); setError(''); }}
-              className="w-full text-center text-zinc-500 text-sm hover:text-zinc-300"
+              className="w-full text-center text-si-5 text-sm hover:text-si-3"
             >
               Já tenho conta, voltar para login
             </button>
@@ -188,21 +188,21 @@ export default function Login() {
               placeholder="E-mail"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
               required
             />
             <div className="flex justify-between items-center">
               <button
                 type="button"
                 onClick={() => setForgotMode(true)}
-                className="text-zinc-500 text-sm hover:text-zinc-300"
+                className="text-si-5 text-sm hover:text-si-3"
               >
                 Esqueci a senha
               </button>
               <button
                 type="button"
                 onClick={() => { setRegisterMode(true); setError(''); }}
-                className="text-zinc-500 text-sm hover:text-zinc-300"
+                className="text-si-5 text-sm hover:text-si-3"
               >
                 Criar conta
               </button>
@@ -212,13 +212,13 @@ export default function Login() {
               placeholder="Senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
               required
             />
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold disabled:opacity-50"
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
@@ -229,10 +229,10 @@ export default function Login() {
         <>
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/10" />
+            <div className="w-full border-t border-si-border-md" />
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="px-2 bg-[#0a0f18] text-zinc-500">ou</span>
+            <span className="px-2 bg-si-card text-si-5">ou</span>
           </div>
         </div>
 
@@ -240,7 +240,7 @@ export default function Login() {
           type="button"
           onClick={handleGoogleLogin}
           disabled={loading}
-          className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-200 font-bold hover:bg-white/10 disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-2 font-bold hover:bg-si-over-3 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path

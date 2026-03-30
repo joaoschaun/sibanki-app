@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { useFinancialData } from '../hooks/useFinancialData';
+import { useState, useMemo, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { useAppContext } from '../context/AppContext';
 import {
   addCard,
   addCardPurchase,
@@ -17,6 +17,24 @@ import type { Card, CardPurchase } from '../types/userData';
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard', 'Outros'];
+const BANCOS = [
+  'Nubank',
+  'Itaú',
+  'Bradesco',
+  'Santander',
+  'Banco do Brasil',
+  'Caixa',
+  'Inter',
+  'C6',
+  'BTG',
+  'XP',
+  'Mercado Pago',
+  'PicPay',
+  'PagBank',
+  'Will',
+  'Neon',
+  'Outros',
+];
 const CORES_CARTAO = [
   { value: '#4F8CFF', label: 'Azul' },
   { value: '#10b981', label: 'Verde' },
@@ -34,29 +52,36 @@ function getDiasParaFecha(card: Card): number {
 }
 
 export default function Cards() {
-  const { user } = useAuth();
-  const { cards, entries, categories, loading } = useFinancialData(user?.uid);
+  const { user, cards, entries, categories, financialProfile, creditAccounts, creditObligations, loading } = useAppContext();
   const [modalOpen, setModalOpen] = useState(false);
   const [name, setName] = useState('');
   const [limit, setLimit] = useState('');
   const [closeDay, setCloseDay] = useState(10);
   const [dueDay, setDueDay] = useState(15);
   const [flag, setFlag] = useState('Visa');
+  const [bank, setBank] = useState('Outros');
   const [color, setColor] = useState('#4F8CFF');
+  const [annualFee, setAnnualFee] = useState('');
+  const [annualFeeMonth, setAnnualFeeMonth] = useState<number>(1);
   const [editCardId, setEditCardId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
   const [editLimit, setEditLimit] = useState('');
   const [editCloseDay, setEditCloseDay] = useState(10);
   const [editDueDay, setEditDueDay] = useState(15);
   const [editFlag, setEditFlag] = useState('Visa');
+  const [editBank, setEditBank] = useState('Outros');
   const [editColor, setEditColor] = useState('#4F8CFF');
+  const [editAnnualFee, setEditAnnualFee] = useState('');
+  const [editAnnualFeeMonth, setEditAnnualFeeMonth] = useState<number>(1);
   const [deleteCardId, setDeleteCardId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [importOpen, setImportOpen] = useState(false);
   const [importCardId, setImportCardId] = useState<number | null>(null);
+  const [importMode, setImportMode] = useState<'csv' | 'ofx'>('csv');
   const [importText, setImportText] = useState('');
+  const importFileRef = useRef<HTMLInputElement>(null);
   const [importBusy, setImportBusy] = useState(false);
 
   const [faturaCardId, setFaturaCardId] = useState<number | null>(null);
@@ -99,13 +124,17 @@ export default function Cards() {
     setBusy(true);
     try {
       const limitNum = parseFloat(limit.replace(',', '.')) || 0;
+      const annualFeeNum = parseFloat(annualFee.replace(',', '.')) || 0;
       await addCard(user.uid, cards, {
         name: name.trim(),
         limit: Math.round(limitNum * 100) / 100,
         closeDay,
         dueDay,
         flag,
+        bank,
         color,
+        annualFee: Math.round(annualFeeNum * 100) / 100,
+        annualFeeMonth,
       });
       setModalOpen(false);
       setName('');
@@ -113,7 +142,10 @@ export default function Cards() {
       setCloseDay(10);
       setDueDay(15);
       setFlag('Visa');
+      setBank('Outros');
       setColor('#4F8CFF');
+      setAnnualFee('');
+      setAnnualFeeMonth(1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao adicionar cartão.');
     } finally {
@@ -128,7 +160,10 @@ export default function Cards() {
     setEditCloseDay(card.closeDay ?? 10);
     setEditDueDay(card.dueDay ?? 15);
     setEditFlag(card.flag ?? 'Visa');
+    setEditBank((card as Card & { bank?: string }).bank ?? 'Outros');
     setEditColor(card.color ?? '#4F8CFF');
+    setEditAnnualFee(String((card as Card & { annualFee?: number }).annualFee ?? ''));
+    setEditAnnualFeeMonth((card as Card & { annualFeeMonth?: number }).annualFeeMonth ?? 1);
     setError(null);
   };
 
@@ -136,6 +171,7 @@ export default function Cards() {
     e.preventDefault();
     if (!user?.uid || editCardId == null) return;
     const limitNum = parseFloat(editLimit.replace(',', '.')) || 0;
+    const annualFeeNum = parseFloat(editAnnualFee.replace(',', '.')) || 0;
     setError(null);
     setBusy(true);
     try {
@@ -145,7 +181,10 @@ export default function Cards() {
         closeDay: editCloseDay,
         dueDay: editDueDay,
         flag: editFlag,
+        bank: editBank,
         color: editColor,
+        annualFee: Math.round(annualFeeNum * 100) / 100,
+        annualFeeMonth: editAnnualFeeMonth,
       });
       setEditCardId(null);
     } catch (err) {
@@ -203,6 +242,54 @@ export default function Cards() {
     setDelConfirm(null);
   };
 
+  const parseImportItems = (raw: string, mode: 'csv' | 'ofx') => {
+    const items: { desc: string; category: string; value: number; date: string; parcelas?: number }[] = [];
+    if (mode === 'csv') {
+      const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      if (lines.length < 2) {
+        throw new Error('Informe pelo menos uma linha de dados além do cabeçalho.');
+      }
+      const header = lines[0];
+      const sep = header.includes(';') ? ';' : ',';
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(sep).map((c) => c.trim());
+        const [dateRaw, descRaw, catRaw, valRaw, parcRaw] = cols;
+        const date = dateRaw || new Date().toISOString().slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+        const v = parseFloat((valRaw || '').replace(',', '.')) || 0;
+        if (v <= 0) continue;
+        const parcelas = parcRaw ? Number(parcRaw) || 1 : 1;
+        items.push({
+          date,
+          desc: descRaw || 'Compra',
+          category: catRaw || 'Outros',
+          value: v,
+          parcelas,
+        });
+      }
+      return items;
+    }
+    const blocks = raw.split(/<STMTTRN>/i).slice(1);
+    for (const b of blocks) {
+      const dt = b.match(/<DTPOSTED>(\d{8})/i)?.[1];
+      const amountRaw = b.match(/<TRNAMT>(-?\d+(?:[.,]\d+)?)/i)?.[1];
+      const memo = b.match(/<MEMO>(.+)/i)?.[1]?.split(/\r?\n/)[0]?.trim();
+      const name = b.match(/<NAME>(.+)/i)?.[1]?.split(/\r?\n/)[0]?.trim();
+      if (!dt || !amountRaw) continue;
+      const amount = Math.abs(parseFloat(amountRaw.replace(',', '.')) || 0);
+      if (amount <= 0) continue;
+      const date = `${dt.slice(0, 4)}-${dt.slice(4, 6)}-${dt.slice(6, 8)}`;
+      items.push({
+        date,
+        desc: memo || name || 'Compra importada',
+        category: 'Outros',
+        value: amount,
+        parcelas: 1,
+      });
+    }
+    return items;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -216,30 +303,178 @@ export default function Cards() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-3xl font-bold">Cartões</h2>
-          <p className="text-zinc-500 text-sm">Faturas e limites – mesmo dados do app atual</p>
+          <p className="text-si-5 text-sm">Faturas e limites – mesmo dados do app atual</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button
             type="button"
             onClick={() => { setError(null); setImportOpen(true); setImportCardId(cards[0]?.id ?? null); }}
             disabled={cards.length === 0}
-            className="bg-white/5 hover:bg-white/10 disabled:opacity-50 text-zinc-100 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 border border-white/10"
+            className="bg-si-over-2 hover:bg-si-over-3 disabled:opacity-50 text-si-1 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 border border-si-border-md"
           >
             <FileText className="w-4 h-4" /> Importar fatura
           </button>
           <button
             type="button"
             onClick={() => { setError(null); setModalOpen(true); }}
-            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2"
+            className="bg-blue-600 hover:bg-blue-500 text-si-1 px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> Novo cartão
           </button>
         </div>
       </div>
 
+      {(financialProfile.credit.activeCards > 0 || financialProfile.credit.monthlyDebtCommitment > 0) && (
+        <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h3 className="font-semibold text-si-1">Visão macro de crédito</h3>
+              <p className="text-si-5 text-sm mt-1">
+                Consolidação do que está comprometido no cartão hoje e do peso mensal de dívidas recorrentes.
+              </p>
+            </div>
+            <span
+              className={`px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${
+                financialProfile.credit.pressureLevel === 'critico'
+                  ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                  : financialProfile.credit.pressureLevel === 'elevado'
+                    ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                    : financialProfile.credit.pressureLevel === 'atencao'
+                      ? 'text-blue-300 bg-blue-500/10 border-blue-500/20'
+                      : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+              }`}
+            >
+              {financialProfile.credit.pressureLevel}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+            <div className="bg-si-bg border border-si-border-md rounded-xl p-4">
+              <p className="text-si-5 text-xs">Limite total</p>
+              <p className="text-lg font-bold text-blue-400">
+                R$ {financialProfile.credit.totalCardLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="bg-si-bg border border-si-border-md rounded-xl p-4">
+              <p className="text-si-5 text-xs">Uso estimado</p>
+              <p className="text-lg font-bold text-si-1">
+                {financialProfile.credit.cardUtilizationPct.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}%
+              </p>
+            </div>
+            <div className="bg-si-bg border border-si-border-md rounded-xl p-4">
+              <p className="text-si-5 text-xs">Disponível</p>
+              <p className="text-lg font-bold text-emerald-400">
+                R$ {financialProfile.credit.availableLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="bg-si-bg border border-si-border-md rounded-xl p-4">
+              <p className="text-si-5 text-xs">Faturas em 7 dias</p>
+              <p className="text-lg font-bold text-amber-400">
+                R$ {financialProfile.credit.dueSoonAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="bg-si-bg border border-si-border-md rounded-xl p-4">
+              <p className="text-si-5 text-xs">Dívida recorrente</p>
+              <p className="text-lg font-bold text-si-1">
+                R$ {financialProfile.credit.monthlyDebtCommitment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap text-sm">
+            <span className="text-si-4">
+              {financialProfile.credit.highUtilizationCards} cartão(ões) acima de 60% de uso.
+            </span>
+            <Link to="/consultor-ia" className="text-blue-400 hover:text-blue-300 underline">
+              Pedir plano de reorganização
+            </Link>
+            <Link to="/solucoes/credito" className="text-si-4 hover:text-si-2 underline">
+              Comparar soluções de crédito
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {(creditAccounts.length > 0 || creditObligations.length > 0) && (
+        <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
+          <div>
+            <h3 className="font-semibold text-si-1">Crédito estruturado</h3>
+            <p className="text-si-5 text-sm mt-1">
+              Base pronta para Open Finance e consolidação completa de empréstimos, financiamentos e obrigações.
+            </p>
+          </div>
+
+          {creditAccounts.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-wide text-si-5">Contas de crédito</p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {creditAccounts.slice(0, 6).map((account) => (
+                  <div key={account.id} className="rounded-xl border border-si-border-md bg-si-bg p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-si-1">{account.label}</p>
+                        <p className="text-xs text-si-5">
+                          {account.institution || 'Instituição não informada'} · {account.kind}
+                        </p>
+                      </div>
+                      <span className="text-xs text-si-4 uppercase">{account.status || 'ativo'}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
+                      <div>
+                        <p className="text-si-5 text-xs">Saldo usado</p>
+                        <p className="text-si-2">
+                          R$ {Number(account.balanceUsed || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-si-5 text-xs">Parcela mensal</p>
+                        <p className="text-si-2">
+                          R$ {Number(account.monthlyInstallment || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {creditObligations.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-wide text-si-5">Próximas obrigações</p>
+              <div className="space-y-2">
+                {creditObligations
+                  .filter((obligation) => obligation.status !== 'paga')
+                  .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+                  .slice(0, 6)
+                  .map((obligation) => (
+                    <div
+                      key={obligation.id}
+                      className="rounded-xl border border-si-border-md bg-si-bg px-4 py-3 flex items-center justify-between gap-3"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-si-1">{obligation.label}</p>
+                        <p className="text-xs text-si-5">
+                          {obligation.institution || 'Crédito'} · vence em {new Date(`${obligation.dueDate}T12:00:00`).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-amber-400">
+                          R$ {Number(obligation.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                        <p className="text-xs text-si-5">{obligation.status || 'aberta'}</p>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.length === 0 ? (
-          <div className="col-span-full bg-[#0a0f18] rounded-2xl border border-white/5 p-12 text-center text-zinc-500">
+          <div className="col-span-full bg-si-card rounded-2xl border border-si-border p-12 text-center text-si-5">
             Nenhum cartão cadastrado. Clique em &quot;Novo cartão&quot; para adicionar.
           </div>
         ) : (
@@ -251,7 +486,7 @@ export default function Cards() {
             return (
               <div
                 key={card.id}
-                className="bg-[#0a0f18] rounded-2xl border border-white/5 p-6 flex flex-col gap-4"
+                className="bg-si-card rounded-2xl border border-si-border p-6 flex flex-col gap-4"
               >
                 <div className="flex items-center gap-4">
                   <div
@@ -264,17 +499,23 @@ export default function Cards() {
                     <CreditCard className="w-6 h-6" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-zinc-100 truncate">{card.name || 'Cartão'}</h3>
-                    <p className="text-xs text-zinc-500">
+                    <h3 className="font-bold text-si-1 truncate">{card.name || 'Cartão'}</h3>
+                    <p className="text-xs text-si-5">
                       Fecha dia {card.closeDay} · Vence dia {card.dueDay}
                     </p>
-                    <p className="text-sm font-bold text-zinc-300 mt-1">
+                    <p className="text-xs text-si-5">
+                      {(card as Card & { bank?: string }).bank || 'Banco não informado'}
+                      {(card as Card & { annualFee?: number }).annualFee
+                        ? ` · Anuidade R$ ${Number((card as Card & { annualFee?: number }).annualFee ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                        : ' · Sem anuidade'}
+                    </p>
+                    <p className="text-sm font-bold text-si-3 mt-1">
                       Limite: R$ {Number(card.limit ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-xs text-zinc-500">
+                  <span className="text-xs text-si-5">
                     Fatura atual: R$ {used.toFixed(2)} ({pctUsado}% usado)
                     {diasFecha <= 7 && (
                       <span className="text-amber-400 ml-1"> · Fecha em {diasFecha} dia(s)</span>
@@ -284,21 +525,21 @@ export default function Cards() {
                     <button
                       type="button"
                       onClick={() => { setLancarCardId(card.id); setLancarCat(lancarCat || userCats[0]); }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/10 text-zinc-200 text-sm"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 text-sm"
                     >
                       <Plus className="w-3.5 h-3.5" /> Lançar
                     </button>
                     <button
                       type="button"
                       onClick={() => { setFaturaCardId(card.id); setFaturaMonth(getBillingMonth(card, new Date().toISOString().split('T')[0])); }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/10 text-zinc-200 text-sm"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 text-sm"
                     >
                       <FileText className="w-3.5 h-3.5" /> Fatura
                     </button>
                     <button
                       type="button"
                       onClick={() => openEdit(card)}
-                      className="p-2 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white"
+                      className="p-2 rounded-lg hover:bg-si-over-3 text-si-4 hover:text-si-1"
                       title="Editar cartão"
                     >
                       <Pencil className="w-4 h-4" />
@@ -306,7 +547,7 @@ export default function Cards() {
                     <button
                       type="button"
                       onClick={() => { setDeleteCardId(card.id); setError(null); }}
-                      className="p-2 rounded-lg hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400"
+                      className="p-2 rounded-lg hover:bg-rose-500/20 text-si-4 hover:text-rose-400"
                       title="Excluir cartão"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -320,20 +561,20 @@ export default function Cards() {
       </div>
 
       {cards.length > 0 && (
-        <section className="bg-[#0a0f18] rounded-2xl border border-white/5 p-6">
-          <h3 className="font-semibold text-zinc-100 mb-4 flex items-center gap-2">
+        <section className="bg-si-card rounded-2xl border border-si-border p-6">
+          <h3 className="font-semibold text-si-1 mb-4 flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-400" />
             Detalhe da fatura
           </h3>
           <div className="flex flex-wrap gap-4 mb-4">
             <div>
-              <label htmlFor="fat-card-select" className="block text-xs text-zinc-500 mb-1">Cartão</label>
+              <label htmlFor="fat-card-select" className="block text-xs text-si-5 mb-1">Cartão</label>
               <select
                 id="fat-card-select"
                 aria-label="Cartão para ver fatura"
                 value={faturaCardId ?? ''}
                 onChange={(e) => { setFaturaCardId(e.target.value ? Number(e.target.value) : null); }}
-                className="px-3 py-2 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 text-sm"
+                className="px-3 py-2 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm"
               >
                 <option value="">Selecione</option>
                 {cards.map((c) => (
@@ -342,13 +583,13 @@ export default function Cards() {
               </select>
             </div>
             <div>
-              <label htmlFor="fat-month-select" className="block text-xs text-zinc-500 mb-1">Mês</label>
+              <label htmlFor="fat-month-select" className="block text-xs text-si-5 mb-1">Mês</label>
               <select
                 id="fat-month-select"
                 aria-label="Mês da fatura"
                 value={faturaMonth}
                 onChange={(e) => setFaturaMonth(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 text-sm"
+                className="px-3 py-2 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm"
               >
                 {availableMonths.map((ym) => {
                   const [y, m] = ym.split('-');
@@ -362,30 +603,30 @@ export default function Cards() {
             </div>
           </div>
           {faturaCard && (
-            <div className="rounded-xl bg-[#05080d] border border-white/5 overflow-hidden">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 border-b border-white/5">
+            <div className="rounded-xl bg-si-bg border border-si-border overflow-hidden">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 border-b border-si-border">
                 <div className="text-center">
-                  <div className="text-xs text-zinc-500">Total da fatura</div>
+                  <div className="text-xs text-si-5">Total da fatura</div>
                   <div className="text-lg font-bold text-blue-400">R$ {faturaTotal.toFixed(2)}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xs text-zinc-500">Itens</div>
-                  <div className="text-lg font-bold text-zinc-200">{faturaPurchases.length}</div>
+                  <div className="text-xs text-si-5">Itens</div>
+                  <div className="text-lg font-bold text-si-2">{faturaPurchases.length}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xs text-zinc-500">Limite disponível</div>
-                  <div className="text-lg font-bold text-zinc-200">
+                  <div className="text-xs text-si-5">Limite disponível</div>
+                  <div className="text-lg font-bold text-si-2">
                     R$ {(Number(faturaCard.limit ?? 0) - faturaTotal).toFixed(2)}
                   </div>
                 </div>
               </div>
               <div className="max-h-64 overflow-y-auto">
                 {faturaPurchases.length === 0 ? (
-                  <p className="text-zinc-500 text-sm text-center py-8">Nenhuma compra neste mês.</p>
+                  <p className="text-si-5 text-sm text-center py-8">Nenhuma compra neste mês.</p>
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-left text-zinc-500 border-b border-white/5">
+                      <tr className="text-left text-si-5 border-b border-si-border">
                         <th className="p-3">Data</th>
                         <th className="p-3">Descrição</th>
                         <th className="p-3">Categoria</th>
@@ -395,18 +636,18 @@ export default function Cards() {
                     </thead>
                     <tbody>
                       {faturaPurchases.map((p) => (
-                        <tr key={p.id} className="border-b border-white/5 hover:bg-white/5">
-                          <td className="p-3 text-zinc-300">
+                        <tr key={p.id} className="border-b border-si-border hover:bg-si-over-2">
+                          <td className="p-3 text-si-3">
                             {new Date(p.date + 'T12:00:00').toLocaleDateString('pt-BR')}
                           </td>
-                          <td className="p-3 text-zinc-200">{p.desc}</td>
-                          <td className="p-3 text-zinc-400">{p.category ?? '—'}</td>
-                          <td className="p-3 text-right font-medium text-zinc-100">R$ {p.value.toFixed(2)}</td>
+                          <td className="p-3 text-si-2">{p.desc}</td>
+                          <td className="p-3 text-si-4">{p.category ?? '—'}</td>
+                          <td className="p-3 text-right font-medium text-si-1">R$ {p.value.toFixed(2)}</td>
                           <td className="p-3">
                             <button
                               type="button"
                               onClick={() => setDelConfirm({ cardId: faturaCard.id, purchaseId: p.purchaseId ?? p.id })}
-                              className="p-1.5 rounded-lg text-zinc-500 hover:bg-rose-500/20 hover:text-rose-400"
+                              className="p-1.5 rounded-lg text-si-5 hover:bg-rose-500/20 hover:text-rose-400"
                               aria-label="Excluir compra"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -432,24 +673,24 @@ export default function Cards() {
           {lancarCardId != null && (
             <>
               <div>
-                <label className="block text-xs text-zinc-500 mb-1">Descrição</label>
+                <label className="block text-xs text-si-5 mb-1">Descrição</label>
                 <input
                   type="text"
                   value={lancarDesc}
                   onChange={(e) => setLancarDesc(e.target.value)}
                   placeholder="Ex: Supermercado"
-                  className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
                   required
                 />
               </div>
               <div>
-                <label htmlFor="lancar-cat" className="block text-xs text-zinc-500 mb-1">Categoria</label>
+                <label htmlFor="lancar-cat" className="block text-xs text-si-5 mb-1">Categoria</label>
                 <select
                   id="lancar-cat"
                   aria-label="Categoria da compra"
                   value={lancarCat}
                   onChange={(e) => setLancarCat(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
                 >
                   {userCats.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -458,24 +699,24 @@ export default function Cards() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1">Valor (R$)</label>
+                  <label className="block text-xs text-si-5 mb-1">Valor (R$)</label>
                   <input
                     type="text"
                     inputMode="decimal"
                     value={lancarVal}
                     onChange={(e) => setLancarVal(e.target.value.replace(/[^0-9,.-]/, ''))}
                     placeholder="0,00"
-                    className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label htmlFor="lancar-parcelas" className="block text-xs text-zinc-500 mb-1">Parcelas</label>
+                  <label htmlFor="lancar-parcelas" className="block text-xs text-si-5 mb-1">Parcelas</label>
                   <select
                     id="lancar-parcelas"
                     aria-label="Número de parcelas"
                     value={lancarParcelas}
                     onChange={(e) => setLancarParcelas(Number(e.target.value))}
-                    className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
                   >
                     {[1, 2, 3, 4, 5, 6, 10, 12].map((n) => (
                       <option key={n} value={n}>{n}x</option>
@@ -484,7 +725,7 @@ export default function Cards() {
                 </div>
               </div>
               <div>
-                <label htmlFor="lancar-date" className="block text-xs text-zinc-500 mb-1">Data da compra</label>
+                <label htmlFor="lancar-date" className="block text-xs text-si-5 mb-1">Data da compra</label>
                 <input
                   id="lancar-date"
                   type="date"
@@ -492,21 +733,21 @@ export default function Cards() {
                   title="Data da compra"
                   value={lancarDate}
                   onChange={(e) => setLancarDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
                 />
               </div>
               <div className="flex gap-3 pt-2">
                 <button
                   type="submit"
                   disabled={lancarBusy}
-                  className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm"
+                  className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm"
                 >
                   {lancarBusy ? 'Salvando…' : 'Lançar'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setLancarCardId(null)}
-                  className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-400 font-medium text-sm hover:bg-white/10"
+                  className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3"
                 >
                   Cancelar
                 </button>
@@ -530,31 +771,11 @@ export default function Cards() {
             setError(null);
             setImportBusy(true);
             try {
-              const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-              if (lines.length < 2) {
-                throw new Error('Informe pelo menos uma linha de dados além do cabeçalho.');
-              }
-              const header = lines[0];
-              const sep = header.includes(';') ? ';' : ',';
-              const items: { desc: string; category: string; value: number; date: string; parcelas?: number }[] = [];
-              for (let i = 1; i < lines.length; i++) {
-                const cols = lines[i].split(sep).map((c) => c.trim());
-                const [dateRaw, descRaw, catRaw, valRaw, parcRaw] = cols;
-                const date = dateRaw || new Date().toISOString().slice(0, 10);
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-                const v = parseFloat((valRaw || '').replace(',', '.')) || 0;
-                if (v <= 0) continue;
-                const parcelas = parcRaw ? Number(parcRaw) || 1 : 1;
-                items.push({
-                  date,
-                  desc: descRaw || 'Compra',
-                  category: catRaw || 'Outros',
-                  value: v,
-                  parcelas,
-                });
-              }
+              const items = parseImportItems(raw, importMode);
               if (!items.length) {
-                throw new Error('Nenhuma linha válida encontrada. Use o formato: Data,Descrição,Categoria,Valor,Parcelas.');
+                throw new Error(importMode === 'csv'
+                  ? 'Nenhuma linha válida encontrada. Use o formato: Data,Descrição,Categoria,Valor,Parcelas.'
+                  : 'Nenhuma transação OFX válida encontrada.');
               }
               await importCardPurchases(user.uid, cards, entries, importCardId, items);
               setImportOpen(false);
@@ -574,12 +795,12 @@ export default function Cards() {
           )}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="import-card" className="block text-xs font-medium text-zinc-500 mb-1">Cartão de destino</label>
+              <label htmlFor="import-card" className="block text-xs font-medium text-si-5 mb-1">Cartão de destino</label>
               <select
                 id="import-card"
                 value={importCardId ?? ''}
                 onChange={(e) => setImportCardId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full px-3 py-2.5 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 text-sm focus:outline-none focus:border-blue-500"
+                className="w-full px-3 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-blue-500"
               >
                 <option value="">Selecione</option>
                 {cards.map((c) => (
@@ -587,35 +808,86 @@ export default function Cards() {
                 ))}
               </select>
             </div>
-            <div className="text-xs text-zinc-500">
-              <p className="font-semibold mb-1">Formato esperado (CSV simples):</p>
-              <p>Data,Descrição,Categoria,Valor,Parcelas</p>
-              <p className="mt-1">Ex: 2026-03-10,Supermercado,Alimentação,350.90,1</p>
+            <div>
+              <label htmlFor="import-mode" className="block text-xs font-medium text-si-5 mb-1">Formato</label>
+              <select
+                id="import-mode"
+                value={importMode}
+                onChange={(e) => setImportMode(e.target.value as 'csv' | 'ofx')}
+                className="w-full px-3 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-blue-500"
+              >
+                <option value="csv">CSV</option>
+                <option value="ofx">OFX</option>
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <input
+                ref={importFileRef}
+                type="file"
+                accept={importMode === 'csv' ? '.csv,text/csv' : '.ofx,application/x-ofx,text/plain'}
+                className="hidden"
+                aria-label={`Selecionar arquivo ${importMode.toUpperCase()} para importar fatura`}
+                title={`Selecionar arquivo ${importMode.toUpperCase()} para importar fatura`}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  const r = new FileReader();
+                  r.onload = (ev) => setImportText(String(ev.target?.result ?? ''));
+                  r.readAsText(f, 'UTF-8');
+                  e.target.value = '';
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => importFileRef.current?.click()}
+                className="px-3 py-2 rounded-lg bg-si-over-2 border border-si-border-md text-si-3 text-sm hover:bg-si-over-3"
+              >
+                Carregar arquivo {importMode.toUpperCase()}
+              </button>
+            </div>
+            <div className="text-xs text-si-5">
+              {importMode === 'csv' ? (
+                <>
+                  <p className="font-semibold mb-1">Formato esperado (CSV simples):</p>
+                  <p>Data,Descrição,Categoria,Valor,Parcelas</p>
+                  <p className="mt-1">Ex: 2026-03-10,Supermercado,Alimentação,350.90,1</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold mb-1">Formato esperado (OFX):</p>
+                  <p>Arquivo OFX contendo blocos `&lt;STMTTRN&gt;` com `&lt;DTPOSTED&gt;` e `&lt;TRNAMT&gt;`.</p>
+                  <p className="mt-1">Descrição usa `&lt;MEMO&gt;` ou `&lt;NAME&gt;` quando disponíveis.</p>
+                </>
+              )}
             </div>
           </div>
           <div>
-            <label htmlFor="import-text" className="block text-xs font-medium text-zinc-500 mb-1">Cole aqui as linhas da fatura</label>
+            <label htmlFor="import-text" className="block text-xs font-medium text-si-5 mb-1">
+              {importMode === 'csv' ? 'Cole aqui as linhas da fatura' : 'Cole aqui o conteúdo OFX'}
+            </label>
             <textarea
               id="import-text"
               rows={8}
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 text-sm focus:outline-none focus:border-blue-500"
-              placeholder={'Data,Descrição,Categoria,Valor,Parcelas\n2026-03-10,Supermercado,Alimentação,350.90,1'}
+              className="w-full px-3 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-blue-500"
+              placeholder={importMode === 'csv'
+                ? 'Data,Descrição,Categoria,Valor,Parcelas\n2026-03-10,Supermercado,Alimentação,350.90,1'
+                : '<STMTTRN>\n<DTPOSTED>20260310\n<TRNAMT>-350.90\n<MEMO>SUPERMERCADO'}
             />
           </div>
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
               disabled={importBusy}
-              className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm disabled:opacity-50"
+              className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold text-sm disabled:opacity-50"
             >
               {importBusy ? 'Importando…' : 'Importar'}
             </button>
             <button
               type="button"
               onClick={() => { if (!importBusy) { setImportOpen(false); setImportText(''); } }}
-              className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-400 font-medium text-sm hover:bg-white/10"
+              className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3"
             >
               Cancelar
             </button>
@@ -628,21 +900,21 @@ export default function Cards() {
         onClose={() => setDelConfirm(null)}
         title="Excluir compra"
       >
-        <p className="text-zinc-400 text-sm mb-4">
+        <p className="text-si-4 text-sm mb-4">
           Remover esta compra da fatura? Todas as parcelas vinculadas serão excluídas.
         </p>
         <div className="flex gap-3">
           <button
             type="button"
             onClick={handleDeletePurchase}
-            className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-medium text-sm"
+            className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-si-1 font-medium text-sm"
           >
             Excluir
           </button>
           <button
             type="button"
             onClick={() => setDelConfirm(null)}
-            className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-zinc-400 font-medium text-sm hover:bg-white/10"
+            className="px-6 py-2.5 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3"
           >
             Cancelar
           </button>
@@ -657,19 +929,19 @@ export default function Cards() {
             </div>
           )}
           <div>
-            <label htmlFor="card-name" className="block text-xs font-medium text-zinc-500 mb-1">Nome do cartão</label>
+            <label htmlFor="card-name" className="block text-xs font-medium text-si-5 mb-1">Nome do cartão</label>
             <input
               id="card-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Nubank, Itaú"
-              className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
               required
             />
           </div>
           <div>
-            <label htmlFor="card-limit" className="block text-xs font-medium text-zinc-500 mb-1">Limite (R$)</label>
+            <label htmlFor="card-limit" className="block text-xs font-medium text-si-5 mb-1">Limite (R$)</label>
             <input
               id="card-limit"
               type="text"
@@ -677,17 +949,17 @@ export default function Cards() {
               value={limit}
               onChange={(e) => setLimit(e.target.value.replace(/[^0-9,.-]/, ''))}
               placeholder="0,00"
-              className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="card-close" className="block text-xs font-medium text-zinc-500 mb-1">Dia fechamento</label>
+              <label htmlFor="card-close" className="block text-xs font-medium text-si-5 mb-1">Dia fechamento</label>
               <select
                 id="card-close"
                 value={closeDay}
                 onChange={(e) => setCloseDay(Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
               >
                 {DAYS.map((d) => (
                   <option key={d} value={d}>{d}</option>
@@ -695,12 +967,12 @@ export default function Cards() {
               </select>
             </div>
             <div>
-              <label htmlFor="card-due" className="block text-xs font-medium text-zinc-500 mb-1">Dia vencimento</label>
+              <label htmlFor="card-due" className="block text-xs font-medium text-si-5 mb-1">Dia vencimento</label>
               <select
                 id="card-due"
                 value={dueDay}
                 onChange={(e) => setDueDay(Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
               >
                 {DAYS.map((d) => (
                   <option key={d} value={d}>{d}</option>
@@ -709,12 +981,12 @@ export default function Cards() {
             </div>
           </div>
           <div>
-            <label htmlFor="card-flag" className="block text-xs font-medium text-zinc-500 mb-1">Bandeira</label>
+            <label htmlFor="card-flag" className="block text-xs font-medium text-si-5 mb-1">Bandeira</label>
             <select
               id="card-flag"
               value={flag}
               onChange={(e) => setFlag(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
             >
               {BANDEIRAS.map((b) => (
                 <option key={b} value={b}>{b}</option>
@@ -722,7 +994,47 @@ export default function Cards() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-zinc-500 mb-1">Cor</label>
+            <label htmlFor="card-bank" className="block text-xs font-medium text-si-5 mb-1">Banco</label>
+            <select
+              id="card-bank"
+              value={bank}
+              onChange={(e) => setBank(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+            >
+              {BANCOS.map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="card-annual-fee" className="block text-xs font-medium text-si-5 mb-1">Anuidade (R$)</label>
+              <input
+                id="card-annual-fee"
+                type="text"
+                inputMode="decimal"
+                value={annualFee}
+                onChange={(e) => setAnnualFee(e.target.value.replace(/[^0-9,.-]/g, ''))}
+                placeholder="0,00"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="card-annual-fee-month" className="block text-xs font-medium text-si-5 mb-1">Mês da cobrança</label>
+              <select
+                id="card-annual-fee-month"
+                value={annualFeeMonth}
+                onChange={(e) => setAnnualFeeMonth(Number(e.target.value))}
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+              >
+                {MESES.map((m, idx) => (
+                  <option key={m} value={idx + 1}>{m}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-si-5 mb-1">Cor</label>
             <div className="flex flex-wrap gap-2">
               {CORES_CARTAO.map((c) => (
                 <button
@@ -740,14 +1052,14 @@ export default function Cards() {
             <button
               type="submit"
               disabled={busy}
-              className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm"
+              className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm"
             >
               {busy ? 'Salvando…' : 'Adicionar'}
             </button>
             <button
               type="button"
               onClick={() => setModalOpen(false)}
-              className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-400 font-medium text-sm hover:bg-white/10"
+              className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3"
             >
               Cancelar
             </button>
@@ -764,35 +1076,35 @@ export default function Cards() {
               </div>
             )}
             <div>
-              <label htmlFor="edit-card-name" className="block text-xs font-medium text-zinc-500 mb-1">Nome</label>
+              <label htmlFor="edit-card-name" className="block text-xs font-medium text-si-5 mb-1">Nome</label>
               <input
                 id="edit-card-name"
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
                 required
               />
             </div>
             <div>
-              <label htmlFor="edit-card-limit" className="block text-xs font-medium text-zinc-500 mb-1">Limite (R$)</label>
+              <label htmlFor="edit-card-limit" className="block text-xs font-medium text-si-5 mb-1">Limite (R$)</label>
               <input
                 id="edit-card-limit"
                 type="text"
                 inputMode="decimal"
                 value={editLimit}
                 onChange={(e) => setEditLimit(e.target.value.replace(/[^0-9,.-]/, ''))}
-                className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="edit-card-close" className="block text-xs font-medium text-zinc-500 mb-1">Dia fechamento</label>
+                <label htmlFor="edit-card-close" className="block text-xs font-medium text-si-5 mb-1">Dia fechamento</label>
                 <select
                   id="edit-card-close"
                   value={editCloseDay}
                   onChange={(e) => setEditCloseDay(Number(e.target.value))}
-                  className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
                 >
                   {DAYS.map((d) => (
                     <option key={d} value={d}>{d}</option>
@@ -800,12 +1112,12 @@ export default function Cards() {
                 </select>
               </div>
               <div>
-                <label htmlFor="edit-card-due" className="block text-xs font-medium text-zinc-500 mb-1">Dia vencimento</label>
+                <label htmlFor="edit-card-due" className="block text-xs font-medium text-si-5 mb-1">Dia vencimento</label>
                 <select
                   id="edit-card-due"
                   value={editDueDay}
                   onChange={(e) => setEditDueDay(Number(e.target.value))}
-                  className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
                 >
                   {DAYS.map((d) => (
                     <option key={d} value={d}>{d}</option>
@@ -814,12 +1126,12 @@ export default function Cards() {
               </div>
             </div>
             <div>
-              <label htmlFor="edit-card-flag" className="block text-xs font-medium text-zinc-500 mb-1">Bandeira</label>
+              <label htmlFor="edit-card-flag" className="block text-xs font-medium text-si-5 mb-1">Bandeira</label>
               <select
                 id="edit-card-flag"
                 value={editFlag}
                 onChange={(e) => setEditFlag(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
               >
                 {BANDEIRAS.map((b) => (
                   <option key={b} value={b}>{b}</option>
@@ -827,7 +1139,47 @@ export default function Cards() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-500 mb-1">Cor</label>
+              <label htmlFor="edit-card-bank" className="block text-xs font-medium text-si-5 mb-1">Banco</label>
+              <select
+                id="edit-card-bank"
+                value={editBank}
+                onChange={(e) => setEditBank(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+              >
+                {BANCOS.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="edit-card-annual-fee" className="block text-xs font-medium text-si-5 mb-1">Anuidade (R$)</label>
+                <input
+                  id="edit-card-annual-fee"
+                  type="text"
+                  inputMode="decimal"
+                  value={editAnnualFee}
+                  onChange={(e) => setEditAnnualFee(e.target.value.replace(/[^0-9,.-]/g, ''))}
+                  placeholder="0,00"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="edit-card-annual-fee-month" className="block text-xs font-medium text-si-5 mb-1">Mês da cobrança</label>
+                <select
+                  id="edit-card-annual-fee-month"
+                  value={editAnnualFeeMonth}
+                  onChange={(e) => setEditAnnualFeeMonth(Number(e.target.value))}
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                >
+                  {MESES.map((m, idx) => (
+                    <option key={m} value={idx + 1}>{m}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-si-5 mb-1">Cor</label>
               <div className="flex flex-wrap gap-2">
                 {CORES_CARTAO.map((c) => (
                   <button
@@ -842,10 +1194,10 @@ export default function Cards() {
               </div>
             </div>
             <div className="flex gap-3 pt-2">
-              <button type="submit" disabled={busy} className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm">
+              <button type="submit" disabled={busy} className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm">
                 {busy ? 'Salvando…' : 'Salvar'}
               </button>
-              <button type="button" onClick={() => setEditCardId(null)} className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-400 font-medium text-sm hover:bg-white/10">
+              <button type="button" onClick={() => setEditCardId(null)} className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3">
                 Cancelar
               </button>
             </div>
@@ -861,7 +1213,7 @@ export default function Cards() {
                 {error}
               </div>
             )}
-            <p className="text-zinc-300">
+            <p className="text-si-3">
               Excluir este cartão? As compras e lançamentos já registrados na fatura permanecem; apenas o cartão deixará de aparecer na lista.
             </p>
             <div className="flex gap-3 pt-2">
@@ -869,11 +1221,11 @@ export default function Cards() {
                 type="button"
                 onClick={handleDeleteCard}
                 disabled={busy}
-                className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-bold text-sm"
+                className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-si-1 font-bold text-sm"
               >
                 {busy ? 'Excluindo…' : 'Excluir'}
               </button>
-              <button type="button" onClick={() => setDeleteCardId(null)} className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-400 font-medium text-sm hover:bg-white/10">
+              <button type="button" onClick={() => setDeleteCardId(null)} className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3">
                 Cancelar
               </button>
             </div>

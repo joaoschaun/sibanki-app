@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Entry } from '../types/userData';
+import { isTransferEntry } from './entryUtils';
 
 interface ReportPdfInput {
   userName: string;
@@ -26,8 +27,9 @@ export function generateReportPdf(input: ReportPdfInput): void {
     const d = new Date(e.date + 'T12:00:00');
     return d.getMonth() === cm && d.getFullYear() === cy;
   });
-  const receitaMes = mesEntries.filter((e) => e.type === 'receita').reduce((s, e) => s + Number(e.value), 0);
-  const despesaMes = mesEntries.filter((e) => e.type === 'despesa').reduce((s, e) => s + Number(e.value), 0);
+  const mesEntriesNoTransfer = mesEntries.filter((e) => !isTransferEntry(e));
+  const receitaMes = mesEntriesNoTransfer.filter((e) => e.type === 'receita').reduce((s, e) => s + Number(e.value), 0);
+  const despesaMes = mesEntriesNoTransfer.filter((e) => e.type === 'despesa').reduce((s, e) => s + Number(e.value), 0);
   const saldoMes = receitaMes - despesaMes;
 
   // Capa
@@ -98,7 +100,7 @@ export function generateReportPdf(input: ReportPdfInput): void {
   }
 
   const cats: Record<string, number> = {};
-  mesEntries.filter((e) => e.type === 'despesa').forEach((e) => {
+  mesEntriesNoTransfer.filter((e) => e.type === 'despesa').forEach((e) => {
     const c = e.category || 'Outros';
     cats[c] = (cats[c] || 0) + Number(e.value);
   });

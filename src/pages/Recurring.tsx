@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { useFinancialData } from '../hooks/useFinancialData';
+import { useAppContext } from '../context/AppContext';
 import { addRecurrent, deleteRecurrent, generateEntriesFromRecurrents } from '../services/persistUserData';
-import type { Recurrent } from '../types/userData';
 import { DEFAULT_CATEGORIES, DEFAULT_ACCOUNTS } from '../constants/defaults';
 import { Modal } from '../components/ui/Modal';
-import { Repeat, Plus, Trash2, PlayCircle } from 'lucide-react';
+import { Plus, Trash2, PlayCircle } from 'lucide-react';
 
 const FREQ_OPTIONS = [
   { value: 'mensal', label: 'Mensal' },
@@ -18,8 +16,7 @@ const FREQ_OPTIONS = [
 ];
 
 export default function Recurring() {
-  const { user } = useAuth();
-  const { recurrents, entries, accounts, categories: userCategories, loading } = useFinancialData(user?.uid);
+  const { user, recurrents, entries, accounts, categories: userCategories, loading } = useAppContext();
   const categories = userCategories?.length ? userCategories : DEFAULT_CATEGORIES;
   const accountOptions = accounts?.length ? accounts : DEFAULT_ACCOUNTS;
 
@@ -129,13 +126,13 @@ export default function Recurring() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold">Recorrentes</h2>
-          <p className="text-zinc-500 text-sm">Lançamentos fixos (aluguel, assinaturas, salário, etc.)</p>
+          <p className="text-si-5 text-sm">Lançamentos fixos (aluguel, assinaturas, salário, etc.)</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={openAdd}
-            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2"
+            className="bg-blue-600 hover:bg-blue-500 text-si-1 px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> Novo recorrente
           </button>
@@ -144,7 +141,7 @@ export default function Recurring() {
               type="button"
               onClick={handleGenerateMonth}
               disabled={busy}
-              className="bg-emerald-600/80 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 disabled:opacity-50 border border-emerald-500/30"
+              className="bg-emerald-600/80 hover:bg-emerald-600 text-si-1 px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 disabled:opacity-50 border border-emerald-500/30"
             >
               <PlayCircle className="w-4 h-4" /> Gerar lançamentos do mês
             </button>
@@ -168,20 +165,20 @@ export default function Recurring() {
 
       {activeRecurrents.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-[#0a0f18] rounded-2xl border border-white/5 p-6">
-            <p className="text-zinc-500 text-sm">Receitas fixas</p>
+          <div className="bg-si-card rounded-2xl border border-si-border p-6">
+            <p className="text-si-5 text-sm">Receitas fixas</p>
             <p className="text-2xl font-bold text-emerald-400">
               R$ {totalReceita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </div>
-          <div className="bg-[#0a0f18] rounded-2xl border border-white/5 p-6">
-            <p className="text-zinc-500 text-sm">Despesas fixas</p>
+          <div className="bg-si-card rounded-2xl border border-si-border p-6">
+            <p className="text-si-5 text-sm">Despesas fixas</p>
             <p className="text-2xl font-bold text-rose-400">
               R$ {totalDespesa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </div>
-          <div className="bg-[#0a0f18] rounded-2xl border border-white/5 p-6">
-            <p className="text-zinc-500 text-sm">Saldo fixo</p>
+          <div className="bg-si-card rounded-2xl border border-si-border p-6">
+            <p className="text-si-5 text-sm">Saldo fixo</p>
             <p className={`text-2xl font-bold ${totalReceita - totalDespesa >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               R$ {(totalReceita - totalDespesa).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
@@ -189,9 +186,9 @@ export default function Recurring() {
         </div>
       )}
 
-      <div className="bg-[#0a0f18] rounded-2xl border border-white/5 overflow-hidden">
+      <div className="bg-si-card rounded-2xl border border-si-border overflow-hidden">
         {recurrents.length === 0 ? (
-          <div className="p-12 text-center text-zinc-500">
+          <div className="p-12 text-center text-si-5">
             Nenhum lançamento recorrente. Clique em &quot;Novo recorrente&quot; para cadastrar (ex.: aluguel, assinaturas, salário).
           </div>
         ) : (
@@ -199,11 +196,11 @@ export default function Recurring() {
             {recurrents.map((r) => (
               <div
                 key={r.id}
-                className="flex items-center justify-between gap-4 p-6 hover:bg-white/[0.02] transition-colors"
+                className="flex items-center justify-between gap-4 p-6 hover:bg-si-over-1 transition-colors"
               >
                 <div className="min-w-0">
-                  <p className="font-bold text-zinc-100 truncate">{r.desc}</p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="font-bold text-si-1 truncate">{r.desc}</p>
+                  <p className="text-xs text-si-5">
                     {r.category ?? '—'} · dia {r.day} · {FREQ_OPTIONS.find((f) => f.value === (r.freq || 'mensal'))?.label ?? r.freq ?? 'Mensal'}
                     {r.account ? ` · ${r.account}` : ''}
                   </p>
@@ -215,7 +212,7 @@ export default function Recurring() {
                   <button
                     type="button"
                     onClick={() => setDeletingId(r.id)}
-                    className="p-2 rounded-lg hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400"
+                    className="p-2 rounded-lg hover:bg-rose-500/20 text-si-4 hover:text-rose-400"
                     title="Excluir"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -235,43 +232,43 @@ export default function Recurring() {
             </div>
           )}
           <div>
-            <label className="block text-xs font-medium text-zinc-500 mb-1">Tipo</label>
+            <label className="block text-xs font-medium text-si-5 mb-1">Tipo</label>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setFormType('despesa')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium ${formType === 'despesa' ? 'bg-rose-600 text-white' : 'bg-white/5 text-zinc-400 border border-white/10'}`}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-medium ${formType === 'despesa' ? 'bg-rose-600 text-si-1' : 'bg-si-over-2 text-si-4 border border-si-border-md'}`}
               >
                 Despesa
               </button>
               <button
                 type="button"
                 onClick={() => setFormType('receita')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium ${formType === 'receita' ? 'bg-emerald-600 text-white' : 'bg-white/5 text-zinc-400 border border-white/10'}`}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-medium ${formType === 'receita' ? 'bg-emerald-600 text-si-1' : 'bg-si-over-2 text-si-4 border border-si-border-md'}`}
               >
                 Receita
               </button>
             </div>
           </div>
           <div>
-            <label htmlFor="rc-desc" className="block text-xs font-medium text-zinc-500 mb-1">Descrição</label>
+            <label htmlFor="rc-desc" className="block text-xs font-medium text-si-5 mb-1">Descrição</label>
             <input
               id="rc-desc"
               type="text"
               value={formDesc}
               onChange={(e) => setFormDesc(e.target.value)}
               placeholder="Ex: Aluguel, Netflix"
-              className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
               required
             />
           </div>
           <div>
-            <label htmlFor="rc-category" className="block text-xs font-medium text-zinc-500 mb-1">Categoria</label>
+            <label htmlFor="rc-category" className="block text-xs font-medium text-si-5 mb-1">Categoria</label>
             <select
               id="rc-category"
               value={formCategory}
               onChange={(e) => setFormCategory(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
             >
               <option value="">—</option>
               {categories.map((c) => (
@@ -280,7 +277,7 @@ export default function Recurring() {
             </select>
           </div>
           <div>
-            <label htmlFor="rc-value" className="block text-xs font-medium text-zinc-500 mb-1">Valor (R$)</label>
+            <label htmlFor="rc-value" className="block text-xs font-medium text-si-5 mb-1">Valor (R$)</label>
             <input
               id="rc-value"
               type="text"
@@ -288,13 +285,13 @@ export default function Recurring() {
               value={formValue}
               onChange={(e) => setFormValue(e.target.value.replace(/[^0-9,.-]/, ''))}
               placeholder="0,00"
-              className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
               required
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="rc-day" className="block text-xs font-medium text-zinc-500 mb-1">Dia (1–31)</label>
+              <label htmlFor="rc-day" className="block text-xs font-medium text-si-5 mb-1">Dia (1–31)</label>
               <input
                 id="rc-day"
                 type="number"
@@ -302,16 +299,16 @@ export default function Recurring() {
                 max={31}
                 value={formDay}
                 onChange={(e) => setFormDay(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
               />
             </div>
             <div>
-              <label htmlFor="rc-freq" className="block text-xs font-medium text-zinc-500 mb-1">Frequência</label>
+              <label htmlFor="rc-freq" className="block text-xs font-medium text-si-5 mb-1">Frequência</label>
               <select
                 id="rc-freq"
                 value={formFreq}
                 onChange={(e) => setFormFreq(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
               >
                 {FREQ_OPTIONS.map((f) => (
                   <option key={f.value} value={f.value}>{f.label}</option>
@@ -320,12 +317,12 @@ export default function Recurring() {
             </div>
           </div>
           <div>
-            <label htmlFor="rc-account" className="block text-xs font-medium text-zinc-500 mb-1">Conta (opcional)</label>
+            <label htmlFor="rc-account" className="block text-xs font-medium text-si-5 mb-1">Conta (opcional)</label>
             <select
               id="rc-account"
               value={formAccount}
               onChange={(e) => setFormAccount(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[#05080d] border border-white/10 text-zinc-100 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
             >
               <option value="">—</option>
               {accountOptions.map((a) => (
@@ -337,14 +334,14 @@ export default function Recurring() {
             <button
               type="submit"
               disabled={busy}
-              className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm"
+              className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm"
             >
               {busy ? 'Salvando…' : 'Adicionar'}
             </button>
             <button
               type="button"
               onClick={() => setModalOpen(false)}
-              className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-400 font-medium text-sm hover:bg-white/10"
+              className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3"
             >
               Cancelar
             </button>
@@ -353,20 +350,20 @@ export default function Recurring() {
       </Modal>
 
       <Modal open={deletingId !== null} onClose={() => setDeletingId(null)} title="Excluir recorrente">
-        <p className="text-zinc-400 text-sm mb-6">Tem certeza que deseja excluir este lançamento recorrente?</p>
+        <p className="text-si-4 text-sm mb-6">Tem certeza que deseja excluir este lançamento recorrente?</p>
         <div className="flex gap-3">
           <button
             type="button"
             onClick={() => deletingId != null && handleDelete(deletingId)}
             disabled={busy}
-            className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-bold text-sm"
+            className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-si-1 font-bold text-sm"
           >
             {busy ? 'Excluindo…' : 'Excluir'}
           </button>
           <button
             type="button"
             onClick={() => setDeletingId(null)}
-            className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-400 font-medium text-sm hover:bg-white/10"
+            className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3"
           >
             Cancelar
           </button>

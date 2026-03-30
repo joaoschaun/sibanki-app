@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
-import type { UserData, Entry, Recurrent, InvestorProfile } from '../types/userData';
+import type { UserData, Entry, Recurrent, InvestorProfile, CreditAccount, CreditObligation, CreditSnapshot } from '../types/userData';
+import { calculateFinScore } from '../utils/calculateScore';
 
 /**
  * Lê os dados do documento único users/{uid} (mesmo modelo do app atual).
@@ -52,9 +53,23 @@ export function useFinancialData(userId: string | undefined) {
   const recurrents: Recurrent[] = data?.recurrents ?? [];
   const commProfile = data?.commProfile ?? null;
   const commBookmarks = data?.commBookmarks ?? [];
+  const achievements: Record<string, { date?: string }> = data?.achievements ?? {};
+  const creditAccounts: CreditAccount[] = data?.creditAccounts ?? [];
+  const creditObligations: CreditObligation[] = data?.creditObligations ?? [];
+  const creditSnapshot: CreditSnapshot | null = data?.creditSnapshot ?? null;
 
-  // Score: pode vir de um campo futuro ou ser calculado (como no app atual)
-  const score = typeof (data as any)?.finScore === 'number' ? (data as any).finScore : 90;
+  // Score: calculado em tempo real; finScore salvo no Firestore tem prioridade
+  const score = useMemo(() => {
+    if (typeof (data as any)?.finScore === 'number') return (data as any).finScore as number;
+    return calculateFinScore(
+      entries,
+      goals,
+      budgets as Record<string, unknown>,
+      accountBalances,
+      accountMeta as Record<string, { incluirNaSoma?: boolean }>,
+      creditSnapshot,
+    );
+  }, [entries, goals, budgets, accountBalances, accountMeta, creditSnapshot, data]);
 
   return {
     data,
@@ -72,7 +87,11 @@ export function useFinancialData(userId: string | undefined) {
     recurrents,
     commProfile,
     commBookmarks,
+    creditAccounts,
+    creditObligations,
+    creditSnapshot,
     investorProfile: (data?.investorProfile as InvestorProfile | undefined) ?? undefined,
     score,
+    achievements,
   };
 }

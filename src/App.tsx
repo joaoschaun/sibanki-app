@@ -1,102 +1,161 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './hooks/useAuth';
-import { useFinancialData } from './hooks/useFinancialData';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { AppProvider, useAppContext } from './context/AppContext';
+/**
+ * Acao 6 (29/03/2026): Multi-tenant rollout.
+ * TenantProvider resolve o tenant pelo host, aplica branding (CSS vars,
+ * favicon, document.title, custom CSS) e expoe features flags.
+ * Para o dominio principal (sibanki.com.br) usa fallback DEFAULT_BRANDING.
+ */
+import { TenantProvider } from './hooks/useTenant';
+import { useUiStore } from './store/useUiStore';
 import { useTheme } from './hooks/useTheme';
 import { Sidebar, type SidebarOpenGroup } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
-import Dashboard from './pages/Dashboard';
-import Transactions from './pages/Transactions';
-import Recurring from './pages/Recurring';
-import Accounts from './pages/Accounts';
-import Cards from './pages/Cards';
-import Planning from './pages/Planning';
-import Budget from './pages/Budget';
-import Growth from './pages/Growth';
-import Social from './pages/Social';
-import Consultant from './pages/Consultant';
-import Education from './pages/Education';
-import Profile from './pages/Profile';
-import Settings from './pages/Settings';
-import NotFound from './pages/NotFound';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { OnboardingTour } from './components/ui/OnboardingTour';
+import { BriefingModal } from './components/ui/BriefingModal';
+import { SibcoinToastContainer } from './components/sibcoin/SibcoinToastContainer';
 import Login from './pages/Login';
 import { useState } from 'react';
-import SolucaoCredito from './pages/solutions/SolucaoCredito';
-import SolucaoConsorcio from './pages/solutions/SolucaoConsorcio';
-import SolucaoSeguro from './pages/solutions/SolucaoSeguro';
-import SolucaoInvestimentosParceiros from './pages/solutions/SolucaoInvestimentosParceiros';
 
-export default function App() {
-  const { user, loading } = useAuth();
+// ── Lazy-loaded pages (code splitting — cada rota vira chunk separado) ──────
+const Dashboard   = lazy(() => import('./pages/Dashboard'));
+const Transactions= lazy(() => import('./pages/Transactions'));
+const Recurring   = lazy(() => import('./pages/Recurring'));
+const Accounts    = lazy(() => import('./pages/Accounts'));
+const Cards       = lazy(() => import('./pages/Cards'));
+const Planning    = lazy(() => import('./pages/Planning'));
+const Budget      = lazy(() => import('./pages/Budget'));
+const Growth      = lazy(() => import('./pages/Growth'));
+const Tools       = lazy(() => import('./pages/Tools'));
+const Social      = lazy(() => import('./pages/Social'));
+const Consultant  = lazy(() => import('./pages/Consultant'));
+const Education   = lazy(() => import('./pages/Education'));
+const Profile     = lazy(() => import('./pages/Profile'));
+const Settings    = lazy(() => import('./pages/Settings'));
+const Reports     = lazy(() => import('./pages/Reports'));
+const Calendar    = lazy(() => import('./pages/Calendar'));
+const Achievements= lazy(() => import('./pages/Achievements'));
+const NotFound    = lazy(() => import('./pages/NotFound'));
+const SolucaoCredito = lazy(() => import('./pages/solutions/SolucaoCredito'));
+const SolucaoConsorcio = lazy(() => import('./pages/solutions/SolucaoConsorcio'));
+const SolucaoSeguro = lazy(() => import('./pages/solutions/SolucaoSeguro'));
+const SolucaoInvestimentosParceiros = lazy(() => import('./pages/solutions/SolucaoInvestimentosParceiros'));
+// ── Novos módulos de expansão ────────────────────────────────────────────────
+const Cripto       = lazy(() => import('./pages/Cripto'));
+const Loja         = lazy(() => import('./pages/Loja'));
+const MeuCpf       = lazy(() => import('./pages/MeuCpf'));
+const MeusBoletos  = lazy(() => import('./pages/MeusBoletos'));
+const Sibcoin      = lazy(() => import('./pages/Sibcoin'));
+// Acao 12 (29/03/2026): Hub de Credito — visao consolidada do passivo financeiro
+const CreditHub    = lazy(() => import('./pages/CreditHub'));
+
+// ── Spinner reutilizável para Suspense ───────────────────────────────────────
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center py-24">
+      <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+    </div>
+  );
+}
+
+function OnboardingTourRedirect() {
+  const navigate = useNavigate();
+  return <OnboardingTour onComplete={() => navigate('/lancamentos', { replace: true })} />;
+}
+
+// ── Shell autenticado (usa AppContext — sem chamadas extras de hook) ──────────
+function AuthenticatedShell() {
+  const { user, authLoading, score, data, avatarURL } = useAppContext();
   const { theme } = useTheme();
-  const { score, data } = useFinancialData(user?.uid);
-  const avatarURL = data?.avatarURL ?? null;
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { sidebarCollapsed, toggleSidebar } = useUiStore();
   const [sidebarOpenGroup, setSidebarOpenGroup] = useState<SidebarOpenGroup>(null);
 
-  const toggleSidebar = () => {
-    setSidebarCollapsed((c) => {
-      const next = !c;
-      if (next) setSidebarOpenGroup(null);
-      return next;
-    });
+  const handleToggle = () => {
+    toggleSidebar();
+    if (!sidebarCollapsed) setSidebarOpenGroup(null);
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#05080d] flex items-center justify-center">
+      <div className="min-h-screen bg-si-bg flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (!user) {
-    return <Login />;
-  }
+  if (!user) return <Login />;
 
-  const rootBg =
-    theme === 'light'
-      ? 'bg-zinc-50 text-zinc-950'
-      : 'bg-[#05080d] text-zinc-100';
+  const rootBg = theme === 'light' ? 'bg-zinc-50 text-zinc-950' : 'bg-si-bg text-si-1';
 
   return (
-    <BrowserRouter>
-      <div className={`min-h-screen ${rootBg} font-sans flex overflow-hidden`}>
-        <Sidebar
-          userName={user.displayName || data?.name || undefined}
-          userEmail={user.email || undefined}
-          avatarURL={avatarURL ?? user.photoURL ?? undefined}
-          score={score}
-          collapsed={sidebarCollapsed}
-          openGroup={sidebarOpenGroup}
-          setOpenGroup={setSidebarOpenGroup}
-        />
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-          <Header onMenuClick={toggleSidebar} sidebarCollapsed={sidebarCollapsed} />
-          <main className="flex-1 overflow-y-auto p-8 space-y-8">
+    <div className={`min-h-screen ${rootBg} font-sans flex overflow-hidden`}>
+      <Sidebar
+        userName={user.displayName || data?.name || undefined}
+        userEmail={user.email || undefined}
+        avatarURL={avatarURL ?? undefined}
+        score={score}
+        collapsed={sidebarCollapsed}
+        openGroup={sidebarOpenGroup}
+        setOpenGroup={setSidebarOpenGroup}
+      />
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <Header onMenuClick={handleToggle} sidebarCollapsed={sidebarCollapsed} />
+        <main className="flex-1 overflow-y-auto p-8 space-y-8">
+          <Suspense fallback={<PageLoader />}>
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/contas" element={<Accounts />} />
-              <Route path="/cartoes" element={<Cards />} />
-              <Route path="/lancamentos" element={<Transactions />} />
-              <Route path="/recorrentes" element={<Recurring />} />
+              <Route path="/" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+              <Route path="/contas" element={<ErrorBoundary><Accounts /></ErrorBoundary>} />
+              <Route path="/cartoes" element={<ErrorBoundary><Cards /></ErrorBoundary>} />
+              <Route path="/lancamentos" element={<ErrorBoundary><Transactions /></ErrorBoundary>} />
+              <Route path="/recorrentes" element={<ErrorBoundary><Recurring /></ErrorBoundary>} />
               <Route path="/transactions" element={<Navigate to="/lancamentos" replace />} />
-              <Route path="/planejamento" element={<Planning />} />
-              <Route path="/orcamento" element={<Budget />} />
-              <Route path="/crescimento" element={<Growth />} />
-              <Route path="/social" element={<Social />} />
-              <Route path="/consultor-ia" element={<Consultant />} />
-              <Route path="/educacao" element={<Education />} />
-              <Route path="/solucoes/credito" element={<SolucaoCredito />} />
-              <Route path="/solucoes/consorcio" element={<SolucaoConsorcio />} />
-              <Route path="/solucoes/seguro" element={<SolucaoSeguro />} />
-              <Route path="/solucoes/investimentos" element={<SolucaoInvestimentosParceiros />} />
-              <Route path="/perfil" element={<Profile />} />
-              <Route path="/configuracoes" element={<Settings />} />
-              <Route path="*" element={<NotFound />} />
+              <Route path="/planejamento" element={<ErrorBoundary><Planning /></ErrorBoundary>} />
+              <Route path="/orcamento" element={<ErrorBoundary><Budget /></ErrorBoundary>} />
+              <Route path="/crescimento" element={<ErrorBoundary><Growth /></ErrorBoundary>} />
+              <Route path="/ferramentas" element={<ErrorBoundary><Tools /></ErrorBoundary>} />
+              <Route path="/social" element={<ErrorBoundary><Social /></ErrorBoundary>} />
+              <Route path="/consultor-ia" element={<ErrorBoundary><Consultant /></ErrorBoundary>} />
+              <Route path="/educacao" element={<ErrorBoundary><Education /></ErrorBoundary>} />
+              <Route path="/solucoes/credito" element={<ErrorBoundary><SolucaoCredito /></ErrorBoundary>} />
+              <Route path="/solucoes/consorcio" element={<ErrorBoundary><SolucaoConsorcio /></ErrorBoundary>} />
+              <Route path="/solucoes/seguro" element={<ErrorBoundary><SolucaoSeguro /></ErrorBoundary>} />
+              <Route path="/solucoes/investimentos" element={<ErrorBoundary><SolucaoInvestimentosParceiros /></ErrorBoundary>} />
+              {/* ── Novos módulos de expansão ──────────────────────────────── */}
+              {/* Acao 12: Hub de Credito */}
+              <Route path="/credito" element={<ErrorBoundary><CreditHub /></ErrorBoundary>} />
+              <Route path="/cripto" element={<ErrorBoundary><Cripto /></ErrorBoundary>} />
+              <Route path="/loja" element={<ErrorBoundary><Loja /></ErrorBoundary>} />
+              <Route path="/meu-cpf" element={<ErrorBoundary><MeuCpf /></ErrorBoundary>} />
+              <Route path="/meus-boletos" element={<ErrorBoundary><MeusBoletos /></ErrorBoundary>} />
+              <Route path="/sibcoin" element={<ErrorBoundary><Sibcoin /></ErrorBoundary>} />
+              <Route path="/perfil" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
+              <Route path="/configuracoes" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
+              <Route path="/relatorios" element={<ErrorBoundary><Reports /></ErrorBoundary>} />
+              <Route path="/calendario" element={<ErrorBoundary><Calendar /></ErrorBoundary>} />
+              <Route path="/conquistas" element={<ErrorBoundary><Achievements /></ErrorBoundary>} />
+              <Route path="*" element={<ErrorBoundary><NotFound /></ErrorBoundary>} />
             </Routes>
-          </main>
-        </div>
+          </Suspense>
+        </main>
       </div>
-    </BrowserRouter>
+      <OnboardingTourRedirect />
+      <BriefingModal />
+      <SibcoinToastContainer />
+    </div>
+  );
+}
+
+// Acao 6 (29/03/2026): TenantProvider externo resolve branding antes do AppProvider
+export default function App() {
+  return (
+    <TenantProvider>
+      <AppProvider>
+        <BrowserRouter>
+          <AuthenticatedShell />
+        </BrowserRouter>
+      </AppProvider>
+    </TenantProvider>
   );
 }

@@ -1,11 +1,133 @@
 @import 'tailwindcss';
 
+/* ─────────────────────────────────────────────
+   SEMANTIC COLOR TOKENS
+   dark defaults  →  overridden by [data-theme="light"]
+   ───────────────────────────────────────────── */
+:root {
+  /* Page / card surfaces */
+  --si-bg:      #05080d;
+  --si-card:    #0a0f18;
+
+  /* Borders */
+  --si-border:    rgba(255, 255, 255, 0.05);
+  --si-border-md: rgba(255, 255, 255, 0.10);
+  --si-border-lg: rgba(255, 255, 255, 0.15);
+  --si-border-xl: rgba(255, 255, 255, 0.20);
+
+  /* Text */
+  --si-text-1: #f4f4f5;   /* zinc-100 */
+  --si-text-2: #e4e4e7;   /* zinc-200 */
+  --si-text-3: #d4d4d8;   /* zinc-300 */
+  --si-text-4: #a1a1aa;   /* zinc-400 */
+  --si-text-5: #71717a;   /* zinc-500 */
+
+  /* Overlay / glass fills */
+  --si-over-1: rgba(255, 255, 255, 0.02);
+  --si-over-2: rgba(255, 255, 255, 0.05);
+  --si-over-3: rgba(255, 255, 255, 0.10);
+  --si-over-4: rgba(255, 255, 255, 0.15);
+
+  /* Zinc solids */
+  --si-zinc-8: #27272a;   /* zinc-800 */
+  --si-zinc-9: #18181b;   /* zinc-900 */
+
+  /* Body gradient */
+  --si-grad-a: rgba(16, 185, 129, 0.08);
+  --si-grad-b: rgba(59, 130, 246, 0.08);
+}
+
+[data-theme="light"] {
+  /* Page / card surfaces */
+  --si-bg:      #f0f4f8;
+  --si-card:    #ffffff;
+
+  /* Borders */
+  --si-border:    rgba(0, 0, 0, 0.06);
+  --si-border-md: rgba(0, 0, 0, 0.10);
+  --si-border-lg: rgba(0, 0, 0, 0.15);
+  --si-border-xl: rgba(0, 0, 0, 0.20);
+
+  /* Text */
+  --si-text-1: #09090b;   /* near black */
+  --si-text-2: #3f3f46;   /* zinc-700 */
+  --si-text-3: #52525b;   /* zinc-600 */
+  --si-text-4: #71717a;   /* zinc-500 */
+  --si-text-5: #a1a1aa;   /* zinc-400 */
+
+  /* Overlay / glass fills */
+  --si-over-1: rgba(0, 0, 0, 0.02);
+  --si-over-2: rgba(0, 0, 0, 0.04);
+  --si-over-3: rgba(0, 0, 0, 0.08);
+  --si-over-4: rgba(0, 0, 0, 0.12);
+
+  /* Zinc solids */
+  --si-zinc-8: #e4e4e7;
+  --si-zinc-9: #f4f4f5;
+
+  /* Body gradient */
+  --si-grad-a: rgba(16, 185, 129, 0.06);
+  --si-grad-b: rgba(59, 130, 246, 0.06);
+}
+
+/* ─────────────────────────────────────────────
+   TAILWIND v4: Register tokens as utility classes
+   bg-si-bg, text-si-1, border-si-border, etc.
+   ───────────────────────────────────────────── */
+@theme inline {
+  --color-si-bg:        var(--si-bg);
+  --color-si-card:      var(--si-card);
+
+  --color-si-border:    var(--si-border);
+  --color-si-border-md: var(--si-border-md);
+  --color-si-border-lg: var(--si-border-lg);
+  --color-si-border-xl: var(--si-border-xl);
+
+  --color-si-1:  var(--si-text-1);
+  --color-si-2:  var(--si-text-2);
+  --color-si-3:  var(--si-text-3);
+  --color-si-4:  var(--si-text-4);
+  --color-si-5:  var(--si-text-5);
+
+  --color-si-over-1: var(--si-over-1);
+  --color-si-over-2: var(--si-over-2);
+  --color-si-over-3: var(--si-over-3);
+  --color-si-over-4: var(--si-over-4);
+
+  --color-si-zinc-8: var(--si-zinc-8);
+  --color-si-zinc-9: var(--si-zinc-9);
+}
+
+/* ─────────────────────────────────────────────
+   BASE STYLES
+   ───────────────────────────────────────────── */
 :root {
   font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
 }
+
 body {
   margin: 0;
   min-height: 100vh;
-  background: #05080d;
-  color: #f0f4f8;
+  background-color: var(--si-bg);
+  background-image:
+    radial-gradient(circle at 15% 50%, var(--si-grad-a), transparent 25%),
+    radial-gradient(circle at 85% 30%, var(--si-grad-b), transparent 25%);
+  background-attachment: fixed;
+  color: var(--si-text-1);
+}
+
+/* Custom Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--si-border-md);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--si-border-lg);
 }

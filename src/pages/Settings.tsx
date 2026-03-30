@@ -1,27 +1,54 @@
-import { useState, useRef } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { useFinancialData } from '../hooks/useFinancialData';
+import { useEffect, useState, useRef } from 'react';
+import { useAppContext } from '../context/AppContext';
 import { resetUserData, updateUserDoc } from '../services/persistUserData';
-import type { Entry } from '../types/userData';
+import type { Entry, Investment, Goal, Recurrent } from '../types/userData';
 import { generateReportPdf } from '../utils/generateReportPdf';
 import { Modal } from '../components/ui/Modal';
-import { Database, Trash2, Upload, FileDown, FileText } from 'lucide-react';
+import { Database, Trash2, Upload, FileDown, FileText, MapPin, ArrowRight, Sparkles } from 'lucide-react';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
+import { useLanguage } from '../hooks/useLanguage';
+import { useDashboardMode } from '../hooks/useDashboardMode';
+/** Acao 18: Modo Sugestivo (insights proativos da IA) */
+import { useSuggestiveMode } from '../hooks/useSuggestiveMode';
 
 export default function Settings() {
-  const { user } = useAuth();
-  const { data, entries, accounts, accountBalances, cards, goals, investments, budgets, categories, recurrents, loading } = useFinancialData(user?.uid);
+  const { user, data, entries, accounts, accountBalances, cards, goals, investments, budgets, categories, recurrents, loading } = useAppContext();
   const userName = user?.displayName ?? (data?.name as string) ?? '';
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [backupDone, setBackupDone] = useState(false);
   const [importMessage, setImportMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  /** Acao 17: ativo enquanto o Gemini categoriza lancamentos do CSV */
+  const [aiCategorizing, setAiCategorizing] = useState(false);
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null);
+  const [planType, setPlanType] = useState<'gratuito' | 'pro'>('gratuito');
+  const [telegramEnabled, setTelegramEnabled] = useState(false);
+  const [whatsEnabled, setWhatsEnabled] = useState(false);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { language, setLanguage } = useLanguage();
+  const { mode: dashboardMode, setMode: setDashboardMode } = useDashboardMode();
+  /** Acao 18 */
+  const { suggestiveMode, toggleSuggestiveMode } = useSuggestiveMode();
+  const quickActions = [
+    { label: 'Novo lançamento', hint: 'Ir para Lançamentos', to: '/lancamentos' },
+    { label: 'Cadastrar conta', hint: 'Ir para Contas', to: '/contas' },
+    { label: 'Cadastrar cartão', hint: 'Ir para Cartões', to: '/cartoes' },
+    { label: 'Criar meta', hint: 'Ir para Planejamento', to: '/planejamento' },
+    { label: 'Abrir Consultor IA', hint: 'Ir para Consultor', to: '/consultor-ia' },
+  ] as const;
+
+  useEffect(() => {
+    const s = (data as any)?.settings;
+    if (!s) return;
+    if (s.planType === 'pro' || s.planType === 'gratuito') setPlanType(s.planType);
+    setTelegramEnabled(Boolean(s.telegramEnabled));
+    setWhatsEnabled(Boolean(s.whatsEnabled));
+  }, [data]);
 
   const handleBackupJson = () => {
     const payload = {
@@ -73,13 +100,13 @@ export default function Settings() {
           id: typeof (e as Entry).id === 'number' ? (e as Entry).id : base + i,
         })) as Entry[];
         const newEntries = [...entries, ...importedEntries];
-        const newInvestments = [...investments, ...(parsed.investments ?? [])];
-        const newGoals = [...goals, ...(parsed.goals ?? [])];
+        const newInvestments = [...investments, ...(parsed.investments ?? [])] as Investment[];
+        const newGoals = [...goals, ...(parsed.goals ?? [])] as Goal[];
         const newBudgets = { ...budgets, ...(parsed.budgets ?? {}) };
         const newCategories = [...new Set([...categories, ...(parsed.categories ?? [])])];
         const newAccounts = [...new Set([...accounts, ...(parsed.accounts ?? [])])];
         const newAccountBalances = { ...accountBalances, ...(parsed.accountBalances ?? {}) };
-        const newRecurrents = Array.isArray(parsed.recurrents) ? parsed.recurrents : recurrents;
+        const newRecurrents = (Array.isArray(parsed.recurrents) ? parsed.recurrents : recurrents) as Recurrent[];
         await updateUserDoc(user.uid, {
           entries: newEntries,
           investments: newInvestments,
@@ -128,6 +155,17 @@ export default function Settings() {
     return out;
   };
 
+  /**
+   * Acao 17 -- handleImportCsv com categorizacao IA
+   *
+   * Fluxo:
+   *   1. Parseia CSV (formato: Data,Tipo,Descricao,Categoria,Valor,Conta)
+   *   2. Identifica lancamentos sem categoria definida (vazia ou "Outros")
+   *   3. Chama Cloud Function aiCategorizeCsv (Gemini Flash, batch de 50)
+   *   4. Aplica categorias sugeridas e salva no Firestore
+   *
+   * Fallback gracioso: se a IA falhar, usa "Outros" e continua normalmente.
+   */
   const handleImportCsv = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user?.uid) return;
@@ -147,6 +185,8 @@ export default function Settings() {
         }
         const base = Date.now();
         const newEntries: Entry[] = [];
+
+        // Passagem 1: parseia todas as linhas
         for (let i = 1; i < lines.length; i++) {
           const cols = parseCsvLine(lines[i]);
           if (cols.length < 5) continue;
@@ -155,7 +195,7 @@ export default function Settings() {
           const tipoStr = (cols[1] ?? '').toLowerCase();
           const type = tipoStr.includes('rec') ? 'receita' : 'despesa';
           const desc = (cols[2] ?? '').trim();
-          const category = (cols[3] ?? '').trim() || 'Outros';
+          const category = (cols[3] ?? '').trim() || '';
           const value = parseFloat((cols[4] ?? '0').replace(',', '.')) || 0;
           const account = (cols[5] ?? '').trim();
           newEntries.push({
@@ -163,23 +203,63 @@ export default function Settings() {
             type,
             date,
             desc: desc || undefined,
-            category,
+            category: category || 'Outros',
             value,
             account: account || undefined,
           });
         }
+
         if (newEntries.length === 0) {
           setImportMessage({ type: 'err', text: 'Nenhum lançamento válido no CSV. Use cabeçalho: Data,Tipo,Descrição,Categoria,Valor,Conta' });
           setBusy(false);
           return;
         }
+
+        // Passagem 2: identifica itens sem categoria para enriquecer com IA
+        const toAiCategorize = newEntries
+          .map((entry, idx) => ({ index: idx, entry }))
+          .filter(({ entry }) => !entry.category || entry.category === 'Outros')
+          .map(({ index, entry }) => ({
+            index,
+            desc: entry.desc ?? '',
+            type: entry.type,
+          }));
+
+        if (toAiCategorize.length > 0) {
+          try {
+            setAiCategorizing(true);
+            const BATCH_SIZE = 50;
+            for (let b = 0; b < toAiCategorize.length; b += BATCH_SIZE) {
+              const batch = toAiCategorize.slice(b, b + BATCH_SIZE);
+              const fns = getFunctions(undefined, 'southamerica-east1');
+              const categorize = httpsCallable<
+                { items: { index: number; desc: string; type: string }[] },
+                { results: { index: number; category: string }[] }
+              >(fns, 'aiCategorizeCsv');
+              const result = await categorize({ items: batch });
+              for (const { index, category } of result.data.results) {
+                newEntries[index].category = category;
+              }
+            }
+          } catch {
+            // Fallback silencioso: mantém "Outros" se IA falhar
+          } finally {
+            setAiCategorizing(false);
+          }
+        }
+
         const merged = [...entries, ...newEntries];
         await updateUserDoc(user.uid, { entries: merged });
-        setImportMessage({ type: 'ok', text: `${newEntries.length} lançamentos importados.` });
+
+        const aiNote = toAiCategorize.length > 0
+          ? ` (${toAiCategorize.length} categorizados por IA)`
+          : '';
+        setImportMessage({ type: 'ok', text: `${newEntries.length} lançamentos importados${aiNote}.` });
       } catch (err) {
         setImportMessage({ type: 'err', text: (err instanceof Error ? err.message : 'Erro ao importar CSV.') });
       } finally {
         setBusy(false);
+        setAiCategorizing(false);
       }
     };
     reader.readAsText(file, 'UTF-8');
@@ -207,6 +287,28 @@ export default function Settings() {
     }
   };
 
+  const handleSaveIntegrations = async () => {
+    if (!user?.uid) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await updateUserDoc(user.uid, {
+        settings: {
+          ...((data as any)?.settings ?? {}),
+          planType,
+          telegramEnabled,
+          whatsEnabled,
+        },
+      } as any);
+      setImportMessage({ type: 'ok', text: 'Configurações de plano e integrações salvas.' });
+      setTimeout(() => setImportMessage(null), 2500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar integrações.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -219,7 +321,7 @@ export default function Settings() {
     <div className="space-y-8">
       <div>
         <h2 className="text-3xl font-bold">Configurações</h2>
-        <p className="text-zinc-500 text-sm">Tema, backup e opções avançadas</p>
+        <p className="text-si-5 text-sm">Tema, backup e opções avançadas</p>
       </div>
 
       {error && (
@@ -228,39 +330,207 @@ export default function Settings() {
         </div>
       )}
 
-      <section className="bg-[#0a0f18] rounded-2xl border border-white/5 p-6 space-y-4">
+      <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h3 className="font-semibold text-zinc-100">Tema do aplicativo</h3>
-            <p className="text-zinc-500 text-sm">
+            <h3 className="font-semibold text-si-1">Tema do aplicativo</h3>
+            <p className="text-si-5 text-sm">
               Escolha entre modo escuro e claro. Sua preferência fica salva neste navegador.
             </p>
           </div>
           <button
             type="button"
             onClick={toggleTheme}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-zinc-200 hover:bg-white/10"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-sm text-si-2 hover:bg-si-over-3"
           >
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#05080d] border border-white/10 text-xs">
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-si-bg border border-si-border-md text-xs">
               {theme === 'light' ? '☀' : '🌙'}
             </span>
             {theme === 'light' ? 'Tema claro' : 'Tema escuro'}
           </button>
         </div>
+        <div className="pt-4 border-t border-si-border">
+          <h3 className="font-semibold text-si-1">Preferência do Dashboard</h3>
+          <p className="text-si-5 text-sm mb-3">
+            Escolha o estilo visual dos cards do Dashboard.
+          </p>
+          <div className="flex flex-wrap gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => setDashboardMode('padrao')}
+              className={`px-4 py-2 rounded-xl border text-sm ${dashboardMode === 'padrao' ? 'bg-blue-600 border-blue-600 text-si-1' : 'bg-si-over-2 border-si-border-md text-si-3 hover:bg-si-over-3'}`}
+            >
+              Padrão
+            </button>
+            <button
+              type="button"
+              onClick={() => setDashboardMode('caixa')}
+              className={`px-4 py-2 rounded-xl border text-sm ${dashboardMode === 'caixa' ? 'bg-blue-600 border-blue-600 text-si-1' : 'bg-si-over-2 border-si-border-md text-si-3 hover:bg-si-over-3'}`}
+            >
+              Modo caixa
+            </button>
+          </div>
+
+          {/* Acao 18 — Modo Sugestivo */}
+          <h3 className="font-semibold text-si-1 mt-4">Modo Sugestivo</h3>
+          <p className="text-si-5 text-sm mb-3">
+            Quando ativo, a IA gera insights financeiros proativos automaticamente ao
+            abrir o Dashboard. Desative para um modo mais silencioso.
+          </p>
+          <button
+            type="button"
+            onClick={toggleSuggestiveMode}
+            aria-pressed={suggestiveMode}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm transition-colors ${
+              suggestiveMode
+                ? 'bg-blue-600 border-blue-600 text-si-1'
+                : 'bg-si-over-2 border-si-border-md text-si-3 hover:bg-si-over-3'
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            {suggestiveMode ? 'Modo Sugestivo ativo' : 'Modo Sugestivo inativo'}
+          </button>
+
+          <h3 className="font-semibold text-si-1">Idioma</h3>
+          <p className="text-si-5 text-sm mb-3">
+            Define o idioma preferido da interface.
+          </p>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as 'pt-BR' | 'en-US')}
+            className="px-4 py-2 rounded-xl bg-si-bg border border-si-border-md text-sm text-si-2"
+            aria-label="Selecionar idioma"
+          >
+            <option value="pt-BR">Português (Brasil)</option>
+            <option value="en-US">English (US)</option>
+          </select>
+        </div>
       </section>
 
-      <section className="bg-[#0a0f18] rounded-2xl border border-white/5 p-6 space-y-4">
+      <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
         <div>
-          <h3 className="font-semibold text-zinc-100 flex items-center gap-2">
+          <h3 className="font-semibold text-si-1">Meu plano</h3>
+          <p className="text-si-5 text-sm mt-1">Visualize e altere seu plano atual do app.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setPlanType('gratuito')}
+            className={`px-4 py-2 rounded-xl border text-sm ${planType === 'gratuito' ? 'bg-blue-600 border-blue-600 text-si-1' : 'bg-si-over-2 border-si-border-md text-si-3 hover:bg-si-over-3'}`}
+          >
+            Gratuito
+          </button>
+          <button
+            type="button"
+            onClick={() => setPlanType('pro')}
+            className={`px-4 py-2 rounded-xl border text-sm ${planType === 'pro' ? 'bg-blue-600 border-blue-600 text-si-1' : 'bg-si-over-2 border-si-border-md text-si-3 hover:bg-si-over-3'}`}
+          >
+            Pro
+          </button>
+        </div>
+      </section>
+
+      <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
+        <div>
+          <h3 className="font-semibold text-si-1">Notificações e integrações</h3>
+          <p className="text-si-5 text-sm mt-1">Ative canais de notificações, lembretes e alertas.</p>
+        </div>
+        <label className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md">
+          <span className="text-sm text-si-3">Resumo semanal por e-mail</span>
+          <input type="checkbox" className="rounded border-si-border-xl bg-si-bg" />
+        </label>
+        <label className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md">
+          <span className="text-sm text-si-3">Alertas de orçamento (quando ultrapassar limite)</span>
+          <input type="checkbox" className="rounded border-si-border-xl bg-si-bg" />
+        </label>
+        <label className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md">
+          <span className="text-sm text-si-3">Telegram</span>
+          <input
+            type="checkbox"
+            checked={telegramEnabled}
+            onChange={(e) => setTelegramEnabled(e.target.checked)}
+            className="rounded border-si-border-xl bg-si-bg"
+          />
+        </label>
+        <label className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md">
+          <span className="text-sm text-si-3">WhatsApp</span>
+          <input
+            type="checkbox"
+            checked={whatsEnabled}
+            onChange={(e) => setWhatsEnabled(e.target.checked)}
+            className="rounded border-si-border-xl bg-si-bg"
+          />
+        </label>
+        <button
+          type="button"
+          onClick={handleSaveIntegrations}
+          disabled={busy}
+          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 text-sm font-bold"
+        >
+          {busy ? 'Salvando…' : 'Salvar plano e integrações'}
+        </button>
+      </section>
+
+      <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
+        <div>
+          <h3 className="font-semibold text-si-1 flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-blue-400" />
+            Tour guiado
+          </h3>
+          <p className="text-si-5 text-sm mt-1">
+            Apresentação interativa de todos os módulos do app. Aparece automaticamente no primeiro acesso.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            localStorage.removeItem('sibanki_tour_done');
+            window.location.reload();
+          }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 font-medium text-sm"
+        >
+          <MapPin className="w-4 h-4" />
+          Rever o tour guiado
+        </button>
+      </section>
+
+      <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
+        <div>
+          <h3 className="font-semibold text-si-1">Ações rápidas</h3>
+          <p className="text-si-5 text-sm mt-1">
+            Atalhos para tarefas frequentes, sem precisar navegar por vários módulos.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {quickActions.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => navigate(item.to)}
+              className="w-full inline-flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-si-over-2 hover:bg-si-over-3 border border-si-border-md text-left"
+            >
+              <span>
+                <span className="block text-sm font-medium text-si-2">{item.label}</span>
+                <span className="block text-xs text-si-5">{item.hint}</span>
+              </span>
+              <ArrowRight className="w-4 h-4 text-si-5" />
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
+        <div>
+          <h3 className="font-semibold text-si-1 flex items-center gap-2">
             <Database className="w-5 h-5 text-blue-400" />
             Dados e Backup
           </h3>
-          <p className="text-zinc-500 text-sm mt-1">Exporte seus dados financeiros em JSON (mesmo formato do app atual).</p>
+          <p className="text-si-5 text-sm mt-1">Exporte seus dados financeiros em JSON (mesmo formato do app atual).</p>
         </div>
         <button
           type="button"
           onClick={handleBackupJson}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-medium text-sm"
         >
           <Database className="w-4 h-4" />
           Backup JSON
@@ -268,13 +538,13 @@ export default function Settings() {
         {backupDone && (
           <p className="text-emerald-400 text-sm">Backup baixado com sucesso.</p>
         )}
-        <p className="text-zinc-500 text-xs">
+        <p className="text-si-5 text-xs">
           Faça backup regularmente. O JSON inclui lançamentos, metas, investimentos, contas, cartões e configurações.
         </p>
 
-        <div className="pt-4 border-t border-white/5">
-          <p className="font-medium text-zinc-300 text-sm mb-2">Relatório PDF</p>
-          <p className="text-zinc-500 text-xs mb-2">Gera um PDF com resumo do mês, lançamentos e despesas por categoria.</p>
+        <div className="pt-4 border-t border-si-border">
+          <p className="font-medium text-si-3 text-sm mb-2">Relatório PDF</p>
+          <p className="text-si-5 text-xs mb-2">Gera um PDF com resumo do mês, lançamentos e despesas por categoria.</p>
           <button
             type="button"
             onClick={() => {
@@ -291,16 +561,16 @@ export default function Settings() {
                 setImportMessage({ type: 'err', text: (err instanceof Error ? err.message : 'Erro ao gerar PDF.') });
               }
             }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-zinc-200 font-medium text-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 font-medium text-sm"
           >
             <FileDown className="w-4 h-4" />
             Gerar relatório PDF
           </button>
         </div>
 
-        <div className="pt-6 border-t border-white/5">
-          <p className="font-medium text-zinc-300 text-sm mb-3">Importar dados</p>
-          <p className="text-zinc-500 text-xs mb-3">
+        <div className="pt-6 border-t border-si-border">
+          <p className="font-medium text-si-3 text-sm mb-3">Importar dados</p>
+          <p className="text-si-5 text-xs mb-3">
             JSON: mescla com seus dados atuais. CSV: adiciona lançamentos (cabeçalho: Data,Tipo,Descrição,Categoria,Valor,Conta).
           </p>
           {importMessage && (
@@ -323,7 +593,7 @@ export default function Settings() {
               type="button"
               disabled={busy}
               onClick={() => jsonInputRef.current?.click()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-zinc-200 font-medium text-sm disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 font-medium text-sm disabled:opacity-50"
             >
               <Upload className="w-4 h-4" />
               Importar JSON
@@ -340,57 +610,57 @@ export default function Settings() {
               type="button"
               disabled={busy}
               onClick={() => csvInputRef.current?.click()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-zinc-200 font-medium text-sm disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 font-medium text-sm disabled:opacity-50"
             >
               <Upload className="w-4 h-4" />
-              Importar CSV (lançamentos)
+              {aiCategorizing ? (<><Sparkles className="w-3 h-3 mr-1 animate-pulse inline" />Categorizando com IA...</>) : 'Importar CSV (lançamentos)'}
             </button>
           </div>
         </div>
       </section>
 
-      <section className="bg-[#0a0f18] rounded-2xl border border-white/5 p-6 space-y-4">
+      <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
         <div>
-          <h3 className="font-semibold text-zinc-100 flex items-center gap-2">
+          <h3 className="font-semibold text-si-1 flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-400" />
             Privacidade e termos
           </h3>
-          <p className="text-zinc-500 text-sm mt-1">Termos de uso e política de privacidade do app.</p>
+          <p className="text-si-5 text-sm mt-1">Termos de uso e política de privacidade do app.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => setLegalModal('terms')}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-zinc-200 font-medium text-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 font-medium text-sm"
           >
             <FileText className="w-4 h-4" /> Termos de Uso
           </button>
           <button
             type="button"
             onClick={() => setLegalModal('privacy')}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-zinc-200 font-medium text-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 font-medium text-sm"
           >
             <FileText className="w-4 h-4" /> Política de Privacidade
           </button>
         </div>
       </section>
 
-      <section className="bg-[#0a0f18] rounded-2xl border border-white/5 p-6 space-y-4">
+      <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
         <div>
-          <h3 className="font-semibold text-zinc-100 flex items-center gap-2">
+          <h3 className="font-semibold text-si-1 flex items-center gap-2">
             <Trash2 className="w-5 h-5 text-rose-400" />
             Recomeçar do zero
           </h3>
-          <p className="text-zinc-500 text-sm mt-1">Apaga todos os lançamentos, metas, contas, cartões e investimentos. Sua conta de login permanece.</p>
+          <p className="text-si-5 text-sm mt-1">Apaga todos os lançamentos, metas, contas, cartões e investimentos. Sua conta de login permanece.</p>
         </div>
-        <p className="text-zinc-400 text-sm">
+        <p className="text-si-4 text-sm">
           Esta ação não pode ser desfeita. Faça um backup antes se quiser guardar seus dados.
         </p>
         <button
           type="button"
           onClick={handleReset}
           disabled={busy}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white font-medium text-sm disabled:opacity-50 border border-rose-500/30"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-si-1 font-medium text-sm disabled:opacity-50 border border-rose-500/30"
         >
           <Trash2 className="w-4 h-4" />
           {busy ? 'Apagando…' : 'Apagar tudo e recomeçar'}
@@ -402,25 +672,25 @@ export default function Settings() {
         onClose={() => setLegalModal(null)}
         title={legalModal === 'terms' ? 'Termos de Uso' : 'Política de Privacidade'}
       >
-        <div className="max-h-[70vh] overflow-y-auto p-1 text-zinc-400 text-sm space-y-4">
+        <div className="max-h-[70vh] overflow-y-auto p-1 text-si-4 text-sm space-y-4">
           {legalModal === 'terms' && (
             <>
-              <p><strong className="text-zinc-200">1. Aceitação.</strong> Ao utilizar o Sibanki, você concorda com estes Termos. Se não concordar, não utilize o aplicativo.</p>
-              <p><strong className="text-zinc-200">2. Uso.</strong> O app é para controle financeiro pessoal. Use de forma lícita e responsável.</p>
-              <p><strong className="text-zinc-200">3. Conta.</strong> Você é responsável por manter a confidencialidade do login.</p>
-              <p><strong className="text-zinc-200">4. Dados.</strong> Seus dados são armazenados de forma segura. Faça backup periodicamente.</p>
-              <p><strong className="text-zinc-200">5. Modificações.</strong> Podemos alterar estes Termos. O uso continuado após alterações constitui aceitação.</p>
-              <p><strong className="text-zinc-200">6. Legislação.</strong> Regidos pela legislação brasileira (CDC e LGPD – Lei nº 13.709/2018).</p>
+              <p><strong className="text-si-2">1. Aceitação.</strong> Ao utilizar o Sibanki, você concorda com estes Termos. Se não concordar, não utilize o aplicativo.</p>
+              <p><strong className="text-si-2">2. Uso.</strong> O app é para controle financeiro pessoal. Use de forma lícita e responsável.</p>
+              <p><strong className="text-si-2">3. Conta.</strong> Você é responsável por manter a confidencialidade do login.</p>
+              <p><strong className="text-si-2">4. Dados.</strong> Seus dados são armazenados de forma segura. Faça backup periodicamente.</p>
+              <p><strong className="text-si-2">5. Modificações.</strong> Podemos alterar estes Termos. O uso continuado após alterações constitui aceitação.</p>
+              <p><strong className="text-si-2">6. Legislação.</strong> Regidos pela legislação brasileira (CDC e LGPD – Lei nº 13.709/2018).</p>
             </>
           )}
           {legalModal === 'privacy' && (
             <>
-              <p><strong className="text-zinc-200">1. Dados coletados.</strong> E-mail, nome, dados financeiros que você insere (lançamentos, contas, metas) para oferecer o serviço.</p>
-              <p><strong className="text-zinc-200">2. Uso.</strong> Para operar o app, personalizar sua experiência e melhorar o serviço.</p>
-              <p><strong className="text-zinc-200">3. Armazenamento.</strong> Dados no Firebase (Google), com medidas de segurança.</p>
-              <p><strong className="text-zinc-200">4. Compartilhamento.</strong> Não vendemos seus dados. Podemos compartilhar apenas quando exigido por lei.</p>
-              <p><strong className="text-zinc-200">5. Seus direitos (LGPD).</strong> Acessar, corrigir, solicitar exclusão, revogar consentimento e exportar dados (JSON/CSV nas Configurações).</p>
-              <p><strong className="text-zinc-200">6. Contato.</strong> Para dúvidas ou exercício dos direitos, use o e-mail de suporte disponível no app.</p>
+              <p><strong className="text-si-2">1. Dados coletados.</strong> E-mail, nome, dados financeiros que você insere (lançamentos, contas, metas) para oferecer o serviço.</p>
+              <p><strong className="text-si-2">2. Uso.</strong> Para operar o app, personalizar sua experiência e melhorar o serviço.</p>
+              <p><strong className="text-si-2">3. Armazenamento.</strong> Dados no Firebase (Google), com medidas de segurança.</p>
+              <p><strong className="text-si-2">4. Compartilhamento.</strong> Não vendemos seus dados. Podemos compartilhar apenas quando exigido por lei.</p>
+              <p><strong className="text-si-2">5. Seus direitos (LGPD).</strong> Acessar, corrigir, solicitar exclusão, revogar consentimento e exportar dados (JSON/CSV nas Configurações).</p>
+              <p><strong className="text-si-2">6. Contato.</strong> Para dúvidas ou exercício dos direitos, use o e-mail de suporte disponível no app.</p>
             </>
           )}
         </div>

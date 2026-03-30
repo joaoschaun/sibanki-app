@@ -1,6 +1,19 @@
 import { db } from '../firebase';
-import { doc, setDoc } from 'firebase/firestore';
-import type { Entry, UserData, Card, CardPurchase, Goal, Investment, Recurrent, CommProfile } from '../types/userData';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { calculateFinScore } from '../utils/calculateScore';
+import type {
+  Entry,
+  UserData,
+  Card,
+  CardPurchase,
+  Goal,
+  Investment,
+  Recurrent,
+  CommProfile,
+  CreditAccount,
+  CreditObligation,
+  CreditSnapshot,
+} from '../types/userData';
 
 /**
  * Atualiza apenas alguns campos do documento users/{uid} (merge).
@@ -11,7 +24,46 @@ export async function updateUserDoc(
   payload: Partial<UserData>
 ): Promise<void> {
   const ref = doc(db, 'users', uid);
-  await setDoc(ref, { ...payload, updated: new Date().toISOString() }, { merge: true });
+  const nextPayload: Partial<UserData> & { updated: string } = {
+    ...payload,
+    updated: new Date().toISOString(),
+  };
+
+  const shouldRecalculateScore =
+    'entries' in payload ||
+    'goals' in payload ||
+    'budgets' in payload ||
+    'accountBalances' in payload ||
+    'accountMeta' in payload ||
+    'creditSnapshot' in payload;
+
+  if (shouldRecalculateScore) {
+    const snap = await getDoc(ref);
+    const current = (snap.exists() ? snap.data() : {}) as Partial<UserData>;
+    const merged = { ...current, ...payload } as Partial<UserData>;
+    nextPayload.finScore = calculateFinScore(
+      merged.entries ?? [],
+      merged.goals ?? [],
+      (merged.budgets ?? {}) as Record<string, unknown>,
+      merged.accountBalances ?? {},
+      merged.accountMeta ?? {},
+      merged.creditSnapshot ?? null,
+    );
+  }
+
+  await setDoc(ref, nextPayload, { merge: true });
+}
+
+export async function setCreditAccounts(uid: string, creditAccounts: CreditAccount[]): Promise<void> {
+  await updateUserDoc(uid, { creditAccounts });
+}
+
+export async function setCreditObligations(uid: string, creditObligations: CreditObligation[]): Promise<void> {
+  await updateUserDoc(uid, { creditObligations });
+}
+
+export async function setCreditSnapshot(uid: string, creditSnapshot: CreditSnapshot | null): Promise<void> {
+  await updateUserDoc(uid, { creditSnapshot });
 }
 
 /**
@@ -20,6 +72,60 @@ export async function updateUserDoc(
 export async function addEntry(uid: string, currentEntries: Entry[], newEntry: Omit<Entry, 'id'>): Promise<void> {
   const id = Date.now();
   const entries = [...currentEntries, { ...newEntry, id } as Entry];
+  await updateUserDoc(uid, { entries });
+}
+
+/**
+ * Adiciona uma transferência entre contas (gravando 2 entries):
+ * - despesa (conta origem) com `isTransfer=true`
+ * - receita (conta destino) com `isTransfer=true`
+ *
+ * Observação: a UI/relatórios devem excluir transfers quando calcularem receitas/despesas.
+ */
+export async function addTransfer(
+  uid: string,
+  currentEntries: Entry[],
+  opts: { from: string; to: string; date: string; value: number }
+): Promise<void> {
+  const from = opts.from?.trim();
+  const to = opts.to?.trim();
+  const date = opts.date;
+  const val = Math.round((opts.value ?? 0) * 100) / 100;
+
+  if (!from || !to || from === to) return;
+  if (!date) return;
+  if (!Number.isFinite(val) || val <= 0) return;
+
+  const now = Date.now();
+
+  const despesa: Omit<Entry, 'id'> = {
+    date,
+    type: 'despesa',
+    desc: `Transf. para ${to}`,
+    category: 'Transferencia',
+    value: val,
+    account: from,
+    status: 'pago',
+    isTransfer: true,
+  };
+
+  const receita: Omit<Entry, 'id'> = {
+    date,
+    type: 'receita',
+    desc: `Transf. de ${from}`,
+    category: 'Transferencia',
+    value: val,
+    account: to,
+    status: 'pago',
+    isTransfer: true,
+  };
+
+  const entries: Entry[] = [
+    ...currentEntries,
+    { ...despesa, id: now } as Entry,
+    { ...receita, id: now + 1 } as Entry,
+  ];
+
   await updateUserDoc(uid, { entries });
 }
 
@@ -222,7 +328,13 @@ export async function updateCard(
   uid: string,
   currentCards: Card[],
   cardId: number,
-  updates: Partial<Pick<Card, 'name' | 'limit' | 'closeDay' | 'dueDay' | 'flag' | 'color'>>
+  updates: Partial<
+    Pick<Card, 'name' | 'limit' | 'closeDay' | 'dueDay' | 'flag' | 'color'> & {
+      bank?: string;
+      annualFee?: number;
+      annualFeeMonth?: number;
+    }
+  >
 ): Promise<void> {
   const cards = currentCards.map((c) =>
     c.id === cardId ? { ...c, ...updates } : c
@@ -370,8 +482,15 @@ export async function updateAccountBalance(
   await updateUserDoc(uid, { accountBalances });
 }
 
-/** Meta de uma conta (cor, incluir na soma, tipo). */
-export type AccountMetaEntry = { cor?: string; incluirNaSoma?: boolean; tipo?: string };
+/** Meta de uma conta (cor, incluir na soma, tipo e limite opcional). */
+export type AccountMetaEntry = {
+  cor?: string;
+  incluirNaSoma?: boolean;
+  tipo?: string;
+  temChequeEspecial?: boolean;
+  chequeEspecialLimite?: number;
+  chequeEspecialJurosPct?: number;
+};
 
 /**
  * Remove uma conta (accounts, accountBalances, accountMeta). Entries que referenciam a conta permanecem com o nome (conta removida).
@@ -565,6 +684,7 @@ export async function resetUserData(
     commPosts: [],
     commBookmarks: [],
     investorProfile: null,
+    finScore: calculateFinScore([], [], {}, { 'Carteira física': 0 }, {}, null),
     ...(keep.name !== undefined && { name: keep.name }),
     ...(keep.email !== undefined && { email: keep.email }),
   };

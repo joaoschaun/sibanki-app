@@ -24,20 +24,20 @@ export function SolutionPartnerPage({ meta }: { meta: SolutionMeta }) {
     <div className="space-y-8 max-w-3xl">
       <Link
         to="/"
-        className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+        className="inline-flex items-center gap-2 text-sm text-si-5 hover:text-si-3 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" /> Voltar ao início
       </Link>
 
-      <div className="flex flex-wrap gap-2 p-1 rounded-xl bg-zinc-900/80 border border-white/10 w-fit">
+      <div className="flex flex-wrap gap-2 p-1 rounded-xl bg-si-zinc-9/80 border border-si-border-md w-fit">
         {TABS.map((t) => (
           <Link
             key={t.path}
             to={t.path}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
               meta.slug === t.slug
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                ? 'bg-blue-600 text-si-1 shadow-lg shadow-blue-600/20'
+                : 'text-si-4 hover:text-si-2 hover:bg-si-over-2'
             }`}
           >
             {t.label}
@@ -51,16 +51,16 @@ export function SolutionPartnerPage({ meta }: { meta: SolutionMeta }) {
         </div>
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-blue-400 mb-1">Soluções · Parceiros</p>
-          <h1 className="text-3xl font-bold text-white mb-2">{meta.title}</h1>
-          <p className="text-lg text-zinc-400 font-medium">{meta.purpose}</p>
+          <h1 className="text-3xl font-bold text-si-1 mb-2">{meta.title}</h1>
+          <p className="text-lg text-si-4 font-medium">{meta.purpose}</p>
         </div>
       </div>
 
-      <p className="text-zinc-400 leading-relaxed">{meta.description}</p>
+      <p className="text-si-4 leading-relaxed">{meta.description}</p>
 
-      <div className="rounded-xl border border-white/10 bg-zinc-900/40 p-6">
-        <h2 className="font-semibold text-white mb-2">Em breve</h2>
-        <p className="text-sm text-zinc-500">
+      <div className="rounded-xl border border-si-border-md bg-si-zinc-9/40 p-6">
+        <h2 className="font-semibold text-si-1 mb-2">Em breve</h2>
+        <p className="text-sm text-si-5">
           Aqui você verá ofertas e parceiros selecionados para esta categoria, com transparência e foco no que faz sentido para o seu perfil.
         </p>
       </div>

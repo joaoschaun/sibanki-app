@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
+import { useSibcoin } from '../../hooks/useSibcoin';
 
-export type SidebarOpenGroup = 'planejamento' | 'crescimento' | 'social' | 'solucoes' | null;
+export type SidebarOpenGroup = 'planejamento' | 'crescimento' | 'social' | 'solucoes' | 'expansao' | null;
 import {
   LayoutDashboard,
   Wallet,
@@ -21,6 +22,14 @@ import {
   UsersRound,
   Shield,
   LineChart,
+  FileBarChart,
+  Calendar,
+  Trophy,
+  Wrench,
+  Bitcoin,
+  ShoppingBag,
+  FileText,
+  Coins,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -68,6 +77,9 @@ const navGroups: { id: NavGroupId; label: string; icon: LucideIcon; items: SubIt
       { label: 'Investimentos', path: '/crescimento', icon: Growth },
       { label: 'Consultor IA', path: '/consultor-ia', icon: MessageCircle },
       { label: 'Educação', path: '/educacao', icon: BookOpen },
+      { label: 'Relatórios', path: '/relatorios', icon: FileBarChart },
+      { label: 'Calendário', path: '/calendario', icon: Calendar },
+      { label: 'Conquistas', path: '/conquistas', icon: Trophy },
     ],
   },
   {
@@ -87,6 +99,18 @@ const navGroups: { id: NavGroupId; label: string; icon: LucideIcon; items: SubIt
       { label: 'Investimentos', sub: 'Parceiros e produtos', path: '/solucoes/investimentos', icon: LineChart },
     ],
   },
+  {
+    id: 'expansao',
+    label: 'Expansão',
+    icon: Coins,
+    items: [
+      { label: 'SibCoin', sub: 'Recompensas e missões', path: '/sibcoin', icon: Coins },
+      { label: 'Cripto', sub: 'Exchange e ativos digitais', path: '/cripto', icon: Bitcoin },
+      { label: 'Loja Sibanki', sub: 'Ofertas e cashback', path: '/loja', icon: ShoppingBag },
+      { label: 'Meu CPF', sub: 'Score e proteção', path: '/meu-cpf', icon: Shield },
+      { label: 'Meus Boletos', sub: 'DDA automático', path: '/meus-boletos', icon: FileText },
+    ],
+  },
 ];
 
 const flatItems: { icon: LucideIcon; label: string; sub?: string; path: string }[] = [
@@ -95,6 +119,8 @@ const flatItems: { icon: LucideIcon; label: string; sub?: string; path: string }
   { icon: CreditCard, label: 'Cartões', sub: 'Faturas', path: '/cartoes' },
   { icon: Receipt, label: 'Lançamentos', sub: 'Receitas e despesas', path: '/lancamentos' },
   { icon: Repeat, label: 'Recorrentes', sub: 'Fixos mensais', path: '/recorrentes' },
+  // Itens abaixo dos grupos (aparecen depois de Soluções)
+  { icon: Wrench, label: 'Ferramentas', sub: 'Calculadoras financeiras', path: '/ferramentas' },
   { icon: User, label: 'Perfil', sub: 'Nome e foto', path: '/perfil' },
   { icon: Settings, label: 'Configurações', sub: 'Backup e dados', path: '/configuracoes' },
 ];
@@ -103,6 +129,7 @@ const SOLUTIONS_PREFIX = '/solucoes/';
 
 function pathMatchesGroup(pathname: string, group: (typeof navGroups)[0]) {
   if (group.id === 'solucoes') return pathname.startsWith('/solucoes');
+  if (group.id === 'expansao') return ['/sibcoin', '/cripto', '/loja', '/meu-cpf', '/meus-boletos'].includes(pathname);
   return group.items.some((it) => it.path === pathname);
 }
 
@@ -111,10 +138,14 @@ const groupDefaultPath: Record<NonNullable<NavGroupId>, string> = {
   crescimento: '/crescimento',
   social: '/social',
   solucoes: '/solucoes/credito',
+  expansao: '/cripto',
 };
+
+const TIER_EMOJI: Record<string, string> = { bronze: '🥉', silver: '🥈', gold: '🥇', diamond: '💎' };
 
 export function Sidebar({ userName, userEmail, avatarURL, score, collapsed, openGroup, setOpenGroup }: SidebarProps) {
   const location = useLocation();
+  const { balance, tier } = useSibcoin();
 
   useEffect(() => {
     if (collapsed) setOpenGroup(null);
@@ -123,7 +154,7 @@ export function Sidebar({ userName, userEmail, avatarURL, score, collapsed, open
   const isSolutionsRoute = location.pathname.startsWith(SOLUTIONS_PREFIX);
 
   const linkActiveClassExpanded = (isActive: boolean) =>
-    isActive ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20' : 'text-zinc-500 hover:bg-white/5';
+    isActive ? 'bg-gradient-to-r from-blue-600/15 to-transparent text-blue-400 border-l-2 border-blue-500 shadow-[inset_1px_0_10px_rgba(59,130,246,0.05)]' : 'text-si-5 hover:bg-si-over-2 hover:text-si-3 transition-colors';
 
   /** Modo minimizado: sem caixa azul — só ícone em destaque + barra lateral fina */
   const linkCollapsedClass = (isActive: boolean) =>
@@ -131,13 +162,13 @@ export function Sidebar({ userName, userEmail, avatarURL, score, collapsed, open
       'relative max-w-full justify-center rounded-none',
       isActive
         ? 'text-blue-400 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-7 before:w-0.5 before:rounded-full before:bg-blue-500'
-        : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04]'
+        : 'text-si-5 hover:text-si-3 hover:bg-white/[0.04]'
     );
 
   return (
     <aside
       className={cn(
-        'bg-[#0a0f18] border-r border-white/5 flex flex-col shrink-0 transition-[width] duration-200 ease-out isolate',
+        'bg-si-card/60 backdrop-blur-xl border-r border-si-border flex flex-col shrink-0 transition-[width] duration-200 ease-out isolate shadow-[4px_0_24px_rgba(0,0,0,0.05)]',
         collapsed ? 'w-[72px] max-w-[72px] overflow-x-clip overflow-y-auto' : 'w-[280px] overflow-x-clip'
       )}
       onMouseLeave={() => {
@@ -146,14 +177,14 @@ export function Sidebar({ userName, userEmail, avatarURL, score, collapsed, open
     >
       <div
         className={cn(
-          'flex flex-col items-center text-center border-b border-white/5 shrink-0',
+          'flex flex-col items-center text-center border-b border-si-border shrink-0',
           collapsed ? 'p-3' : 'p-8'
         )}
       >
         <div className={cn('relative mb-2', !collapsed && 'mb-4')}>
           <div
             className={cn(
-              'rounded-full border-2 border-blue-500/30 bg-[#111f30] flex items-center justify-center font-bold text-zinc-400 overflow-hidden',
+              'rounded-full border-2 border-transparent bg-gradient-to-tr from-[#111f30] to-[#1a2b42] flex items-center justify-center font-bold text-si-4 overflow-hidden shadow-[0_0_15px_rgba(59,130,246,0.15)]',
               collapsed ? 'w-11 h-11 text-sm' : 'w-20 h-20 text-2xl'
             )}
           >
@@ -164,21 +195,29 @@ export function Sidebar({ userName, userEmail, avatarURL, score, collapsed, open
             )}
           </div>
           {!collapsed && (
-            <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-4 border-[#0a0f18]" />
+            <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-4 border-si-card" />
           )}
         </div>
         {!collapsed && (
           <>
             <h2 className="font-bold text-lg">{userName || 'Usuário'}</h2>
-            <p className="text-xs text-zinc-500 mb-4 truncate w-full px-2">{userEmail || '...'}</p>
+            <p className="text-xs text-si-5 mb-4 truncate w-full px-2">{userEmail || '...'}</p>
             <div className="flex gap-2 flex-wrap justify-center">
               <span className="bg-green-500/10 text-green-500 text-[10px] font-bold px-2 py-1 rounded-full border border-green-500/20">
                 Score: {score}
               </span>
-              <span className="bg-zinc-800 text-zinc-400 text-[10px] font-bold px-2 py-1 rounded-full">
+              <span className="bg-si-zinc-8 text-si-4 text-[10px] font-bold px-2 py-1 rounded-full">
                 GRATUITO
               </span>
             </div>
+            <Link
+              to="/sibcoin"
+              className="mt-3 flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-bold px-3 py-1.5 rounded-full hover:bg-amber-500/20 transition-colors"
+            >
+              <Coins className="w-3.5 h-3.5" />
+              {balance.toLocaleString('pt-BR')} SC
+              <span className="ml-0.5">{TIER_EMOJI[tier] ?? '🥉'}</span>
+            </Link>
           </>
         )}
       </div>
@@ -214,7 +253,7 @@ export function Sidebar({ userName, userEmail, avatarURL, score, collapsed, open
             (isGroupActive || (group.id === 'solucoes' && isSolutionsRoute));
           const groupBtnExpanded = cn(
             'w-full flex items-center rounded-xl transition-all text-left gap-4 px-4 py-3',
-            isGroupActive ? 'text-blue-400' : 'text-zinc-500 hover:bg-white/5'
+            isGroupActive ? 'text-blue-400' : 'text-si-5 hover:bg-si-over-2'
           );
 
           return (
@@ -230,7 +269,7 @@ export function Sidebar({ userName, userEmail, avatarURL, score, collapsed, open
                   )}
                 >
                   <group.icon
-                    className={cn('w-5 h-5 shrink-0 mx-auto', groupHighlight ? 'text-blue-400' : 'text-zinc-500')}
+                    className={cn('w-5 h-5 shrink-0 mx-auto', groupHighlight ? 'text-blue-400' : 'text-si-5')}
                   />
                 </Link>
               ) : (
@@ -257,7 +296,7 @@ export function Sidebar({ userName, userEmail, avatarURL, score, collapsed, open
                   )}
                   aria-hidden={!isOpen}
                 >
-                  <div className="pl-4 ml-4 border-l border-white/10 space-y-0.5 py-1">
+                  <div className="pl-4 ml-4 border-l border-si-border-md space-y-0.5 py-1">
                     {group.items.map((sub) => {
                       const isActive =
                         group.id === 'solucoes'
@@ -269,7 +308,7 @@ export function Sidebar({ userName, userEmail, avatarURL, score, collapsed, open
                           to={sub.path}
                           className={cn(
                             'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
-                            isActive ? 'bg-blue-600/10 text-blue-400' : 'text-zinc-500 hover:bg-white/5'
+                            isActive ? 'bg-blue-600/10 text-blue-400' : 'text-si-5 hover:bg-si-over-2'
                           )}
                         >
                           <sub.icon className="w-4 h-4 opacity-70 shrink-0" />
@@ -295,7 +334,7 @@ export function Sidebar({ userName, userEmail, avatarURL, score, collapsed, open
               title={collapsed ? item.label : undefined}
               className={cn(
                 'w-full flex items-center transition-all group outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
-                collapsed ? cn('py-2.5 px-0', linkCollapsedClass(isActive)) : cn('rounded-xl gap-4 px-4 py-3', linkActiveClassExpanded(isActive))
+                collapsed ? cn('py-2.5 px-0', linkCollapsedClass(isActive)) : cn('gap-4 px-4 py-3', linkActiveClassExpanded(isActive), isActive ? 'rounded-r-xl' : 'rounded-xl')
               )}
             >
               <item.icon className={cn('w-5 h-5 shrink-0', isActive ? 'text-blue-400' : '')} />

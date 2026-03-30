@@ -31,17 +31,17 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
       aria-labelledby="modal-title"
     >
       <div
-        className="bg-[#0a0f18] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl"
+        className="bg-si-card border border-si-border-md rounded-2xl w-full max-w-md shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b border-white/5">
+        <div className="flex items-center justify-between p-6 border-b border-si-border">
           <h2 id="modal-title" className="text-lg font-bold">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white"
+            className="p-2 rounded-lg hover:bg-si-over-2 text-si-4 hover:text-si-1"
             aria-label="Fechar"
           >
             ✕
