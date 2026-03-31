@@ -1,8 +1,12 @@
 # Análise Profunda do Projeto Virtus Financeiro (Sibanki)
 
 **Data:** 30 de Março de 2026  
-**Autor:** Manus AI (revisão técnica contra o repositório em 30/03/2026)  
 **Escopo:** Estrutura, código, arquitetura, segurança, performance e recomendações.
+
+### Proveniência
+
+- **Análise original:** [Manus AI](https://www.manus.im/) — relatório estruturado sobre o Virtus/Sibanki (stack, riscos, recomendações).
+- **Revisão no repositório (30/03/2026):** conferência contra o código real (tamanhos de `app.js` vs `index.html`, regras Firestore, `formatReply` no Consultor, `vite.config`, presença de WhatsApp nas Functions) e ajustes de redação neste arquivo.
 
 ---
 
@@ -116,4 +120,4 @@ No legado, `innerHTML` sem sanitização é risco conhecido. No React, o escape 
 
 ---
 
-*Fim do relatório (revisão incorporando tamanhos reais do legado, status WhatsApp, nuance Context/Zustand e mitigação parcial no Consultor).*
+*Fim do relatório. Base: análise Manus AI; revisão factual e créditos acima.*
