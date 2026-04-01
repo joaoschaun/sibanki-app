@@ -107,6 +107,7 @@ Implementacao inicial A/B (landing):
 - arquivo: `public/assets/js/landing.js` (funcao `applyHeroAB()`)
 - medicao minima: exposicao e clique de CTA por variante em `localStorage` (`sib_landing_ab_metrics`)
 - continuidade da variante: persistida em `sib_landing_ab` e propagada para links `/app?ab=...`
+- painel `?abdebug=1`: botoes **Zerar contagens** e **Limpar variante salva** para testes manuais sem DevTools
 
 ---
 

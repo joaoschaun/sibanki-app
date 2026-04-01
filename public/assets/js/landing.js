@@ -238,26 +238,49 @@
       '<strong>AB Debug</strong>' +
       '<button type="button" id="abDebugClose" style="background:transparent;border:0;color:#9ca3af;cursor:pointer;font-size:14px;">x</button>' +
       '</div>' +
-      '<div style="margin-bottom:8px;">Variante ativa: <strong>' + variant.toUpperCase() + '</strong></div>' +
+      '<div style="margin-bottom:8px;">Variante ativa: <strong id="abDebugVariantValue">' + variant.toUpperCase() + '</strong></div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
       '<div style="padding:8px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;">' +
       '<div style="font-weight:600;margin-bottom:4px;">A</div>' +
-      '<div>Exposicoes: ' + (va.exposure || 0) + '</div>' +
-      '<div>CTA clicks: ' + (va.cta_click || 0) + '</div>' +
+      '<div>Exposicoes: <span id="ab-metric-a-exp">' + (va.exposure || 0) + '</span></div>' +
+      '<div>CTA clicks: <span id="ab-metric-a-cta">' + (va.cta_click || 0) + '</span></div>' +
       '</div>' +
       '<div style="padding:8px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;">' +
       '<div style="font-weight:600;margin-bottom:4px;">B</div>' +
-      '<div>Exposicoes: ' + (vb.exposure || 0) + '</div>' +
-      '<div>CTA clicks: ' + (vb.cta_click || 0) + '</div>' +
+      '<div>Exposicoes: <span id="ab-metric-b-exp">' + (vb.exposure || 0) + '</span></div>' +
+      '<div>CTA clicks: <span id="ab-metric-b-cta">' + (vb.cta_click || 0) + '</span></div>' +
       '</div>' +
       '</div>' +
-      '<div style="margin-top:8px;color:#9ca3af;">Dica: limpe com localStorage.removeItem(\"sib_landing_ab_metrics\")</div>';
+      '<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;">' +
+      '<button type="button" id="abDebugResetMetrics" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(59,130,246,0.5);background:rgba(59,130,246,0.15);color:#93c5fd;cursor:pointer;font-size:11px;">Zerar contagens (metricas)</button>' +
+      '<button type="button" id="abDebugClearVariant" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:#d1d5db;cursor:pointer;font-size:11px;">Limpar variante salva (localStorage)</button>' +
+      '</div>' +
+      '<div style="margin-top:8px;color:#9ca3af;font-size:11px;">Apos zerar, recarregue a pagina para nova exposicao.</div>';
 
     document.body.appendChild(panel);
     var close = document.getElementById('abDebugClose');
     if(close){
       close.addEventListener('click', function(){
         panel.remove();
+      });
+    }
+    var resetBtn = document.getElementById('abDebugResetMetrics');
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        try { localStorage.removeItem('sib_landing_ab_metrics'); } catch (e) {}
+        var ids = ['ab-metric-a-exp', 'ab-metric-a-cta', 'ab-metric-b-exp', 'ab-metric-b-cta'];
+        ids.forEach(function(id){
+          var el = document.getElementById(id);
+          if(el) el.textContent = '0';
+        });
+      });
+    }
+    var clearVarBtn = document.getElementById('abDebugClearVariant');
+    if(clearVarBtn){
+      clearVarBtn.addEventListener('click', function(){
+        try { localStorage.removeItem('sib_landing_ab'); } catch (e) {}
+        var vEl = document.getElementById('abDebugVariantValue');
+        if(vEl) vEl.textContent = '(limpa — use ?ab=a ou ?ab=b)';
       });
     }
   }
