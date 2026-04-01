@@ -47,10 +47,13 @@ const CATEGORY_MAP: Record<string, AssetCategory> = {
   polkadot:        'Layer1',
 };
 
-const fmtBRL = (v: number) =>
-  v >= 1_000
-    ? `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    : `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+const fmtBRL = (v: number | null | undefined) => {
+  const n = Number(v ?? 0);
+  if (!Number.isFinite(n)) return 'R$ —';
+  return n >= 1_000
+    ? `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+};
 
 const CATEGORY_COLOR: Record<string, string> = {
   Layer1:     'bg-blue-500/10 text-blue-400',
@@ -123,12 +126,12 @@ export default function Cripto() {
         id:        c.id,
         symbol:    (c.symbol as string).toUpperCase(),
         name:      c.name,
-        price:     c.current_price,
-        change24h: c.price_change_percentage_24h ?? 0,
-        volume24h: c.total_volume ?? 0,
-        imageUrl:  c.image,
+        price:     Number(c.current_price ?? 0) || 0,
+        change24h: Number(c.price_change_percentage_24h ?? 0) || 0,
+        volume24h: Number(c.total_volume ?? 0) || 0,
+        imageUrl:  typeof c.image === 'string' ? c.image : '',
         category:  CATEGORY_MAP[c.id] ?? 'Layer1',
-        marketCap: c.market_cap,
+        marketCap: c.market_cap != null ? Number(c.market_cap) : undefined,
       })));
       setLastUpdate(new Date());
       setApiError(false);
@@ -331,8 +334,8 @@ export default function Cripto() {
           <div className="grid grid-cols-2 gap-6">
             <div>
               <p className="text-xs text-si-5 mb-2 uppercase tracking-wide">Compra (BID)</p>
-              {(assets[0]
-                ? [0,1,2,3,4].map((i) => assets[0].price - (i + 1) * 20)
+              {(assets[0] && Number.isFinite(Number(assets[0].price))
+                ? [0,1,2,3,4].map((i) => Number(assets[0].price) - (i + 1) * 20)
                 : [348_480, 348_450, 348_420, 348_390, 348_360]
               ).map((p, i) => (
                 <div key={i} className="flex justify-between text-sm py-1">
@@ -343,8 +346,8 @@ export default function Cripto() {
             </div>
             <div>
               <p className="text-xs text-si-5 mb-2 uppercase tracking-wide">Venda (ASK)</p>
-              {(assets[0]
-                ? [0,1,2,3,4].map((i) => assets[0].price + (i + 1) * 20)
+              {(assets[0] && Number.isFinite(Number(assets[0].price))
+                ? [0,1,2,3,4].map((i) => Number(assets[0].price) + (i + 1) * 20)
                 : [348_520, 348_550, 348_580, 348_610, 348_640]
               ).map((p, i) => (
                 <div key={i} className="flex justify-between text-sm py-1">
