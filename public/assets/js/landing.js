@@ -175,6 +175,30 @@
     }
   }
 
+  function applyHeroAB(){
+    var params = new URLSearchParams(window.location.search);
+    var variant = (params.get('ab') || 'a').toLowerCase();
+    if(variant !== 'b') return;
+
+    var hook = document.querySelector('.hero-hook');
+    var h1 = document.querySelector('.hero-copy h1');
+    var oneliner = document.querySelector('.hero-oneliner');
+    var desc = document.querySelector('.hero-desc');
+
+    if(hook){
+      hook.textContent = 'Pare de adivinhar. Comece a decidir melhor todo mes.';
+    }
+    if(h1){
+      h1.innerHTML = '<span class="hero-eyebrow">Menos planilha. Mais direcao.</span>Sua vida financeira <span class="hero-title-accent">organizada com prioridade</span>.';
+    }
+    if(oneliner){
+      oneliner.textContent = 'O Sibanki cruza contas, cartoes, orcamento e credito para mostrar sua proxima melhor acao. Registre no app, WhatsApp ou Telegram.';
+    }
+    if(desc){
+      desc.textContent = 'Comece gratis, sem cartao, e receba clareza pratica para melhorar caixa, rotina e tranquilidade financeira em minutos.';
+    }
+  }
+
   window.selectPlan = selectPlan;
   window.goToPlan = goToPlan;
   window.setSelectedPlan = persistSelectedPlan;
@@ -186,5 +210,6 @@
     setupParallax();
     setupTiltCards();
     captureReferral();
+    applyHeroAB();
   });
 })();

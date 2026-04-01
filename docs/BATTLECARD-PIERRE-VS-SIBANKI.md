@@ -102,6 +102,10 @@ Implicacao: o Pierre tende a ganhar no primeiro impacto; o Sibanki tende a vence
 2. validar 2 variacoes de headline com teste A/B simples
 3. iniciar painel semanal "Pierre vs Sibanki" (mensagem, preco, prova social, novas features)
 
+Implementacao inicial A/B (landing):
+- controle por querystring: `?ab=a` (padrao) e `?ab=b` (variacao focada em "prioridade e proxima acao")
+- arquivo: `public/assets/js/landing.js` (funcao `applyHeroAB()`)
+
 ---
 
 Documento de trabalho para orientacao de produto, growth e comunicacao comercial.
