@@ -105,6 +105,8 @@ Implicacao: o Pierre tende a ganhar no primeiro impacto; o Sibanki tende a vence
 Implementacao inicial A/B (landing):
 - controle por querystring: `?ab=a` (padrao) e `?ab=b` (variacao focada em "prioridade e proxima acao")
 - arquivo: `public/assets/js/landing.js` (funcao `applyHeroAB()`)
+- medicao minima: exposicao e clique de CTA por variante em `localStorage` (`sib_landing_ab_metrics`)
+- continuidade da variante: persistida em `sib_landing_ab` e propagada para links `/app?ab=...`
 
 ---
 

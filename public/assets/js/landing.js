@@ -175,9 +175,71 @@
     }
   }
 
-  function applyHeroAB(){
+  function getABVariant(){
     var params = new URLSearchParams(window.location.search);
-    var variant = (params.get('ab') || 'a').toLowerCase();
+    var fromQuery = (params.get('ab') || '').toLowerCase();
+    if(fromQuery === 'a' || fromQuery === 'b'){
+      try { localStorage.setItem('sib_landing_ab', fromQuery); } catch (error) {}
+      return fromQuery;
+    }
+    try {
+      var fromStorage = (localStorage.getItem('sib_landing_ab') || '').toLowerCase();
+      if(fromStorage === 'a' || fromStorage === 'b') return fromStorage;
+    } catch (error) {}
+    return 'a';
+  }
+
+  function trackABEvent(eventName, variant){
+    try {
+      var key = 'sib_landing_ab_metrics';
+      var raw = localStorage.getItem(key);
+      var metrics = raw ? JSON.parse(raw) : {};
+      if(!metrics[variant]) metrics[variant] = {};
+      metrics[variant][eventName] = (metrics[variant][eventName] || 0) + 1;
+      localStorage.setItem(key, JSON.stringify(metrics));
+    } catch (error) {
+      return;
+    }
+  }
+
+  function propagateABToAppLinks(variant){
+    var links = document.querySelectorAll('a[href^="/app"]');
+    links.forEach(function(link){
+      var href = link.getAttribute('href');
+      if(!href) return;
+      try {
+        var url = new URL(href, window.location.origin);
+        if(!url.searchParams.get('ab')){
+          url.searchParams.set('ab', variant);
+          link.setAttribute('href', url.pathname + url.search + url.hash);
+        }
+      } catch (error) {
+        return;
+      }
+    });
+  }
+
+  function wireABClickTracking(variant){
+    var selectors = [
+      '.hero-btns a',
+      '.nav-links a[href="/app"]',
+      '.price-btn',
+      '#planSelBtn',
+      '.cta-actions a[href="/app"]'
+    ].join(',');
+    document.querySelectorAll(selectors).forEach(function(el){
+      el.addEventListener('click', function(){
+        trackABEvent('cta_click', variant);
+      });
+    });
+  }
+
+  function applyHeroAB(){
+    var variant = getABVariant();
+    document.body.setAttribute('data-ab', variant);
+    trackABEvent('exposure', variant);
+    propagateABToAppLinks(variant);
+    wireABClickTracking(variant);
     if(variant !== 'b') return;
 
     var hook = document.querySelector('.hero-hook');
