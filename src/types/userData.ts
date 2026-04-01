@@ -59,6 +59,8 @@ export interface UserData {
   sibcoinProgress?: Record<string, number>;
 
   // ─── Open Finance ──────────────────────────────────────────────────────────
+  /** Legado / Firestore: true quando a conexão Open Finance está ativa (mesmo campo do app web). */
+  openBankingAtivo?: boolean;
   /** Status da conexão Open Finance (via Pluggy). */
   openFinanceStatus?: 'nao-conectado' | 'conectando' | 'ativo' | 'erro' | 'expirado';
   /** IDs de itens Pluggy conectados. */

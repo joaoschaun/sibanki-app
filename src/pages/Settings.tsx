@@ -4,7 +4,7 @@ import { resetUserData, updateUserDoc } from '../services/persistUserData';
 import type { Entry, Investment, Goal, Recurrent } from '../types/userData';
 import { generateReportPdf } from '../utils/generateReportPdf';
 import { Modal } from '../components/ui/Modal';
-import { Database, Trash2, Upload, FileDown, FileText, MapPin, ArrowRight, Sparkles } from 'lucide-react';
+import { Database, Trash2, Upload, FileDown, FileText, MapPin, ArrowRight, Sparkles, Building2 } from 'lucide-react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
@@ -49,6 +49,17 @@ export default function Settings() {
     setTelegramEnabled(Boolean(s.telegramEnabled));
     setWhatsEnabled(Boolean(s.whatsEnabled));
   }, [data]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.location.hash !== '#open-finance') return;
+    const el = document.getElementById('open-finance');
+    if (el) {
+      window.requestAnimationFrame(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }, [loading]);
 
   const handleBackupJson = () => {
     const payload = {
@@ -317,6 +328,28 @@ export default function Settings() {
     );
   }
 
+  const ofRaw = data?.openFinanceStatus;
+  const ofLegacyAtivo = Boolean(data?.openBankingAtivo);
+  const ofConnected = ofRaw === 'ativo' || ofLegacyAtivo;
+  const ofBadgeClass = ofConnected
+    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+    : ofRaw === 'conectando'
+      ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+      : ofRaw === 'erro'
+        ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+        : ofRaw === 'expirado'
+          ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+          : 'bg-si-over-2 text-si-4 border-si-border-md';
+  const ofBadgeText = ofConnected
+    ? 'Conectado'
+    : ofRaw === 'conectando'
+      ? 'Conectando…'
+      : ofRaw === 'erro'
+        ? 'Erro — tente reconectar'
+        : ofRaw === 'expirado'
+          ? 'Expirado — reconecte'
+          : 'Não conectado';
+
   return (
     <div className="space-y-8">
       <div>
@@ -329,6 +362,47 @@ export default function Settings() {
           {error}
         </div>
       )}
+
+      <section
+        id="open-finance"
+        className="bg-si-card rounded-2xl border border-blue-500/25 p-6 space-y-4 ring-1 ring-blue-500/15"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-si-1 flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-blue-400 shrink-0" aria-hidden />
+              Open Finance — conexão com bancos
+            </h3>
+            <p className="text-si-5 text-sm mt-1 max-w-2xl">
+              Autorize a leitura das suas contas no ambiente oficial do seu banco (Open Finance, regulado pelo Banco
+              Central). O Sibanki não pede senha de acesso ao banco e não movimenta seu dinheiro — apenas organiza dados
+              para você enxergar saldo, cartões e lançamentos com menos trabalho manual.
+            </p>
+            <ul className="mt-3 text-sm text-si-4 space-y-1 list-disc list-inside">
+              <li>Transações e extratos podem entrar automaticamente após a autorização</li>
+              <li>Você pode revogar o acesso quando quiser no fluxo do banco ou do conector</li>
+            </ul>
+          </div>
+          <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
+            <span
+              className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-full border ${ofBadgeClass}`}
+            >
+              {ofBadgeText}
+            </span>
+            <a
+              href="/app"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 text-sm font-semibold"
+            >
+              Abrir app web para conectar
+              <ArrowRight className="w-4 h-4" />
+            </a>
+            <p className="text-[11px] text-si-5 text-left sm:text-right max-w-[260px]">
+              O assistente completo de conexão de instituições está no app web em <span className="text-si-4">/app</span>{' '}
+              (mesma conta). Use este atalho na primeira vez ou para reconectar.
+            </p>
+          </div>
+        </div>
+      </section>
 
       <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">

@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface TourStep {
   emoji: string;
   title: string;
   description: string;
   path?: string;
+  /** CTA opcional: leva ao fluxo principal (ex.: Open Finance em Configurações). */
+  ctaLabel?: string;
+  ctaPath?: string;
 }
 
 const TOUR_STEPS: TourStep[] = [
@@ -13,97 +17,106 @@ const TOUR_STEPS: TourStep[] = [
     emoji: '👋',
     title: 'Bem-vindo ao Sibanki!',
     description:
-      'Seu app completo de finanças pessoais. Em poucos passos você vai conhecer tudo o que está disponível para organizar sua vida financeira.',
+      'Vamos começar pelo que mais economiza tempo: conectar suas contas com segurança. Você também pode usar tudo manualmente — mas a conexão oficial deixa o app mais automático.',
+  },
+  {
+    emoji: '🔗',
+    title: 'Open Finance — seu atalho para menos planilha',
+    description:
+      'Conecte bancos e cartões pelo Open Finance (regulado pelo Banco Central). Você autoriza no ambiente do seu banco: o Sibanki não pede senha de acesso e não movimenta seu dinheiro — só lê para organizar e gerar insights.',
+    path: '/configuracoes',
+    ctaLabel: 'Abrir Configurações (conexão)',
+    ctaPath: '/configuracoes#open-finance',
   },
   {
     emoji: '📊',
     title: 'Dashboard',
     description:
-      'Visão consolidada do seu mês: receitas, despesas, saldo e evolução dos últimos 6 meses — tudo em um único lugar.',
+      'Visão do mês: receitas, despesas, saldo e tendências. Quando a conexão estiver ativa, a leitura fica ainda mais fiel ao que acontece nas suas contas.',
     path: '/',
   },
   {
     emoji: '🏦',
     title: 'Contas',
     description:
-      'Cadastre suas contas bancárias (corrente, poupança, digital) e acompanhe o saldo de cada uma separadamente.',
+      'Cadastre contas manualmente ou acompanhe as que vierem pela conexão. Saldo e movimentação no mesmo lugar.',
     path: '/contas',
   },
   {
     emoji: '💳',
     title: 'Cartões de Crédito',
     description:
-      'Registre seus cartões com limite, bandeira e data de vencimento. Controle os gastos antes da fatura fechar.',
+      'Limite, vencimento e gastos antes da fatura fechar — para você não ser pego de surpresa.',
     path: '/cartoes',
   },
   {
     emoji: '📝',
     title: 'Lançamentos',
     description:
-      'Registre receitas e despesas com data, categoria e conta. Use o botão "Novo lançamento" no dashboard ou acesse aqui.',
+      'Registre receitas e despesas com data e categoria. Pelo app, WhatsApp ou Telegram — como preferir.',
     path: '/lancamentos',
   },
   {
     emoji: '🔁',
     title: 'Lançamentos Recorrentes',
     description:
-      'Cadastre contas fixas mensais como aluguel, streaming, academia e salário. O app lembra automaticamente.',
+      'Contas fixas (aluguel, streaming, academia, salário) para o mês se planejar sozinho.',
     path: '/recorrentes',
   },
   {
     emoji: '🎯',
     title: 'Metas Financeiras',
     description:
-      'Crie metas com valor alvo e prazo (reserva de emergência, viagem, bem). Acompanhe o progresso com barra visual.',
+      'Reserva, viagem, troca de carro: metas com prazo e progresso visível.',
     path: '/planejamento',
   },
   {
     emoji: '📐',
     title: 'Orçamento por Categoria',
     description:
-      'Defina limites mensais por categoria (alimentação, lazer, transporte). O dashboard alerta quando você estourar.',
+      'Limites por grupo de gasto. O dashboard avisa quando o ritmo passa do planejado.',
     path: '/orcamento',
   },
   {
     emoji: '📈',
     title: 'Investimentos',
     description:
-      'Registre renda fixa, ações, FIIs e cripto. Consulte cotações B3 em tempo real, calcule juros compostos e defina seu perfil de investidor.',
+      'Renda fixa, ações, FIIs e mais — com contexto do que você já registrou no app.',
     path: '/crescimento',
   },
   {
     emoji: '🤖',
     title: 'Consultor IA',
     description:
-      'Análise inteligente das suas finanças com sugestões personalizadas. Pergunte qualquer coisa: "quanto gastei esse mês?", "como melhorar meu score?"',
+      'Pergunte em linguagem natural: “quanto gastei?”, “o que cortar primeiro?” — com base nos seus dados.',
     path: '/consultor-ia',
   },
   {
     emoji: '📚',
     title: 'Educação Financeira',
     description:
-      'Conteúdos e dicas para evoluir sua relação com dinheiro — de iniciante a investidor.',
+      'Conteúdos e dicas para evoluir da organização à decisão com mais confiança.',
     path: '/educacao',
   },
   {
     emoji: '🏪',
     title: 'Soluções Financeiras',
     description:
-      'Compare e contrate crédito, consórcio, seguro e investimentos de parceiros — tudo dentro do app.',
+      'Crédito, consórcio, seguro e investimentos de parceiros — quando fizer sentido para você.',
     path: '/solucoes/credito',
   },
   {
     emoji: '⚙️',
     title: 'Configurações',
     description:
-      'Faça backup dos seus dados em JSON, importe lançamentos via CSV, gere relatório PDF e escolha entre tema claro e escuro.',
+      'Backup, importação, relatórios, tema e integrações — tudo que mantém sua rotina segura e portátil.',
     path: '/configuracoes',
   },
   {
     emoji: '🚀',
     title: 'Pronto para começar!',
     description:
-      'Recomendamos: cadastre suas contas em "Contas", defina saldos iniciais e faça seu primeiro lançamento. Qualquer dúvida, o Consultor IA está aqui para ajudar.',
+      'Recomendação: abra Configurações e conecte o Open Finance no app web (atalho na mesma tela). Depois, faça um primeiro lançamento ou peça um resumo ao Consultor IA.',
   },
 ];
 
@@ -113,14 +126,21 @@ interface OnboardingTourProps {
   onComplete?: () => void;
 }
 
+function navigateToPath(navigate: ReturnType<typeof useNavigate>, pathStr: string) {
+  const i = pathStr.indexOf('#');
+  const pathname = i >= 0 ? pathStr.slice(0, i) : pathStr;
+  const hash = i >= 0 ? pathStr.slice(i) : '';
+  navigate({ pathname: pathname || '/', hash: hash || undefined });
+}
+
 export function OnboardingTour({ onComplete }: OnboardingTourProps) {
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const done = localStorage.getItem(STORAGE_KEY);
     if (!done) {
-      // Pequeno delay para o app terminar de montar
       const t = setTimeout(() => setVisible(true), 600);
       return () => clearTimeout(t);
     }
@@ -148,6 +168,12 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
     if (step > 0) setStep((s) => s - 1);
   };
 
+  const handleCta = () => {
+    if (!current.ctaPath) return;
+    navigateToPath(navigate, current.ctaPath);
+    close();
+  };
+
   if (!visible) return null;
 
   return (
@@ -158,7 +184,6 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
       aria-label="Tour de apresentação do Sibanki"
     >
       <div className="relative w-full max-w-sm mx-4 bg-si-card border border-si-border-md rounded-2xl shadow-2xl overflow-hidden">
-        {/* Barra de progresso */}
         <div className="h-1 bg-si-over-2">
           <div
             className="h-full bg-blue-500 transition-all duration-300"
@@ -166,7 +191,6 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
           />
         </div>
 
-        {/* Cabeçalho */}
         <div className="flex items-center justify-between px-5 pt-4 pb-0">
           <span className="text-xs text-si-5 font-medium">
             {step + 1} de {total}
@@ -181,16 +205,23 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
           </button>
         </div>
 
-        {/* Conteúdo */}
-        <div className="px-5 pt-5 pb-6 text-center min-h-[220px] flex flex-col items-center justify-center">
+        <div className="px-5 pt-5 pb-4 text-center min-h-[220px] flex flex-col items-center justify-center">
           <div className="text-5xl mb-4 leading-none" role="img" aria-hidden="true">
             {current.emoji}
           </div>
           <h2 className="text-lg font-bold text-si-1 mb-2">{current.title}</h2>
           <p className="text-sm text-si-4 leading-relaxed">{current.description}</p>
+          {current.ctaLabel && current.ctaPath && (
+            <button
+              type="button"
+              onClick={handleCta}
+              className="mt-4 w-full py-2.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-600 text-si-1 font-semibold text-sm border border-emerald-500/40"
+            >
+              {current.ctaLabel}
+            </button>
+          )}
         </div>
 
-        {/* Botões */}
         <div className="flex items-center gap-3 px-5 pb-5">
           <button
             type="button"
@@ -221,7 +252,6 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
           </button>
         </div>
 
-        {/* Link pular */}
         <div className="text-center pb-4">
           <button
             type="button"
