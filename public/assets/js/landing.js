@@ -202,6 +202,66 @@
     }
   }
 
+  function readABMetrics(){
+    try {
+      var raw = localStorage.getItem('sib_landing_ab_metrics');
+      return raw ? JSON.parse(raw) : {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function renderABDebugPanel(variant){
+    var params = new URLSearchParams(window.location.search);
+    if(params.get('abdebug') !== '1') return;
+
+    var metrics = readABMetrics();
+    var va = metrics.a || {};
+    var vb = metrics.b || {};
+    var panel = document.createElement('aside');
+    panel.setAttribute('aria-label', 'AB Debug');
+    panel.style.position = 'fixed';
+    panel.style.right = '12px';
+    panel.style.bottom = '12px';
+    panel.style.zIndex = '9999';
+    panel.style.width = '280px';
+    panel.style.padding = '12px';
+    panel.style.borderRadius = '12px';
+    panel.style.border = '1px solid rgba(255,255,255,0.2)';
+    panel.style.background = 'rgba(5,8,13,0.92)';
+    panel.style.color = '#e5e7eb';
+    panel.style.fontFamily = 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+    panel.style.fontSize = '12px';
+    panel.style.lineHeight = '1.4';
+    panel.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+      '<strong>AB Debug</strong>' +
+      '<button type="button" id="abDebugClose" style="background:transparent;border:0;color:#9ca3af;cursor:pointer;font-size:14px;">x</button>' +
+      '</div>' +
+      '<div style="margin-bottom:8px;">Variante ativa: <strong>' + variant.toUpperCase() + '</strong></div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+      '<div style="padding:8px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;">' +
+      '<div style="font-weight:600;margin-bottom:4px;">A</div>' +
+      '<div>Exposicoes: ' + (va.exposure || 0) + '</div>' +
+      '<div>CTA clicks: ' + (va.cta_click || 0) + '</div>' +
+      '</div>' +
+      '<div style="padding:8px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;">' +
+      '<div style="font-weight:600;margin-bottom:4px;">B</div>' +
+      '<div>Exposicoes: ' + (vb.exposure || 0) + '</div>' +
+      '<div>CTA clicks: ' + (vb.cta_click || 0) + '</div>' +
+      '</div>' +
+      '</div>' +
+      '<div style="margin-top:8px;color:#9ca3af;">Dica: limpe com localStorage.removeItem(\"sib_landing_ab_metrics\")</div>';
+
+    document.body.appendChild(panel);
+    var close = document.getElementById('abDebugClose');
+    if(close){
+      close.addEventListener('click', function(){
+        panel.remove();
+      });
+    }
+  }
+
   function propagateABToAppLinks(variant){
     var links = document.querySelectorAll('a[href^="/app"]');
     links.forEach(function(link){
@@ -240,6 +300,7 @@
     trackABEvent('exposure', variant);
     propagateABToAppLinks(variant);
     wireABClickTracking(variant);
+    renderABDebugPanel(variant);
     if(variant !== 'b') return;
 
     var hook = document.querySelector('.hero-hook');
