@@ -62,8 +62,12 @@ function getMonthLabel(monthKey: string): string {
 }
 
 export default function Dashboard() {
-  const { user, entries, accounts, score, budgets, loading, accountBalances, accountMeta, cards, goals, recurrents, financialProfile, investments, creditObligations } =
-    useAppContext();
+  const {
+    user, entries, accounts, score, budgets, loading,
+    accountBalances, accountMeta, cards, goals, recurrents,
+    financialProfile, investments, creditObligations,
+    hasOpenFinance, verifiedEntries, openFinanceIdentityByItem, dataFreshness,
+  } = useAppContext();
   const { mode: dashboardMode } = useDashboardMode();
 
   const now = useMemo(() => new Date(), []);
@@ -328,6 +332,10 @@ export default function Dashboard() {
           accountBalances={accountBalances}
           accountMeta={accountMeta}
           loading={loading}
+          hasOpenFinance={hasOpenFinance}
+          verifiedEntries={verifiedEntries}
+          openFinanceIdentityByItem={openFinanceIdentityByItem}
+          dataFreshness={dataFreshness}
         />
       )}
 

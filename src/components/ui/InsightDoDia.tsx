@@ -12,6 +12,8 @@ import { httpsCallable } from 'firebase/functions';
 import { Loader2, Lightbulb } from 'lucide-react';
 import { functions } from '../../firebase';
 import type { Card, Entry, Goal, Recurrent } from '../../types/userData';
+import type { OpenFinanceIdentitySnapshot } from '../../types/openFinance';
+import type { DataFreshness } from '../../context/AppContext';
 import { isTransferEntry } from '../../utils/entryUtils';
 import { trackPlatformEvent } from '../../services/platformEvents';
 
@@ -44,6 +46,11 @@ export function InsightDoDia({
   accountBalances,
   accountMeta,
   loading,
+  // ── Open Finance ──────────────────────────────────────────────────────────
+  hasOpenFinance = false,
+  verifiedEntries = [],
+  openFinanceIdentityByItem = {},
+  dataFreshness = 'none',
 }: {
   entries: Entry[];
   cards: Card[];
@@ -52,6 +59,14 @@ export function InsightDoDia({
   accountBalances: Record<string, number>;
   accountMeta: Record<string, { incluirNaSoma?: boolean }>;
   loading?: boolean;
+  /** Open Finance está ativo e autenticado? */
+  hasOpenFinance?: boolean;
+  /** Lançamentos confirmados pelo extrato bancário (source='open-finance'). */
+  verifiedEntries?: Entry[];
+  /** Identidade por item Pluggy (inclui investorProfile). */
+  openFinanceIdentityByItem?: Record<string, OpenFinanceIdentitySnapshot>;
+  /** Quão recente é o dado bancário. */
+  dataFreshness?: DataFreshness;
 }) {
   const todayStr = useMemo(() => getLocalDateStr(new Date()), []);
   const [forceNew, setForceNew] = useState(0);
@@ -142,11 +157,60 @@ export function InsightDoDia({
       }
     }
 
+    // ── Open Finance: contexto adicional para o LLM ───────────────────────
+    const ofLines: string[] = [];
+    if (hasOpenFinance) {
+      // Qualidade dos dados
+      const mesAtualOf = todayStr.slice(0, 7);
+      const despMesEntries = entries.filter(
+        (e) => !isTransferEntry(e) && e.type === 'despesa' && (e.date ?? '').slice(0, 7) === mesAtualOf,
+      );
+      const verifiedMes = despMesEntries.filter((e) => e.source === 'open-finance').length;
+      const verifiedPct = despMesEntries.length > 0
+        ? Math.round((verifiedMes / despMesEntries.length) * 100)
+        : 0;
+      ofLines.push(
+        `Qualidade dos dados: ${verifiedPct}% das despesas do mês verificadas pelo extrato bancário real (Open Finance).`,
+      );
+      if (dataFreshness === 'fresh') ofLines.push('Status da conexão: dados bancários atualizados (< 6h).');
+      if (dataFreshness === 'stale') ofLines.push('Status da conexão: dados bancários desatualizados (> 6h) — sincronização em andamento.');
+
+      // Perfil de investidor (do primeiro item Pluggy com investorProfile)
+      const profileMap: Record<string, string> = {
+        Conservative: 'conservador',
+        Moderate: 'moderado',
+        Aggressive: 'arrojado',
+      };
+      const firstIdentity = Object.values(openFinanceIdentityByItem ?? {}).find(
+        (id) => id?.investorProfile,
+      );
+      if (firstIdentity?.investorProfile) {
+        const ptProfile = profileMap[firstIdentity.investorProfile] ?? firstIdentity.investorProfile;
+        ofLines.push(`Perfil de investidor (banco): ${ptProfile}.`);
+      }
+
+      // Saldo de entradas verificadas no mês
+      const recVerif = verifiedEntries
+        .filter((e) => (e.date ?? '').slice(0, 7) === mesAtualOf && e.type === 'receita')
+        .reduce((s, e) => s + (Number(e.value) || 0), 0);
+      const despVerif = verifiedEntries
+        .filter((e) => (e.date ?? '').slice(0, 7) === mesAtualOf && e.type === 'despesa')
+        .reduce((s, e) => s + (Number(e.value) || 0), 0);
+      if (recVerif > 0 || despVerif > 0) {
+        ofLines.push(
+          `Movimentação verificada pelo banco este mês: receita R$ ${fmtBRL(recVerif)} | despesa R$ ${fmtBRL(despVerif)}.`,
+        );
+      }
+    } else {
+      ofLines.push('Fonte dos dados: inseridos manualmente pelo usuário (Open Finance não conectado).');
+    }
+
     return [
       `Data: ${todayStr}`,
       `Receita do m\u00eas: R$ ${fmtBRL(recMes)} | Despesa do m\u00eas: R$ ${fmtBRL(despMes)} | Saldo do m\u00eas: R$ ${fmtBRL(saldoMes)}`,
       `Saldo dispon\u00edvel nas contas: R$ ${fmtBRL(saldoContas)}`,
       '',
+      ...(ofLines.length ? ['OPEN FINANCE:', ...ofLines, ''] : []),
       `Despesas de hoje: R$ ${fmtBRL(total)}`,
       'Categorias (top 5):',
       ...(topCatsLines.length ? topCatsLines : ['- (sem dados)']),
@@ -156,7 +220,10 @@ export function InsightDoDia({
       ...(metaLines.length ? ['', 'Metas em andamento:', ...metaLines] : []),
       ...(recLines.length ? ['', 'Contas vencendo em 7 dias:', ...recLines] : []),
     ].join('\n');
-  }, [despesasHoje, todayStr, entries, accountBalances, accountMeta, goals, recurrents]);
+  }, [
+    despesasHoje, todayStr, entries, accountBalances, accountMeta, goals, recurrents,
+    hasOpenFinance, verifiedEntries, openFinanceIdentityByItem, dataFreshness,
+  ]);
 
   const cacheKey = useMemo(() => `sibanki_insight_dia_${todayStr}`, [todayStr]);
 
@@ -466,7 +533,14 @@ export function InsightDoDia({
       >AS</div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-bold text-emerald-400 mb-1.5">Arquiteto Soberano</p>
+        <div className="flex items-center justify-between mb-1.5 gap-2">
+          <p className="text-xs font-bold text-emerald-400">Arquiteto Soberano</p>
+          {hasOpenFinance && dataFreshness === 'fresh' && (
+            <span className="text-[10px] text-emerald-400/70 flex items-center gap-1">
+              ● extrato verificado
+            </span>
+          )}
+        </div>
         <div className="bg-si-card border border-si-border-md rounded-2xl rounded-tl-sm p-4">
 
           {error && (
