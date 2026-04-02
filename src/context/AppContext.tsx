@@ -6,8 +6,15 @@
  *
  * Agora: App.tsx monta o provider UMA vez; todas as páginas consomem via
  * useAppContext() — zero listeners duplicados.
+ *
+ * Open Finance: expõe sinais de primeira classe (hasOpenFinance, dataFreshness,
+ * verifiedEntries, syncOpenFinance…) para que qualquer componente saiba distinguir
+ * dado verificado pelo banco de dado inserido manualmente.
  */
-import { createContext, useContext, useMemo, useEffect, useRef, type ReactNode } from 'react';
+import {
+  createContext, useContext, useMemo, useEffect, useRef, useState, useCallback,
+  type ReactNode,
+} from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useAuth } from '../hooks/useAuth';
 import { useFinancialData } from '../hooks/useFinancialData';
@@ -25,8 +32,18 @@ import type {
   CreditObligation,
   CreditSnapshot,
 } from '../types/userData';
+import type {
+  OpenFinanceCreditBill,
+  OpenFinanceIdentitySnapshot,
+  OpenFinanceConsentItemSummary,
+} from '../types/openFinance';
 import type { ConsolidatedFinancialProfile } from '../types/platform';
 import { buildFinancialProfile } from '../utils/financialProfile';
+
+/** Quão recente é o dado Open Finance do usuário. */
+export type DataFreshness = 'fresh' | 'stale' | 'none';
+/** < 6 h → fresh; > 6 h mas conectado → stale; não conectado → none */
+const OF_STALE_HOURS = 6;
 
 interface AppContextValue {
   // ── Auth ──────────────────────────────────────────────────────────────────
@@ -37,6 +54,8 @@ interface AppContextValue {
   loading: boolean;
   error: Error | null;
   entries: Entry[];
+  /** Lançamentos só no documento users (para gravar; não inclui entriesOverflow). */
+  entriesInline: Entry[];
   accounts: string[];
   accountBalances: Record<string, number>;
   accountMeta: Record<string, {
@@ -46,6 +65,9 @@ interface AppContextValue {
     temChequeEspecial?: boolean;
     chequeEspecialLimite?: number;
     chequeEspecialJurosPct?: number;
+    source?: string;
+    pluggyAccountId?: string;
+    pluggyItemId?: string;
   }>;
   cards: Card[];
   goals: Goal[];
@@ -64,6 +86,38 @@ interface AppContextValue {
   // ── Derivado ──────────────────────────────────────────────────────────────
   avatarURL: string | null | undefined;
   financialProfile: ConsolidatedFinancialProfile;
+  // ── Open Finance — sinais de primeira classe ──────────────────────────────
+  /** Status da conexão Pluggy/OF. */
+  openFinanceStatus: UserData['openFinanceStatus'] | null;
+  /** ISO string da última sync bem-sucedida. */
+  openFinanceSyncedAt: string | null;
+  /** Faturas de cartão confirmadas pelo banco (API bills Pluggy). */
+  openFinanceCreditBills: OpenFinanceCreditBill[];
+  /** Identidade por item Pluggy (CPF mascarado, perfil de investidor…). */
+  openFinanceIdentityByItem: Record<string, OpenFinanceIdentitySnapshot>;
+  /** IDs dos itens Pluggy conectados. */
+  openFinanceItems: string[];
+  /** Resumo de consentimentos OF por item. */
+  openFinanceConsentsByItem: Record<string, OpenFinanceConsentItemSummary>;
+  /** Metadados da última sync Pluggy. */
+  openFinanceLastSyncSummary: UserData['openFinanceLastSyncSummary'] | null;
+  /** true quando openFinanceStatus === 'ativo'. */
+  hasOpenFinance: boolean;
+  /**
+   * Quão recente é o dado bancário:
+   * - 'fresh'  → sincronizado há < 6 h
+   * - 'stale'  → conectado mas sync > 6 h atrás
+   * - 'none'   → não conectado
+   */
+  dataFreshness: DataFreshness;
+  /** Lançamentos cuja origem foi confirmada pelo Open Finance. */
+  verifiedEntries: Entry[];
+  /** Lançamentos inseridos manualmente pelo usuário. */
+  manualEntries: Entry[];
+  /** Dispara sync Pluggy imediato (Cloud Function pluggySyncAccounts). */
+  syncOpenFinance: () => Promise<{ ok: boolean; message?: string }>;
+  /** true enquanto o sync está em andamento. */
+  isSyncing: boolean;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -72,7 +126,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const financial = useFinancialData(user?.uid);
 
-  // ── Open Finance connected: fire once when status flips to 'ativo' ────────
+  // ── Sync state ────────────────────────────────────────────────────────────
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const syncOpenFinance = useCallback(async (): Promise<{ ok: boolean; message?: string }> => {
+    if (!user?.uid) return { ok: false, message: 'Usuário não autenticado' };
+    if (isSyncing) return { ok: false, message: 'Sync já em andamento' };
+    setIsSyncing(true);
+    try {
+      const fns = getFunctions(undefined, 'southamerica-east1');
+      const fn = httpsCallable<unknown, { ok: boolean; message?: string }>(fns, 'pluggySyncAccounts');
+      const result = await fn({});
+      return result.data ?? { ok: true };
+    } catch {
+      return { ok: false, message: 'Erro ao sincronizar com o banco' };
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [user?.uid, isSyncing]);
+
+  // ── Open Finance connected: fire SibCoin once ─────────────────────────────
   const ofFiredRef = useRef<string | null>(null);
   useEffect(() => {
     if (!user?.uid) return;
@@ -83,26 +156,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ofFiredRef.current = user.uid;
     localStorage.setItem(key, '1');
     const fns = getFunctions(undefined, 'southamerica-east1');
-    const trigger = httpsCallable(fns, 'triggerSibcoinEvent');
-    trigger({ eventType: 'open_finance_connected' }).catch(() => {});
+    httpsCallable(fns, 'triggerSibcoinEvent')({ eventType: 'open_finance_connected' }).catch(() => {});
   }, [user?.uid, financial.data?.openFinanceStatus]);
 
-  // ── Login streak: fire once per day per uid (fire-and-forget) ────────────
+  // ── Auto-sync: se dados estiverem stale (>6h), dispara uma vez por dia ────
+  const autoSyncFiredRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!user?.uid) return;
+    if (financial.data?.openFinanceStatus !== 'ativo') return;
+    const syncedAt = financial.data?.openFinanceSyncedAt;
+    if (!syncedAt) return; // nunca sincronizou → usuário deve disparar manualmente
+    const hoursSince = (Date.now() - new Date(syncedAt).getTime()) / 3_600_000;
+    if (hoursSince < OF_STALE_HOURS) return; // ainda fresco
+    const today = new Date().toDateString();
+    const key = `sib_of_autosync_${user.uid}`;
+    if (autoSyncFiredRef.current === today) return;
+    if (localStorage.getItem(key) === today) { autoSyncFiredRef.current = today; return; }
+    autoSyncFiredRef.current = today;
+    localStorage.setItem(key, today);
+    // fire-and-forget: o onSnapshot vai atualizar o contexto quando o sync terminar
+    const fns = getFunctions(undefined, 'southamerica-east1');
+    httpsCallable(fns, 'pluggySyncAccounts')({}).catch(() => {});
+  }, [user?.uid, financial.data?.openFinanceStatus, financial.data?.openFinanceSyncedAt]);
+
+  // ── Login streak ──────────────────────────────────────────────────────────
   const loginFiredRef = useRef<string | null>(null);
   useEffect(() => {
     if (!user?.uid) return;
     const today = new Date().toDateString();
     const key = `sibcoin_login_${user.uid}`;
-    // Already fired this session or already fired today
     if (loginFiredRef.current === today) return;
     if (localStorage.getItem(key) === today) { loginFiredRef.current = today; return; }
     loginFiredRef.current = today;
     localStorage.setItem(key, today);
     const fns = getFunctions(undefined, 'southamerica-east1');
-    const trigger = httpsCallable(fns, 'triggerSibcoinEvent');
-    trigger({ eventType: 'login_streak' }).catch(() => {});
+    httpsCallable(fns, 'triggerSibcoinEvent')({ eventType: 'login_streak' }).catch(() => {});
   }, [user?.uid]);
 
+  // ── Valor do contexto ─────────────────────────────────────────────────────
   const value = useMemo<AppContextValue>(
     () => {
       const financialProfile = buildFinancialProfile({
@@ -122,16 +213,55 @@ export function AppProvider({ children }: { children: ReactNode }) {
         data: financial.data as Record<string, unknown> | null,
       });
 
+      // ── Open Finance — derivados ────────────────────────────────────────
+      const openFinanceStatus = financial.data?.openFinanceStatus ?? null;
+      const openFinanceSyncedAt = financial.data?.openFinanceSyncedAt ?? null;
+      const openFinanceCreditBills =
+        (financial.data?.openFinanceCreditBills ?? []) as OpenFinanceCreditBill[];
+      const openFinanceIdentityByItem =
+        (financial.data?.openFinanceIdentityByItem ?? {}) as Record<string, OpenFinanceIdentitySnapshot>;
+      const openFinanceItems = financial.data?.openFinanceItems ?? [];
+      const openFinanceConsentsByItem =
+        (financial.data?.openFinanceConsentsByItem ?? {}) as Record<string, OpenFinanceConsentItemSummary>;
+      const openFinanceLastSyncSummary = financial.data?.openFinanceLastSyncSummary ?? null;
+      const hasOpenFinance = openFinanceStatus === 'ativo';
+
+      let dataFreshness: DataFreshness = 'none';
+      if (hasOpenFinance && openFinanceSyncedAt) {
+        const hoursSince =
+          (Date.now() - new Date(openFinanceSyncedAt).getTime()) / 3_600_000;
+        dataFreshness = hoursSince < OF_STALE_HOURS ? 'fresh' : 'stale';
+      }
+
+      // Lançamentos com origem confirmada pelo banco
+      const verifiedEntries = financial.entries.filter((e) => e.source === 'open-finance');
+      // Lançamentos manuais (sem marcação ou explicitamente manual)
+      const manualEntries = financial.entries.filter((e) => e.source !== 'open-finance');
+
       return {
         user,
         authLoading,
         ...financial,
         avatarURL: financial.data?.avatarURL ?? user?.photoURL ?? null,
         financialProfile,
+        // Open Finance
+        openFinanceStatus,
+        openFinanceSyncedAt,
+        openFinanceCreditBills,
+        openFinanceIdentityByItem,
+        openFinanceItems,
+        openFinanceConsentsByItem,
+        openFinanceLastSyncSummary,
+        hasOpenFinance,
+        dataFreshness,
+        verifiedEntries,
+        manualEntries,
+        syncOpenFinance,
+        isSyncing,
       };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, authLoading, financial],
+    [user, authLoading, financial, syncOpenFinance, isSyncing],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

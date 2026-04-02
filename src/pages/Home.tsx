@@ -1,10 +1,13 @@
 /**
  * Home — tela inicial limpa, estilo Pierre Finance.
  *
- * O Arquiteto Soberano já leu tudo antes do usuário abrir o app:
- * boletos, orçamentos, investimentos, metas, cartões.
- * Apresenta um briefing conversacional do dia + ações rápidas.
- * O painel completo fica um clique adiante.
+ * Open Finance como fonte primária:
+ * — Faturas confirmadas pelo banco via openFinanceCreditBills
+ * — Saldo verificado das contas OF
+ * — Alerta se dados estiverem stale (>6h)
+ * — Sugestão de conexão se OF não configurado
+ *
+ * O painel completo fica um clique adiante (/dashboard).
  */
 
 import { useMemo, useState } from 'react';
@@ -13,7 +16,7 @@ import { useAppContext } from '../context/AppContext';
 import { calculateDaysOfFreedom } from '../utils/sovereigntyEngine';
 import {
   LayoutDashboard, PlusCircle, Bot, Target,
-  CreditCard, CalendarDays, TrendingUp, Shield, Send,
+  CreditCard, CalendarDays, TrendingUp, Shield, Send, RefreshCw,
 } from 'lucide-react';
 import { isTransferEntry } from '../utils/entryUtils';
 
@@ -39,13 +42,30 @@ function in7DaysStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// ─── briefing builder ─────────────────────────────────────────────────────────
-type BriefingItem = { emoji: string; text: string; link?: string };
+function inNDaysStr(n: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
+// ─── briefing types ───────────────────────────────────────────────────────────
+type BriefingItem = {
+  emoji: string;
+  text: string;
+  link?: string;
+  /** true = dado confirmado pelo Open Finance */
+  verified?: boolean;
+  /** 'warn' = item de atenção (stale/desconectado) */
+  kind?: 'warn' | 'info' | 'normal';
+};
+
+// ─── briefing builder ─────────────────────────────────────────────────────────
 function buildBriefingItems(ctx: ReturnType<typeof useAppContext>): BriefingItem[] {
   const {
     entries, recurrents, cards, goals, budgets,
-    accountBalances, accountMeta, investments, creditObligations,
+    accountBalances, accountMeta, investments,
+    hasOpenFinance, openFinanceCreditBills, openFinanceSyncedAt,
+    dataFreshness,
   } = ctx;
 
   const items: BriefingItem[] = [];
@@ -54,6 +74,19 @@ function buildBriefingItems(ctx: ReturnType<typeof useAppContext>): BriefingItem
   const now = new Date();
   const currentMonth = today.slice(0, 7);
   const todayDay = now.getDate();
+
+  // ── 0. Alerta de dados stale ───────────────────────────────────────────────
+  if (hasOpenFinance && dataFreshness === 'stale' && openFinanceSyncedAt) {
+    const hoursAgo = Math.round(
+      (Date.now() - new Date(openFinanceSyncedAt).getTime()) / 3_600_000,
+    );
+    items.push({
+      emoji: '🔄',
+      text: `Dados bancários desatualizados — última sincronização há **${hoursAgo}h**. Atualizando em segundo plano…`,
+      link: '/configuracoes',
+      kind: 'warn',
+    });
+  }
 
   // ── 1. Recorrentes vencendo em até 7 dias ──────────────────────────────────
   const recVenc: { name: string; value: number; day: number }[] = [];
@@ -72,9 +105,10 @@ function buildBriefingItems(ctx: ReturnType<typeof useAppContext>): BriefingItem
   if (recVenc.length > 0) {
     const total = recVenc.reduce((s, r) => s + r.value, 0);
     if (recVenc.length === 1) {
+      const daysLeft = recVenc[0].day - todayDay;
       items.push({
         emoji: '📅',
-        text: `**${recVenc[0].name}** vence em ${recVenc[0].day - todayDay <= 0 ? 'hoje' : `${recVenc[0].day - todayDay} dia(s)`} — R$ ${fmtBRL(recVenc[0].value)}.`,
+        text: `**${recVenc[0].name}** vence ${daysLeft <= 0 ? 'hoje' : `em ${daysLeft} dia(s)`} — R$ ${fmtBRL(recVenc[0].value)}.`,
         link: '/recorrentes',
       });
     } else {
@@ -86,20 +120,45 @@ function buildBriefingItems(ctx: ReturnType<typeof useAppContext>): BriefingItem
     }
   }
 
-  // ── 2. Faturas de cartão fechando em até 5 dias ───────────────────────────
-  for (const card of cards ?? []) {
-    if (!card.closeDay) continue;
-    const daysLeft = card.closeDay - todayDay;
-    if (daysLeft >= 0 && daysLeft <= 5) {
-      const fat = (card.purchases ?? [])
-        .filter((p) => (p.billingMonth ?? '').startsWith(currentMonth))
-        .reduce((s, p) => s + (p.value ?? 0), 0);
-      if (fat > 0) {
-        items.push({
-          emoji: '💳',
-          text: `Fatura do **${card.name || 'cartão'}** fecha em ${daysLeft === 0 ? 'hoje' : `${daysLeft} dia(s)`} — R$ ${fmtBRL(fat)}.`,
-          link: '/cartoes',
-        });
+  // ── 2. Faturas de cartão — Open Finance tem prioridade ────────────────────
+  if (hasOpenFinance && openFinanceCreditBills.length > 0) {
+    // Faturas reais confirmadas pelo banco, vencendo em até 5 dias
+    const in5 = inNDaysStr(5);
+    const urgentBills = openFinanceCreditBills
+      .filter((b) => b.dueDate && b.dueDate >= today && b.dueDate <= in5 && b.totalAmount > 0)
+      .sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''));
+
+    for (const bill of urgentBills) {
+      const card = cards?.find((c) => (c as any).pluggyAccountId === bill.pluggyAccountId);
+      const cardName = card?.name ?? 'cartão';
+      const dueParts = (bill.dueDate ?? '').split('-');
+      const dueDate = new Date(
+        Number(dueParts[0]), Number(dueParts[1]) - 1, Number(dueParts[2]),
+      );
+      const daysLeft = Math.ceil((dueDate.getTime() - now.setHours(0, 0, 0, 0)) / 86_400_000);
+      items.push({
+        emoji: '💳',
+        text: `Fatura **${cardName}** de R$ ${fmtBRL(bill.totalAmount)} vence ${daysLeft <= 0 ? 'hoje' : `em ${daysLeft} dia(s)`} — confirmado pelo banco.`,
+        link: '/cartoes',
+        verified: true,
+      });
+    }
+  } else {
+    // Fallback: calcula a partir das compras registradas no cartão
+    for (const card of cards ?? []) {
+      if (!card.closeDay) continue;
+      const daysLeft = card.closeDay - todayDay;
+      if (daysLeft >= 0 && daysLeft <= 5) {
+        const fat = (card.purchases ?? [])
+          .filter((p) => (p.billingMonth ?? '').startsWith(currentMonth))
+          .reduce((s, p) => s + (p.value ?? 0), 0);
+        if (fat > 0) {
+          items.push({
+            emoji: '💳',
+            text: `Fatura do **${card.name || 'cartão'}** fecha em ${daysLeft === 0 ? 'hoje' : `${daysLeft} dia(s)`} — R$ ${fmtBRL(fat)}.`,
+            link: '/cartoes',
+          });
+        }
       }
     }
   }
@@ -130,17 +189,20 @@ function buildBriefingItems(ctx: ReturnType<typeof useAppContext>): BriefingItem
   if (overBudget.length > 0) {
     overBudget.sort((a, b) => b.pct - a.pct);
     const top = overBudget[0];
+    const suffix = hasOpenFinance ? ' (baseado no seu extrato).' : '.';
     if (overBudget.length === 1) {
       items.push({
         emoji: '⚠️',
-        text: `**${top.cat}** está ${top.pct}% do orçamento — acima do limite.`,
+        text: `**${top.cat}** está ${top.pct}% do orçamento — acima do limite${suffix}`,
         link: '/orcamento',
+        verified: hasOpenFinance,
       });
     } else {
       items.push({
         emoji: '⚠️',
-        text: `**${overBudget.length} categorias** acima do orçamento — pior: ${top.cat} (${top.pct}%).`,
+        text: `**${overBudget.length} categorias** acima do orçamento — pior: ${top.cat} (${top.pct}%)${suffix}`,
         link: '/orcamento',
+        verified: hasOpenFinance,
       });
     }
   }
@@ -150,7 +212,7 @@ function buildBriefingItems(ctx: ReturnType<typeof useAppContext>): BriefingItem
     const deadline = (g as any).deadline || (g as any).endDate;
     if (!deadline) continue;
     const dFim = new Date(deadline);
-    const daysLeft = Math.ceil((dFim.getTime() - now.getTime()) / 86400000);
+    const daysLeft = Math.ceil((dFim.getTime() - now.getTime()) / 86_400_000);
     if (daysLeft > 0 && daysLeft <= 30) {
       const pct = g.target > 0 ? Math.round(((g.current ?? 0) / g.target) * 100) : 0;
       if (pct < 100) {
@@ -164,37 +226,56 @@ function buildBriefingItems(ctx: ReturnType<typeof useAppContext>): BriefingItem
     }
   }
 
-  // ── 5. Investimentos (rendimento vs CDI) ──────────────────────────────────
+  // ── 5. Investimentos ──────────────────────────────────────────────────────
   const invList = investments ?? [];
   if (invList.length > 0) {
-    const totalInv = invList.reduce((s, i) => s + (Number((i as any).currentValue ?? (i as any).value ?? 0)), 0);
+    const totalInv = invList.reduce((s, i) => s + Number((i as any).atual ?? (i as any).currentValue ?? (i as any).value ?? 0), 0);
     if (totalInv > 0) {
       const cdiMes = 0.0107;
       const totalYield = invList.reduce((s, i) => {
         const rate = Number((i as any).monthlyRate ?? (i as any).rate ?? 0);
-        const val = Number((i as any).currentValue ?? (i as any).value ?? 0);
+        const val = Number((i as any).atual ?? (i as any).currentValue ?? (i as any).value ?? 0);
         return s + val * (rate || cdiMes);
       }, 0);
       const rendMes = totalInv > 0 ? (totalYield / totalInv) * 100 : 0;
+      const verifiedCount = invList.filter((i) => (i as any).source === 'open-finance').length;
+      const verifiedSuffix = verifiedCount > 0 ? ` (${verifiedCount} confirmado${verifiedCount > 1 ? 's' : ''} pelo banco)` : '';
       items.push({
         emoji: '📈',
-        text: `Carteira de **R$ ${fmtBRL(totalInv)}** rendendo ~${rendMes.toFixed(2)}% a.m. — ${rendMes >= cdiMes * 100 * 0.9 ? 'acima' : 'abaixo'} do CDI.`,
+        text: `Carteira de **R$ ${fmtBRL(totalInv)}** rendendo ~${rendMes.toFixed(2)}% a.m.${verifiedSuffix} — ${rendMes >= cdiMes * 100 * 0.9 ? 'acima' : 'abaixo'} do CDI.`,
         link: '/crescimento',
+        verified: verifiedCount > 0,
       });
     }
   }
 
   // ── 6. Saldo disponível ───────────────────────────────────────────────────
   let saldoContas = 0;
+  let saldoVerified = false;
   for (const [acc, bal] of Object.entries(accountBalances ?? {})) {
     if ((accountMeta as any)?.[acc]?.incluirNaSoma === false) continue;
     saldoContas += Number(bal) || 0;
+    if ((accountMeta as any)?.[acc]?.source === 'open-finance') saldoVerified = true;
   }
-  if (saldoContas > 0 && items.length === 0) {
-    // só mostra se não há alertas mais urgentes
+  if (saldoContas > 0 && items.filter((i) => i.kind !== 'warn').length === 0) {
+    // mostra saldo apenas se não há outros alertas mais urgentes
+    const suffix = saldoVerified
+      ? ' — saldo verificado pelo Open Finance.'
+      : ' em contas registradas.';
     items.push({
       emoji: '💰',
-      text: `Saldo disponível nas contas: **R$ ${fmtBRL(saldoContas)}**.`,
+      text: `Saldo disponível: **R$ ${fmtBRL(saldoContas)}**${suffix}`,
+      verified: saldoVerified,
+    });
+  }
+
+  // ── 7. Sugestão de conectar Open Finance ─────────────────────────────────
+  if (!hasOpenFinance && items.filter((i) => i.kind !== 'warn').length === 0) {
+    items.push({
+      emoji: '🏦',
+      text: `Conecte seu banco via **Open Finance** para que eu veja seu extrato real e possa te orientar com dados verificados.`,
+      link: '/configuracoes#open-finance',
+      kind: 'info',
     });
   }
 
@@ -203,12 +284,12 @@ function buildBriefingItems(ctx: ReturnType<typeof useAppContext>): BriefingItem
 
 // ─── quick actions ────────────────────────────────────────────────────────────
 const ACTIONS = [
-  { icon: PlusCircle,     label: 'Registrar gasto',   to: '/lancamentos',  color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20' },
-  { icon: LayoutDashboard,label: 'Ver painel',         to: '/dashboard',   color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20' },
-  { icon: Bot,            label: 'Consultor IA',       to: '/consultor-ia', color: 'text-violet-400',  bg: 'bg-violet-500/10 border-violet-500/20 hover:bg-violet-500/20' },
-  { icon: Target,         label: 'Metas',              to: '/planejamento', color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20' },
-  { icon: CreditCard,     label: 'Cartões',            to: '/cartoes',      color: 'text-rose-400',    bg: 'bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20' },
-  { icon: CalendarDays,   label: 'Calendário',         to: '/calendario',   color: 'text-cyan-400',    bg: 'bg-cyan-500/10 border-cyan-500/20 hover:bg-cyan-500/20' },
+  { icon: PlusCircle,      label: 'Registrar gasto',   to: '/lancamentos',  color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20' },
+  { icon: LayoutDashboard, label: 'Ver painel',         to: '/dashboard',    color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20' },
+  { icon: Bot,             label: 'Consultor IA',       to: '/consultor-ia', color: 'text-violet-400',  bg: 'bg-violet-500/10 border-violet-500/20 hover:bg-violet-500/20' },
+  { icon: Target,          label: 'Metas',              to: '/planejamento', color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20' },
+  { icon: CreditCard,      label: 'Cartões',            to: '/cartoes',      color: 'text-rose-400',    bg: 'bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20' },
+  { icon: CalendarDays,    label: 'Calendário',         to: '/calendario',   color: 'text-cyan-400',    bg: 'bg-cyan-500/10 border-cyan-500/20 hover:bg-cyan-500/20' },
 ];
 
 // ─── bold renderer (simple **text** → <strong>) ───────────────────────────────
@@ -229,11 +310,43 @@ function BoldText({ text }: { text: string }) {
   );
 }
 
+// ─── sync freshness badge ─────────────────────────────────────────────────────
+function SyncBadge({
+  syncedAt, isSyncing, onSync,
+}: {
+  syncedAt: string | null;
+  isSyncing: boolean;
+  onSync: () => void;
+}) {
+  if (!syncedAt) return null;
+  const minutesAgo = Math.round((Date.now() - new Date(syncedAt).getTime()) / 60_000);
+  const label =
+    minutesAgo < 60
+      ? `há ${minutesAgo} min`
+      : `há ${Math.round(minutesAgo / 60)}h`;
+
+  return (
+    <button
+      type="button"
+      onClick={onSync}
+      disabled={isSyncing}
+      className="flex items-center gap-1.5 text-xs text-si-5 hover:text-si-3 transition-colors disabled:opacity-50"
+      title="Sincronizar com o banco"
+    >
+      <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin text-emerald-400' : ''}`} />
+      {isSyncing ? 'Sincronizando…' : `Open Finance · ${label}`}
+    </button>
+  );
+}
+
 // ─── component ────────────────────────────────────────────────────────────────
 export default function Home() {
   const ctx = useAppContext();
   const navigate = useNavigate();
-  const { user, score, entries, accountBalances, accountMeta, investments, loading } = ctx;
+  const {
+    user, score, entries, accountBalances, accountMeta, investments, loading,
+    hasOpenFinance, openFinanceSyncedAt, dataFreshness, isSyncing, syncOpenFinance,
+  } = ctx;
   const [architectReply, setArchitectReply] = useState('');
 
   const userName = user?.displayName || user?.email?.split('@')[0] || 'você';
@@ -253,7 +366,12 @@ export default function Home() {
   const briefingItems = useMemo(
     () => (loading ? [] : buildBriefingItems(ctx)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [loading, ctx.entries, ctx.recurrents, ctx.cards, ctx.goals, ctx.budgets, ctx.investments, ctx.accountBalances],
+    [
+      loading,
+      ctx.entries, ctx.recurrents, ctx.cards, ctx.goals, ctx.budgets,
+      ctx.investments, ctx.accountBalances,
+      ctx.openFinanceCreditBills, ctx.dataFreshness, ctx.openFinanceSyncedAt,
+    ],
   );
 
   const dateStr = new Date().toLocaleDateString('pt-BR', {
@@ -280,7 +398,18 @@ export default function Home() {
 
         {/* Bubble */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs lg:text-sm font-bold text-emerald-400 mb-2">Arquiteto Soberano</p>
+          {/* Header: nome + badge OF */}
+          <div className="flex items-center justify-between mb-2 gap-3">
+            <p className="text-xs lg:text-sm font-bold text-emerald-400">Arquiteto Soberano</p>
+            {hasOpenFinance && (
+              <SyncBadge
+                syncedAt={openFinanceSyncedAt}
+                isSyncing={isSyncing}
+                onSync={syncOpenFinance}
+              />
+            )}
+          </div>
+
           <div className="bg-si-card border border-si-border-md rounded-2xl rounded-tl-sm p-5 sm:p-6 lg:p-8 space-y-3 lg:space-y-4">
 
             {/* greeting line */}
@@ -291,25 +420,42 @@ export default function Home() {
             {loading ? (
               <div className="flex items-center gap-2 text-si-4 text-sm">
                 <div className="w-4 h-4 border-2 border-emerald-500/40 border-t-emerald-400 rounded-full animate-spin" />
-                Preparando seu briefing...
+                Preparando seu briefing…
               </div>
             ) : briefingItems.length === 0 ? (
               <p className="text-si-3 text-sm lg:text-base leading-relaxed max-w-3xl">
-                Tudo tranquilo hoje — nenhuma ação urgente no radar. Quer registrar um gasto, revisar suas metas ou consultar o IA?
+                Tudo tranquilo hoje — nenhuma ação urgente no radar.
+                {!hasOpenFinance && (
+                  <>{' '}
+                    <Link to="/configuracoes#open-finance" className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2">
+                      Conecte seu banco
+                    </Link>
+                    {' '}para eu acompanhar seu extrato automaticamente.
+                  </>
+                )}
               </p>
             ) : (
               <>
                 <p className="text-si-4 text-sm lg:text-base">
-                  {briefingItems.length === 1
+                  {briefingItems.filter((i) => i.kind !== 'warn').length === 0
+                    ? 'Uma atualização sobre seus dados:'
+                    : briefingItems.filter((i) => i.kind !== 'warn').length === 1
                     ? 'Tenho uma coisa para você hoje:'
-                    : `Tenho ${briefingItems.length} itens para você hoje:`}
+                    : `Tenho ${briefingItems.filter((i) => i.kind !== 'warn').length} itens para você hoje:`}
                 </p>
                 <ul className="space-y-2 lg:space-y-3">
                   {briefingItems.map((item, i) => (
                     <li key={i} className="flex items-start gap-2 lg:gap-3">
                       <span className="text-lg lg:text-xl leading-snug shrink-0">{item.emoji}</span>
-                      <span className="text-si-2 text-sm lg:text-base leading-relaxed">
+                      <span className={`text-sm lg:text-base leading-relaxed ${
+                        item.kind === 'warn' ? 'text-amber-300/90' : 'text-si-2'
+                      }`}>
                         <BoldText text={item.text} />
+                        {item.verified && (
+                          <span className="ml-1.5 inline-flex items-center text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 rounded px-1 py-0.5 align-middle">
+                            ✓ OF
+                          </span>
+                        )}
                         {item.link && (
                           <Link
                             to={item.link}
@@ -322,6 +468,16 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
+                {/* Connect bank CTA when no OF */}
+                {!hasOpenFinance && (
+                  <p className="text-xs text-si-5 pt-1 border-t border-si-border">
+                    Conecte seu{' '}
+                    <Link to="/configuracoes#open-finance" className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2">
+                      banco via Open Finance
+                    </Link>
+                    {' '}para que esses dados sejam verificados automaticamente.
+                  </p>
+                )}
                 <p className="text-si-5 text-xs pt-1">
                   Como posso ajudar?
                 </p>
@@ -392,6 +548,12 @@ export default function Home() {
             <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
             Score {score}
           </span>
+          {hasOpenFinance && dataFreshness === 'fresh' && (
+            <>
+              <span className="w-px h-3 bg-si-border" />
+              <span className="text-emerald-400/70">● dados verificados</span>
+            </>
+          )}
         </div>
       )}
     </div>
