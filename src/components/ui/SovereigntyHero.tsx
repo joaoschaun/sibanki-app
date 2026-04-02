@@ -8,7 +8,7 @@
  *  - Greeting + "Novo lançamento" CTA in the same card — no clutter outside
  */
 
-import { ArrowUpRight, Shield, TrendingUp, TrendingDown, Zap } from 'lucide-react';
+import { ArrowUpRight, Shield, TrendingUp, TrendingDown, Zap, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // ─── Types (must stay in sync with sovereigntyEngine) ──────────────────────────
@@ -30,6 +30,8 @@ export type FreedomResult = {
   coverageMonths: number;
   dailyBurnRate: number;
   status: FreedomStatus;
+  dataConfidence?: 'alta' | 'media' | 'baixa';
+  verifiedExpensesPct?: number;
 };
 
 export type SpreadResult = {
@@ -159,6 +161,20 @@ export function SovereigntyHero({
           >
             {STATUS_LABEL[freedom.status]}
           </span>
+
+          {/* Confidence badge — only shown when meaningful */}
+          {freedom.dataConfidence === 'alta' && (
+            <span className="mt-2 flex items-center gap-1 text-[11px] text-emerald-400/80">
+              <CheckCircle2 className="w-3 h-3" />
+              {freedom.verifiedExpensesPct}% das despesas verificadas pelo banco
+            </span>
+          )}
+          {freedom.dataConfidence === 'baixa' && (
+            <span className="mt-2 flex items-center gap-1 text-[11px] text-si-5">
+              <AlertCircle className="w-3 h-3 text-amber-400/60" />
+              baseado em dados manuais — conecte seu banco para maior precisão
+            </span>
+          )}
         </div>
 
         {/* ── Divider ── */}

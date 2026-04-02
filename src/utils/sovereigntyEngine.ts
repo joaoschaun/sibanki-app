@@ -35,6 +35,15 @@ export interface DaysOfFreedomResult {
   status: FreedomStatus;
   /** Meses de cobertura (arredondado) */
   coverageMonths: number;
+  /**
+   * Confiança no cálculo, baseada na proporção de despesas verificadas pelo Open Finance.
+   * - 'alta'  → ≥ 70% das despesas dos últimos 3 meses vieram do extrato bancário real
+   * - 'media' → 30–69% verificadas
+   * - 'baixa' → < 30% ou Open Finance não conectado
+   */
+  dataConfidence: 'alta' | 'media' | 'baixa';
+  /** Percentual das despesas recentes confirmadas via Open Finance (0–100) */
+  verifiedExpensesPct: number;
 }
 
 export type SpreadVerdict =
@@ -147,6 +156,15 @@ export function calculateDaysOfFreedom(params: {
       (e.date || '') >= thresholdDate,
   );
 
+  // Confiança: proporção de despesas confirmadas pelo Open Finance
+  const verifiedCount = relevantExpenses.filter((e) => e.source === 'open-finance').length;
+  const verifiedExpensesPct =
+    relevantExpenses.length > 0
+      ? Math.round((verifiedCount / relevantExpenses.length) * 100)
+      : 0;
+  const dataConfidence: 'alta' | 'media' | 'baixa' =
+    verifiedExpensesPct >= 70 ? 'alta' : verifiedExpensesPct >= 30 ? 'media' : 'baixa';
+
   const totalExpenses3m = relevantExpenses.reduce((sum, e) => sum + (Number(e.value) || 0), 0);
 
   // Calcula quantos meses distintos existem nos dados (mínimo 1)
@@ -179,6 +197,8 @@ export function calculateDaysOfFreedom(params: {
     monthlyPassiveIncome,
     status,
     coverageMonths,
+    dataConfidence,
+    verifiedExpensesPct,
   };
 }
 
@@ -411,6 +431,7 @@ SOBERANIA FINANCEIRA:
 - Liquidez Total: R$ ${freedom.totalLiquidity.toFixed(2)}
 - Burn Rate Diário: R$ ${freedom.dailyBurnRate.toFixed(2)}/dia
 - Renda Passiva Mensal: R$ ${freedom.monthlyPassiveIncome.toFixed(2)}
+- Confiança no cálculo: ${freedom.dataConfidence.toUpperCase()} (${freedom.verifiedExpensesPct}% das despesas verificadas pelo banco${freedom.dataConfidence === 'baixa' ? ' — conectar Open Finance melhorará a precisão' : ''})
 
 ANÁLISE DE SPREAD (Wall Street):
 - Rendimento médio investimentos: ${(spread.avgInvestmentYieldMonthly * 100).toFixed(2)}% a.m.
