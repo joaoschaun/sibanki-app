@@ -1,36 +1,21 @@
-import { useEffect } from 'react';
-import { useSibcoin } from '../../hooks/useSibcoin';
-
-export type SidebarOpenGroup = 'planejamento' | 'crescimento' | 'social' | 'solucoes' | 'expansao' | null;
+import { useEffect, useState } from 'react';
 import {
   House,
   LayoutDashboard,
+  Receipt,
+  TrendingUp,
+  MessageCircle,
   Wallet,
   CreditCard,
-  Receipt,
   Repeat,
   Target,
   PieChart,
-  TrendingUp as Growth,
-  Users,
-  MessageCircle,
-  BookOpen,
-  User,
-  Settings,
-  ChevronDown,
-  Store,
-  Banknote,
-  UsersRound,
-  Shield,
-  LineChart,
   FileBarChart,
   Calendar,
-  Trophy,
-  Wrench,
-  Bitcoin,
-  ShoppingBag,
-  FileText,
-  Coins,
+  User,
+  Settings,
+  MoreHorizontal,
+  ChevronDown,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -40,6 +25,8 @@ import { twMerge } from 'tailwind-merge';
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export type SidebarOpenGroup = 'mais' | null;
 
 interface SidebarProps {
   userName?: string | null;
@@ -51,316 +38,241 @@ interface SidebarProps {
   setOpenGroup: (g: SidebarOpenGroup) => void;
 }
 
-type NavGroupId = SidebarOpenGroup;
-
-interface SubItem {
+interface NavItem {
+  icon: LucideIcon;
   label: string;
   path: string;
-  icon: LucideIcon;
-  sub?: string;
 }
 
-const navGroups: { id: NavGroupId; label: string; icon: LucideIcon; items: SubItem[] }[] = [
-  {
-    id: 'planejamento',
-    label: 'Planejamento',
-    icon: Target,
-    items: [
-      { label: 'Metas', path: '/planejamento', icon: Target },
-      { label: 'Orçamento', path: '/orcamento', icon: PieChart },
-    ],
-  },
-  {
-    id: 'crescimento',
-    label: 'Crescimento',
-    icon: Growth,
-    items: [
-      { label: 'Investimentos', path: '/crescimento', icon: Growth },
-      { label: 'Consultor IA', path: '/consultor-ia', icon: MessageCircle },
-      { label: 'Educação', path: '/educacao', icon: BookOpen },
-      { label: 'Relatórios', path: '/relatorios', icon: FileBarChart },
-      { label: 'Calendário', path: '/calendario', icon: Calendar },
-      { label: 'Conquistas', path: '/conquistas', icon: Trophy },
-    ],
-  },
-  {
-    id: 'social',
-    label: 'Social',
-    icon: Users,
-    items: [{ label: 'Comunidade', path: '/social', icon: Users }],
-  },
-  {
-    id: 'solucoes',
-    label: 'Soluções',
-    icon: Store,
-    items: [
-      { label: 'Crédito', sub: 'Empréstimo e linhas', path: '/solucoes/credito', icon: Banknote },
-      { label: 'Consórcio', sub: 'Grupos e contemplação', path: '/solucoes/consorcio', icon: UsersRound },
-      { label: 'Seguro', sub: 'Proteção e coberturas', path: '/solucoes/seguro', icon: Shield },
-      { label: 'Investimentos', sub: 'Parceiros e produtos', path: '/solucoes/investimentos', icon: LineChart },
-    ],
-  },
-  {
-    id: 'expansao',
-    label: 'Expansão',
-    icon: Coins,
-    items: [
-      { label: 'SibCoin', sub: 'Recompensas e missões', path: '/sibcoin', icon: Coins },
-      { label: 'Cripto', sub: 'Exchange e ativos digitais', path: '/cripto', icon: Bitcoin },
-      { label: 'Loja Sibanki', sub: 'Ofertas e cashback', path: '/loja', icon: ShoppingBag },
-      { label: 'Meu CPF', sub: 'Score e proteção', path: '/meu-cpf', icon: Shield },
-      { label: 'Meus Boletos', sub: 'DDA automático', path: '/meus-boletos', icon: FileText },
-    ],
-  },
+// ── Navegação principal — 5 ações que importam ────────────────────────────────
+const primaryNav: NavItem[] = [
+  { icon: House,           label: 'Início',        path: '/' },
+  { icon: LayoutDashboard, label: 'Dashboard',     path: '/dashboard' },
+  { icon: Receipt,         label: 'Lançamentos',   path: '/lancamentos' },
+  { icon: TrendingUp,      label: 'Investimentos', path: '/crescimento' },
+  { icon: MessageCircle,   label: 'Consultor IA',  path: '/consultor-ia' },
 ];
 
-const flatItems: { icon: LucideIcon; label: string; sub?: string; path: string }[] = [
-  { icon: House, label: 'Início', sub: 'Briefing do dia', path: '/' },
-  { icon: LayoutDashboard, label: 'Dashboard', sub: 'Visão geral', path: '/dashboard' },
-  { icon: Wallet, label: 'Contas', sub: 'Saldos', path: '/contas' },
-  { icon: CreditCard, label: 'Cartões', sub: 'Faturas', path: '/cartoes' },
-  { icon: Receipt, label: 'Lançamentos', sub: 'Receitas e despesas', path: '/lancamentos' },
-  { icon: Repeat, label: 'Recorrentes', sub: 'Fixos mensais', path: '/recorrentes' },
-  // Itens abaixo dos grupos (aparecen depois de Soluções)
-  { icon: Wrench, label: 'Ferramentas', sub: 'Calculadoras financeiras', path: '/ferramentas' },
-  { icon: User, label: 'Perfil', sub: 'Nome e foto', path: '/perfil' },
-  { icon: Settings, label: 'Configurações', sub: 'Backup e dados', path: '/configuracoes' },
+// ── Secundário — acessível mas não na frente ──────────────────────────────────
+const secondaryNav: NavItem[] = [
+  { icon: Wallet,       label: 'Contas',       path: '/contas' },
+  { icon: CreditCard,   label: 'Cartões',      path: '/cartoes' },
+  { icon: Repeat,       label: 'Recorrentes',  path: '/recorrentes' },
+  { icon: Target,       label: 'Metas',        path: '/planejamento' },
+  { icon: PieChart,     label: 'Orçamento',    path: '/orcamento' },
+  { icon: FileBarChart, label: 'Relatórios',   path: '/relatorios' },
+  { icon: Calendar,     label: 'Calendário',   path: '/calendario' },
 ];
 
-const SOLUTIONS_PREFIX = '/solucoes/';
+// ── Rodapé ────────────────────────────────────────────────────────────────────
+const bottomNav: NavItem[] = [
+  { icon: User,     label: 'Perfil',        path: '/perfil' },
+  { icon: Settings, label: 'Configurações', path: '/configuracoes' },
+];
 
-function pathMatchesGroup(pathname: string, group: (typeof navGroups)[0]) {
-  if (group.id === 'solucoes') return pathname.startsWith('/solucoes');
-  if (group.id === 'expansao') return ['/sibcoin', '/cripto', '/loja', '/meu-cpf', '/meus-boletos'].includes(pathname);
-  return group.items.some((it) => it.path === pathname);
-}
+const secondaryPaths = secondaryNav.map((i) => i.path);
 
-const groupDefaultPath: Record<NonNullable<NavGroupId>, string> = {
-  planejamento: '/planejamento',
-  crescimento: '/crescimento',
-  social: '/social',
-  solucoes: '/solucoes/credito',
-  expansao: '/cripto',
-};
-
-const TIER_EMOJI: Record<string, string> = { bronze: '🥉', silver: '🥈', gold: '🥇', diamond: '💎' };
-
-export function Sidebar({ userName, userEmail, avatarURL, score, collapsed, openGroup, setOpenGroup }: SidebarProps) {
+export function Sidebar({
+  userName,
+  userEmail: _userEmail,
+  avatarURL,
+  score: _score,
+  collapsed,
+  openGroup: _openGroup,
+  setOpenGroup,
+}: SidebarProps) {
   const location = useLocation();
-  const { balance, tier } = useSibcoin();
+  const [maisOpen, setMaisOpen] = useState(false);
 
+  // Fecha accordion quando colapsa
   useEffect(() => {
-    if (collapsed) setOpenGroup(null);
+    if (collapsed) {
+      setMaisOpen(false);
+      setOpenGroup(null);
+    }
   }, [collapsed, setOpenGroup]);
 
-  const isSolutionsRoute = location.pathname.startsWith(SOLUTIONS_PREFIX);
+  // Abre "Mais" automaticamente se a rota ativa for secundária
+  useEffect(() => {
+    if (!collapsed && secondaryPaths.includes(location.pathname)) {
+      setMaisOpen(true);
+    }
+  }, [location.pathname, collapsed]);
 
-  const linkActiveClassExpanded = (isActive: boolean) =>
-    isActive ? 'bg-gradient-to-r from-blue-600/15 to-transparent text-blue-400 border-l-2 border-blue-500 shadow-[inset_1px_0_10px_rgba(59,130,246,0.05)]' : 'text-si-5 hover:bg-si-over-2 hover:text-si-3 transition-colors';
+  const isActive = (path: string) =>
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
-  /** Modo minimizado: sem caixa azul — só ícone em destaque + barra lateral fina */
-  const linkCollapsedClass = (isActive: boolean) =>
+  // ── Estilos ──────────────────────────────────────────────────────────────────
+  const itemBase = cn(
+    'flex items-center gap-3 rounded-lg transition-all duration-150 outline-none',
+    'focus-visible:ring-2 focus-visible:ring-blue-500/40'
+  );
+
+  const itemExpanded = (active: boolean) =>
     cn(
-      'relative max-w-full justify-center rounded-none',
-      isActive
-        ? 'text-blue-400 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-7 before:w-0.5 before:rounded-full before:bg-blue-500'
-        : 'text-si-5 hover:text-si-3 hover:bg-white/[0.04]'
+      itemBase,
+      'px-3 py-2.5 w-full text-sm font-medium',
+      active
+        ? 'bg-white/[0.08] text-white'
+        : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]'
     );
+
+  const itemCollapsed = (active: boolean) =>
+    cn(
+      itemBase,
+      'justify-center w-10 h-10 mx-auto',
+      active
+        ? 'text-white bg-white/[0.08]'
+        : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04]'
+    );
+
+  const iconCls = (active: boolean) =>
+    cn('w-4 h-4 shrink-0', active ? 'text-white' : '');
+
+  const initials = (userName || 'U').slice(0, 2).toUpperCase();
 
   return (
     <aside
       className={cn(
-        'bg-si-card/60 backdrop-blur-xl border-r border-si-border flex flex-col shrink-0 transition-[width] duration-200 ease-out isolate shadow-[4px_0_24px_rgba(0,0,0,0.05)]',
-        collapsed ? 'w-[72px] max-w-[72px] overflow-x-clip overflow-y-auto' : 'w-[280px] overflow-x-clip'
+        'flex flex-col shrink-0 border-r border-white/[0.06] bg-[#0d0d0f]',
+        'transition-[width] duration-200 ease-out overflow-hidden',
+        collapsed ? 'w-[60px]' : 'w-[220px]'
       )}
-      onMouseLeave={() => {
-        if (!collapsed) setOpenGroup(null);
-      }}
     >
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div
         className={cn(
-          'flex flex-col items-center text-center border-b border-si-border shrink-0',
-          collapsed ? 'p-3' : 'p-8'
+          'flex items-center border-b border-white/[0.06] shrink-0',
+          collapsed ? 'justify-center px-0 py-4' : 'gap-3 px-4 py-4'
         )}
       >
-        <div className={cn('relative mb-2', !collapsed && 'mb-4')}>
-          <div
-            className={cn(
-              'rounded-full border-2 border-transparent bg-gradient-to-tr from-[#111f30] to-[#1a2b42] flex items-center justify-center font-bold text-si-4 overflow-hidden shadow-[0_0_15px_rgba(59,130,246,0.15)]',
-              collapsed ? 'w-11 h-11 text-sm' : 'w-20 h-20 text-2xl'
-            )}
-          >
-            {avatarURL ? (
-              <img src={avatarURL} alt="" className="w-full h-full object-cover" />
-            ) : (
-              (userName || 'U').slice(0, 2).toUpperCase()
-            )}
-          </div>
-          {!collapsed && (
-            <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-4 border-si-card" />
+        <div
+          className={cn(
+            'rounded-full bg-gradient-to-br from-blue-600 to-blue-800',
+            'flex items-center justify-center font-semibold text-white shrink-0 overflow-hidden',
+            collapsed ? 'w-8 h-8 text-xs' : 'w-7 h-7 text-[11px]'
+          )}
+        >
+          {avatarURL ? (
+            <img src={avatarURL} alt="" className="w-full h-full object-cover" />
+          ) : (
+            initials
           )}
         </div>
         {!collapsed && (
-          <>
-            <h2 className="font-bold text-lg">{userName || 'Usuário'}</h2>
-            <p className="text-xs text-si-5 mb-4 truncate w-full px-2">{userEmail || '...'}</p>
-            <div className="flex gap-2 flex-wrap justify-center">
-              <span className="bg-green-500/10 text-green-500 text-[10px] font-bold px-2 py-1 rounded-full border border-green-500/20">
-                Score: {score}
-              </span>
-              <span className="bg-si-zinc-8 text-si-4 text-[10px] font-bold px-2 py-1 rounded-full">
-                GRATUITO
-              </span>
-            </div>
-            <Link
-              to="/sibcoin"
-              className="mt-3 flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-bold px-3 py-1.5 rounded-full hover:bg-amber-500/20 transition-colors"
-            >
-              <Coins className="w-3.5 h-3.5" />
-              {balance.toLocaleString('pt-BR')} SC
-              <span className="ml-0.5">{TIER_EMOJI[tier] ?? '🥉'}</span>
-            </Link>
-          </>
+          <span className="text-sm font-medium text-zinc-200 truncate">
+            {userName || 'Usuário'}
+          </span>
         )}
       </div>
 
-      <nav className={cn('flex-1 overflow-y-auto overflow-x-hidden', collapsed ? 'p-2 space-y-1' : 'p-4 space-y-1')}>
-        {flatItems.slice(0, 5).map((item, i) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={i}
-              to={item.path}
-              title={collapsed ? item.label : undefined}
-              className={cn(
-                'w-full flex items-center transition-all group outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
-                collapsed ? cn('py-2.5 px-0', linkCollapsedClass(isActive)) : cn('rounded-xl gap-4 px-4 py-3', linkActiveClassExpanded(isActive))
-              )}
-            >
-              <item.icon className={cn('w-5 h-5 shrink-0', isActive ? 'text-blue-400' : '')} />
-              {!collapsed && (
-                <div className="flex-1 text-left min-w-0">
-                  <div className="text-sm font-bold truncate">{item.label}</div>
-                  {item.sub && <div className="text-[10px] opacity-60">{item.sub}</div>}
-                </div>
-              )}
-            </Link>
-          );
-        })}
-        {navGroups.map((group) => {
-          const isOpen = !collapsed && openGroup === group.id;
-          const isGroupActive = pathMatchesGroup(location.pathname, group);
-          const groupHighlight =
-            collapsed &&
-            (isGroupActive || (group.id === 'solucoes' && isSolutionsRoute));
-          const groupBtnExpanded = cn(
-            'w-full flex items-center rounded-xl transition-all text-left gap-4 px-4 py-3',
-            isGroupActive ? 'text-blue-400' : 'text-si-5 hover:bg-si-over-2'
-          );
+      {/* ── Navegação principal ─────────────────────────────────────────────── */}
+      <nav
+        className={cn(
+          'flex-1 overflow-y-auto overflow-x-hidden',
+          collapsed ? 'px-2 pt-3' : 'px-3 pt-3'
+        )}
+      >
+        <div className="space-y-0.5">
+          {primaryNav.map((item) => {
+            const active = isActive(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                title={collapsed ? item.label : undefined}
+                className={collapsed ? itemCollapsed(active) : itemExpanded(active)}
+              >
+                <item.icon className={iconCls(active)} />
+                {!collapsed && item.label}
+              </Link>
+            );
+          })}
+        </div>
 
-          return (
-            <div key={group.id} className={cn('space-y-0.5', collapsed && 'overflow-hidden')}>
-              {collapsed ? (
-                <Link
-                  to={groupDefaultPath[group.id!]}
-                  title={group.label}
-                  className={cn(
-                    'w-full flex items-center transition-all outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
-                    'py-2.5 px-0',
-                    linkCollapsedClass(!!groupHighlight)
-                  )}
-                >
-                  <group.icon
-                    className={cn('w-5 h-5 shrink-0 mx-auto', groupHighlight ? 'text-blue-400' : 'text-si-5')}
-                  />
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setOpenGroup(isOpen ? null : group.id)}
-                  className={groupBtnExpanded}
-                  aria-expanded={isOpen ? 'true' : 'false'}
-                  aria-controls={`sidebar-group-${group.id}`}
-                >
-                  <group.icon className="w-5 h-5 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold truncate">{group.label}</div>
-                  </div>
-                  <ChevronDown className={cn('w-4 h-4 opacity-40 shrink-0 transition-transform', isOpen && 'rotate-180')} />
-                </button>
-              )}
-              {!collapsed && (
-                <div
-                  id={`sidebar-group-${group.id}`}
-                  className={cn(
-                    'overflow-hidden transition-[max-height,opacity] duration-200',
-                    isOpen ? 'max-h-[520px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none hidden'
-                  )}
-                  aria-hidden={!isOpen}
-                >
-                  <div className="pl-4 ml-4 border-l border-si-border-md space-y-0.5 py-1">
-                    {group.items.map((sub) => {
-                      const isActive =
-                        group.id === 'solucoes'
-                          ? location.pathname === sub.path
-                          : location.pathname === sub.path;
-                      return (
-                        <Link
-                          key={sub.path}
-                          to={sub.path}
-                          className={cn(
-                            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
-                            isActive ? 'bg-blue-600/10 text-blue-400' : 'text-si-5 hover:bg-si-over-2'
-                          )}
-                        >
-                          <sub.icon className="w-4 h-4 opacity-70 shrink-0" />
-                          <span className="min-w-0">
-                            <span className="block font-medium">{sub.label}</span>
-                            {sub.sub && <span className="block text-[10px] opacity-60">{sub.sub}</span>}
-                          </span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+        {/* ── Mais ────────────────────────────────────────────────────────── */}
+        <div className="mt-4 pt-4 border-t border-white/[0.06]">
+          {collapsed ? (
+            <div title="Mais" className={itemCollapsed(false)}>
+              <MoreHorizontal className="w-4 h-4 text-zinc-600" />
             </div>
-          );
-        })}
-        {flatItems.slice(5).map((item, i) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={i}
-              to={item.path}
-              title={collapsed ? item.label : undefined}
-              className={cn(
-                'w-full flex items-center transition-all group outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
-                collapsed ? cn('py-2.5 px-0', linkCollapsedClass(isActive)) : cn('gap-4 px-4 py-3', linkActiveClassExpanded(isActive), isActive ? 'rounded-r-xl' : 'rounded-xl')
-              )}
-            >
-              <item.icon className={cn('w-5 h-5 shrink-0', isActive ? 'text-blue-400' : '')} />
-              {!collapsed && (
-                <div className="flex-1 text-left min-w-0">
-                  <div className="text-sm font-bold truncate">{item.label}</div>
-                  {item.sub && <div className="text-[10px] opacity-60">{item.sub}</div>}
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setMaisOpen((v) => !v)}
+                className={cn(itemExpanded(false), 'w-full justify-between')}
+              >
+                <span className="flex items-center gap-3">
+                  <MoreHorizontal className="w-4 h-4 shrink-0" />
+                  Mais
+                </span>
+                <ChevronDown
+                  className={cn(
+                    'w-3.5 h-3.5 text-zinc-600 transition-transform duration-150',
+                    maisOpen && 'rotate-180'
+                  )}
+                />
+              </button>
+
+              <div
+                className={cn(
+                  'overflow-hidden transition-[max-height,opacity] duration-200',
+                  'pl-3 ml-2 border-l border-white/[0.06]',
+                  maisOpen
+                    ? 'max-h-96 opacity-100 mt-1'
+                    : 'max-h-0 opacity-0 pointer-events-none'
+                )}
+              >
+                <div className="space-y-0.5">
+                  {secondaryNav.map((item) => {
+                    const active = isActive(item.path);
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={cn(
+                          itemBase,
+                          'px-3 py-2 w-full text-sm font-medium',
+                          active
+                            ? 'text-white bg-white/[0.06]'
+                            : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]'
+                        )}
+                      >
+                        <item.icon className="w-3.5 h-3.5 shrink-0" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
                 </div>
-              )}
-            </Link>
-          );
-        })}
+              </div>
+            </>
+          )}
+        </div>
       </nav>
 
-      {!collapsed && (
-        <div className="p-6 shrink-0">
-          <button
-            type="button"
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-400 text-black font-bold text-sm shadow-lg shadow-blue-500/20 hover:scale-[1.02] transition-transform"
-          >
-            Upgrade para Pro
-          </button>
-        </div>
-      )}
+      {/* ── Rodapé ─────────────────────────────────────────────────────────── */}
+      <div
+        className={cn(
+          'border-t border-white/[0.06] shrink-0',
+          collapsed ? 'px-2 py-3 space-y-0.5' : 'px-3 py-3 space-y-0.5'
+        )}
+      >
+        {bottomNav.map((item) => {
+          const active = isActive(item.path);
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              title={collapsed ? item.label : undefined}
+              className={collapsed ? itemCollapsed(active) : itemExpanded(active)}
+            >
+              <item.icon className={iconCls(active)} />
+              {!collapsed && item.label}
+            </Link>
+          );
+        })}
+      </div>
     </aside>
   );
 }
