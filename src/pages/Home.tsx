@@ -7,13 +7,13 @@
  * O painel completo fica um clique adiante.
  */
 
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { calculateDaysOfFreedom } from '../utils/sovereigntyEngine';
 import {
   LayoutDashboard, PlusCircle, Bot, Target,
-  CreditCard, CalendarDays, TrendingUp, Shield,
+  CreditCard, CalendarDays, TrendingUp, Shield, Send,
 } from 'lucide-react';
 import { isTransferEntry } from '../utils/entryUtils';
 
@@ -232,9 +232,18 @@ function BoldText({ text }: { text: string }) {
 // ─── component ────────────────────────────────────────────────────────────────
 export default function Home() {
   const ctx = useAppContext();
+  const navigate = useNavigate();
   const { user, score, entries, accountBalances, accountMeta, investments, loading } = ctx;
+  const [architectReply, setArchitectReply] = useState('');
 
   const userName = user?.displayName || user?.email?.split('@')[0] || 'você';
+
+  const sendToConsultant = () => {
+    const t = architectReply.trim();
+    if (!t) return;
+    setArchitectReply('');
+    navigate('/consultor-ia', { state: { initialMessage: t } });
+  };
 
   const freedom = useMemo(
     () => calculateDaysOfFreedom({ entries, accountBalances, accountMeta, investments }),
@@ -317,6 +326,41 @@ export default function Home() {
                   Como posso ajudar?
                 </p>
               </>
+            )}
+
+            {!loading && (
+              <div className="border-t border-si-border pt-4 mt-2 space-y-2">
+                <label htmlFor="home-architect-reply" className="text-xs font-medium text-si-5">
+                  Responder ao Arquiteto
+                </label>
+                <div className="flex gap-2 items-end">
+                  <textarea
+                    id="home-architect-reply"
+                    rows={3}
+                    value={architectReply}
+                    onChange={(e) => setArchitectReply(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendToConsultant();
+                      }
+                    }}
+                    placeholder="Digite sua mensagem… (Enter envia, Shift+Enter quebra linha)"
+                    className="flex-1 min-w-0 rounded-xl bg-si-bg border border-si-border-md px-3 py-2.5 text-sm text-si-2 placeholder:text-si-5 focus:outline-none focus:border-emerald-500/50 resize-y min-h-[5rem]"
+                    aria-label="Mensagem para o Arquiteto Soberano"
+                  />
+                  <button
+                    type="button"
+                    onClick={sendToConsultant}
+                    disabled={!architectReply.trim()}
+                    className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 text-sm font-semibold disabled:opacity-40 disabled:pointer-events-none"
+                    aria-label="Enviar ao Consultor IA"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span className="hidden sm:inline">Enviar</span>
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>

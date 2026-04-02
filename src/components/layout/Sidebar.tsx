@@ -3,6 +3,7 @@ import { useSibcoin } from '../../hooks/useSibcoin';
 
 export type SidebarOpenGroup = 'planejamento' | 'crescimento' | 'social' | 'solucoes' | 'expansao' | null;
 import {
+  House,
   LayoutDashboard,
   Wallet,
   CreditCard,
@@ -114,7 +115,8 @@ const navGroups: { id: NavGroupId; label: string; icon: LucideIcon; items: SubIt
 ];
 
 const flatItems: { icon: LucideIcon; label: string; sub?: string; path: string }[] = [
-  { icon: LayoutDashboard, label: 'Dashboard', sub: 'Visão geral', path: '/' },
+  { icon: House, label: 'Início', sub: 'Briefing do dia', path: '/' },
+  { icon: LayoutDashboard, label: 'Dashboard', sub: 'Visão geral', path: '/dashboard' },
   { icon: Wallet, label: 'Contas', sub: 'Saldos', path: '/contas' },
   { icon: CreditCard, label: 'Cartões', sub: 'Faturas', path: '/cartoes' },
   { icon: Receipt, label: 'Lançamentos', sub: 'Receitas e despesas', path: '/lancamentos' },

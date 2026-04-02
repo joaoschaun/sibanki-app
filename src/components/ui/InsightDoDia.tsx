@@ -1,4 +1,4 @@
-/**
+﻿/**
  * InsightDoDia — Insight proativo gerado pelo Gemini
  *
  * Acao 18 (29/03/2026): respeita o Modo Sugestivo configurado pelo usuario.
@@ -86,33 +86,77 @@ export function InsightDoDia({
       const cat = (e.category || 'Outros').trim() || 'Outros';
       catTotals[cat] = (catTotals[cat] ?? 0) + (Number(e.value) || 0);
     }
-
-    const topCats = Object.entries(catTotals)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-
-    const topEntries = [...despesasHoje]
-      .sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0))
-      .slice(0, 5);
-
+    const topCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const topEntries = [...despesasHoje].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)).slice(0, 5);
     const topCatsLines = topCats.map(([cat, v]) => `- ${cat}: R$ ${fmtBRL(v)}`);
     const topEntriesLines = topEntries.map((e) => {
-      const label = (e.desc || e.category || 'Lançamento').trim();
+      const label = (e.desc || e.category || 'Lan\u00e7amento').trim();
       const cat = (e.category || 'Outros').trim();
-      return `- ${label} (${cat}): R$ ${fmtBRL(e.value)}`;
+      return `- ${label} (${cat}): R$ ${fmtBRL(Number(e.value))}`;
     });
+
+    // Contexto mensal
+    const mesAtual = todayStr.slice(0, 7);
+    let recMes = 0, despMes = 0;
+    for (const e of entries) {
+      if (isTransferEntry(e)) continue;
+      if ((e.date ?? '').slice(0, 7) !== mesAtual) continue;
+      const v = Number(e.value) || 0;
+      if (e.type === 'receita') recMes += v;
+      else if (e.type === 'despesa') despMes += v;
+    }
+    const saldoMes = recMes - despMes;
+
+    // Saldo dispon\u00edvel nas contas
+    let saldoContas = 0;
+    for (const [acc, bal] of Object.entries(accountBalances || {})) {
+      if (accountMeta?.[acc]?.incluirNaSoma === false) continue;
+      saldoContas += Number(bal) || 0;
+    }
+
+    // Metas mais pr\u00f3ximas de completar
+    const metaLines: string[] = [];
+    if (goals && goals.length > 0) {
+      const sorted = [...goals]
+        .filter((g) => (g.current ?? 0) < (g.target ?? 0))
+        .sort((a, b) => (a.target - a.current) - (b.target - b.current))
+        .slice(0, 2);
+      for (const g of sorted) {
+        const pct = g.target > 0 ? Math.round((g.current / g.target) * 100) : 0;
+        metaLines.push(`- ${g.title}: ${pct}% (faltam R$ ${fmtBRL(g.target - g.current)})`);
+      }
+    }
+
+    // Recorrentes vencendo em at\u00e9 7 dias
+    const hoje = new Date();
+    const em7 = new Date(hoje); em7.setDate(hoje.getDate() + 7);
+    const recLines: string[] = [];
+    if (recurrents && recurrents.length > 0) {
+      for (const r of recurrents) {
+        const dueDay = Number((r as any).dueDay ?? (r as any).dia ?? 0);
+        if (!dueDay) continue;
+        const thisMonth = new Date(hoje.getFullYear(), hoje.getMonth(), dueDay);
+        if (thisMonth >= hoje && thisMonth <= em7) {
+          recLines.push(`- ${(r as any).desc || (r as any).name || 'Recorrente'}: R$ ${fmtBRL(Number((r as any).value ?? (r as any).valor ?? 0))} (dia ${dueDay})`);
+        }
+      }
+    }
 
     return [
       `Data: ${todayStr}`,
-      `Total de despesas: R$ ${fmtBRL(total)}`,
+      `Receita do m\u00eas: R$ ${fmtBRL(recMes)} | Despesa do m\u00eas: R$ ${fmtBRL(despMes)} | Saldo do m\u00eas: R$ ${fmtBRL(saldoMes)}`,
+      `Saldo dispon\u00edvel nas contas: R$ ${fmtBRL(saldoContas)}`,
       '',
+      `Despesas de hoje: R$ ${fmtBRL(total)}`,
       'Categorias (top 5):',
       ...(topCatsLines.length ? topCatsLines : ['- (sem dados)']),
       '',
-      'Lançamentos (até 5):',
+      'Lan\u00e7amentos de hoje (at\u00e9 5):',
       ...(topEntriesLines.length ? topEntriesLines : ['- (sem dados)']),
+      ...(metaLines.length ? ['', 'Metas em andamento:', ...metaLines] : []),
+      ...(recLines.length ? ['', 'Contas vencendo em 7 dias:', ...recLines] : []),
     ].join('\n');
-  }, [despesasHoje, todayStr]);
+  }, [despesasHoje, todayStr, entries, accountBalances, accountMeta, goals, recurrents]);
 
   const cacheKey = useMemo(() => `sibanki_insight_dia_${todayStr}`, [todayStr]);
 
@@ -398,17 +442,16 @@ export function InsightDoDia({
 
   if (busy) {
     return (
-      <div className="bg-si-card rounded-2xl border border-si-border p-6">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-blue-500/20 text-blue-300">
-            <Lightbulb className="w-5 h-5" />
-          </div>
-          <div className="flex-1">
-            <p className="text-si-5 text-sm">Insight do Dia</p>
-            <div className="mt-1 flex items-center gap-2 text-si-3 text-sm">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Analisando seus gastos...
-            </div>
+      <div className="flex gap-3 items-start">
+        <div
+          className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-emerald-500/20"
+          style={{ background: 'linear-gradient(135deg,#10b981,#7c3aed)' }}
+        >AS</div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold text-emerald-400 mb-1.5">Arquiteto Soberano</p>
+          <div className="bg-si-card border border-si-border-md rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-2 text-si-3 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+            Analisando seus movimentos...
           </div>
         </div>
       </div>
@@ -416,14 +459,15 @@ export function InsightDoDia({
   }
 
   return (
-    <div className="bg-si-card rounded-2xl border border-si-border p-6">
-      <div className="flex items-start gap-4">
-        <div className="p-3 rounded-xl bg-blue-500/20 text-blue-300 shrink-0">
-          <Lightbulb className="w-5 h-5" />
-        </div>
+    <div className="flex gap-3 items-start">
+      <div
+        className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-emerald-500/20"
+        style={{ background: 'linear-gradient(135deg,#10b981,#7c3aed)' }}
+      >AS</div>
 
-        <div className="flex-1 min-w-0">
-          <p className="text-si-5 text-sm">Insight do Dia</p>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-bold text-emerald-400 mb-1.5">Arquiteto Soberano</p>
+        <div className="bg-si-card border border-si-border-md rounded-2xl rounded-tl-sm p-4">
 
           {error && (
             <div className="mt-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 text-amber-400 text-sm">

@@ -50,6 +50,7 @@ const MeusBoletos  = lazy(() => import('./pages/MeusBoletos'));
 const Sibcoin      = lazy(() => import('./pages/Sibcoin'));
 // Acao 12 (29/03/2026): Hub de Credito — visao consolidada do passivo financeiro
 const CreditHub    = lazy(() => import('./pages/CreditHub'));
+const Home         = lazy(() => import('./pages/Home'));
 
 // ── Spinner reutilizável para Suspense ───────────────────────────────────────
 function PageLoader() {
@@ -105,7 +106,8 @@ function AuthenticatedShell() {
         <main className="flex-1 overflow-y-auto p-8 space-y-8">
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              <Route path="/" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+              <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
+              <Route path="/dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
               <Route path="/contas" element={<ErrorBoundary><Accounts /></ErrorBoundary>} />
               <Route path="/cartoes" element={<ErrorBoundary><Cards /></ErrorBoundary>} />
               <Route path="/lancamentos" element={<ErrorBoundary><Transactions /></ErrorBoundary>} />

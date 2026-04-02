@@ -1,8 +1,11 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
-import { TrendingUp, TrendingDown, ArrowUpRight, AlertTriangle, Lightbulb, CreditCard, Shield, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowUpRight, AlertTriangle, Lightbulb, CreditCard, Shield, Zap, Navigation, X } from 'lucide-react';
 import { calculateDaysOfFreedom, calculateSpreadGap } from '../utils/sovereigntyEngine';
+import { useSentinelaGeo, SCENARIO_LABELS } from '../hooks/useSentinelaGeo';
+import { CoachSetup } from '../components/ui/CoachSetup';
+import { SovereigntyHero } from '../components/ui/SovereigntyHero';
 import { InsightDoDia } from '../components/ui/InsightDoDia';
 import { SibcoinWidget } from '../components/sibcoin/SibcoinWidget';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
@@ -32,7 +35,7 @@ type WidgetConfig = {
 function readWidgetConfig(): WidgetConfig {
   try {
     const raw = localStorage.getItem(DASHBOARD_WIDGETS_KEY);
-    if (!raw) return { insight: true, passos: true, alertas: true, resumo: true, graficos: true };
+    if (!raw) return { insight: true, passos: true, alertas: true, resumo: false, graficos: true };
     const parsed = JSON.parse(raw) as Partial<WidgetConfig>;
     return {
       insight: parsed.insight !== false,
@@ -148,6 +151,22 @@ export default function Dashboard() {
     const spread = calculateSpreadGap({ investments, creditObligations, cards, currentCdiMonthly: 0.0107 });
     return { freedom, spread };
   }, [entries, accountBalances, accountMeta, investments, creditObligations, cards]);
+
+  // Sentinela GPS — snapshot de soberania passado para a Cloud Function
+  const sentinelaSnapshot = useMemo(() => ({
+    daysOfFreedom: sovereignty.freedom.days,
+    spreadGap: sovereignty.spread.spreadGap,
+    monthlyBurn: sovereignty.freedom.dailyBurnRate * 30,
+    categoryBudgets: Object.fromEntries(
+      Object.entries(catTotals).map(([cat, spent]) => {
+        const limit = budgetMap[cat] ?? 0;
+        return [cat, { spent, limit, pct: limit > 0 ? Math.round((spent / limit) * 100) : 0 }];
+      })
+    ),
+  }), [sovereignty, catTotals, budgetMap]);
+
+  const userPhone = (financialProfile as Record<string, unknown>)?.whatsappPhone as string | undefined;
+  const sentinela = useSentinelaGeo(sentinelaSnapshot, userPhone);
 
   const alertas = useMemo(() => {
     const list: { type: 'positive' | 'warning' | 'info'; title: string; text: string; link?: string }[] = [];
@@ -288,6 +307,15 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+
+      <CoachSetup
+        entries={entries}
+        accountBalances={accountBalances}
+        goals={goals}
+        creditObligations={creditObligations}
+        investments={investments}
+        financialProfile={financialProfile as Record<string, unknown> | null}
+      />
 
       <SibcoinMissionBanner eventType="login_streak" />
 
@@ -444,34 +472,17 @@ export default function Dashboard() {
         </section>
       )}
 
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="text-si-5 text-sm mb-1">
-            {now.getHours() >= 12 ? (now.getHours() >= 18 ? 'Boa noite' : 'Boa tarde') : 'Bom dia'},{' '}
-            {user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
-          </p>
-          <div className="flex items-center gap-3">
-            <h2 className="text-4xl font-bold">{user?.displayName || user?.email?.split('@')[0] || 'Usuário'}</h2>
-            <span className="bg-green-500/20 text-green-400 text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" /> Score {score}
-            </span>
-          </div>
-          <p className="text-si-5 text-xs mt-2">
-            {now.toLocaleDateString('pt-BR', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })}
-          </p>
-        </div>
-        <Link
-          to="/lancamentos"
-          className="bg-blue-600 hover:bg-blue-500 text-si-1 px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors"
-        >
-          <ArrowUpRight className="w-4 h-4" /> Novo lançamento
-        </Link>
-      </div>
+      <SovereigntyHero
+        userName={user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
+        score={score}
+        freedom={sovereignty.freedom}
+        spread={sovereignty.spread}
+        receitaMes={receitaMes}
+        despesaMes={despesaMes}
+        saldoMes={saldoMes}
+        varReceita={varReceita}
+        varDespesa={varDespesa}
+      />
 
       {/* ── SibCoin Widget ───────────────────────────────────────────── */}
       <SibcoinWidget />
@@ -518,62 +529,73 @@ export default function Dashboard() {
       )}
 
 
-      {/* Soberania Financeira */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-si-card rounded-2xl border border-si-border p-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Shield className="w-4 h-4 text-violet-400" />
-            <span className="text-xs font-bold text-si-4 uppercase tracking-wider">Dias de Liberdade</span>
+
+      {/* Sentinela GPS — Geofencing Financeiro */}
+      <div className="bg-si-card rounded-2xl border border-si-border p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Navigation className="w-4 h-4 text-cyan-400" />
+            <span className="text-xs font-bold text-si-4 uppercase tracking-wider">Sentinela GPS</span>
+            <span className="text-xs text-si-5 ml-1">— alerta financeiro por localização</span>
           </div>
-          <div className="flex items-end gap-2">
-            <span className="text-4xl font-bold text-violet-300">{sovereignty.freedom.days}</span>
-            <span className="text-si-5 text-sm mb-1">dias</span>
-          </div>
-          <p className="text-xs text-si-5 mt-1">
-            {sovereignty.freedom.coverageMonths.toFixed(1)} meses &middot; queima R$ {sovereignty.freedom.dailyBurnRate.toFixed(0)}/dia
-          </p>
-          <span className={`mt-3 inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border ${
-            sovereignty.freedom.status === 'inabalavel'    ? 'bg-violet-500/15 text-violet-300 border-violet-500/30' :
-            sovereignty.freedom.status === 'soberano'      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' :
-            sovereignty.freedom.status === 'resiliente'    ? 'bg-blue-500/15 text-blue-300 border-blue-500/30' :
-            sovereignty.freedom.status === 'em-construcao' ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' :
-            'bg-rose-500/15 text-rose-300 border-rose-500/30'
-          }`}>
-            {sovereignty.freedom.status === 'inabalavel'    ? 'Inabal\u00e1vel' :
-             sovereignty.freedom.status === 'soberano'      ? 'Soberano' :
-             sovereignty.freedom.status === 'resiliente'    ? 'Resiliente' :
-             sovereignty.freedom.status === 'em-construcao' ? 'Em constru\u00e7\u00e3o' : 'Fr\u00e1gil'}
-          </span>
+          <button
+            onClick={() => sentinela.check()}
+            disabled={sentinela.loading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/25 text-cyan-300 text-xs font-bold hover:bg-cyan-500/20 transition-colors disabled:opacity-50 disabled:cursor-wait"
+          >
+            <Navigation className={`w-3.5 h-3.5 ${sentinela.loading ? 'animate-pulse' : ''}`} />
+            {sentinela.loading ? 'Localizando...' : 'Verificar local'}
+          </button>
         </div>
 
-        <div className="bg-si-card rounded-2xl border border-si-border p-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Zap className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-bold text-si-4 uppercase tracking-wider">Spread Gap</span>
+        {sentinela.error && (
+          <div className="mt-3 flex items-start gap-2 text-xs text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-xl px-3 py-2">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>{sentinela.error}</span>
           </div>
-          <div className="flex items-end gap-2">
-            <span className={`text-4xl font-bold ${sovereignty.spread.spreadGap >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-              {sovereignty.spread.spreadGap >= 0 ? '+' : ''}{(sovereignty.spread.spreadGap * 100).toFixed(2)}%
-            </span>
-            <span className="text-si-5 text-sm mb-1">a.m.</span>
+        )}
+
+        {sentinela.result && sentinela.result.scenario && (
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-si-2">
+                {SCENARIO_LABELS[sentinela.result.scenario]}
+                {sentinela.result.placeName ? ` — ${sentinela.result.placeName}` : ''}
+              </span>
+              <button onClick={() => sentinela.reset()} className="ml-auto text-si-5 hover:text-si-3">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            {sentinela.result.message && (
+              <pre className="whitespace-pre-wrap text-xs text-si-3 bg-si-bg rounded-xl p-3 border border-si-border leading-relaxed font-sans">
+                {sentinela.result.message}
+              </pre>
+            )}
+            {sentinela.result.sent && (
+              <p className="text-xs text-emerald-400">✓ Alerta enviado via WhatsApp</p>
+            )}
           </div>
-          <p className="text-xs text-si-5 mt-1">
-            {sovereignty.spread.spreadGap < 0
-              ? `Vazamento ~R$ ${Math.abs(sovereignty.spread.monthlyLeakage).toFixed(0)}/m\u00eas`
-              : 'Rendimento supera o custo da d\u00edvida'}
+        )}
+
+        {sentinela.result && !sentinela.result.scenario && !sentinela.loading && (
+          <p className="mt-3 text-xs text-si-5">
+            Nenhum local financeiramente relevante detectado no raio de 100m.
           </p>
-          <span className={`mt-3 inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border ${
-            sovereignty.spread.verdict === 'alavancagem-inteligente' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' :
-            sovereignty.spread.verdict === 'zona-neutra'             ? 'bg-blue-500/15 text-blue-300 border-blue-500/30' :
-            sovereignty.spread.verdict === 'ineficiencia-moderada'   ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' :
-            'bg-rose-500/15 text-rose-300 border-rose-500/30'
-          }`}>
-            {sovereignty.spread.verdict === 'alavancagem-inteligente' ? 'Alavancagem inteligente' :
-             sovereignty.spread.verdict === 'zona-neutra'             ? 'Zona neutra' :
-             sovereignty.spread.verdict === 'ineficiencia-moderada'   ? 'Inefici\u00eancia moderada' : 'Dreno cr\u00edtico'}
-          </span>
-        </div>
+        )}
+
+        {!sentinela.result && !sentinela.loading && !sentinela.error && (
+          <p className="mt-2 text-xs text-si-5">
+            Pressione "Verificar local" ao entrar em shoppings, concessionárias, bancos e lojas — o Arquiteto avisa o que importa.
+          </p>
+        )}
+
+        {sentinela.lastChecked && (
+          <p className="mt-2 text-xs text-si-5">
+            Última verificação: {sentinela.lastChecked.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        )}
       </div>
+
       {widgets.graficos && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-si-card rounded-2xl border border-si-border p-6">
