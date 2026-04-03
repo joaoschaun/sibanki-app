@@ -1,4 +1,5 @@
 ﻿import { useState, useMemo } from 'react';
+import { InvestmentInsights } from '../components/ui/InvestmentInsights';
 import { useAppContext } from '../context/AppContext';
 import { useSibcoinToast } from '../hooks/useSibcoinToast';
 import { addInvestment, updateInvestment, deleteInvestment, addEntry, updateUserDoc } from '../services/persistUserData';
@@ -23,7 +24,7 @@ const CHART_LEGEND_STYLE = { fontSize: 11, color: '#a1a1aa' };
 
 
 export default function Growth() {
-  const { user, investments, accounts, entries, loading, investorProfile } = useAppContext();
+  const { user, investments, accounts, entries, loading, investorProfile, hasOpenFinance, dataFreshness, verifiedEntries } = useAppContext();
   const { triggerWithToast } = useSibcoinToast();
   const navigate = useNavigate();
   const [addOpen, setAddOpen] = useState(false);
@@ -263,6 +264,15 @@ export default function Growth() {
       </div>
 
       <SibcoinMissionBanner eventType="investment_added" />
+
+      <InvestmentInsights
+        investments={investments}
+        entries={entries}
+        investorProfile={investorProfile}
+        hasOpenFinance={hasOpenFinance}
+        dataFreshness={dataFreshness}
+        verifiedEntries={verifiedEntries}
+      />
 
       {error && !addOpen && !editingAtual && deletingId === null && (
         <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl px-4 py-3 text-rose-400 text-sm">{error}</div>
