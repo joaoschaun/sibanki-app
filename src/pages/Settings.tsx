@@ -5,6 +5,7 @@ import type { Entry, Investment, Goal, Recurrent } from '../types/userData';
 // generateReportPdf carregado via dynamic import (evita vendor-pdf no load inicial)
 import { Modal } from '../components/ui/Modal';
 import { Database, Trash2, Upload, FileDown, FileText, MapPin, ArrowRight, Sparkles, Building2, RefreshCw, Bell } from 'lucide-react';
+import { RoundUpToggle } from '../components/ui/RoundUpWidget';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { functions as firebaseFunctions } from '../firebase';
@@ -621,6 +622,7 @@ export default function Settings() {
           )}
         </div>
         {push.error && <p className="text-xs text-rose-400">{push.error}</p>}
+        <RoundUpToggle />
         <button
           type="button"
           onClick={handleSaveIntegrations}

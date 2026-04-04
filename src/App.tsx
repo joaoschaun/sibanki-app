@@ -52,6 +52,8 @@ const Sibcoin      = lazy(() => import('./pages/Sibcoin'));
 // Acao 12 (29/03/2026): Hub de Credito — visao consolidada do passivo financeiro
 const CreditHub    = lazy(() => import('./pages/CreditHub'));
 const Filiados     = lazy(() => import('./pages/Filiados'));
+const Quarentena   = lazy(() => import('./pages/Quarentena'));
+const FilhosPage   = lazy(() => import('./pages/Filhos'));
 const Home         = lazy(() => import('./pages/Home'));
 
 // ── Spinner reutilizável para Suspense ───────────────────────────────────────
@@ -182,6 +184,8 @@ function AuthenticatedShell() {
               <Route path="/meus-boletos" element={<ErrorBoundary><MeusBoletos /></ErrorBoundary>} />
               <Route path="/sibcoin" element={<ErrorBoundary><Sibcoin /></ErrorBoundary>} />
               <Route path="/filiados" element={<ErrorBoundary><Filiados /></ErrorBoundary>} />
+              <Route path="/quarentena" element={<ErrorBoundary><Quarentena /></ErrorBoundary>} />
+              <Route path="/filhos" element={<ErrorBoundary><FilhosPage /></ErrorBoundary>} />
               <Route path="/perfil" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
               <Route path="/configuracoes" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
               <Route path="/relatorios" element={<ErrorBoundary><Reports /></ErrorBoundary>} />

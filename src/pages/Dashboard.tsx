@@ -16,6 +16,7 @@ import { ExpensesPieChart } from '../components/charts/ExpensesPieChart';
 import { FinancialBarChart } from '../components/charts/FinancialBarChart';
 import { BalanceAreaChart } from '../components/charts/BalanceAreaChart';
 import { PageTransition } from '../components/ui/PageTransition';
+import { RoundUpWidget } from '../components/ui/RoundUpWidget';
 const DASHBOARD_WIDGETS_KEY = 'sibanki_dashboard_widgets';
 
 type WidgetConfig = {
@@ -548,6 +549,9 @@ export default function Dashboard() {
 
       {/* ── Spread Gap — card dedicado ───────────────────────────────── */}
       <SpreadGapCard spread={spread} />
+
+      {/* ── Round-up Cofre ────────────────────────────────────────────── */}
+      <RoundUpWidget />
 
       {/* ── SibCoin Widget ───────────────────────────────────────────── */}
       <SibcoinWidget />

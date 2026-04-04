@@ -14,6 +14,12 @@ import type {
   CreditAccount,
   CreditObligation,
   CreditSnapshot,
+  RoundUpConfig,
+  RoundUpEntry,
+  QuarentenaItem,
+  Filho,
+  FilhoTarefa,
+  FilhoTransacao,
 } from '../types/userData';
 
 async function loadInlineEntries(uid: string): Promise<Entry[]> {
@@ -94,12 +100,36 @@ export async function setCreditSnapshot(uid: string, creditSnapshot: CreditSnaps
 }
 
 /**
- * Adiciona um lançamento ao array entries e persiste (só documento users; lê inline atual do Firestore).
+ * Adiciona um lançamento ao array entries e persiste.
+ * Se round-up estiver ativo e for despesa, acumula a diferença no cofre.
  */
 export async function addEntry(uid: string, _currentEntries: Entry[], newEntry: Omit<Entry, 'id'>): Promise<void> {
   const inline = await loadInlineEntries(uid);
   const id = Date.now();
-  await updateUserDoc(uid, { entries: [...inline, { ...newEntry, id } as Entry] });
+  const payload: Partial<UserData> = { entries: [...inline, { ...newEntry, id } as Entry] };
+
+  if (newEntry.type === 'despesa' && !newEntry.isTransfer) {
+    const ref = doc(db, 'users', uid);
+    const snap = await getDoc(ref);
+    const cfg = snap.exists() ? (snap.data()?.roundUpConfig as RoundUpConfig | undefined) : undefined;
+    if (cfg?.enabled && cfg.roundTo) {
+      const val = Number(newEntry.value);
+      const rounded = Math.ceil(val / cfg.roundTo) * cfg.roundTo;
+      const diff = Math.round((rounded - val) * 100) / 100;
+      if (diff > 0) {
+        const history = (cfg.cofreHistory ?? []).slice(-99);
+        const entryDate = String(newEntry.date);
+        const roundUpEntry: RoundUpEntry = { id, entryId: id, originalValue: val, roundedValue: rounded, diff, date: entryDate };
+        payload.roundUpConfig = {
+          ...cfg,
+          cofreTotal: Math.round(((cfg.cofreTotal ?? 0) + diff) * 100) / 100,
+          cofreHistory: [...history, roundUpEntry],
+        };
+      }
+    }
+  }
+
+  await updateUserDoc(uid, payload);
 }
 
 /**
@@ -708,6 +738,196 @@ export async function generateEntriesFromRecurrents(
   const newEntries = [...inline, ...toAdd];
   await updateUserDoc(uid, { entries: newEntries });
   return toAdd.length;
+}
+
+// ─── Round-up ───────────────────────────────────────────────────────────────
+
+export async function updateRoundUpConfig(uid: string, config: Partial<RoundUpConfig>): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const current = (snap.exists() ? snap.data()?.roundUpConfig : {}) as Partial<RoundUpConfig>;
+  await updateUserDoc(uid, {
+    roundUpConfig: { enabled: false, roundTo: 1, cofreTotal: 0, cofreHistory: [], ...current, ...config } as RoundUpConfig,
+  });
+}
+
+export async function investirCofre(
+  uid: string,
+  currentGoals: Goal[],
+  goalId: string,
+  amount: number
+): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const cfg = (snap.exists() ? snap.data()?.roundUpConfig : null) as RoundUpConfig | null;
+  if (!cfg || cfg.cofreTotal < amount) throw new Error('Saldo insuficiente no cofre.');
+  const goals = currentGoals.map((g) =>
+    String(g.id) === goalId ? { ...g, current: Math.round((g.current + amount) * 100) / 100 } : g
+  ) as Goal[];
+  await updateUserDoc(uid, {
+    goals,
+    roundUpConfig: { ...cfg, cofreTotal: Math.round((cfg.cofreTotal - amount) * 100) / 100 },
+  });
+}
+
+// ─── Quarentena de Compras ──────────────────────────────────────────────────
+
+export async function addQuarentena(uid: string, item: Omit<QuarentenaItem, 'id' | 'criadoEm' | 'expiraEm' | 'status'>): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const current = (snap.exists() ? (snap.data()?.quarentena ?? []) : []) as QuarentenaItem[];
+  const now = new Date();
+  const expira = new Date(now.getTime() + 48 * 3600_000);
+  const newItem: QuarentenaItem = {
+    id: crypto.randomUUID?.() ?? `q_${Date.now()}`,
+    ...item,
+    criadoEm: now.toISOString(),
+    expiraEm: expira.toISOString(),
+    status: 'pendente',
+  };
+  await updateUserDoc(uid, { quarentena: [...current, newItem] } as Partial<UserData>);
+}
+
+export async function resolveQuarentena(
+  uid: string,
+  itemId: string,
+  action: 'comprado' | 'desistido',
+  _currentEntries: Entry[]
+): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const items = (snap.exists() ? (snap.data()?.quarentena ?? []) : []) as QuarentenaItem[];
+  const item = items.find((q) => q.id === itemId);
+  if (!item) return;
+
+  const updated = items.map((q) => q.id === itemId ? { ...q, status: action } : q) as QuarentenaItem[];
+  const payload: Partial<UserData> = { quarentena: updated };
+
+  if (action === 'comprado') {
+    const inline = await loadInlineEntries(uid);
+    const entry: Entry = {
+      id: Date.now(),
+      type: 'despesa',
+      desc: item.descricao,
+      category: item.categoria || 'Outros',
+      value: item.valor,
+      date: new Date().toISOString().split('T')[0],
+      tags: ['quarentena-aprovada'],
+    };
+    payload.entries = [...inline, entry];
+  } else {
+    const cfg = snap.data()?.roundUpConfig as RoundUpConfig | undefined;
+    if (cfg?.enabled) {
+      payload.roundUpConfig = {
+        ...cfg,
+        cofreTotal: Math.round((cfg.cofreTotal + item.valor) * 100) / 100,
+      };
+    }
+  }
+
+  await updateUserDoc(uid, payload);
+}
+
+export async function deleteQuarentena(uid: string, itemId: string): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const items = (snap.exists() ? (snap.data()?.quarentena ?? []) : []) as QuarentenaItem[];
+  await updateUserDoc(uid, { quarentena: items.filter((q) => q.id !== itemId) } as Partial<UserData>);
+}
+
+// ─── Finanças dos Filhos ────────────────────────────────────────────────────
+
+export async function addFilho(uid: string, filho: Omit<Filho, 'id' | 'saldo' | 'sibcoinBalance' | 'tarefas' | 'historico'>): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const current = (snap.exists() ? (snap.data()?.filhos ?? []) : []) as Filho[];
+  const novo: Filho = {
+    id: crypto.randomUUID?.() ?? `f_${Date.now()}`,
+    ...filho,
+    saldo: 0,
+    sibcoinBalance: 0,
+    tarefas: [],
+    historico: [],
+  };
+  await updateUserDoc(uid, { filhos: [...current, novo] } as Partial<UserData>);
+}
+
+export async function updateFilho(uid: string, filhoId: string, updates: Partial<Filho>): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const current = (snap.exists() ? (snap.data()?.filhos ?? []) : []) as Filho[];
+  const filhos = current.map((f) => f.id === filhoId ? { ...f, ...updates, id: f.id } : f) as Filho[];
+  await updateUserDoc(uid, { filhos } as Partial<UserData>);
+}
+
+export async function deleteFilho(uid: string, filhoId: string): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const current = (snap.exists() ? (snap.data()?.filhos ?? []) : []) as Filho[];
+  await updateUserDoc(uid, { filhos: current.filter((f) => f.id !== filhoId) } as Partial<UserData>);
+}
+
+export async function addTarefaFilho(uid: string, filhoId: string, tarefa: Omit<FilhoTarefa, 'id' | 'status'>): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const filhos = (snap.exists() ? (snap.data()?.filhos ?? []) : []) as Filho[];
+  const updated = filhos.map((f) => {
+    if (f.id !== filhoId) return f;
+    const nova: FilhoTarefa = { id: crypto.randomUUID?.() ?? `t_${Date.now()}`, ...tarefa, status: 'pendente' };
+    return { ...f, tarefas: [...f.tarefas, nova] };
+  }) as Filho[];
+  await updateUserDoc(uid, { filhos: updated } as Partial<UserData>);
+}
+
+export async function completarTarefaFilho(uid: string, filhoId: string, tarefaId: string): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const filhos = (snap.exists() ? (snap.data()?.filhos ?? []) : []) as Filho[];
+  const updated = filhos.map((f) => {
+    if (f.id !== filhoId) return f;
+    const tarefa = f.tarefas.find((t) => t.id === tarefaId);
+    if (!tarefa || tarefa.status === 'completa') return f;
+    const tarefas = f.tarefas.map((t) =>
+      t.id === tarefaId ? { ...t, status: 'completa' as const, completaEm: new Date().toISOString() } : t
+    );
+    const transacao: FilhoTransacao = {
+      id: crypto.randomUUID?.() ?? `ft_${Date.now()}`,
+      tipo: 'tarefa',
+      descricao: tarefa.titulo,
+      valor: tarefa.recompensa,
+      date: new Date().toISOString().split('T')[0],
+    };
+    return {
+      ...f,
+      tarefas,
+      saldo: Math.round((f.saldo + tarefa.recompensa) * 100) / 100,
+      sibcoinBalance: f.sibcoinBalance + Math.round(tarefa.recompensa),
+      historico: [...f.historico.slice(-49), transacao],
+    };
+  }) as Filho[];
+  await updateUserDoc(uid, { filhos: updated } as Partial<UserData>);
+}
+
+export async function pagarMesada(uid: string, filhoId: string): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const filhos = (snap.exists() ? (snap.data()?.filhos ?? []) : []) as Filho[];
+  const updated = filhos.map((f) => {
+    if (f.id !== filhoId) return f;
+    const transacao: FilhoTransacao = {
+      id: crypto.randomUUID?.() ?? `fm_${Date.now()}`,
+      tipo: 'mesada',
+      descricao: `Mesada ${f.mesadaFrequencia}`,
+      valor: f.mesadaValor,
+      date: new Date().toISOString().split('T')[0],
+    };
+    return {
+      ...f,
+      saldo: Math.round((f.saldo + f.mesadaValor) * 100) / 100,
+      historico: [...f.historico.slice(-49), transacao],
+    };
+  }) as Filho[];
+  await updateUserDoc(uid, { filhos: updated } as Partial<UserData>);
 }
 
 /** Categorias padrão (mesmo do app legado). */

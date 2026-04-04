@@ -101,6 +101,15 @@ export interface UserData {
     periodTo: string;
   };
 
+  // ─── Arredondamento de Troco (Round-up) ────────────────────────────────────
+  roundUpConfig?: RoundUpConfig;
+
+  // ─── Quarentena de Compras ────────────────────────────────────────────────
+  quarentena?: QuarentenaItem[];
+
+  // ─── Finanças dos Filhos ──────────────────────────────────────────────────
+  filhos?: Filho[];
+
   // ─── CPF Monitoring ────────────────────────────────────────────────────────
   /** Snapshot do monitoramento CPF. */
   cpfMonitoring?: CpfMonitoringSnapshot | null;
@@ -375,4 +384,64 @@ export interface Investment {
   /** Taxa de rendimento anual declarada (ex: 0.12 = 12% a.a.) */
   taxaAnual?: number;
   [key: string]: unknown;
+}
+
+// ─── Round-up (Arredondamento de Troco) ──────────────────────────────────────
+export interface RoundUpConfig {
+  enabled: boolean;
+  roundTo: 1 | 5 | 10;
+  cofreTotal: number;
+  cofreHistory?: RoundUpEntry[];
+}
+
+export interface RoundUpEntry {
+  id: number;
+  entryId: number;
+  originalValue: number;
+  roundedValue: number;
+  diff: number;
+  date: string;
+}
+
+// ─── Quarentena de Compras ───────────────────────────────────────────────────
+export interface QuarentenaItem {
+  id: string;
+  descricao: string;
+  valor: number;
+  categoria?: string;
+  criadoEm: string;
+  expiraEm: string;
+  status: 'pendente' | 'comprado' | 'desistido';
+  notificado?: boolean;
+}
+
+// ─── Finanças dos Filhos ─────────────────────────────────────────────────────
+export interface FilhoTarefa {
+  id: string;
+  titulo: string;
+  recompensa: number;
+  frequencia: 'diaria' | 'semanal' | 'mensal' | 'unica';
+  completaEm?: string;
+  status: 'pendente' | 'completa';
+}
+
+export interface Filho {
+  id: string;
+  nome: string;
+  idade: number;
+  avatarEmoji?: string;
+  mesadaValor: number;
+  mesadaFrequencia: 'semanal' | 'quinzenal' | 'mensal';
+  saldo: number;
+  sibcoinBalance: number;
+  tarefas: FilhoTarefa[];
+  historico: FilhoTransacao[];
+}
+
+export interface FilhoTransacao {
+  id: string;
+  tipo: 'mesada' | 'tarefa' | 'gasto' | 'bonus';
+  descricao: string;
+  valor: number;
+  date: string;
 }
