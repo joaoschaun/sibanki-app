@@ -17,6 +17,8 @@ import { ImportEntries } from '../components/import/ImportEntries';
 import { calculateSovereigntyScore } from '../utils/sovereigntyEngine';
 import { SovereigntyBadge } from '../components/ui/SovereigntyBadge';
 import { PageTransition } from '../components/ui/PageTransition';
+import { useIntelligence } from '../context/IntelligenceContext';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
 // ── Tipos do Formulário ────────────────────────────────────────────────────
 interface RecurrenceSettings {
@@ -85,9 +87,12 @@ function categoryClass(category?: string, type?: string) {
 }
 
 export default function Transactions() {
-  const { user, data, entries, recurrents, loading, accounts: allAccounts, accountBalances, investments, budgets } = useAppContext();
+  const { user, data, entries, recurrents, loading, accounts: allAccounts, budgets } = useAppContext();
   const { triggerWithToast } = useSibcoinToast();
+  const { hasFeature } = useFeatureFlags();
   const navigate = useNavigate();
+  const canOcr = hasFeature('ocr_foto');
+  const canStt = hasFeature('stt_voz');
 
   const [addOpen, setAddOpen]         = useState(false);
   const [editing, setEditing]         = useState<Entry | null>(null);
@@ -180,22 +185,12 @@ export default function Transactions() {
     return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a));
   }, [sorted, subTab]);
 
-  // ── Sovereignty Score base metrics (computed once per render) ──────────────
-  const sovereigntyBase = useMemo(() => {
-    const saldoContas = Object.values(accountBalances || {})
-      .reduce((s, v) => s + (Number(v) || 0), 0);
-    const liquidezInv = (investments || [])
-      .filter((i: Record<string, unknown>) => i.liquido !== false)
-      .reduce((s: number, i: Record<string, unknown>) => s + Number(i.currentValue ?? i.valorAtual ?? 0), 0);
-    const liquidity = saldoContas + liquidezInv;
+  // ── Sovereignty Score base metrics (usa engine global via IntelligenceContext) ──
+  const { freedom } = useIntelligence();
 
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 90);
-    const cutoffStr = cutoff.toISOString().slice(0, 10);
-    const despesas90 = entries
-      .filter((e) => e.type === 'despesa' && !isTransferEntry(e) && (e.date || '') >= cutoffStr)
-      .reduce((s, e) => s + (Number(e.value) || 0), 0);
-    const dailyBurnRate = despesas90 > 0 ? despesas90 / 90 : 50;
+  const sovereigntyBase = useMemo(() => {
+    const liquidity = freedom.totalLiquidity ?? 0;
+    const dailyBurnRate = freedom.dailyBurnRate > 0 ? freedom.dailyBurnRate : 50;
 
     // orçamento por categoria
     const budgetMap: Record<string, number> = {};
@@ -218,7 +213,7 @@ export default function Transactions() {
     const ESSENTIAL_CATS = new Set(['Moradia', 'Saúde', 'Educação', 'Transporte', 'Alimentação', 'Utilidades', 'Serviços essenciais']);
 
     return { liquidity, dailyBurnRate, budgetMap, catSpent, ESSENTIAL_CATS };
-  }, [accountBalances, investments, entries, budgets]);
+  }, [freedom, entries, budgets]);
 
   // Score por entry id (apenas despesas)
   const scoreMap = useMemo(() => {
@@ -417,20 +412,24 @@ export default function Transactions() {
         <div className="flex gap-2 flex-wrap">
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" title="Selecionar foto"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) handleOcrFile(f); e.target.value = ''; }} />
-          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={ocrBusy}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-300 text-sm font-medium disabled:opacity-50"
-            title="Lançar por foto (OCR)">
-            <Camera className="w-4 h-4" /> {ocrBusy ? 'Lendo…' : 'Foto'}
-          </button>
-          <button type="button"
-            onClick={() => recording ? stopRecording() : startRecording()}
-            disabled={sttBusy}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium disabled:opacity-50 ${
-              recording ? 'border-rose-500 bg-rose-500/20 text-rose-300 animate-pulse' : 'border-violet-500/30 bg-violet-500/15 text-violet-300'
-            }`}
-            title="Lançar por voz">
-            <Mic className="w-4 h-4" /> {sttBusy ? 'Transcrevendo…' : recording ? 'Parar' : 'Voz'}
-          </button>
+          {canOcr && (
+            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={ocrBusy}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-300 text-sm font-medium disabled:opacity-50"
+              title="Lançar por foto (OCR)">
+              <Camera className="w-4 h-4" /> {ocrBusy ? 'Lendo…' : 'Foto'}
+            </button>
+          )}
+          {canStt && (
+            <button type="button"
+              onClick={() => recording ? stopRecording() : startRecording()}
+              disabled={sttBusy}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium disabled:opacity-50 ${
+                recording ? 'border-rose-500 bg-rose-500/20 text-rose-300 animate-pulse' : 'border-violet-500/30 bg-violet-500/15 text-violet-300'
+              }`}
+              title="Lançar por voz">
+              <Mic className="w-4 h-4" /> {sttBusy ? 'Transcrevendo…' : recording ? 'Parar' : 'Voz'}
+            </button>
+          )}
           <button type="button" onClick={() => setImportOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-500/30 bg-blue-500/15 text-blue-300 text-sm font-medium"
             title="Importar CSV/OFX">

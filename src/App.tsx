@@ -2,13 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { IntelligenceProvider } from './context/IntelligenceContext';
-/**
- * Acao 6 (29/03/2026): Multi-tenant rollout.
- * TenantProvider resolve o tenant pelo host, aplica branding (CSS vars,
- * favicon, document.title, custom CSS) e expoe features flags.
- * Para o dominio principal (sibanki.com.br) usa fallback DEFAULT_BRANDING.
- */
-import { TenantProvider } from './hooks/useTenant';
+// TenantProvider fica em main.tsx (resolve branding pelo host antes do AppProvider)
 import { useUiStore } from './store/useUiStore';
 import { useTheme } from './hooks/useTheme';
 import { Sidebar, type SidebarOpenGroup } from './components/layout/Sidebar';
@@ -208,17 +202,15 @@ function AuthenticatedShell() {
   );
 }
 
-// Acao 6 (29/03/2026): TenantProvider externo resolve branding antes do AppProvider
+// TenantProvider já está em main.tsx — não duplicar aqui
 export default function App() {
   return (
-    <TenantProvider>
-      <AppProvider>
-        <IntelligenceProvider>
-          <BrowserRouter>
-            <AuthenticatedShell />
-          </BrowserRouter>
-        </IntelligenceProvider>
-      </AppProvider>
-    </TenantProvider>
+    <AppProvider>
+      <IntelligenceProvider>
+        <BrowserRouter>
+          <AuthenticatedShell />
+        </BrowserRouter>
+      </IntelligenceProvider>
+    </AppProvider>
   );
 }

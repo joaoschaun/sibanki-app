@@ -62,8 +62,9 @@ export function useFinancialData(userId: string | undefined) {
         });
         setOverflowEntries(list);
       },
-      () => {
-        /* permissão negada: mantém só inline */
+      (err) => {
+        console.warn('[useFinancialData] entriesOverflow error:', err.message);
+        setError((prev) => prev ?? new Error('Falha ao carregar lançamentos arquivados (Open Finance).'));
         setOverflowEntries([]);
       },
     );

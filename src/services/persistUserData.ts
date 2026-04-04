@@ -1,5 +1,5 @@
 import { db } from '../firebase';
-import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, writeBatch, runTransaction } from 'firebase/firestore';
 import { mergeInlineAndOverflowEntries } from '../utils/entryUtils';
 import { calculateFinScore } from '../utils/calculateScore';
 import type {
@@ -45,17 +45,13 @@ async function deleteEntriesOverflowCollection(uid: string): Promise<void> {
 
 /**
  * Atualiza apenas alguns campos do documento users/{uid} (merge).
- * Não sobrescreve o resto: entries, accounts, cards, etc. permanecem intactos nos outros campos.
+ * Usa runTransaction quando precisa recalcular finScore para evitar race conditions.
  */
 export async function updateUserDoc(
   uid: string,
   payload: Partial<UserData>
 ): Promise<void> {
   const ref = doc(db, 'users', uid);
-  const nextPayload: Partial<UserData> & { updated: string } = {
-    ...payload,
-    updated: new Date().toISOString(),
-  };
 
   const shouldRecalculateScore =
     'entries' in payload ||
@@ -66,20 +62,23 @@ export async function updateUserDoc(
     'creditSnapshot' in payload;
 
   if (shouldRecalculateScore) {
-    const snap = await getDoc(ref);
-    const current = (snap.exists() ? snap.data() : {}) as Partial<UserData>;
-    const merged = { ...current, ...payload } as Partial<UserData>;
-    nextPayload.finScore = calculateFinScore(
-      merged.entries ?? [],
-      merged.goals ?? [],
-      (merged.budgets ?? {}) as Record<string, unknown>,
-      merged.accountBalances ?? {},
-      merged.accountMeta ?? {},
-      merged.creditSnapshot ?? null,
-    );
+    await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(ref);
+      const current = (snap.exists() ? snap.data() : {}) as Partial<UserData>;
+      const merged = { ...current, ...payload } as Partial<UserData>;
+      const finScore = calculateFinScore(
+        merged.entries ?? [],
+        merged.goals ?? [],
+        (merged.budgets ?? {}) as Record<string, unknown>,
+        merged.accountBalances ?? {},
+        merged.accountMeta ?? {},
+        merged.creditSnapshot ?? null,
+      );
+      transaction.set(ref, { ...payload, finScore, updated: new Date().toISOString() }, { merge: true });
+    });
+  } else {
+    await setDoc(ref, { ...payload, updated: new Date().toISOString() }, { merge: true });
   }
-
-  await setDoc(ref, nextPayload, { merge: true });
 }
 
 export async function setCreditAccounts(uid: string, creditAccounts: CreditAccount[]): Promise<void> {
@@ -112,7 +111,7 @@ export async function addEntry(uid: string, _currentEntries: Entry[], newEntry: 
  */
 export async function addTransfer(
   uid: string,
-  currentEntries: Entry[],
+  _currentEntries: Entry[],
   opts: { from: string; to: string; date: string; value: number }
 ): Promise<void> {
   const from = opts.from?.trim();

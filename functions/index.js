@@ -28,6 +28,7 @@ const { generateAnalysis, generateProactiveInsight } = require("./services/llm/l
 const { buildConsultantPrompt, buildProactiveInsightPrompt } = require("./services/llm/sovereignSystemPrompt");
 const { retrieveRelevantChunks } = require("./services/llm/brazilianFinanceKnowledge");
 const { runSentinelaGeo } = require("./services/sentinel/sentinelaGeoService");
+const adminAuth = require("./services/admin/adminAuth");
 const { runSentinelaWeekly } = require("./services/sentinel/sentinelaWeeklyService");
 const tenantRoutes = require("./services/tenant/tenantRoutes");
 const { onUserCreated } = require("./services/user/userService");
@@ -81,6 +82,12 @@ exports.api = functions.https.onRequest(app);
 exports.onUserCreated = functions.auth.user().onCreate(onUserCreated);
 
 // =============================================
+// ADMIN AUTH: validação de acesso ao painel
+// =============================================
+exports.validateAdminAccess = adminAuth.validateAdminAccess;
+exports.revokeAdminAccess = adminAuth.revokeAdminAccess;
+
+// =============================================
 // STRIPE: delega para serviço de billing
 // =============================================
 exports.createCheckout = functions.https.onCall(async (data, context) => {
@@ -100,25 +107,51 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
 });
 
 // =============================================
-// BRAPI: delega para serviço de mercado
+// BRAPI: delega para serviço de mercado (rate limit por uid)
 // =============================================
+const _brapiRateMap = new Map();
+const BRAPI_RATE_LIMIT = 30; // máx requisições por minuto por uid
+const BRAPI_RATE_WINDOW = 60_000;
+
+function brapiRateCheck(context) {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login necessário");
+  }
+  const uid = context.auth.uid;
+  const now = Date.now();
+  const entry = _brapiRateMap.get(uid);
+  if (entry && now - entry.start < BRAPI_RATE_WINDOW) {
+    entry.count++;
+    if (entry.count > BRAPI_RATE_LIMIT) {
+      throw new functions.https.HttpsError("resource-exhausted", "Limite de requisições atingido. Tente novamente em 1 minuto.");
+    }
+  } else {
+    _brapiRateMap.set(uid, { start: now, count: 1 });
+  }
+}
+
 exports.brapiQuote = functions.https.onCall(async (data, context) => {
+  brapiRateCheck(context);
   return brapiService.quote(data, context);
 });
 
 exports.brapiMulti = functions.https.onCall(async (data, context) => {
+  brapiRateCheck(context);
   return brapiService.multi(data, context);
 });
 
 exports.brapiSearch = functions.https.onCall(async (data, context) => {
+  brapiRateCheck(context);
   return brapiService.search(data, context);
 });
 
 exports.brapiCrypto = functions.https.onCall(async (data, context) => {
+  brapiRateCheck(context);
   return brapiService.crypto(data, context);
 });
 
 exports.brapiInflation = functions.https.onCall(async (data, context) => {
+  brapiRateCheck(context);
   return brapiService.inflation(data, context);
 });
 
@@ -1122,9 +1155,13 @@ const SOL_NOMES = {
  * Parâmetros: { uid, produtoId, valorContratado, contratoId }
  */
 exports.creditarCashbackSibCoin = functions.https.onCall(async (data, context) => {
-  // Só pode ser chamado autenticado OU por admin (uid passado explicitamente)
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Login necessário');
+  }
+
+  const claims = (await admin.auth().getUser(context.auth.uid)).customClaims || {};
+  if (claims.role !== 'admin' && claims.role !== 'superadmin') {
+    throw new functions.https.HttpsError('permission-denied', 'Apenas administradores podem creditar cashback.');
   }
 
   const { produtoId, valorContratado, contratoId } = data;

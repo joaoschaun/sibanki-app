@@ -123,13 +123,14 @@ async function handleStripeWebhook(req, res) {
   const stripe = getStripe();
   let event;
 
+  if (!STRIPE_WEBHOOK_SECRET) {
+    logError("billing", "stripe_webhook_no_secret", new Error("STRIPE_WEBHOOK_SECRET não configurado"), {});
+    return res.status(500).send("Webhook secret not configured");
+  }
+
   try {
-    if (STRIPE_WEBHOOK_SECRET) {
-      const sig = req.headers["stripe-signature"];
-      event = stripe.webhooks.constructEvent(req.rawBody, sig, STRIPE_WEBHOOK_SECRET);
-    } else {
-      event = req.body;
-    }
+    const sig = req.headers["stripe-signature"];
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     logError("billing", "stripe_webhook_signature_error", err, {});
     return res.status(400).send("Webhook Error: " + err.message);

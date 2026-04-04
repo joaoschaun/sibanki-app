@@ -152,7 +152,7 @@ export function ImportEntries({ open, onClose }: Props) {
   const [pasteText, setPasteText] = useState('');
   const [busy, setBusy] = useState(false);
   const [aiCatBusy, setAiCatBusy] = useState(false);
-  const [result, setResult] = useState<{ total: number; ok: number } | null>(null);
+  const [result, setResult] = useState<{ total: number; ok: number; skipped?: number } | null>(null);
 
   const handleFile = useCallback((file: File) => {
     if (file.size > 5 * 1024 * 1024) { alert('Arquivo excede 5MB.'); return; }
@@ -206,8 +206,17 @@ export function ImportEntries({ open, onClose }: Props) {
   const confirmImport = useCallback(async () => {
     if (!user?.uid || selected.length === 0) return;
     setBusy(true);
+
+    const existingHashes = new Set(
+      entries.map((e) => `${e.date}|${(e.desc || '').trim().toLowerCase()}|${Number(e.value).toFixed(2)}`)
+    );
+
     let ok = 0;
+    let skipped = 0;
     for (const it of selected) {
+      const hash = `${it.date}|${(it.desc || '').trim().toLowerCase()}|${Number(it.value).toFixed(2)}`;
+      if (existingHashes.has(hash)) { skipped++; continue; }
+      existingHashes.add(hash);
       try {
         const entry: Omit<Entry, 'id'> = {
           date: it.date,
@@ -222,7 +231,7 @@ export function ImportEntries({ open, onClose }: Props) {
       } catch { /* skip */ }
     }
     if (ok > 0) triggerWithToast('entry_added');
-    setResult({ total: selected.length, ok });
+    setResult({ total: selected.length, ok, skipped });
     setBusy(false);
   }, [user?.uid, entries, selected, triggerWithToast]);
 
@@ -246,6 +255,9 @@ export function ImportEntries({ open, onClose }: Props) {
             <div className="text-center py-8">
               <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
               <p className="text-lg font-bold text-si-1">{result.ok} de {result.total} importados</p>
+              {result.skipped && result.skipped > 0 && (
+                <p className="text-sm text-amber-400 mt-1">{result.skipped} duplicados ignorados</p>
+              )}
               <p className="text-sm text-si-5 mt-1">Lançamentos adicionados com sucesso.</p>
               <div className="mt-6 flex gap-3 justify-center">
                 <button type="button" onClick={reset} className="px-4 py-2.5 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 text-sm">Importar mais</button>
@@ -321,7 +333,7 @@ export function ImportEntries({ open, onClose }: Props) {
                     {items.map((it, idx) => (
                       <tr key={idx} className={`${it.selected ? '' : 'opacity-40'} hover:bg-si-over-1`}>
                         <td className="p-3">
-                          <input type="checkbox" checked={it.selected} onChange={() => toggleItem(idx)} className="rounded" />
+                          <input type="checkbox" checked={it.selected} onChange={() => toggleItem(idx)} className="rounded" title="Selecionar lançamento" />
                         </td>
                         <td className="p-3 text-si-4 whitespace-nowrap">{it.date}</td>
                         <td className="p-3 text-si-1 truncate max-w-[200px]" title={it.desc}>{it.desc}</td>
