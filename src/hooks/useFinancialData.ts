@@ -13,6 +13,7 @@ export function useFinancialData(userId: string | undefined) {
   const [data, setData] = useState<UserData | null>(null);
   const [overflowEntries, setOverflowEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [overflowLoading, setOverflowLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -47,8 +48,10 @@ export function useFinancialData(userId: string | undefined) {
   useEffect(() => {
     if (!userId) {
       setOverflowEntries([]);
+      setOverflowLoading(false);
       return;
     }
+    setOverflowLoading(true);
     const col = collection(db, 'users', userId, 'entriesOverflow');
     const unsub = onSnapshot(
       col,
@@ -61,11 +64,13 @@ export function useFinancialData(userId: string | undefined) {
           }
         });
         setOverflowEntries(list);
+        setOverflowLoading(false);
       },
       (err) => {
         console.warn('[useFinancialData] entriesOverflow error:', err.message);
         setError((prev) => prev ?? new Error('Falha ao carregar lançamentos arquivados (Open Finance).'));
         setOverflowEntries([]);
+        setOverflowLoading(false);
       },
     );
     return () => unsub();
@@ -105,9 +110,11 @@ export function useFinancialData(userId: string | undefined) {
     );
   }, [entries, goals, budgets, accountBalances, accountMeta, creditSnapshot, data]);
 
+  const isFullyLoaded = !loading && !overflowLoading;
+
   return {
     data,
-    loading,
+    loading: !isFullyLoaded,
     error,
     entries,
     entriesInline,

@@ -470,23 +470,23 @@ Quatro análises independentes:
 |---|---------|------|---------|
 | I1 | ~~TenantProvider duplicado~~ | `App.tsx` | ✅ Removido duplicação; mantido apenas em `main.tsx` |
 | I2 | ~~Cálculo Sv em Transactions.tsx difere do Ld global~~ | `Transactions.tsx` | ✅ Agora usa `useIntelligence().freedom` (mesmo engine global) |
-| I3 | **`impulseStreakCount` sempre 0** em Transactions | `Transactions.tsx` | Motor de impulso do engine nunca ativado |
+| I3 | ~~`impulseStreakCount` sempre 0~~ | `Transactions.tsx` | ✅ Agora calcula streak real (mesma categoria + dia da semana nos últimos 30 dias) |
 | I4 | ~~Feature flags `ocr_foto` / `stt_voz` não aplicadas~~ | `Transactions.tsx` | ✅ Botões OCR/STT agora condicionados por `useFeatureFlags` |
 | I5 | ~~Erro de overflow na subcoleção silencioso~~ | `useFinancialData.ts` | ✅ Erro agora propagado para estado `error` com mensagem |
-| I6 | **OFX importa apenas débitos** — créditos ignorados | `ImportEntries.tsx` | Receitas não entram por importação OFX |
+| I6 | ~~OFX importa apenas débitos~~ | `ImportEntries.tsx` | ✅ Agora importa créditos como receitas (val > 0) e débitos como despesas |
 | I7 | ~~Import CSV sem deduplicação~~ | `ImportEntries.tsx` | ✅ Deduplicação por hash (data+desc+valor); UI mostra "X duplicados ignorados" |
 | I8 | ~~`adminAuth` não exportado em `index.js`~~ | `functions/index.js` | ✅ `validateAdminAccess` e `revokeAdminAccess` agora exportados |
 | I9 | **Região inconsistente**: SibCoin em `southamerica-east1`, Sentinela em `us-central1` | Vários | Latência variável; config de chamada precisa estar alinhada |
 
-### 🟢 Menores (UX / Manutenibilidade)
+### 🟢 Menores (UX / Manutenibilidade) — ✅ TODOS RESOLVIDOS
 
 | # | Problema | Onde | Impacto |
 |---|---------|------|---------|
-| M1 | Sem rota `/login` explícita — URL pode mostrar path interno quando deslogado | `App.tsx` | UX: URL confusa |
-| M2 | `useReferral()` chamado antes dos early returns no shell | `App.tsx` | Pode executar lógica desnecessária quando deslogado |
-| M3 | `loading` do overflow não unificado com loading principal | `useFinancialData.ts` | Possível flash de dados incompletos |
-| M4 | `financialAnalysis.ts` referenciado na documentação mas não existe | `src/utils/` | Doc desatualizada |
-| M5 | Toast SibCoin possivelmente inconsistente com payload real | `useSibcoin.ts` | Toast pode não mostrar missão completada |
+| M1 | ~~Sem rota `/login` explícita~~ | `App.tsx` | ✅ Adicionada rota `/login` (redireciona para `/` quando logado) |
+| M2 | ~~`useReferral()` antes do guard de auth~~ | `App.tsx` | ✅ Movido para após verificação de `user` |
+| M3 | ~~Loading de overflow não unificado~~ | `useFinancialData.ts` | ✅ `loading` agora inclui `overflowLoading` |
+| M4 | ~~`financialAnalysis.ts` referenciado mas inexistente~~ | `CLAUDE.md` | ✅ Referência removida da documentação |
+| M5 | ~~Toast SibCoin inconsistente com payload~~ | `useSibcoinToast.ts` | ✅ Alinhado com `completedMissions[]` + `sibcoinAwarded` |
 
 ---
 

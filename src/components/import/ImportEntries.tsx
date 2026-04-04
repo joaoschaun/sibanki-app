@@ -112,9 +112,10 @@ function parseOFX(text: string): ParsedItem[] {
     const raw = dateMatch[1];
     const date = `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`;
     const val = parseFloat(amtMatch[1].replace(',', '.'));
-    if (val >= 0) continue;
+    if (val === 0) continue;
     const desc = (memoMatch?.[1] ?? 'Sem descrição').trim();
-    items.push({ date, desc, value: Math.abs(val), type: 'despesa', category: autoDetect(desc), selected: true });
+    const type = val < 0 ? 'despesa' : 'receita';
+    items.push({ date, desc, value: Math.abs(val), type, category: autoDetect(desc), selected: true });
   }
   return items;
 }

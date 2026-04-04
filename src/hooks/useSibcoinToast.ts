@@ -59,13 +59,20 @@ export function useSibcoinToast() {
   const triggerWithToast = useCallback(
     (eventType: SibcoinEventType, meta?: Record<string, unknown>) => {
       return triggerEvent(eventType, meta)
-        .then((result: any) => {
-          // rewardEngine returns { ok, missionCompleted, missionTitle, reward }
-          if (result?.data?.missionCompleted) {
+        .then((result) => {
+          if (result?.completedMissions?.length) {
+            for (const m of result.completedMissions) {
+              addSibcoinToast({
+                id: `${eventType}-${m.id}-${Date.now()}`,
+                title: m.title ?? 'Missão concluída!',
+                reward: m.reward ?? 0,
+              });
+            }
+          } else if (result && result.sibcoinAwarded > 0) {
             addSibcoinToast({
               id: `${eventType}-${Date.now()}`,
-              title: result.data.missionTitle ?? 'Missão concluída!',
-              reward: result.data.reward ?? 0,
+              title: `+${result.sibcoinAwarded} SibCoins`,
+              reward: result.sibcoinAwarded,
             });
           }
         })

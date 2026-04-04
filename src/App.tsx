@@ -78,7 +78,6 @@ function AuthenticatedShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const showWizard = user && !authLoading && !(data as any)?.cadastroCompleto;
   const [wizardDismissed, setWizardDismissed] = useState(false);
-  useReferral();
 
   const handleToggle = () => {
     // Em mobile (< lg): abre/fecha drawer overlay
@@ -102,6 +101,9 @@ function AuthenticatedShell() {
   }
 
   if (!user) return <Login />;
+
+  // Hooks que dependem de usuário logado — chamados após o guard de auth
+  useReferral();
 
   const rootBg = theme === 'light' ? 'bg-zinc-50 text-zinc-950' : 'bg-si-bg text-si-1';
 
@@ -152,6 +154,7 @@ function AuthenticatedShell() {
         <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 lg:space-y-8">
           <Suspense fallback={<PageLoader />}>
             <Routes>
+              <Route path="/login" element={<Navigate to="/" replace />} />
               <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
               <Route path="/dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
               <Route path="/contas" element={<ErrorBoundary><Accounts /></ErrorBoundary>} />
