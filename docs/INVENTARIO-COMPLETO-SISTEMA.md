@@ -719,8 +719,8 @@ Cada mensagem inclui **Ld** (Dias de Liberdade) e **Sg** (Spread Gap) do usuári
 | Hooks customizados | 14 |
 | Serviços frontend | 5 |
 | Engines/utilitários | 10 |
-| Tipos/interfaces | 60+ |
-| Páginas React | 34 |
+| Tipos/interfaces | 70+ |
+| Páginas React | 36 |
 | Cloud Functions | 49 |
 | Serviços backend | 16+ |
 | Integrações externas | 18 |
@@ -993,6 +993,37 @@ Cada mensagem inclui **Ld** (Dias de Liberdade) e **Sg** (Spread Gap) do usuári
   copy firebase.json.bak firebase.json
   firebase deploy --only hosting:app
   ```
+
+### ✅ Features Comportamentais (04/04/2026)
+- **Arredondamento de Troco (Round-up)**:
+  - Cada despesa arredonda automaticamente para cima (R$1, R$5 ou R$10)
+  - Diferença acumulada num "cofre de investimento"
+  - Widget no Dashboard mostrando saldo + últimas operações
+  - Toggle on/off no Settings com escolha do valor de arredondamento
+  - Botão "Investir em meta" transfere cofre para qualquer Goal
+  - Tipos: `RoundUpConfig`, `RoundUpEntry` em `userData.ts`
+  - Lógica integrada no `addEntry()` de `persistUserData.ts`
+- **Quarentena de Compras**:
+  - Usuário registra intenção de compra → período de reflexão de 48h
+  - Após expirar, decide: "Comprar" (vira despesa) ou "Desisti" (valor vai pro cofre)
+  - Página completa `/quarentena` com cards em andamento + histórico
+  - Total economizado por desistências mostrado em destaque
+  - Se desistir com round-up ativo, valor é adicionado ao cofre
+  - Tipos: `QuarentenaItem` em `userData.ts`
+  - Funções: `addQuarentena`, `resolveQuarentena`, `deleteQuarentena`
+- **Finanças dos Filhos**:
+  - Perfis por filho com emoji, nome, idade, mesada configurável (semanal/quinzenal/mensal)
+  - Sistema de tarefas com recompensas em R$ + SibCoins
+  - Ao completar tarefa: saldo + sibcoinBalance do filho incrementados + histórico
+  - Pagamento de mesada manual com registro no histórico
+  - Página completa `/filhos` com cards por filho, tarefas pendentes/completas
+  - Tipos: `Filho`, `FilhoTarefa`, `FilhoTransacao` em `userData.ts`
+  - Funções: `addFilho`, `updateFilho`, `deleteFilho`, `addTarefaFilho`, `completarTarefaFilho`, `pagarMesada`
+  - Rotas registradas no `App.tsx`, links na Sidebar
+- **Cache BRAPI em 2 camadas**:
+  - Backend: cache em memória compartilhado entre usuários (TTL: 2min cotações, 1min cripto, 30min busca, 6h inflação)
+  - Frontend: cache local por ticker com TTL de 2min
+  - Máximo 500 entradas no backend, 100 no frontend (evita memory leak)
 
 ### Próximos passos
 1. **Monitorar erros** — acompanhar Cloud Functions logs e feedback de usuários por 7 dias
