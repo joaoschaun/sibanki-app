@@ -18,10 +18,18 @@ interface BrapiQuoteResponse {
   [key: string]: unknown;
 }
 
+const CLIENT_CACHE_TTL = 2 * 60_000; // 2 min
+const _clientCache = new Map<string, { data: B3Quote; ts: number }>();
+
 export async function fetchB3Quote(tickerRaw: string): Promise<B3Quote> {
   const ticker = tickerRaw.trim().toUpperCase();
   if (!ticker) {
     throw new Error('Informe um ticker válido.');
+  }
+
+  const cached = _clientCache.get(ticker);
+  if (cached && Date.now() - cached.ts < CLIENT_CACHE_TTL) {
+    return cached.data;
   }
 
   const callable = httpsCallable<{ ticker: string }, BrapiQuoteResponse>(functions, 'brapiQuote');
@@ -43,7 +51,7 @@ export async function fetchB3Quote(tickerRaw: string): Promise<B3Quote> {
   const dy = stock.dividendYield ?? stock.dy ?? undefined;
   const pe = stock.priceEarnings ?? stock.pe ?? undefined;
 
-  return {
+  const result: B3Quote = {
     ticker: stock.symbol || ticker,
     name: stock.longName || stock.shortName || stock.name || ticker,
     price,
@@ -54,5 +62,13 @@ export async function fetchB3Quote(tickerRaw: string): Promise<B3Quote> {
     dy: typeof dy === 'number' ? dy : undefined,
     pe: typeof pe === 'number' ? pe : undefined,
   };
+
+  _clientCache.set(ticker, { data: result, ts: Date.now() });
+  if (_clientCache.size > 100) {
+    const oldest = _clientCache.keys().next().value;
+    if (oldest) _clientCache.delete(oldest);
+  }
+
+  return result;
 }
 

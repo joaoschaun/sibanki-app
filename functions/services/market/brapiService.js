@@ -1,7 +1,36 @@
 const functions = require("firebase-functions");
 const { BRAPI_TOKEN, BRAPI_BASE } = require("../../config");
 const { fetchJson } = require("../../httpClient");
-const { logError } = require("../../logger");
+const { logEvent, logError } = require("../../logger");
+
+// ── Cache em memória (compartilhado entre invocações na mesma instância) ──────
+const _cache = new Map();
+const TTL = {
+  quote: 2 * 60_000,       // cotações: 2 min
+  multi: 2 * 60_000,       // cotações multi: 2 min
+  search: 30 * 60_000,     // busca de ativos: 30 min
+  crypto: 60_000,           // cripto: 1 min
+  inflation: 6 * 3600_000, // inflação: 6 horas
+};
+const MAX_CACHE_SIZE = 500;
+
+function cacheGet(key) {
+  const entry = _cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > entry.ttl) {
+    _cache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function cacheSet(key, data, ttl) {
+  if (_cache.size >= MAX_CACHE_SIZE) {
+    const oldest = _cache.keys().next().value;
+    _cache.delete(oldest);
+  }
+  _cache.set(key, { data, ts: Date.now(), ttl });
+}
 
 // COTAÇÃO DE 1 ATIVO (usa token do servidor: .env ou Firebase config brapi.token)
 async function quote(data) {
@@ -16,25 +45,38 @@ async function quote(data) {
     );
   }
 
+  const rawModules = data.modules || "defaultKeyStatistics,financialData,balanceSheetHistory,incomeStatementHistory";
+  const range = data.range || "1mo";
+  const interval = data.interval || "1d";
+  const cacheKey = `quote:${ticker}:${range}:${interval}`;
+
+  const cached = cacheGet(cacheKey);
+  if (cached) {
+    logEvent("market", "brapi_quote_cache_hit", { ticker });
+    return cached;
+  }
+
   try {
-    const rawModules = data.modules || "defaultKeyStatistics,financialData,balanceSheetHistory,incomeStatementHistory";
     const blocked = ["cashflowStatementHistory", "dividendsData"];
     const modules = rawModules.split(",").map((m) => m.trim()).filter((m) => m && !blocked.includes(m)).join(",");
-    const range = data.range || "1mo";
-    const interval = data.interval || "1d";
     const dividends = data.dividends ? "&dividends=true" : "";
 
     let url = `${BRAPI_BASE}/quote/${ticker}?token=${BRAPI_TOKEN}&fundamental=true&modules=${modules}&range=${range}&interval=${interval}${dividends}`;
+    let result;
     try {
-      return await fetchJson(url, { timeout: 15000 }, "brapiQuote");
+      result = await fetchJson(url, { timeout: 15000 }, "brapiQuote");
     } catch (firstErr) {
       if (firstErr.status === 400 && modules.includes("balanceSheetHistory")) {
         const fallbackModules = "summaryProfile,financialData,defaultKeyStatistics";
         url = `${BRAPI_BASE}/quote/${ticker}?token=${BRAPI_TOKEN}&fundamental=true&modules=${fallbackModules}&range=${range}&interval=${interval}${dividends}`;
-        return await fetchJson(url, { timeout: 15000 }, "brapiQuote");
+        result = await fetchJson(url, { timeout: 15000 }, "brapiQuote");
+      } else {
+        throw firstErr;
       }
-      throw firstErr;
     }
+
+    cacheSet(cacheKey, result, TTL.quote);
+    return result;
   } catch (error) {
     logError("market", "brapi_quote_error", error, { ticker });
     throw new functions.https.HttpsError("internal", "Erro ao buscar dados: " + error.message);
@@ -56,15 +98,25 @@ async function multi(data) {
     throw new functions.https.HttpsError("invalid-argument", "Nenhum ticker válido");
   }
 
+  const tickerStr = cleanTickers.sort().join(",");
+  const cacheKey = `multi:${tickerStr}`;
+
+  const cached = cacheGet(cacheKey);
+  if (cached) {
+    logEvent("market", "brapi_multi_cache_hit", { tickers: cleanTickers });
+    return cached;
+  }
+
   try {
-    const tickerStr = cleanTickers.join(",");
     const rawModules = data.modules || "defaultKeyStatistics,financialData";
     const blocked = ["cashflowStatementHistory", "dividendsData"];
     const modules = rawModules.split(",").map((m) => m.trim()).filter((m) => m && !blocked.includes(m)).join(",");
     const dividends = data.dividends ? "&dividends=true" : "";
 
     const url = `${BRAPI_BASE}/quote/${tickerStr}?token=${BRAPI_TOKEN}&fundamental=true&modules=${modules}${dividends}`;
-    return await fetchJson(url, { timeout: 20000 }, "brapiMulti");
+    const result = await fetchJson(url, { timeout: 20000 }, "brapiMulti");
+    cacheSet(cacheKey, result, TTL.multi);
+    return result;
   } catch (error) {
     logError("market", "brapi_multi_error", error, { tickers: cleanTickers });
     throw new functions.https.HttpsError("internal", "Erro ao buscar dados: " + error.message);
@@ -78,9 +130,15 @@ async function search(data) {
     throw new functions.https.HttpsError("invalid-argument", "Busca deve ter pelo menos 2 caracteres");
   }
 
+  const cacheKey = `search:${query.toLowerCase()}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
   try {
     const url = `${BRAPI_BASE}/available?token=${BRAPI_TOKEN}&search=${encodeURIComponent(query)}`;
-    return await fetchJson(url, { timeout: 10000 }, "brapiSearch");
+    const result = await fetchJson(url, { timeout: 10000 }, "brapiSearch");
+    cacheSet(cacheKey, result, TTL.search);
+    return result;
   } catch (error) {
     logError("market", "brapi_search_error", error, { query });
     throw new functions.https.HttpsError("internal", "Erro ao buscar: " + error.message);
@@ -92,9 +150,15 @@ async function crypto(data) {
   const coin = (data.coin || "BTC").toUpperCase().trim();
   const currency = (data.currency || "BRL").toUpperCase().trim();
 
+  const cacheKey = `crypto:${coin}:${currency}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
   try {
     const url = `${BRAPI_BASE}/v2/crypto?coin=${coin}&currency=${currency}&token=${BRAPI_TOKEN}`;
-    return await fetchJson(url, { timeout: 10000 }, "brapiCrypto");
+    const result = await fetchJson(url, { timeout: 10000 }, "brapiCrypto");
+    cacheSet(cacheKey, result, TTL.crypto);
+    return result;
   } catch (error) {
     logError("market", "brapi_crypto_error", error, { coin, currency });
     throw new functions.https.HttpsError("internal", "Erro ao buscar crypto: " + error.message);
@@ -103,14 +167,20 @@ async function crypto(data) {
 
 // INFLAÇÃO
 async function inflation(data) {
-  try {
-    const country = data.country || "brazil";
-    const historical = data.historical ? "&historical=true" : "";
-    const start = data.start ? `&start=${data.start}` : "";
-    const end = data.end ? `&end=${data.end}` : "";
+  const country = data.country || "brazil";
+  const historical = data.historical ? "&historical=true" : "";
+  const start = data.start ? `&start=${data.start}` : "";
+  const end = data.end ? `&end=${data.end}` : "";
+  const cacheKey = `inflation:${country}:${historical}:${start}:${end}`;
 
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  try {
     const url = `${BRAPI_BASE}/v2/inflation?country=${country}&token=${BRAPI_TOKEN}${historical}${start}${end}`;
-    return await fetchJson(url, { timeout: 10000 }, "brapiInflation");
+    const result = await fetchJson(url, { timeout: 10000 }, "brapiInflation");
+    cacheSet(cacheKey, result, TTL.inflation);
+    return result;
   } catch (error) {
     logError("market", "brapi_inflation_error", error, {});
     throw new functions.https.HttpsError("internal", "Erro: " + error.message);
