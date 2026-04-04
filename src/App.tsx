@@ -54,6 +54,7 @@ const CreditHub    = lazy(() => import('./pages/CreditHub'));
 const Filiados     = lazy(() => import('./pages/Filiados'));
 const Quarentena   = lazy(() => import('./pages/Quarentena'));
 const FilhosPage   = lazy(() => import('./pages/Filhos'));
+const AgentCouncil = lazy(() => import('./pages/AgentCouncil'));
 const Home         = lazy(() => import('./pages/Home'));
 
 // ── Spinner reutilizável para Suspense ───────────────────────────────────────
@@ -186,6 +187,7 @@ function AuthenticatedShell() {
               <Route path="/filiados" element={<ErrorBoundary><Filiados /></ErrorBoundary>} />
               <Route path="/quarentena" element={<ErrorBoundary><Quarentena /></ErrorBoundary>} />
               <Route path="/filhos" element={<ErrorBoundary><FilhosPage /></ErrorBoundary>} />
+              <Route path="/agentes" element={<ErrorBoundary><AgentCouncil /></ErrorBoundary>} />
               <Route path="/perfil" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
               <Route path="/configuracoes" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
               <Route path="/relatorios" element={<ErrorBoundary><Reports /></ErrorBoundary>} />

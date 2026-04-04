@@ -19,6 +19,7 @@ import {
   Users as UsersIcon,
   ShieldCheck,
   Baby,
+  Cpu,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -68,6 +69,7 @@ const secondaryNav: NavItem[] = [
   { icon: UsersIcon,    label: 'Filiados',     path: '/filiados' },
   { icon: ShieldCheck,  label: 'Quarentena',   path: '/quarentena' },
   { icon: Baby,         label: 'Filhos',       path: '/filhos' },
+  { icon: Cpu,          label: 'Agentes IA',   path: '/agentes' },
 ];
 
 // ── Rodapé ────────────────────────────────────────────────────────────────────

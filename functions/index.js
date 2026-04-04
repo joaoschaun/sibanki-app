@@ -1705,3 +1705,23 @@ exports.sendPushNotification = functions.https.onCall(async (data, context) => {
   logEvent("sendPushNotification", { uid, sent: result.sent });
   return result;
 });
+
+// ── Conselho de Agentes — multi-agente com orquestrador ─────────────────────
+exports.agentCouncil = functions.runWith({ timeoutSeconds: 60, memory: "512MB" }).https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Faça login.");
+  }
+  const { financialContext } = data || {};
+  if (!financialContext || typeof financialContext !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "Contexto financeiro é obrigatório.");
+  }
+  try {
+    const { runCouncil } = require("./services/agents/agentCouncil");
+    const result = await runCouncil(financialContext);
+    logEvent("agentCouncil", { uid: context.auth.uid, duration: result.duracaoMs });
+    return result;
+  } catch (e) {
+    logError("agentCouncil", e);
+    throw new functions.https.HttpsError("internal", "Erro ao executar conselho de agentes.");
+  }
+});
