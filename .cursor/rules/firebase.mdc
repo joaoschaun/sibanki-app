@@ -1,0 +1,15 @@
+---
+description: Padrões de banco de dados Firestore e Cloud Functions
+globs: ["functions/**", "src/services/firebase.ts", "src/firebase.ts"]
+alwaysApply: true
+---
+# Firebase & Firestore
+
+- **Coleções principais:** `users`, `transactions`, `accounts`, `cards`, `telegramCodes`, `couples` (quando aplicável).
+- **Modo Família:** documentos de transações/lançamentos de um casal devem conter `ownerId` e `familyId` (ou campos equivalentes já adotados no projeto).
+- **Cloud Functions:** use runtime Node 22 quando aplicável e trate erros de quota (Gemini/LLM) e de serviços externos (ex.: BRAPI).
+- **Telegram:** vinculação via `telegramCodes` tem validade curta (10 min); valide sempre o timestamp `createdAt`.
+- **Autorização:** nunca confie em IDs enviados pelo cliente sem validar pelo `context.auth.uid` no backend.
+
+Use o código com cuidado.
+

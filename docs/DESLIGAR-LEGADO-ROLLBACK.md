@@ -41,7 +41,7 @@ Mesmo após a troca:
 
 - **Não apague `public/app/` nem o código legado imediatamente.**
 - Mantenha uma rota/ferramenta interna que permita:
-  - Testar o legado em staging (`https://staging-13a0b.web.app/app`).
+  - Testar o legado em produção (`https://virtus-financeiro-cd7bd.web.app/app`).
   - Opcionalmente, servir o legado em um subdomínio separado (novo target de hosting), só para suporte/rollback emergencial.
 
 ## 4. Plano de rollback rápido

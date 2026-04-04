@@ -1,9 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { generateReportPdf } from '../utils/generateReportPdf';
+// generateReportPdf carregado via dynamic import (evita vendor-pdf no load inicial)
 import { getMD, fmt } from '../utils/reportUtils';
 import { isTransferEntry } from '../utils/entryUtils';
-import { FileText, TrendingUp, PieChart as PieIcon, Calendar, CreditCard, Target, Share2, FileDown, Bot } from 'lucide-react';
+import { buildFinancialContextString } from '../utils/consultantContext';
+import { functions } from '../firebase';
+import { httpsCallable } from 'firebase/functions';
+import { FileText, TrendingUp, PieChart as PieIcon, Calendar, CreditCard, Target, Share2, FileDown, Bot, Lock } from 'lucide-react';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { Link } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -23,9 +27,13 @@ const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Ag
 type RelTab = 'resumo' | 'patrimonio' | 'categorias' | 'comparativo' | 'cartoes' | 'metas';
 
 export default function Reports() {
-  const { user, entries, investments, goals, cards, loading } = useAppContext();
+  const { user, entries, investments, goals, cards, accounts, accountBalances, budgets, recurrents, creditSnapshot, creditObligations, loading } = useAppContext();
+  const { hasFeature } = useFeatureFlags();
+  const pdfAllowed = hasFeature('relatorio_pdf');
   const [activeTab, setActiveTab] = useState<RelTab>('resumo');
   const [iaLoading, setIaLoading] = useState(false);
+  const [iaResult, setIaResult] = useState<string | null>(null);
+  const [iaError, setIaError] = useState<string | null>(null);
   const [compMes1, setCompMes1] = useState('');
   const [compMes2, setCompMes2] = useState('');
 
@@ -94,16 +102,50 @@ export default function Reports() {
             <Share2 className="w-4 h-4" /> Compartilhar
           </button>
           <button type="button"
-            onClick={() => generateReportPdf({ userName: user?.displayName ?? '', entries, investments, goals })}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-500/30 bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 text-sm">
-            <FileDown className="w-4 h-4" /> PDF
+            onClick={async () => { if (!pdfAllowed) return; const { generateReportPdf } = await import('../utils/generateReportPdf'); generateReportPdf({ userName: user?.displayName ?? '', entries, investments, goals }); }}
+            disabled={!pdfAllowed}
+            title={pdfAllowed ? 'Gerar relatório PDF' : 'Disponível no plano Pro'}
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${pdfAllowed ? 'border-blue-500/30 bg-blue-500/15 text-blue-400 hover:bg-blue-500/25' : 'border-si-border-md bg-si-over-2 text-si-5 cursor-not-allowed'}`}>
+            {pdfAllowed ? <FileDown className="w-4 h-4" /> : <Lock className="w-3.5 h-3.5" />} PDF
           </button>
-          <button type="button" onClick={() => { setIaLoading(true); setTimeout(() => setIaLoading(false), 1500); }} disabled={iaLoading}
+          <button type="button" onClick={async () => {
+            setIaLoading(true); setIaError(null); setIaResult(null);
+            try {
+              const context = buildFinancialContextString({
+                entries, goals, investments, budgets: budgets as Record<string, unknown>,
+                accounts, accountBalances, cards, recurrents,
+                creditSnapshot: creditSnapshot ?? undefined, creditObligations,
+              });
+              const chatApi = httpsCallable<{ message: string; context: string }, { reply?: string }>(functions, 'chatApi');
+              const res = await chatApi({
+                message: 'Analise meus relatórios financeiros de forma objetiva. Destaque: 1) tendência de receita vs despesa, 2) categorias que mais pesam, 3) evolução patrimonial, 4) ações concretas para melhorar. Seja direto e prático.',
+                context,
+              });
+              setIaResult((res.data?.reply ?? '').trim() || 'Sem resposta da IA.');
+            } catch (err) {
+              setIaError(err instanceof Error ? err.message : 'Erro ao gerar análise IA.');
+            } finally { setIaLoading(false); }
+          }} disabled={iaLoading}
             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-violet-500/30 bg-violet-500/15 text-violet-300 text-sm disabled:opacity-50">
-            <Bot className="w-4 h-4" /> {iaLoading ? 'Gerando...' : 'IA'}
+            <Bot className="w-4 h-4" /> {iaLoading ? 'Analisando...' : 'IA'}
           </button>
         </div>
       </div>
+
+      {iaResult && (
+        <div className="bg-violet-500/10 border border-violet-500/20 rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-violet-300 flex items-center gap-2 text-sm"><Bot className="w-4 h-4" /> Análise da IA</h3>
+            <button type="button" onClick={() => setIaResult(null)} className="text-si-5 hover:text-si-3 text-xs">Fechar</button>
+          </div>
+          <div className="text-si-3 text-sm whitespace-pre-wrap leading-relaxed">{iaResult}</div>
+        </div>
+      )}
+      {iaError && (
+        <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3 text-rose-400 text-sm">
+          {iaError}
+        </div>
+      )}
 
       <div className="flex gap-2 flex-wrap border-b border-si-border-md pb-2">
         {tabs.map((t) => (

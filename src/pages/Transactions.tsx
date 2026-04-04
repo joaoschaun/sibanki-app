@@ -7,10 +7,16 @@ import type { Entry } from '../types/userData';
 import { Modal } from '../components/ui/Modal';
 import { EntryForm } from '../components/transactions/EntryForm';
 import { TransferForm } from '../components/transactions/TransferForm';
-import { Search, Filter, X, FileText, Receipt } from 'lucide-react';
-import { generateReportPdf } from '../utils/generateReportPdf';
+import { Search, Filter, X, FileText, Receipt, Camera, Mic, Upload } from 'lucide-react';
+import { functions } from '../firebase';
+import { httpsCallable } from 'firebase/functions';
+// generateReportPdf carregado via dynamic import (evita vendor-pdf no load inicial)
 import { isTransferEntry } from '../utils/entryUtils';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
+import { ImportEntries } from '../components/import/ImportEntries';
+import { calculateSovereigntyScore } from '../utils/sovereigntyEngine';
+import { SovereigntyBadge } from '../components/ui/SovereigntyBadge';
+import { PageTransition } from '../components/ui/PageTransition';
 
 // ── Tipos do Formulário ────────────────────────────────────────────────────
 interface RecurrenceSettings {
@@ -79,7 +85,7 @@ function categoryClass(category?: string, type?: string) {
 }
 
 export default function Transactions() {
-  const { user, data, entries, recurrents, loading, accounts: allAccounts } = useAppContext();
+  const { user, data, entries, recurrents, loading, accounts: allAccounts, accountBalances, investments, budgets } = useAppContext();
   const { triggerWithToast } = useSibcoinToast();
   const navigate = useNavigate();
 
@@ -89,6 +95,14 @@ export default function Transactions() {
   const [busy, setBusy]               = useState(false);
   const [error, setError]             = useState<string | null>(null);
   const [search, setSearch]           = useState('');
+  const [ocrBusy, setOcrBusy]         = useState(false);
+  const [sttBusy, setSttBusy]         = useState(false);
+  const [aiResult, setAiResult]       = useState<{ entry: Entry | null; source: string; raw?: string } | null>(null);
+  const fileInputRef                  = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef              = useRef<MediaRecorder | null>(null);
+  const audioChunksRef                = useRef<Blob[]>([]);
+  const [recording, setRecording]     = useState(false);
+  const [importOpen, setImportOpen]   = useState(false);
   // ✅ FIX: preset padrão = 'hoje' — mostra só os registros do dia atual
   const [filters, dispatchFilter]     = useReducer(filterReducer, {
     type: '', category: '', account: '',
@@ -165,6 +179,70 @@ export default function Transactions() {
     }
     return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a));
   }, [sorted, subTab]);
+
+  // ── Sovereignty Score base metrics (computed once per render) ──────────────
+  const sovereigntyBase = useMemo(() => {
+    const saldoContas = Object.values(accountBalances || {})
+      .reduce((s, v) => s + (Number(v) || 0), 0);
+    const liquidezInv = (investments || [])
+      .filter((i: Record<string, unknown>) => i.liquido !== false)
+      .reduce((s: number, i: Record<string, unknown>) => s + Number(i.currentValue ?? i.valorAtual ?? 0), 0);
+    const liquidity = saldoContas + liquidezInv;
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 90);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    const despesas90 = entries
+      .filter((e) => e.type === 'despesa' && !isTransferEntry(e) && (e.date || '') >= cutoffStr)
+      .reduce((s, e) => s + (Number(e.value) || 0), 0);
+    const dailyBurnRate = despesas90 > 0 ? despesas90 / 90 : 50;
+
+    // orçamento por categoria
+    const budgetMap: Record<string, number> = {};
+    if (budgets && typeof budgets === 'object') {
+      for (const [k, v] of Object.entries(budgets as Record<string, unknown>)) {
+        const n = Number(v);
+        if (!isNaN(n)) budgetMap[k] = n;
+      }
+    }
+    // gasto acumulado mês atual por categoria
+    const nowMonth = new Date().toISOString().slice(0, 7);
+    const catSpent: Record<string, number> = {};
+    for (const e of entries) {
+      if (e.type === 'despesa' && !isTransferEntry(e) && (e.date || '').startsWith(nowMonth)) {
+        const cat = e.category || 'Outros';
+        catSpent[cat] = (catSpent[cat] || 0) + (Number(e.value) || 0);
+      }
+    }
+
+    const ESSENTIAL_CATS = new Set(['Moradia', 'Saúde', 'Educação', 'Transporte', 'Alimentação', 'Utilidades', 'Serviços essenciais']);
+
+    return { liquidity, dailyBurnRate, budgetMap, catSpent, ESSENTIAL_CATS };
+  }, [accountBalances, investments, entries, budgets]);
+
+  // Score por entry id (apenas despesas)
+  const scoreMap = useMemo(() => {
+    const map = new Map<number, ReturnType<typeof calculateSovereigntyScore>>();
+    const { liquidity, dailyBurnRate, budgetMap, catSpent, ESSENTIAL_CATS } = sovereigntyBase;
+    for (const e of sorted) {
+      if (e.type !== 'despesa') continue;
+      const cat = e.category || 'Outros';
+      const limit = budgetMap[cat];
+      const spent = catSpent[cat] || 0;
+      const budgetRemaining = limit != null ? limit - spent : undefined;
+      map.set(e.id, calculateSovereigntyScore({
+        value: Number(e.value) || 0,
+        category: cat,
+        isEssential: ESSENTIAL_CATS.has(cat),
+        liquidity,
+        dailyBurnRate,
+        budgetRemaining,
+        impulseStreakCount: 0,
+      }));
+    }
+    return map;
+  }, [sorted, sovereigntyBase]);
+  // ────────────────────────────────────────────────────────────────────────────
 
   const hasActiveFilter = filters.type !== '' || filters.category !== '' || filters.account !== '' ||
     filters.start !== '' || filters.end !== '';
@@ -247,6 +325,79 @@ export default function Transactions() {
     finally { setBusy(false); }
   }, [user?.uid, entries]);
 
+  // ── OCR: foto → lançamento ────────────────────────────────────────────────
+  const handleOcrFile = useCallback(async (file: File) => {
+    if (!user?.uid) return;
+    setOcrBusy(true); setError(null); setAiResult(null);
+    try {
+      const buf = await file.arrayBuffer();
+      const imageBase64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      const ocrApi = httpsCallable<{ imageBase64: string; mimeType: string }, { entry: Entry | null; ocrText: string | null; provider: string }>(functions, 'ocrToEntry');
+      const res = await ocrApi({ imageBase64, mimeType: file.type || 'image/jpeg' });
+      if (res.data.entry) {
+        setAiResult({ entry: res.data.entry, source: 'foto', raw: res.data.ocrText ?? undefined });
+      } else {
+        setError('Não foi possível extrair um lançamento da imagem.');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao processar foto.');
+    } finally { setOcrBusy(false); }
+  }, [user?.uid]);
+
+  // ── STT: voz → lançamento ───────────────────────────────────────────────
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      audioChunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        if (!user?.uid || audioChunksRef.current.length === 0) return;
+        setSttBusy(true); setError(null); setAiResult(null);
+        try {
+          const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const buf = await blob.arrayBuffer();
+          const audioBase64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+          const sttApi = httpsCallable<{ audioBase64: string; mimeType: string }, { entry: Entry | null; transcript: string | null; provider: string }>(functions, 'sttToEntry');
+          const res = await sttApi({ audioBase64, mimeType: 'audio/webm' });
+          if (res.data.entry) {
+            setAiResult({ entry: res.data.entry, source: 'voz', raw: res.data.transcript ?? undefined });
+          } else {
+            setError('Não foi possível extrair um lançamento do áudio.');
+          }
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Erro ao processar áudio.');
+        } finally { setSttBusy(false); }
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setRecording(true);
+    } catch {
+      setError('Sem permissão para usar o microfone.');
+    }
+  }, [user?.uid]);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    setRecording(false);
+  }, []);
+
+  const confirmAiEntry = useCallback(async () => {
+    if (!aiResult?.entry || !user?.uid) return;
+    setBusy(true);
+    try {
+      const entry = { ...aiResult.entry, id: undefined };
+      await addEntry(user.uid, entries, entry as Omit<Entry, 'id'>);
+      triggerWithToast('entry_added');
+      setAiResult(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar lançamento.');
+    } finally { setBusy(false); }
+  }, [aiResult, user?.uid, entries, triggerWithToast]);
+
   // ── Formatadores ──────────────────────────────────────────────────────────
   const fmtDate = (iso: string) =>
     new Date(iso + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -254,7 +405,7 @@ export default function Transactions() {
   const fmtVal = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 
   return (
-    <div className="space-y-6">
+    <PageTransition className="space-y-6">
       {/* Cabeçalho */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
@@ -264,10 +415,31 @@ export default function Transactions() {
           <p className="text-si-5 text-sm">Registre receitas, despesas, transferências e lançamentos fixos. Filtre e consulte o histórico.</p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" title="Selecionar foto"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleOcrFile(f); e.target.value = ''; }} />
+          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={ocrBusy}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-300 text-sm font-medium disabled:opacity-50"
+            title="Lançar por foto (OCR)">
+            <Camera className="w-4 h-4" /> {ocrBusy ? 'Lendo…' : 'Foto'}
+          </button>
           <button type="button"
-            onClick={() => { try { generateReportPdf({ userName, entries, investments: { length: (data?.investments ?? []).length }, goals: { length: (data?.goals ?? []).length } }); } catch (err) { console.error(err); } }}
+            onClick={() => recording ? stopRecording() : startRecording()}
+            disabled={sttBusy}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium disabled:opacity-50 ${
+              recording ? 'border-rose-500 bg-rose-500/20 text-rose-300 animate-pulse' : 'border-violet-500/30 bg-violet-500/15 text-violet-300'
+            }`}
+            title="Lançar por voz">
+            <Mic className="w-4 h-4" /> {sttBusy ? 'Transcrevendo…' : recording ? 'Parar' : 'Voz'}
+          </button>
+          <button type="button" onClick={() => setImportOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-500/30 bg-blue-500/15 text-blue-300 text-sm font-medium"
+            title="Importar CSV/OFX">
+            <Upload className="w-4 h-4" /> Importar
+          </button>
+          <button type="button"
+            onClick={async () => { try { const { generateReportPdf } = await import('../utils/generateReportPdf'); generateReportPdf({ userName, entries, investments: { length: (data?.investments ?? []).length }, goals: { length: (data?.goals ?? []).length } }); } catch (err) { console.error(err); } }}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 border border-blue-500 text-sm text-si-1 font-medium">
-            <FileText className="w-4 h-4" /> Gerar Relatório PDF
+            <FileText className="w-4 h-4" /> PDF
           </button>
         </div>
       </div>
@@ -400,8 +572,8 @@ export default function Transactions() {
                   </div>
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-xs text-si-5 mb-1">Tipo</label>
-                      <select value={filters.type} onChange={(e) => dispatchFilter({ kind: 'set', field: 'type', value: e.target.value })}
+                      <label htmlFor="filter-type" className="block text-xs text-si-5 mb-1">Tipo</label>
+                      <select id="filter-type" value={filters.type} onChange={(e) => dispatchFilter({ kind: 'set', field: 'type', value: e.target.value })}
                         className="w-full px-3 py-2 rounded-lg bg-si-bg border border-si-border-md text-sm text-si-1">
                         <option value="">Todos</option>
                         <option value="receita">Receita</option>
@@ -409,16 +581,16 @@ export default function Transactions() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-si-5 mb-1">Categoria</label>
-                      <select value={filters.category} onChange={(e) => dispatchFilter({ kind: 'set', field: 'category', value: e.target.value })}
+                      <label htmlFor="filter-cat" className="block text-xs text-si-5 mb-1">Categoria</label>
+                      <select id="filter-cat" value={filters.category} onChange={(e) => dispatchFilter({ kind: 'set', field: 'category', value: e.target.value })}
                         className="w-full px-3 py-2 rounded-lg bg-si-bg border border-si-border-md text-sm text-si-1">
                         <option value="">Todas</option>
                         {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-si-5 mb-1">Conta</label>
-                      <select value={filters.account} onChange={(e) => dispatchFilter({ kind: 'set', field: 'account', value: e.target.value })}
+                      <label htmlFor="filter-acc" className="block text-xs text-si-5 mb-1">Conta</label>
+                      <select id="filter-acc" value={filters.account} onChange={(e) => dispatchFilter({ kind: 'set', field: 'account', value: e.target.value })}
                         className="w-full px-3 py-2 rounded-lg bg-si-bg border border-si-border-md text-sm text-si-1">
                         <option value="">Todas</option>
                         {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
@@ -426,13 +598,13 @@ export default function Transactions() {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-xs text-si-5 mb-1">De</label>
-                        <input type="date" value={filters.start} onChange={(e) => dispatchFilter({ kind: 'set', field: 'start', value: e.target.value })}
+                        <label htmlFor="filter-start" className="block text-xs text-si-5 mb-1">De</label>
+                        <input id="filter-start" type="date" value={filters.start} onChange={(e) => dispatchFilter({ kind: 'set', field: 'start', value: e.target.value })}
                           className="w-full px-3 py-2 rounded-lg bg-si-bg border border-si-border-md text-sm text-si-1" />
                       </div>
                       <div>
-                        <label className="block text-xs text-si-5 mb-1">Até</label>
-                        <input type="date" value={filters.end} onChange={(e) => dispatchFilter({ kind: 'set', field: 'end', value: e.target.value })}
+                        <label htmlFor="filter-end" className="block text-xs text-si-5 mb-1">Até</label>
+                        <input id="filter-end" type="date" value={filters.end} onChange={(e) => dispatchFilter({ kind: 'set', field: 'end', value: e.target.value })}
                           className="w-full px-3 py-2 rounded-lg bg-si-bg border border-si-border-md text-sm text-si-1" />
                       </div>
                     </div>
@@ -491,10 +663,18 @@ export default function Transactions() {
                             {e.category}{e.account ? ` · ${e.account}` : ''}{e.formaPgto ? ` · ${e.formaPgto}` : ''}
                           </p>
                         </div>
-                        <div className="text-right shrink-0">
+                        <div className="text-right shrink-0 flex flex-col items-end gap-1">
                           <span className={`text-sm font-bold ${e.type === 'receita' ? 'text-emerald-400' : 'text-rose-400'}`}>
                             {e.type === 'receita' ? '+' : '-'} R$ {fmtVal(Number(e.value))}
                           </span>
+                          {e.type === 'despesa' && scoreMap.has(e.id) && (
+                            <SovereigntyBadge
+                              score={scoreMap.get(e.id)!.score}
+                              daysLost={scoreMap.get(e.id)!.daysLost}
+                              opportunityCost10y={scoreMap.get(e.id)!.opportunityCost10y}
+                              compact
+                            />
+                          )}
                         </div>
                         {/* Ações (hover) */}
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
@@ -554,6 +734,33 @@ export default function Transactions() {
         </div>
       )}
 
+      <ImportEntries open={importOpen} onClose={() => setImportOpen(false)} />
+
+      {/* Modal — Lançamento via IA (OCR/STT) */}
+      <Modal open={!!aiResult} onClose={() => setAiResult(null)} title={`Lançamento via ${aiResult?.source === 'foto' ? 'Foto' : 'Voz'}`}>
+        {aiResult?.entry && (
+          <div className="space-y-4">
+            {aiResult.raw && (
+              <div className="p-3 rounded-xl bg-si-over-2 border border-si-border text-xs text-si-5">
+                <span className="font-bold text-si-4">{aiResult.source === 'foto' ? 'Texto extraído:' : 'Transcrição:'}</span>
+                <p className="mt-1 break-words">{aiResult.raw}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div><span className="text-si-5">Tipo:</span> <span className="text-si-1 font-semibold">{aiResult.entry.type === 'receita' ? '📈 Receita' : '📉 Despesa'}</span></div>
+              <div><span className="text-si-5">Valor:</span> <span className="text-si-1 font-semibold">R$ {Number(aiResult.entry.value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+              <div><span className="text-si-5">Descrição:</span> <span className="text-si-1">{aiResult.entry.desc || '—'}</span></div>
+              <div><span className="text-si-5">Categoria:</span> <span className="text-si-1">{aiResult.entry.category || '—'}</span></div>
+              {aiResult.entry.date && <div><span className="text-si-5">Data:</span> <span className="text-si-1">{aiResult.entry.date}</span></div>}
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button type="button" onClick={() => setAiResult(null)} className="flex-1 py-2.5 rounded-xl border border-si-border text-si-4 text-sm hover:bg-si-over-2">Cancelar</button>
+              <button type="button" onClick={confirmAiEntry} disabled={busy} className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold disabled:opacity-50">{busy ? 'Salvando…' : 'Confirmar lançamento'}</button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
       {/* Modal — Novo lançamento */}
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Novo lançamento">
         <EntryForm onSubmit={handleAdd} onCancel={() => setAddOpen(false)} />
@@ -581,6 +788,6 @@ export default function Transactions() {
           </button>
         </div>
       </Modal>
-    </div>
+    </PageTransition>
   );
 }

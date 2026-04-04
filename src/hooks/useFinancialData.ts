@@ -1,21 +1,24 @@
 import { useState, useEffect, useMemo } from 'react';
 import { db } from '../firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection } from 'firebase/firestore';
 import type { UserData, Entry, Recurrent, InvestorProfile, CreditAccount, CreditObligation, CreditSnapshot } from '../types/userData';
 import { calculateFinScore } from '../utils/calculateScore';
+import { mergeInlineAndOverflowEntries } from '../utils/entryUtils';
 
 /**
- * Lê os dados do documento único users/{uid} (mesmo modelo do app atual).
- * Nada é perdido: entries, accountBalances, cards, goals, etc.
+ * Lê users/{uid} + lançamentos Pluggy arquivados em users/{uid}/entriesOverflow.
+ * `entries` = merge para UI; `entriesInline` = só o array do documento (mutações / gravar).
  */
 export function useFinancialData(userId: string | undefined) {
   const [data, setData] = useState<UserData | null>(null);
+  const [overflowEntries, setOverflowEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!userId) {
       setData(null);
+      setOverflowEntries([]);
       setLoading(false);
       return;
     }
@@ -35,13 +38,44 @@ export function useFinancialData(userId: string | undefined) {
       (err) => {
         setError(err as Error);
         setLoading(false);
-      }
+      },
     );
 
     return () => unsubscribe();
   }, [userId]);
 
-  const entries: Entry[] = data?.entries ?? [];
+  useEffect(() => {
+    if (!userId) {
+      setOverflowEntries([]);
+      return;
+    }
+    const col = collection(db, 'users', userId, 'entriesOverflow');
+    const unsub = onSnapshot(
+      col,
+      (snap) => {
+        const list: Entry[] = [];
+        snap.forEach((d) => {
+          const x = d.data() as Entry;
+          if (x && typeof x.id === 'number') {
+            list.push({ ...x, entryLocation: 'overflow' });
+          }
+        });
+        setOverflowEntries(list);
+      },
+      () => {
+        /* permissão negada: mantém só inline */
+        setOverflowEntries([]);
+      },
+    );
+    return () => unsub();
+  }, [userId]);
+
+  const entriesInline: Entry[] = data?.entries ?? [];
+  const entries: Entry[] = useMemo(
+    () => mergeInlineAndOverflowEntries(entriesInline, overflowEntries),
+    [entriesInline, overflowEntries],
+  );
+
   const accounts = data?.accounts ?? [];
   const accountBalances = data?.accountBalances ?? {};
   const accountMeta = data?.accountMeta ?? {};
@@ -58,7 +92,6 @@ export function useFinancialData(userId: string | undefined) {
   const creditObligations: CreditObligation[] = data?.creditObligations ?? [];
   const creditSnapshot: CreditSnapshot | null = data?.creditSnapshot ?? null;
 
-  // Score: calculado em tempo real; finScore salvo no Firestore tem prioridade
   const score = useMemo(() => {
     if (typeof (data as any)?.finScore === 'number') return (data as any).finScore as number;
     return calculateFinScore(
@@ -76,6 +109,7 @@ export function useFinancialData(userId: string | undefined) {
     loading,
     error,
     entries,
+    entriesInline,
     accounts,
     accountBalances,
     accountMeta,

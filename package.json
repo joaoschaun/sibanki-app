@@ -18,9 +18,11 @@
     "test:compare": "playwright test compare-modulos-legado compare-modulos-react --config=playwright.config.cjs --project=compare-legado --project=compare-react",
     "test:compare:react": "playwright test compare-modulos-react --config=playwright.config.cjs --project=compare-react",
     "test:compare:legado": "playwright test compare-modulos-legado --config=playwright.config.cjs --project=compare-legado",
+    "test:curadoria": "playwright test curadoria --config=playwright.config.cjs --project=curadoria",
     "report": "playwright show-report",
-    "deploy:staging": "firebase deploy --only hosting:staging",
-    "deploy:app": "npm run syntax-check && firebase deploy --only hosting:app",
+    "deploy:staging": "npm run build && node scripts/clean-staging-dist.mjs && firebase deploy --only hosting:staging",
+    "deploy:app": "npm run build && node scripts/prepare-dist.mjs && firebase deploy --only hosting:app",
+    "deploy:legado": "npm run syntax-check && firebase deploy --only hosting:legado",
     "deploy:doc-investidor": "firebase deploy --only hosting:doc-investidor"
   },
   "dependencies": {
@@ -31,7 +33,9 @@
     "lucide-react": "^0.546.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-pluggy-connect": "^2.12.0",
     "react-router-dom": "^6.28.0",
+    "recharts": "^3.8.0",
     "tailwind-merge": "^3.5.0",
     "zustand": "^5.0.0"
   },

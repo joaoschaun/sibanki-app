@@ -1,0 +1,16 @@
+---
+description: Regras gerais de arquitetura e padrões do projeto Virtus Financeiro (React/TS)
+globs: src/**/*.{ts,tsx}
+alwaysApply: true
+---
+# Diretrizes Globais (React/TS)
+
+- **Arquitetura:** Siga o padrão de pastas em `src/` (ex.: `hooks/`, `components/`, `services/`, `store/`, `pages/`).
+- **Gerenciamento de Estado:** Use exclusivamente **Zustand** em `src/store/` (quando aplicável). Evite Redux e Context API para dados financeiros.
+- **Estilização:** Use **Tailwind CSS**. Evite CSS inline e Styled Components.
+- **Componentes:** Componentes devem ser funcionais e tipados. Use Radix UI (se disponível) ou Tailwind puro.
+- **Segurança:** Nunca exponha chaves do Firebase/Stripe/LLM no frontend. Integrações sensíveis devem ficar em `functions/`.
+- **Migração:** Se houver lógica legada em `public/app/index.html`, converta-a para hooks reutilizáveis em `src/hooks/` ao longo do tempo.
+
+Use o código com cuidado.
+

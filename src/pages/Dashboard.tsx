@@ -1,27 +1,21 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
-import { TrendingUp, TrendingDown, ArrowUpRight, AlertTriangle, Lightbulb, CreditCard, Shield, Zap, Navigation, X } from 'lucide-react';
-import { calculateDaysOfFreedom, calculateSpreadGap } from '../utils/sovereigntyEngine';
+import { TrendingUp, TrendingDown, ArrowUpRight, AlertTriangle, Lightbulb, CreditCard, Zap, Navigation, X } from 'lucide-react';
+import { useIntelligence } from '../context/IntelligenceContext';
 import { useSentinelaGeo, SCENARIO_LABELS } from '../hooks/useSentinelaGeo';
 import { CoachSetup } from '../components/ui/CoachSetup';
 import { SovereigntyHero } from '../components/ui/SovereigntyHero';
+import { SpreadGapCard } from '../components/ui/SpreadGapCard';
 import { InsightDoDia } from '../components/ui/InsightDoDia';
 import { SibcoinWidget } from '../components/sibcoin/SibcoinWidget';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
 import { isTransferEntry, nonTransferEntries } from '../utils/entryUtils';
 import { useDashboardMode } from '../hooks/useDashboardMode';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-  PieChart, Pie, Cell,
-} from 'recharts';
-import {
-  CHART_COLORS,
-  tooltipStyle as CHART_TOOLTIP_STYLE,
-  gridStyle as CHART_GRID,
-  axisStyle as CHART_AXIS,
-  fmtAxis as fmtBRL,
-} from '../components/charts/chartConfig';
+import { ExpensesPieChart } from '../components/charts/ExpensesPieChart';
+import { FinancialBarChart } from '../components/charts/FinancialBarChart';
+import { BalanceAreaChart } from '../components/charts/BalanceAreaChart';
+import { PageTransition } from '../components/ui/PageTransition';
 const DASHBOARD_WIDGETS_KEY = 'sibanki_dashboard_widgets';
 
 type WidgetConfig = {
@@ -150,24 +144,46 @@ export default function Dashboard() {
     return b;
   }, [budgets]);
 
-  const sovereignty = useMemo(() => {
-    const freedom = calculateDaysOfFreedom({ entries, accountBalances, accountMeta, investments });
-    const spread = calculateSpreadGap({ investments, creditObligations, cards, currentCdiMonthly: 0.0107 });
-    return { freedom, spread };
-  }, [entries, accountBalances, accountMeta, investments, creditObligations, cards]);
+  // Dados de soberania via IntelligenceContext — calculados uma vez, compartilhados por todo o app
+  const { freedom, spread, healthLevel, nextBestActions, journeyStage } = useIntelligence();
+
+  const ACTION_MAP: Record<string, { label: string; to: string; description: string }> = {
+    'conectar-open-finance': { label: 'Conectar banco',        to: '/configuracoes',  description: 'Ative o Open Finance para dados reais' },
+    'revisar-credito':       { label: 'Revisar crédito',       to: '/cartoes',        description: 'Uso de limite elevado detectado' },
+    'organizar-dividas':     { label: 'Organizar dívidas',     to: '/consultor-ia',   description: 'Estratégia de quitação otimizada' },
+    'ajustar-orcamento':     { label: 'Ajustar orçamento',     to: '/orcamento',      description: 'Categorias acima do limite' },
+    'criar-meta':            { label: 'Criar uma meta',        to: '/planejamento',   description: 'Defina objetivos financeiros claros' },
+    'avaliar-investimentos': { label: 'Avaliar investimentos', to: '/crescimento',    description: 'Momento certo para investir' },
+    'aprofundar-consultoria':{ label: 'Falar com consultor',   to: '/consultor-ia',   description: 'Análise aprofundada da sua situação' },
+  };
+
+  const HEALTH_COLORS: Record<string, string> = {
+    'critico': 'text-rose-400 bg-rose-500/10 border-rose-500/25',
+    'pressao': 'text-amber-400 bg-amber-500/10 border-amber-500/25',
+    'atencao': 'text-blue-300 bg-blue-500/10 border-blue-500/25',
+    'saudavel': 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25',
+  };
+
+  const JOURNEY_LABELS: Record<string, string> = {
+    'primeiros-passos':    'Começando a jornada',
+    'pressionado':         'Sob pressão financeira',
+    'organizando-base':    'Organizando a base',
+    'estabilizando':       'Estabilizando as finanças',
+    'pronto-para-crescer': 'Pronto para crescer',
+  };
 
   // Sentinela GPS — snapshot de soberania passado para a Cloud Function
   const sentinelaSnapshot = useMemo(() => ({
-    daysOfFreedom: sovereignty.freedom.days,
-    spreadGap: sovereignty.spread.spreadGap,
-    monthlyBurn: sovereignty.freedom.dailyBurnRate * 30,
+    daysOfFreedom: freedom.days,
+    spreadGap: spread.spreadGap,
+    monthlyBurn: freedom.dailyBurnRate * 30,
     categoryBudgets: Object.fromEntries(
       Object.entries(catTotals).map(([cat, spent]) => {
         const limit = budgetMap[cat] ?? 0;
         return [cat, { spent, limit, pct: limit > 0 ? Math.round((spent / limit) * 100) : 0 }];
       })
     ),
-  }), [sovereignty, catTotals, budgetMap]);
+  }), [freedom, spread, catTotals, budgetMap]);
 
   const userPhone = (financialProfile as Record<string, unknown>)?.whatsappPhone as string | undefined;
   const sentinela = useSentinelaGeo(sentinelaSnapshot, userPhone);
@@ -279,14 +295,14 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <PageTransition className="space-y-8">
       <div className="flex items-center justify-end">
         <button
           type="button"
           onClick={() => setShowEditor((v) => !v)}
-          className="px-4 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-sm text-si-3 hover:bg-si-over-3"
+          className="px-3 py-1.5 rounded-md bg-si-over-1 border border-si-border text-[10px] font-bold text-si-5 hover:bg-si-over-2 hover:text-si-3 uppercase tracking-[0.1em] transition-colors"
         >
-          {showEditor ? 'Fechar edição' : 'Editar Dashboard'}
+          {showEditor ? 'Fechar' : 'Editar'}
         </button>
       </div>
 
@@ -323,6 +339,44 @@ export default function Dashboard() {
 
       <SibcoinMissionBanner eventType="login_streak" />
 
+      {/* ── Intelligence Summary ── healthLevel + nextBestActions ── */}
+      {nextBestActions.length > 0 && (
+        <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Zap className="w-3.5 h-3.5 text-si-5" />
+              <h3 className="text-[10px] font-bold text-si-5 uppercase tracking-[0.18em]">Próximas Ações</h3>
+            </div>
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${HEALTH_COLORS[healthLevel] ?? 'text-si-4 bg-si-over-1 border-si-border'}`}>
+              <span>{healthLevel}</span>
+              <span className="opacity-60">·</span>
+              <span className="font-normal normal-case opacity-80">{JOURNEY_LABELS[journeyStage] ?? journeyStage}</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {nextBestActions.map((action) => {
+              const info = ACTION_MAP[action];
+              if (!info) return null;
+              return (
+                <Link
+                  key={action}
+                  to={info.to}
+                  className="flex items-start gap-3 p-4 rounded-xl bg-si-over-1 border border-si-border hover:bg-si-over-2 hover:border-emerald-500/20 transition-all group"
+                >
+                  <div className="w-7 h-7 rounded-md bg-si-over-2 flex items-center justify-center shrink-0 group-hover:bg-si-over-3 transition-colors mt-0.5">
+                    <ArrowUpRight className="w-3.5 h-3.5 text-si-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-si-1 leading-tight">{info.label}</p>
+                    <p className="text-xs text-si-5 mt-0.5 leading-snug">{info.description}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {widgets.insight && (
         <InsightDoDia
           entries={entries}
@@ -343,16 +397,16 @@ export default function Dashboard() {
       <div className="bg-si-card rounded-2xl border border-si-border p-6">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div>
-            <h3 className="text-lg font-bold text-si-1">Seus Primeiros Passos</h3>
-            <p className="text-si-5 text-sm">Checklist inicial para configurar seu controle financeiro.</p>
+            <h3 className="text-[10px] font-bold text-si-5 uppercase tracking-[0.18em]">Primeiros Passos</h3>
+            <p className="text-si-5 text-xs mt-0.5">Configure seu controle financeiro.</p>
           </div>
-          <span className="text-sm font-semibold text-blue-400">
+          <span className="text-[10px] font-bold text-si-4 uppercase tracking-wide">
             {primeirosPassos.doneCount}/{primeirosPassos.steps.length}
           </span>
         </div>
-        <div className="w-full h-2 rounded-full bg-si-over-3 overflow-hidden mb-4">
+        <div className="w-full h-px rounded-full bg-si-border overflow-hidden mb-4">
           <div
-            className="h-full bg-blue-500"
+            className="h-full bg-si-3"
             style={{ width: `${(primeirosPassos.doneCount / primeirosPassos.steps.length) * 100}%` }}
           />
         </div>
@@ -483,14 +537,17 @@ export default function Dashboard() {
       <SovereigntyHero
         userName={user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
         score={score}
-        freedom={sovereignty.freedom}
-        spread={sovereignty.spread}
+        freedom={freedom}
+        spread={spread}
         receitaMes={receitaMes}
         despesaMes={despesaMes}
         saldoMes={saldoMes}
         varReceita={varReceita}
         varDespesa={varDespesa}
       />
+
+      {/* ── Spread Gap — card dedicado ───────────────────────────────── */}
+      <SpreadGapCard spread={spread} />
 
       {/* ── SibCoin Widget ───────────────────────────────────────────── */}
       <SibcoinWidget />
@@ -570,7 +627,7 @@ export default function Dashboard() {
                 {SCENARIO_LABELS[sentinela.result.scenario]}
                 {sentinela.result.placeName ? ` — ${sentinela.result.placeName}` : ''}
               </span>
-              <button onClick={() => sentinela.reset()} className="ml-auto text-si-5 hover:text-si-3">
+              <button onClick={() => sentinela.reset()} className="ml-auto text-si-5 hover:text-si-3" title="Fechar alerta">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -605,81 +662,48 @@ export default function Dashboard() {
       </div>
 
       {widgets.graficos && (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-si-card rounded-2xl border border-si-border p-6">
-          <h3 className="text-sm font-bold text-si-4 uppercase tracking-wider mb-4">
-            Despesas por categoria · {getMonthLabel(currentMonthKey)} {now.getFullYear()}
-          </h3>
-          {donutTotal > 0 ? (
-            <div className="flex flex-col sm:flex-row gap-6 items-center">
-              <ResponsiveContainer width={160} height={160}>
-                <PieChart>
-                  <Pie
-                    data={donutSegments}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={46}
-                    outerRadius={72}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {donutSegments.map((s, i) => (
-                      <Cell key={s.name} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(v: any) => [`R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, '']}
-                    contentStyle={CHART_TOOLTIP_STYLE}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <ul className="space-y-2 flex-1">
-                {donutSegments.map((s, i) => (
-                  <li key={s.name} className="flex items-center gap-2 text-sm">
-                    <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
-                    <span className="text-si-3 truncate">{s.name}</span>
-                    <span className="text-si-5 ml-auto">{s.pct.toFixed(0)}%</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <p className="text-si-5 text-sm py-8 text-center">Nenhuma despesa no mês para exibir.</p>
-          )}
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-si-card rounded-2xl border border-si-border p-6">
+            <h3 className="text-sm font-bold text-si-4 uppercase tracking-wider mb-4">
+              Despesas por categoria · {getMonthLabel(currentMonthKey)} {now.getFullYear()}
+            </h3>
+            {donutTotal > 0 ? (
+              <ExpensesPieChart data={donutSegments} height={200} innerRadius={46} outerRadius={72} />
+            ) : (
+              <p className="text-si-5 text-sm py-8 text-center">Nenhuma despesa no mês para exibir.</p>
+            )}
+          </div>
+
+          <div className="bg-si-card rounded-2xl border border-si-border p-6">
+            <h3 className="text-sm font-bold text-si-4 uppercase tracking-wider mb-4">Evolução · Últimos 6 meses</h3>
+            {maxVal > 0 ? (
+              <FinancialBarChart data={last6Months.map((row) => ({
+                monthKey: row.monthKey,
+                label: getMonthLabel(row.monthKey),
+                receita: row.receita,
+                despesa: row.despesa,
+              }))} height={200} />
+            ) : (
+              <p className="text-si-5 text-sm py-8 text-center">Nenhum dado nos últimos 6 meses.</p>
+            )}
+          </div>
         </div>
 
-        <div className="bg-si-card rounded-2xl border border-si-border p-6">
-          <h3 className="text-sm font-bold text-si-4 uppercase tracking-wider mb-4">Evolução · Últimos 6 meses</h3>
-          {maxVal > 0 ? (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart
-                data={last6Months.map((row) => ({
-                  mes: getMonthLabel(row.monthKey),
-                  Receita: row.receita,
-                  Despesa: row.despesa,
-                }))}
-                margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
-                barCategoryGap="30%"
-                barGap={2}
-              >
-                <CartesianGrid {...CHART_GRID} vertical={false} />
-                <XAxis dataKey="mes" {...CHART_AXIS} />
-                <YAxis tickFormatter={fmtBRL} {...CHART_AXIS} width={56} />
-                <Tooltip
-                  formatter={(v: any) => [`R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, '']}
-                  contentStyle={CHART_TOOLTIP_STYLE}
-                />
-                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, color: '#a1a1aa' }} />
-                <Bar dataKey="Receita" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={32} />
-                <Bar dataKey="Despesa" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={32} />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <p className="text-si-5 text-sm py-8 text-center">Nenhum dado nos últimos 6 meses.</p>
-          )}
-        </div>
+        {last6Months.some((m) => m.receita > 0 || m.despesa > 0) && (
+          <div className="bg-si-card rounded-2xl border border-si-border p-6">
+            <h3 className="text-sm font-bold text-si-4 uppercase tracking-wider mb-4">Saldo acumulado · Últimos 6 meses</h3>
+            <BalanceAreaChart data={(() => {
+              let acc = 0;
+              return last6Months.map((row) => {
+                acc += row.receita - row.despesa;
+                return { label: getMonthLabel(row.monthKey), saldo: +acc.toFixed(2) };
+              });
+            })()} height={180} />
+          </div>
+        )}
       </div>
       )}
-    </div>
+    </PageTransition>
   );
 }

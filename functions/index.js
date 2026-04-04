@@ -1,10 +1,11 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const express = require("express");
 const cors = require("cors")({origin: true});
 const fmtBRL = (v) => "R$ " + Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const fetch = require("node-fetch");
 const { fetchJson, fetchText } = require("./httpClient");
-const { logEvent, logError } = require("./logger");
+const { logEvent, logError, logWarn, timer } = require("./logger");
 const {
   BRAPI_TOKEN,
   BRAPI_BASE,
@@ -24,15 +25,60 @@ const newsService = require("./services/news/newsService");
 const stripeService = require("./services/billing/stripeService");
 const whatsappService = require("./services/whatsapp/whatsappService");
 const { generateAnalysis, generateProactiveInsight } = require("./services/llm/llmService");
+const { buildConsultantPrompt, buildProactiveInsightPrompt } = require("./services/llm/sovereignSystemPrompt");
+const { retrieveRelevantChunks } = require("./services/llm/brazilianFinanceKnowledge");
+const { runSentinelaGeo } = require("./services/sentinel/sentinelaGeoService");
+const { runSentinelaWeekly } = require("./services/sentinel/sentinelaWeeklyService");
+const tenantRoutes = require("./services/tenant/tenantRoutes");
+const { onUserCreated } = require("./services/user/userService");
+const pluggyService = require("./services/pluggy/pluggyService");
+const pluggySyncService = require("./services/pluggy/pluggySyncService");
 
-// Load .env for local development (mantido por compatibilidade)
-try { require("dotenv").config(); } catch(e) {}
+// Load .env for local development (sempre functions/.env, mesmo com cwd na raiz)
+try {
+  const path = require("path");
+  require("dotenv").config({ path: path.join(__dirname, ".env") });
+} catch (e) {}
 
 // Initialize admin
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 const db = admin.firestore();
+const app = express();
+app.use(cors);
+app.use(express.json({ limit: "1mb" }));
+
+app.get("/health", async (_req, res) => {
+  const checks = { status: "ok", timestamp: new Date().toISOString(), services: {} };
+  try {
+    const snap = await db.collection("users").limit(1).get();
+    checks.services.firestore = snap.empty ? "ok (empty)" : "ok";
+  } catch (e) {
+    checks.services.firestore = "error: " + e.message;
+    checks.status = "degraded";
+  }
+  try {
+    await admin.auth().listUsers(1);
+    checks.services.auth = "ok";
+  } catch (e) {
+    checks.services.auth = "error: " + e.message;
+    checks.status = "degraded";
+  }
+  checks.services.deepseek = process.env.DEEPSEEK_KEY ? "configured" : "missing";
+  checks.services.gemini = process.env.GEMINI_KEY ? "configured" : "missing";
+  checks.services.stripe = process.env.STRIPE_SECRET ? "configured" : "missing";
+  checks.services.resend = process.env.RESEND_API_KEY ? "configured" : "missing";
+  checks.services.whatsapp = process.env.WHATSAPP_TOKEN ? "configured" : "missing";
+  checks.services.pluggy = process.env.PLUGGY_CLIENT_ID ? "configured" : "missing";
+  const code = checks.status === "ok" ? 200 : 503;
+  res.status(code).json(checks);
+});
+
+app.use("/api/v1/tenants", tenantRoutes);
+
+exports.api = functions.https.onRequest(app);
+exports.onUserCreated = functions.auth.user().onCreate(onUserCreated);
 
 // =============================================
 // STRIPE: delega para serviço de billing
@@ -158,9 +204,7 @@ const { getConsorcioInviteEmailHtml } = require("./templates/consorcioInviteEmai
 const { getCrediAmigoInviteEmailHtml } = require("./templates/crediAmigoInviteEmail");
 
 function getResendApiKey() {
-  return process.env.RESEND_API_KEY ||
-    (functions.config().resend && functions.config().resend.api_key) ||
-    "";
+  return process.env.RESEND_API_KEY || "";
 }
 
 function genCodigoConvite() {
@@ -375,6 +419,66 @@ exports.weeklySummary = functions.pubsub
 // =============================================
 // CHAT IA (Gemini) - usado pelo FAB e módulo IA do app
 // =============================================
+const PLATFORM_EVENT_ALLOWLIST = new Set([
+  "advisor_opened",
+  "advisor_message_sent",
+  "advisor_reply_received",
+  "advisor_reply_failed",
+  "insight_shown",
+  "insight_cta_clicked",
+]);
+
+function sanitizePlatformPayload(value, depth = 0) {
+  if (depth > 3) return undefined;
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") return value.substring(0, 500);
+  if (typeof value === "number" || typeof value === "boolean") return value;
+  if (Array.isArray(value)) {
+    return value
+      .slice(0, 20)
+      .map((item) => sanitizePlatformPayload(item, depth + 1))
+      .filter((item) => item !== undefined);
+  }
+  if (typeof value === "object") {
+    const out = {};
+    Object.keys(value).slice(0, 30).forEach((key) => {
+      const sanitized = sanitizePlatformPayload(value[key], depth + 1);
+      if (sanitized !== undefined) out[key] = sanitized;
+    });
+    return out;
+  }
+  return undefined;
+}
+
+exports.trackPlatformEvent = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login necessário.");
+  }
+
+  const uid = context.auth.uid;
+  const name = data && data.name ? String(data.name).trim() : "";
+  if (!PLATFORM_EVENT_ALLOWLIST.has(name)) {
+    throw new functions.https.HttpsError("invalid-argument", "Evento não permitido.");
+  }
+
+  const payload = sanitizePlatformPayload((data && data.payload) || {}, 0) || {};
+  const eventData = {
+    uid,
+    name,
+    payload,
+    source: "react",
+    ts: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  const batch = db.batch();
+  batch.set(db.collection("users").doc(uid).collection("platform_events").doc(), eventData);
+  batch.set(db.collection("platform_events").doc(), eventData);
+  await batch.commit();
+
+  logEvent("platform", "trackEvent", { uid, name });
+  return { ok: true };
+});
+
 const RAG_KNOWLEDGE = {
   reserva: `Reserva de emergência: dinheiro guardado para imprevistos (desemprego, saúde, conserto). Primeira prioridade financeira. Mínimo 3 meses de gastos essenciais; ideal 6 meses de gastos totais; autônomo/instável até 12 meses. Deve ficar em aplicação de liquidez imediata (Tesouro Selic, CDB liquidez diária). Nunca usar para viagem, impulso ou investimento arriscado.`,
   imprevisto: `Imprevistos: gastos não planejados (conserto, saúde, multa). Estratégias: 1) Usar reserva de emergência se existir. 2) Cortar gastos não essenciais do mês. 3) Renegociar ou adiar contas não urgentes. 4) Evitar empréstimo com juros altos; se inevitável, comparar taxas e prazos. Sempre priorize o essencial (moradia, alimentação, saúde).`,
@@ -447,17 +551,17 @@ exports.chatApi = functions.runWith(chatApiOptions).https.onCall(async (data, co
   let userContent = (contextStr && !isLegacyFullPrompt)
     ? `DADOS DO USUÁRIO (use para personalizar a resposta):\n${contextStr}\n\nPERGUNTA DO USUÁRIO:\n${message}`
     : message;
-  const ragChunks = getRagChunksForMessage(message);
-  if (ragChunks) {
-    userContent = `REFERÊNCIA (use para fundamentar sua resposta, em português):\n${ragChunks}\n\n---\n\n${userContent}`;
-  }
+  // Arquiteto Soberano: RAG semântico + persona + regras brasileiras + contexto financeiro
+  const ragChunks = retrieveRelevantChunks(message);
+  const fullPrompt = buildConsultantPrompt(userContent, message, ragChunks);
   // Chama o llmService com fallback automático: Gemini → Groq → OpenAI → Claude
+  const t = timer("chatApi", "generate");
   try {
-    const result = await generateAnalysis(contextStr, userContent);
+    const result = await generateAnalysis(contextStr, fullPrompt);
     if (!result || !result.text) {
       throw new functions.https.HttpsError("resource-exhausted", "Todos os provedores de IA atingiram o limite. Tente em alguns minutos.");
     }
-    logEvent("chatApi", { provider: result.provider, uid: context.auth.uid });
+    t.end({ provider: result.provider, uid: context.auth.uid });
     return { reply: result.text };
   } catch (e) {
     if (e instanceof functions.https.HttpsError) throw e;
@@ -476,7 +580,8 @@ exports.proactiveInsightApi = functions.runWith(chatApiOptions).https.onCall(asy
     throw new functions.https.HttpsError("invalid-argument", "Snapshot vazio.");
   }
   try {
-    const result = await generateProactiveInsight(snapshot);
+    const proactivePrompt = buildProactiveInsightPrompt(snapshot);
+    const result = await generateProactiveInsight(proactivePrompt);
     logEvent("proactiveInsightApi", { hasInsight: !result.status, uid: context.auth.uid });
     return result;
   } catch (e) {
@@ -626,16 +731,56 @@ exports.whatsappWebhook = functions.https.onRequest(async (req, res) => {
       return reply(`💸 *Credi Amigo*\n\n${linhas}\n\nGerencie no app: sibanki.com.br`);
     }
 
-    // ── 9. Tentar lançamento financeiro ──
-    const parsed = await whatsappSvc.parseMessageToEntry(text);
-    if (parsed) {
-      await whatsappSvc.addEntryToUser(db, uid, parsed);
-      const ico = parsed.type==="receita"?"📈 +":"📉 -";
-      const valor = fmtBRL(parsed.value);
-      return reply(`✅ *Lançado!*\n\n${ico} ${valor}\n📂 ${parsed.category}\n📝 ${parsed.desc}\n📅 ${parsed.date}\n\nEnvie *resumo* para ver o balanço do mês. 💡`);
+    // ── 9. Comando: boletos (DDA) ──
+    // Acao 11 (29/03/2026): exibe boletos DDA pendentes do usuario.
+    // Fase 1: dados Firestore (ddaBoletos subcollection) com fallback demo.
+    if (/^(boletos?|dda|vencimentos?)$/.test(tl)) {
+      const boletosSnap = await db.collection("users").doc(uid)
+        .collection("ddaBoletos")
+        .where("status", "==", "pendente")
+        .orderBy("vencimento", "asc")
+        .limit(5)
+        .get().catch(() => null);
+
+      if (boletosSnap && !boletosSnap.empty) {
+        const linhas = boletosSnap.docs.map((d) => {
+          const b = d.data();
+          const venc = b.vencimento ? new Date(b.vencimento).toLocaleDateString("pt-BR") : "—";
+          return `📄 *${b.beneficiario}* — ${fmtBRL(b.valor)}\nVence: ${venc}`;
+        }).join("\n\n");
+        return reply(`📄 *Seus boletos pendentes:*\n\n${linhas}\n\nVeja todos no app: sibanki.com.br`);
+      } else {
+        // Demo quando DDA ainda não está integrado via Pluggy
+        return reply(`📄 *Boletos DDA*\n\nNenhum boleto DDA sincronizado ainda.\n\nConecte seu banco via Open Finance no app para ver todos os boletos automaticamente:\nsibanki.com.br > Contas > Conectar banco 🏦`);
+      }
     }
 
-    // ── 10. Consultor IA — tudo que não foi reconhecido ──
+    // ── 10. Comando: score CPF ──
+    // Acao 11 (29/03/2026): exibe score e alertas do CPF do usuario.
+    // Fase 1: dados Firestore (cpfMonitoring) com fallback orientativo.
+    if (/^(cpf|score|score[\s-]?cpf|credito)$/.test(tl)) {
+      const cpf = userData.cpfMonitoring;
+      if (cpf && cpf.score) {
+        const band = cpf.score < 400 ? "Muito Baixo ⚠️"
+          : cpf.score < 600 ? "Regular 🟡"
+          : cpf.score < 750 ? "Bom 🟢"
+          : "Excelente 🌟";
+        const negs = cpf.negativacoesCount || 0;
+        const alerts = Array.isArray(cpf.alertas) ? cpf.alertas.filter(a => !a.lido).length : 0;
+        return reply(`🛡️ *Meu CPF — ${nome}*\n\nScore: *${cpf.score}* — ${band}\nNegativações: ${negs === 0 ? "✅ Nenhuma" : `⚠️ ${negs} ativas`}\nAlertas não lidos: ${alerts}\n\nDetalhes completos no app:\nsibanki.com.br > Meu CPF`);
+      } else {
+        return reply(`🛡️ *Monitoramento de CPF*\n\nSeu CPF ainda não está conectado a um bureau de crédito.\n\nAcesse o app para ativar:\nsibanki.com.br > Meu CPF > Conectar bureau\n\nMonitoramos: Serasa, Boa Vista e SPC Brasil 🔍`);
+      }
+    }
+
+    // ── 11. Wizard de lançamento guiado (multi-turn) ──
+    // Primeiro tenta o wizard (checa estado pendente OU inicia novo se houver valor)
+    const wizardResult = await whatsappSvc.handleWizardMessage(db, uid, userData, text);
+    if (wizardResult.handled) {
+      return reply(wizardResult.reply);
+    }
+
+    // ── 12. Consultor IA — tudo que não foi reconhecido ──
     const entries = Array.isArray(userData.entries) ? userData.entries : [];
     const mes = new Date().toISOString().slice(0, 7);
     const mesEntries = entries.filter(e => e.date?.startsWith(mes) && !e.isTransfer);
@@ -723,6 +868,22 @@ exports.dailyNews = telegramBot.dailyNews;
 exports.weeklyReport = telegramBot.weeklyReport;
 
 // =============================================
+// SIBCOIN — Motor de Recompensas
+// =============================================
+const rewardEngine = require("./services/sibcoin/rewardEngine");
+exports.triggerSibcoinEvent  = rewardEngine.triggerSibcoinEvent;
+exports.getSibcoinMissions   = rewardEngine.getSibcoinMissions;
+exports.adminCreditSibcoin   = rewardEngine.adminCreditSibcoin;
+
+// =============================================
+// IA - Categorizacao em lote de CSV
+// Acao 17 (29/03/2026): Gemini Flash categoriza lancamentos
+// importados via CSV que nao possuem categoria definida.
+// =============================================
+const csvCategorizerService = require("./services/llm/csvCategorizerService");
+exports.aiCategorizeCsv = csvCategorizerService.aiCategorizeCsv;
+
+// =============================================
 // PROGRAMA FILIADO — validação diária de ativação
 // =============================================
 
@@ -748,7 +909,9 @@ function getNivelFil(ativos) {
 }
 
 async function emitirSibCoin(db, filiadoUid, valor, desc, ref) {
-  const mult = FILIADO_MULT[getNivelFil(0)]; // atualizado no batch
+  const filSnap = await db.collection('users').doc(filiadoUid).collection('filiado').doc('dados').get();
+  const ativos = filSnap.exists ? (filSnap.data().totalAtivos || 0) : 0;
+  const mult = FILIADO_MULT[getNivelFil(ativos)] || 1;
   const valorFinal = Math.round(valor * mult);
   const batch = db.batch();
 
@@ -887,6 +1050,27 @@ exports.processarFiliadosDiario = functions.pubsub
     console.log(`Filiado: processados ${indicadosSnap.docs.length} indicados pendentes.`);
     return null;
   });
+
+/**
+ * Callable: gera Connect Token Pluggy para abrir o widget no React (Open Finance).
+ * Requer PLUGGY_CLIENT_ID / PLUGGY_CLIENT_SECRET no .env (dev) ou env vars Firebase (prod).
+ */
+exports.pluggyCreateConnectToken = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login necessário");
+  }
+  return pluggyService.createConnectToken(context.auth.uid);
+});
+
+/**
+ * Callable: puxa contas dos itens Pluggy do usuário e grava em accounts / accountBalances / accountMeta
+ */
+exports.pluggySyncAccounts = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login necessário");
+  }
+  return pluggySyncService.syncAccountsToUser(context.auth.uid, db);
+});
 
 /**
  * Callable: registrar Open Banking ativo (chamado pelo app quando usuário conecta)
@@ -1135,12 +1319,19 @@ exports.sendWhatsAppInviteFamilia = functions.https.onCall(async (data, context)
   const saudacao = nomeConv ? `Olá *${nomeConv}*! ` : "";
   const msg = `👨‍👩‍👧 *Convite Sibanki — Modo Família*\n\n${saudacao}*${nome}* quer gerenciar as finanças junto com você no *Sibanki*! 💰\n\nCom o Modo Família vocês podem:\n✅ Ver saldos e gastos em conjunto\n✅ Definir metas familiares\n✅ Consultor IA financeiro compartilhado\n\n👇 Aceite o convite:\n${link}\n\n_Sibanki — Controle Financeiro Inteligente com IA_`;
   try {
-    await whatsappSvc.sendWhatsAppText(null, toPhone, msg);
+    const ok = await whatsappSvc.sendWhatsAppText(null, toPhone, msg);
+    if (!ok) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Falha ao enviar WhatsApp (verifique token/Logs do Cloud Functions)."
+      );
+    }
     logEvent("sendWhatsAppInviteFamilia", { toPhone, nomeConvidador });
     return { ok: true };
   } catch(e) {
+    if (e instanceof functions.https.HttpsError) throw e;
     logError("sendWhatsAppInviteFamilia", e);
-    throw new functions.https.HttpsError("internal", e.message);
+    throw new functions.https.HttpsError("internal", e.message || "Erro ao enviar WhatsApp.");
   }
 });
 
@@ -1157,7 +1348,7 @@ exports.sendConsorcioInvite = functions.https.onCall(async (data, context) => {
   if (!listaParticipantes.length || !nomeGrupo) {
     throw new functions.https.HttpsError("invalid-argument", "participantes e nomeGrupo são obrigatórios.");
   }
-  const apiKey = process.env.RESEND_API_KEY || (functions.config().resend && functions.config().resend.api_key) || "";
+  const apiKey = process.env.RESEND_API_KEY || "";
   if (!apiKey) return { ok: false, error: "EMAIL_NOT_CONFIGURED" };
 
   const APP_URL = process.env.APP_URL || "https://sibanki.com.br/app";
@@ -1221,7 +1412,7 @@ exports.sendCrediAmigoInvite = functions.https.onCall(async (data, context) => {
   if (!emailAmigo || emailAmigo.indexOf("@") < 0) {
     throw new functions.https.HttpsError("invalid-argument", "emailAmigo inválido.");
   }
-  const apiKey = process.env.RESEND_API_KEY || (functions.config().resend && functions.config().resend.api_key) || "";
+  const apiKey = process.env.RESEND_API_KEY || "";
   if (!apiKey) return { ok: false, error: "EMAIL_NOT_CONFIGURED" };
 
   const APP_URL = process.env.APP_URL || "https://sibanki.com.br/app";
@@ -1273,12 +1464,19 @@ exports.sendWhatsAppInviteConsorcioCallable = functions.https.onCall(async (data
   const saudacao = toNome ? `Olá *${toNome}*! ` : "";
   const msg = `🤝 *${saudacao}Você foi convidado para um Consórcio!*\n\n*${nomeAdmin}* criou o grupo *"${nomeGrupo}"* no Sibanki.\n\n💰 Contribuição: *${fmtBRL(valorParcela)}/mês*\n🎯 Bolo mensal: *${fmtBRL(boloMensal)}*\n📅 Duração: *${prazo} meses*\n\nComo funciona:\n• Todo mês todos contribuem\n• Sorteio auditável e transparente\n• Em ${prazo} meses todo mundo recebe!\n\n👇 Ver detalhes e participar:\n${APP_URL}\n\n_Sibanki — Consórcio entre amigos, sem banco e sem juros_`;
   try {
-    await whatsappSvc.sendWhatsAppText(null, toPhone, msg);
+    const ok = await whatsappSvc.sendWhatsAppText(null, toPhone, msg);
+    if (!ok) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Falha ao enviar WhatsApp (verifique token/Logs do Cloud Functions)."
+      );
+    }
     logEvent("sendWhatsAppInviteConsorcioCallable", { toPhone, nomeGrupo });
     return { ok: true };
   } catch (e) {
+    if (e instanceof functions.https.HttpsError) throw e;
     logError("sendWhatsAppInviteConsorcioCallable", e);
-    throw new functions.https.HttpsError("internal", e.message);
+    throw new functions.https.HttpsError("internal", e.message || "Erro ao enviar WhatsApp.");
   }
 });
 
@@ -1295,11 +1493,178 @@ exports.sendWhatsAppInviteCrediAmigoCallable = functions.https.onCall(async (dat
     ? `💸 *${saudacao}${nomeCredor} registrou um empréstimo para você*\n\nVocê deve *${fmtBRL(valor)}* para ${nomeCredor}${parcelas > 1 ? ` em ${parcelas}x de ${fmtBRL(valorParcela)}` : ""}.\n\nAcompanhe o acordo e receba lembretes no *Sibanki Credi Amigo* — grátis!\n\n👇 Ver meu acordo:\n${APP_URL}\n\n_Sibanki — Empréstimos entre amigos com transparência_`
     : `💰 *${saudacao}${nomeCredor} registrou que você tem a receber*\n\nVocê tem *${fmtBRL(valor)} a receber* de ${nomeCredor}${parcelas > 1 ? ` em ${parcelas}x de ${fmtBRL(valorParcela)}` : ""}.\n\nAcompanhe no *Sibanki Credi Amigo* — grátis!\n\n👇 Ver meu acordo:\n${APP_URL}\n\n_Sibanki — Empréstimos entre amigos com transparência_`;
   try {
-    await whatsappSvc.sendWhatsAppText(null, toPhone, msg);
+    const ok = await whatsappSvc.sendWhatsAppText(null, toPhone, msg);
+    if (!ok) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Falha ao enviar WhatsApp (verifique token/Logs do Cloud Functions)."
+      );
+    }
     logEvent("sendWhatsAppInviteCrediAmigoCallable", { toPhone, nomeCredor });
     return { ok: true };
   } catch (e) {
+    if (e instanceof functions.https.HttpsError) throw e;
     logError("sendWhatsAppInviteCrediAmigoCallable", e);
-    throw new functions.https.HttpsError("internal", e.message);
+    throw new functions.https.HttpsError("internal", e.message || "Erro ao enviar WhatsApp.");
   }
+});
+
+// =============================================
+// SENTINELA GPS — GEOFENCING FINANCEIRO
+// =============================================
+exports.sentinelaGeoCheck = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Faça login.");
+
+  const { lat, lng, snapshot = {}, phone } = data || {};
+  if (!lat || !lng) {
+    throw new functions.https.HttpsError("invalid-argument", "lat e lng são obrigatórios.");
+  }
+
+  // Valida coordenadas básicas
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    throw new functions.https.HttpsError("invalid-argument", "Coordenadas inválidas.");
+  }
+
+  try {
+    let sendFn = null;
+
+    // Se phone foi fornecido, envia via WhatsApp
+    if (phone) {
+      const whatsappSvc = require("./services/whatsapp/whatsappService");
+      sendFn = (msg) => whatsappSvc.sendWhatsAppText(null, phone, msg);
+    }
+
+    const result = await runSentinelaGeo(lat, lng, snapshot, sendFn);
+
+    logEvent("sentinelaGeoCheck", {
+      uid: context.auth.uid,
+      scenario: result.scenario,
+      placeName: result.placeName,
+      sent: result.sent,
+    });
+
+    return {
+      scenario: result.scenario,
+      placeName: result.placeName,
+      message: result.message,
+      sent: result.sent,
+    };
+  } catch (e) {
+    if (e instanceof functions.https.HttpsError) throw e;
+    logError("sentinelaGeoCheck", e);
+    throw new functions.https.HttpsError("internal", e.message || "Erro no Sentinela GPS.");
+  }
+});
+
+// =============================================
+// SENTINELA SEMANAL — SCHEDULED FUNCTION
+// Toda segunda-feira às 08:00 BRT (11:00 UTC)
+// =============================================
+exports.sentinelaWeekly = functions.pubsub
+  .schedule("every monday 11:00")
+  .timeZone("UTC")
+  .onRun(async () => {
+    const whatsappSvc = require("./services/whatsapp/whatsappService");
+    try {
+      const result = await runSentinelaWeekly(db, whatsappSvc.sendWhatsAppText);
+      logEvent("sentinelaWeekly_scheduled", result);
+    } catch (e) {
+      logError("sentinelaWeekly_scheduled", e);
+    }
+    return null;
+  });
+
+// =============================================
+// OCR — FOTO → LANÇAMENTO FINANCEIRO
+// =============================================
+exports.ocrToEntry = functions.runWith({ timeoutSeconds: 30, memory: "512MB" }).https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Faça login.");
+  }
+  const { imageBase64, mimeType } = data || {};
+  if (!imageBase64 || typeof imageBase64 !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "imageBase64 é obrigatório.");
+  }
+  const maxSize = 4 * 1024 * 1024;
+  const buf = Buffer.from(imageBase64, "base64");
+  if (buf.length > maxSize) {
+    throw new functions.https.HttpsError("invalid-argument", "Imagem excede 4MB.");
+  }
+  const t = timer("ocrToEntry", "process");
+  try {
+    const { imageToEntry } = require("./services/llm/ocrService");
+    const userSnap = await db.collection("users").doc(context.auth.uid).get();
+    const categories = userSnap.exists ? (userSnap.data().categories || []) : [];
+    const result = await imageToEntry(buf, mimeType || "image/jpeg", categories);
+    t.end({ uid: context.auth.uid, provider: result.provider, hasEntry: !!result.entry });
+    return result;
+  } catch (e) {
+    t.fail(e, { uid: context.auth.uid });
+    throw new functions.https.HttpsError("internal", "Falha ao processar imagem.");
+  }
+});
+
+// =============================================
+// STT — VOZ → LANÇAMENTO FINANCEIRO
+// =============================================
+exports.sttToEntry = functions.runWith({ timeoutSeconds: 30, memory: "512MB" }).https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Faça login.");
+  }
+  const { audioBase64, mimeType } = data || {};
+  if (!audioBase64 || typeof audioBase64 !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "audioBase64 é obrigatório.");
+  }
+  const maxSize = 10 * 1024 * 1024;
+  const buf = Buffer.from(audioBase64, "base64");
+  if (buf.length > maxSize) {
+    throw new functions.https.HttpsError("invalid-argument", "Áudio excede 10MB.");
+  }
+  const t = timer("sttToEntry", "process");
+  try {
+    const { transcribeAudio } = require("./services/llm/sttService");
+    const { extractEntry } = require("./services/llm/llmService");
+    const stt = await transcribeAudio(buf, mimeType || "audio/webm");
+    if (!stt.text) {
+      t.end({ uid: context.auth.uid, provider: "none", hasEntry: false });
+      return { entry: null, transcript: null, provider: "none" };
+    }
+    const userSnap = await db.collection("users").doc(context.auth.uid).get();
+    const categories = userSnap.exists ? (userSnap.data().categories || []) : [];
+    const entry = await extractEntry(stt.text, categories);
+    t.end({ uid: context.auth.uid, provider: stt.provider, hasEntry: !!entry });
+    return { entry, transcript: stt.text, provider: stt.provider };
+  } catch (e) {
+    logError("sttToEntry", e);
+    throw new functions.https.HttpsError("internal", "Falha ao processar áudio.");
+  }
+});
+
+// ── Push Notifications — alertas diários de orçamento e faturas ──────────────
+exports.dailyPushAlerts = functions.pubsub
+  .schedule("every day 09:00")
+  .timeZone("America/Sao_Paulo")
+  .onRun(async () => {
+    const { runDailyPushAlerts } = require("./services/push/pushService");
+    await runDailyPushAlerts();
+    return null;
+  });
+
+exports.sendPushNotification = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Faça login.");
+  }
+  const { title, body, targetUid, clickAction } = data || {};
+  if (!title || !body) {
+    throw new functions.https.HttpsError("invalid-argument", "title e body são obrigatórios.");
+  }
+  const uid = targetUid || context.auth.uid;
+  const claims = (await admin.auth().getUser(context.auth.uid)).customClaims || {};
+  if (targetUid && targetUid !== context.auth.uid && claims.role !== "admin" && claims.role !== "superadmin") {
+    throw new functions.https.HttpsError("permission-denied", "Sem permissão para notificar outros usuários.");
+  }
+  const { sendPush } = require("./services/push/pushService");
+  const result = await sendPush(uid, { title, body }, { click_action: clickAction || "/" });
+  logEvent("sendPushNotification", { uid, sent: result.sent });
+  return result;
 });

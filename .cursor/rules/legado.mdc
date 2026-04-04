@@ -1,0 +1,15 @@
+---
+description: Padrões ao modificar o Legado (public/app)
+globs: ["public/app/**/*.{js,html,css}","public/app/**/*.{js,html}"]
+alwaysApply: true
+---
+# Legado (JS/HTML do App)
+
+- **Evite React/TS dentro do legado:** `public/app` não é para criar componentes React nem usar JSX/TS.
+- **Padrão de código:** siga o estilo já existente do `public/app/app.js` (funções globais, helpers locais, sem módulos ES import/export).
+- **Integração com IA:** ao chamar IA, reutilize `firebase.functions().httpsCallable(...)` (ex.: `chatApi`, `proactiveInsightApi`) e siga os ids/elementos já usados no DOM.
+- **UI:** ajuste a UI via `innerHTML`/`textContent` e classes/ids já presentes; evite introduzir Tailwind novo no legado.
+- **Snapshots e datas:** ao montar strings de data, mantenha o formato do legado (`YYYY-MM-DD`) para consistência.
+
+Use o código com cuidado.
+

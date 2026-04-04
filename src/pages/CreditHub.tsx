@@ -19,6 +19,7 @@ import {
   ArrowUpRight, RefreshCw, ShieldCheck, Target,
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { ComingSoonBadge } from '../components/ui/ComingSoonBadge';
 import type { CreditAccount, CreditObligation, CreditSnapshot } from '../types/userData';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -256,9 +257,11 @@ export default function CreditHub() {
                 </div>
                 <UtilBar pct={pct} />
                 <div className="flex gap-2">
-                  <button className="flex-1 py-2 rounded-xl bg-violet-600/20 text-violet-400 text-xs font-semibold hover:bg-violet-600/30 transition-colors">
-                    Pagar fatura
-                  </button>
+                  <ComingSoonBadge>
+                    <button disabled className="flex-1 py-2 rounded-xl bg-violet-600/20 text-violet-400/50 text-xs font-semibold cursor-not-allowed">
+                      Pagar fatura
+                    </button>
+                  </ComingSoonBadge>
                   <button className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 text-xs hover:bg-si-over-3 transition-colors">
                     Ver compras
                   </button>
@@ -309,12 +312,16 @@ export default function CreditHub() {
                 </div>
                 <UtilBar pct={pct} warn={90} />
                 <div className="flex gap-2">
-                  <button className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 text-xs hover:bg-si-over-3 transition-colors">
-                    Simular antecipação
-                  </button>
-                  <button className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 text-xs hover:bg-si-over-3 transition-colors">
-                    Renegociar
-                  </button>
+                  <ComingSoonBadge>
+                    <button disabled className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4/50 text-xs cursor-not-allowed">
+                      Simular antecipação
+                    </button>
+                  </ComingSoonBadge>
+                  <ComingSoonBadge>
+                    <button disabled className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4/50 text-xs cursor-not-allowed">
+                      Renegociar
+                    </button>
+                  </ComingSoonBadge>
                 </div>
               </div>
             );
@@ -370,9 +377,11 @@ export default function CreditHub() {
                 <p className="text-xs text-si-5 leading-relaxed">{item.body}</p>
               </div>
               {item.action && (
-                <button className="shrink-0 px-3 py-1.5 rounded-xl bg-violet-600/20 text-violet-400 text-xs font-semibold hover:bg-violet-600/30 transition-colors flex items-center gap-1">
-                  {item.action} <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
+                <ComingSoonBadge>
+                  <button disabled className="shrink-0 px-3 py-1.5 rounded-xl bg-violet-600/20 text-violet-400/50 text-xs font-semibold cursor-not-allowed flex items-center gap-1">
+                    {item.action} <ArrowUpRight className="w-3.5 h-3.5" />
+                  </button>
+                </ComingSoonBadge>
               )}
             </div>
           ))}
@@ -428,9 +437,11 @@ export default function CreditHub() {
                 <div className="flex-1">
                   <p className={`font-bold ${o.color} mb-1`}>{o.title}</p>
                   <p className="text-sm text-si-4 mb-3">{o.desc}</p>
-                  <button className={`px-4 py-2 rounded-xl text-xs font-bold ${o.bg} ${o.color} border ${o.border} hover:opacity-80 transition-opacity flex items-center gap-1.5`}>
-                    {o.cta} <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
+                  <ComingSoonBadge>
+                    <button disabled className={`px-4 py-2 rounded-xl text-xs font-bold ${o.bg} ${o.color}/50 border ${o.border} cursor-not-allowed flex items-center gap-1.5`}>
+                      {o.cta} <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </ComingSoonBadge>
                 </div>
               </div>
             </div>

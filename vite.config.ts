@@ -35,10 +35,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor-react':  ['react', 'react-dom', 'react-router-dom'],
+          'vendor-react':    ['react', 'react-dom', 'react-router-dom'],
           'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/functions'],
-          'vendor-pdf': ['jspdf', 'jspdf-autotable', 'html2canvas'],
-          'vendor-ui': ['lucide-react', 'clsx', 'tailwind-merge'],
+          'vendor-pdf':      ['jspdf', 'jspdf-autotable', 'html2canvas'],
+          'vendor-charts':   ['recharts'],
+          'vendor-ui':       ['lucide-react', 'clsx', 'tailwind-merge'],
         },
       },
     },

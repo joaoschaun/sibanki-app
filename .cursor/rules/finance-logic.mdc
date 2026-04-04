@@ -1,0 +1,15 @@
+---
+description: Regras para lógica financeira, cálculos e integração com Gemini/LLM
+globs: ["src/services/**", "functions/services/llm/**", "functions/index.js"]
+alwaysApply: true
+---
+# Lógica Financeira e IA
+
+- **Cálculos/precisão:** arredondamentos financeiros devem sempre manter **2 casas decimais** (ou mais, se a fonte exigir), evitando erros de precisão.
+- **Categorias:** ao sugerir categorias via IA, use a lista oficial (ex.: `Alimentação`, `Lazer`, `Moradia`, etc.) já presente no domínio do app.
+- **Contexto IA:** quando criar prompts para Gemini/LLM em `functions/`, inclua o contexto de **Modo Família** se o usuário estiver vinculado a um parceiro (quando aplicável).
+- **Tratamento de quota/erros:** trate erros de quota/limite da API do Gemini/LLM e apresente mensagens amigáveis no frontend.
+- **Privacidade:** se precisar enviar dados sensíveis para análise externa, anonimizar/compactar previamente (minimizando PII) sempre que possível.
+
+Use o código com cuidado.
+

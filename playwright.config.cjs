@@ -59,6 +59,14 @@ module.exports = defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
+      name: 'curadoria',
+      testMatch: '**/curadoria.spec.js',
+      use: { 
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.LEGACY_BASE_URL || 'https://virtus-financeiro-cd7bd.web.app/app',
+      },
+    },
+    {
       name: 'analise-staging',
       testMatch: '**/analise-staging.spec.js',
       use: {
@@ -97,6 +105,41 @@ module.exports = defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         baseURL: process.env.REACT_BASE_URL || 'https://staging-13a0b.web.app',
+      },
+    },
+    {
+      name: 'fix-lancamentos',
+      testMatch: '**/fix-lancamentos.spec.cjs',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'https://staging-13a0b.web.app',
+        headless: false,
+      },
+    },
+    {
+      name: 'fix-legado-prod',
+      testMatch: '**/fix-legado.spec.cjs',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'https://virtus-financeiro-cd7bd.web.app',
+        headless: false,
+      },
+    },
+    {
+      name: 'avatar-dropdown-debug',
+      testMatch: '**/avatar-dropdown-debug.spec.js',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'https://virtus-financeiro-cd7bd.web.app/app',
+        headless: false,
+      },
+    },
+    {
+      name: 'react-smoke',
+      testMatch: '**/{react-smoke,lighthouse-audit}.spec.cjs',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: STAGING_URL,
       },
     },
   ],

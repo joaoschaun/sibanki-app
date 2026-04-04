@@ -1,112 +1,140 @@
-rules_version = '2';
+rules_version = "2";
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Dados do usuario - so o proprio pode ler/escrever
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    // Feedback do consultor IA (para treino futuro) - so o dono grava/lê
-    match /users/{userId}/aiFeedback/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function isAuthed() {
+      return request.auth != null;
     }
 
-    // Casais - membros autenticados podem ler/escrever
-    match /couples/{coupleId} {
-      allow read, write: if request.auth != null;
+    function isSuperAdmin() {
+      return isAuthed() && request.auth.token.role == "superadmin";
     }
 
-    // Convites - usuarios autenticados podem ler/escrever
-    match /invites/{inviteId} {
-      allow read, write: if request.auth != null;
+    function sameTenant(tenantId) {
+      return isAuthed() && request.auth.token.tenantId == tenantId;
     }
 
-    // Comunidade - todos autenticados leem, criam e comentam. So o autor deleta.
-    match /community/{postId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    function isTenantAdmin(tenantId) {
+      return sameTenant(tenantId) && request.auth.token.role == "admin";
     }
 
-    // Rate limits - so leitura pelo proprio usuario
-    match /rateLimits/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if false;
-    }
-
-    // Codigos de vinculacao Telegram
-    match /telegramCodes/{codeId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow delete: if request.auth != null;
-    }
-
-    // Interacoes nas noticias (curtir, comentar, reagir, visualizacoes)
-    match /newsInteractions/{articleId} {
-      allow read, write: if request.auth != null;
-    }
-
-    // Denuncias da comunidade
-    match /community_reports/{reportId} {
-      allow create: if request.auth != null;
-      allow read, update, delete: if false;
-    }
-
-    // Ranking da comunidade (leitura publica para autenticados)
-    match /community_ranking/{docId} {
-      allow read: if request.auth != null;
-      allow write: if false;
-    }
-
-    // ── SOLUÇÕES FINANCEIRAS — cliques e cashback ──
-    // Cliques por usuário — só o dono lê; app escreve
-    match /users/{userId}/sol_cliques/{docId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update, delete: if false;
-    }
-    // Log global de cashbacks — só Cloud Function (admin SDK) escreve; admin lê
-    match /cashback_log/{docId} {
-      allow read, write: if false; // apenas admin SDK
-    }
-    // Cliques globais — só Cloud Function escreve
-    match /sol_cliques_global/{docId} {
-      allow read, write: if false;
-    }
-
-    // ── PROGRAMA FILIADO ──
-    // Dados do programa filiado - só o próprio lê/escreve
-    match /users/{userId}/filiado/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    // Lista de indicados do filiado - só o próprio lê; Cloud Function escreve via admin
-    match /users/{userId}/indicados/{docId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if false; // só Cloud Function (admin SDK) escreve
-    }
-    // Extrato SibCoin - só o próprio lê; Cloud Function escreve via admin
-    match /users/{userId}/sibcoin/{docId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if false; // só Cloud Function (admin SDK) escreve
-    }
-    // Feedback board (sugestões de features)
-    match /feedbackBoard/{docId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && (
-        resource.data.autorId == request.auth.uid ||
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votos'])
+    function isTenantUser(tenantId) {
+      return sameTenant(tenantId) && (
+        request.auth.token.role == "user" ||
+        request.auth.token.role == "admin"
       );
-      allow delete: if request.auth != null && resource.data.autorId == request.auth.uid;
-    }
-    // Config global do Filiado - só leitura pelo app; escrita apenas pelo admin
-    match /config/{docId} {
-      allow read: if request.auth != null;
-      allow write: if false;
     }
 
-    // Bloqueia tudo mais
+    function isOwner(userId) {
+      return isAuthed() && request.auth.uid == userId;
+    }
+
+    function ownerInTenant(tenantId, userId) {
+      return sameTenant(tenantId) && isOwner(userId);
+    }
+
+    function canReadTenantData(tenantId, userId) {
+      return isSuperAdmin() || ownerInTenant(tenantId, userId) || isTenantAdmin(tenantId);
+    }
+
+    function canWriteTenantData(tenantId, userId) {
+      return isSuperAdmin() || ownerInTenant(tenantId, userId) || isTenantAdmin(tenantId);
+    }
+
+    // Namespace principal multi-tenant
+    match /tenants/{tenantId} {
+      allow read: if isSuperAdmin() || sameTenant(tenantId);
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() || isTenantAdmin(tenantId);
+      allow delete: if isSuperAdmin();
+
+      // Metadados do tenant (slug, domínio, plano, branding, features)
+      match /meta/{docId} {
+        allow read: if isSuperAdmin() || sameTenant(tenantId);
+        allow create: if isSuperAdmin();
+        allow update: if isSuperAdmin() || isTenantAdmin(tenantId);
+        allow delete: if isSuperAdmin();
+      }
+
+      // Dados de usuário por tenant
+      match /users/{userId} {
+        allow read: if canReadTenantData(tenantId, userId);
+        allow create: if isSuperAdmin() || ownerInTenant(tenantId, userId) || isTenantAdmin(tenantId);
+        allow delete: if isSuperAdmin() || isTenantAdmin(tenantId);
+        allow update: if canWriteTenantData(tenantId, userId) &&
+          (
+            // tenantId não pode ser alterado após criação
+            !("tenantId" in resource.data) ||
+            request.resource.data.tenantId == resource.data.tenantId
+          );
+
+        // Subcoleções financeiras do usuário
+        match /{subCollection}/{docId} {
+          allow read, create, update, delete: if canWriteTenantData(tenantId, userId);
+        }
+
+        // Consentimentos Open Finance: revoga (update), nunca deleta
+        match /openFinanceConsents/{consentId} {
+          allow read: if canReadTenantData(tenantId, userId);
+          allow create: if canWriteTenantData(tenantId, userId);
+          allow update: if canWriteTenantData(tenantId, userId);
+          allow delete: if false;
+        }
+
+        // Logs de auditoria: append-only (sem update/delete)
+        match /auditLogs/{logId} {
+          allow read: if isSuperAdmin() || isTenantAdmin(tenantId) || ownerInTenant(tenantId, userId);
+          allow create: if canWriteTenantData(tenantId, userId);
+          allow update, delete: if false;
+        }
+      }
+
+      // Catálogo/configuração do tenant
+      match /config/{docId} {
+        allow read: if isSuperAdmin() || sameTenant(tenantId);
+        allow create, update: if isSuperAdmin() || isTenantAdmin(tenantId);
+        allow delete: if isSuperAdmin();
+      }
+
+      match /categories/{categoryId} {
+        allow read: if isSuperAdmin() || sameTenant(tenantId);
+        allow create, update, delete: if isSuperAdmin() || isTenantAdmin(tenantId);
+      }
+
+      // Convites por tenant
+      match /invites/{inviteId} {
+        allow read: if isSuperAdmin() || isTenantAdmin(tenantId);
+        allow create: if isSuperAdmin() || isTenantAdmin(tenantId);
+        allow update: if isSuperAdmin() || isTenantAdmin(tenantId);
+        allow delete: if isSuperAdmin();
+      }
+
+      // Auditoria de tenant: imutável
+      match /audit/{auditId} {
+        allow read: if isSuperAdmin() || isTenantAdmin(tenantId);
+        allow create: if isSuperAdmin() || isTenantAdmin(tenantId);
+        allow update, delete: if false;
+      }
+    }
+
+    // Índice público para resolução por host/slug
+    match /tenantPublic/{tenantKey} {
+      allow read: if true;
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    // Lançamentos Pluggy arquivados (limite 1MB do documento users) — mesmo dono do uid
+    match /users/{userId}/entriesOverflow/{docId} {
+      allow read, create, update, delete: if isAuthed() && request.auth.uid == userId;
+    }
+
+    // Legado (root): app React / hosting staging usam users/{uid} — só o dono lê/escreve.
+    // Não confundir com tenants/{tenantId}/users/{userId} (regras acima).
+    match /users/{userId} {
+      allow read: if isAuthed() && request.auth.uid == userId;
+      allow create, update: if isAuthed() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

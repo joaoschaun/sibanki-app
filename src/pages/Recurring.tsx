@@ -3,7 +3,9 @@ import { useAppContext } from '../context/AppContext';
 import { addRecurrent, deleteRecurrent, generateEntriesFromRecurrents } from '../services/persistUserData';
 import { DEFAULT_CATEGORIES, DEFAULT_ACCOUNTS } from '../constants/defaults';
 import { Modal } from '../components/ui/Modal';
-import { Plus, Trash2, PlayCircle } from 'lucide-react';
+import { Plus, Trash2, PlayCircle, RefreshCw } from 'lucide-react';
+import { EmptyState } from '../components/ui/EmptyState';
+import { PageTransition } from '../components/ui/PageTransition';
 
 const FREQ_OPTIONS = [
   { value: 'mensal', label: 'Mensal' },
@@ -188,9 +190,13 @@ export default function Recurring() {
 
       <div className="bg-si-card rounded-2xl border border-si-border overflow-hidden">
         {recurrents.length === 0 ? (
-          <div className="p-12 text-center text-si-5">
-            Nenhum lançamento recorrente. Clique em &quot;Novo recorrente&quot; para cadastrar (ex.: aluguel, assinaturas, salário).
-          </div>
+          <EmptyState
+            icon={<RefreshCw className="w-7 h-7" />}
+            title="Nenhum recorrente cadastrado"
+            description="Cadastre lançamentos fixos como aluguel, assinaturas e salário. Eles são gerados automaticamente todo mês."
+            actionLabel="+ Novo recorrente"
+            onAction={() => setAddOpen(true)}
+          />
         ) : (
           <div className="divide-y divide-white/5">
             {recurrents.map((r) => (

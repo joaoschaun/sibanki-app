@@ -4,7 +4,9 @@ import { useSibcoinToast } from '../hooks/useSibcoinToast';
 import { addGoal, updateGoal, deleteGoal } from '../services/persistUserData';
 import type { Goal } from '../types/userData';
 import { Modal } from '../components/ui/Modal';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Target } from 'lucide-react';
+import { EmptyState } from '../components/ui/EmptyState';
+import { PageTransition } from '../components/ui/PageTransition';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
 
 const GOAL_ICONS = ['🎯', '🛡️', '✈️', '🏠', '🚗', '💼', '🎓', '❤️'];
@@ -152,8 +154,14 @@ export default function Planning() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {goals.length === 0 ? (
-          <div className="col-span-full bg-si-card rounded-2xl border border-si-border p-12 text-center text-si-5">
-            Nenhuma meta. Clique em &quot;Nova meta&quot; para criar uma.
+          <div className="col-span-full">
+            <EmptyState
+              icon={<Target className="w-7 h-7" />}
+              title="Nenhuma meta financeira"
+              description="Defina metas para organizar seus objetivos — reserva de emergência, viagem, investimento ou qualquer sonho que queira alcançar."
+              actionLabel="+ Nova meta"
+              onAction={() => { setAddOpen(true); resetForm(); }}
+            />
           </div>
         ) : (
           goals.map((g) => {

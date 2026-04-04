@@ -5,36 +5,36 @@
    dark defaults  →  overridden by [data-theme="light"]
    ───────────────────────────────────────────── */
 :root {
-  /* Page / card surfaces */
-  --si-bg:      #05080d;
-  --si-card:    #0a0f18;
+  /* Page / card surfaces — Pierre Finance: pure black */
+  --si-bg:      #0a0a0a;
+  --si-card:    #111111;
 
-  /* Borders */
-  --si-border:    rgba(255, 255, 255, 0.05);
+  /* Borders — mais sutis no preto puro */
+  --si-border:    rgba(255, 255, 255, 0.06);
   --si-border-md: rgba(255, 255, 255, 0.10);
-  --si-border-lg: rgba(255, 255, 255, 0.15);
-  --si-border-xl: rgba(255, 255, 255, 0.20);
+  --si-border-lg: rgba(255, 255, 255, 0.16);
+  --si-border-xl: rgba(255, 255, 255, 0.22);
 
-  /* Text */
-  --si-text-1: #f4f4f5;   /* zinc-100 */
-  --si-text-2: #e4e4e7;   /* zinc-200 */
-  --si-text-3: #d4d4d8;   /* zinc-300 */
-  --si-text-4: #a1a1aa;   /* zinc-400 */
-  --si-text-5: #71717a;   /* zinc-500 */
+  /* Text — high-contrast no preto */
+  --si-text-1: #f0f0f0;
+  --si-text-2: #d4d4d4;
+  --si-text-3: #b0b0b0;
+  --si-text-4: #787878;
+  --si-text-5: #505050;
 
   /* Overlay / glass fills */
-  --si-over-1: rgba(255, 255, 255, 0.02);
+  --si-over-1: rgba(255, 255, 255, 0.025);
   --si-over-2: rgba(255, 255, 255, 0.05);
-  --si-over-3: rgba(255, 255, 255, 0.10);
-  --si-over-4: rgba(255, 255, 255, 0.15);
+  --si-over-3: rgba(255, 255, 255, 0.09);
+  --si-over-4: rgba(255, 255, 255, 0.14);
 
   /* Zinc solids */
-  --si-zinc-8: #27272a;   /* zinc-800 */
-  --si-zinc-9: #18181b;   /* zinc-900 */
+  --si-zinc-8: #222222;
+  --si-zinc-9: #181818;
 
-  /* Body gradient */
-  --si-grad-a: rgba(16, 185, 129, 0.08);
-  --si-grad-b: rgba(59, 130, 246, 0.08);
+  /* Body gradient — removido: sem glow, fundo limpo */
+  --si-grad-a: transparent;
+  --si-grad-b: transparent;
 }
 
 [data-theme="light"] {
@@ -102,18 +102,17 @@
    BASE STYLES
    ───────────────────────────────────────────── */
 :root {
-  font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.01em;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   background-color: var(--si-bg);
-  background-image:
-    radial-gradient(circle at 15% 50%, var(--si-grad-a), transparent 25%),
-    radial-gradient(circle at 85% 30%, var(--si-grad-b), transparent 25%);
-  background-attachment: fixed;
   color: var(--si-text-1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Custom Premium Scrollbar */
@@ -130,4 +129,46 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--si-border-lg);
+}
+
+/* ── Animações de entrada ─────────────────────────────────── */
+@keyframes si-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes si-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes si-slide-up-sm {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-in {
+  animation: si-fade-in 0.3s ease-out both;
+}
+.fade-in {
+  animation-name: si-fade-in;
+}
+.slide-in-from-bottom-4 {
+  animation-name: si-slide-up;
+}
+.slide-in-from-bottom-2 {
+  animation-name: si-slide-up-sm;
+}
+.duration-300 {
+  animation-duration: 0.3s;
+}
+.duration-500 {
+  animation-duration: 0.5s;
+}
+
+/* ── Mobile refinements ───────────────────────────────────── */
+@media (max-width: 639px) {
+  .text-3xl { font-size: 1.5rem; }
+  .text-2xl { font-size: 1.25rem; }
+  .px-6 { padding-left: 1rem; padding-right: 1rem; }
+  .py-4 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+  .gap-8 { gap: 1.25rem; }
+  .gap-6 { gap: 1rem; }
 }

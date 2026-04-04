@@ -151,7 +151,7 @@ Resumo:
 
 2. **Testar o link com frase**  
    Abrir no celular (logado):  
-   `https://staging-13a0b.web.app/app/?voice=almoço%2045`  
+   `https://virtus-financeiro-cd7bd.web.app/app/?voice=almoço%2045`
    e conferir se o consultor abre e envia a frase.
 
 3. **Para a Play Store**  

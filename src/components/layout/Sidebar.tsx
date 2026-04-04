@@ -16,6 +16,7 @@ import {
   Settings,
   MoreHorizontal,
   ChevronDown,
+  Users as UsersIcon,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -62,6 +63,7 @@ const secondaryNav: NavItem[] = [
   { icon: PieChart,     label: 'Orçamento',    path: '/orcamento' },
   { icon: FileBarChart, label: 'Relatórios',   path: '/relatorios' },
   { icon: Calendar,     label: 'Calendário',   path: '/calendario' },
+  { icon: UsersIcon,    label: 'Filiados',     path: '/filiados' },
 ];
 
 // ── Rodapé ────────────────────────────────────────────────────────────────────
@@ -111,32 +113,32 @@ export function Sidebar({
   const itemExpanded = (active: boolean) =>
     cn(
       itemBase,
-      'px-3 py-2.5 w-full text-sm font-medium',
+      'px-3 py-2 w-full text-[11px] font-semibold tracking-[0.08em] uppercase',
       active
-        ? 'bg-white/[0.08] text-white'
-        : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]'
+        ? 'bg-si-over-2 text-si-1'
+        : 'text-si-5 hover:text-si-3 hover:bg-si-over-1'
     );
 
   const itemCollapsed = (active: boolean) =>
     cn(
       itemBase,
-      'justify-center w-10 h-10 mx-auto',
+      'justify-center w-8 h-8 mx-auto',
       active
-        ? 'text-white bg-white/[0.08]'
-        : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04]'
+        ? 'text-si-1 bg-si-over-2'
+        : 'text-si-5 hover:text-si-3 hover:bg-si-over-1'
     );
 
   const iconCls = (active: boolean) =>
-    cn('w-4 h-4 shrink-0', active ? 'text-white' : '');
+    cn('w-3.5 h-3.5 shrink-0', active ? 'text-si-1' : '');
 
   const initials = (userName || 'U').slice(0, 2).toUpperCase();
 
   return (
     <aside
       className={cn(
-        'flex flex-col shrink-0 border-r border-white/[0.06] bg-[#0d0d0f]',
+        'flex flex-col shrink-0 border-r border-si-border bg-[#0a0a0a]',
         'transition-[width] duration-200 ease-out overflow-hidden',
-        collapsed ? 'w-[60px]' : 'w-[220px]'
+        collapsed ? 'w-[52px]' : 'w-[200px]'
       )}
     >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
@@ -148,9 +150,9 @@ export function Sidebar({
       >
         <div
           className={cn(
-            'rounded-full bg-gradient-to-br from-blue-600 to-blue-800',
-            'flex items-center justify-center font-semibold text-white shrink-0 overflow-hidden',
-            collapsed ? 'w-8 h-8 text-xs' : 'w-7 h-7 text-[11px]'
+            'rounded-full border border-si-border bg-si-over-2',
+            'flex items-center justify-center font-bold text-si-3 shrink-0 overflow-hidden',
+            collapsed ? 'w-7 h-7 text-[10px]' : 'w-6 h-6 text-[10px]'
           )}
         >
           {avatarURL ? (
@@ -160,7 +162,7 @@ export function Sidebar({
           )}
         </div>
         {!collapsed && (
-          <span className="text-sm font-medium text-zinc-200 truncate">
+          <span className="text-[11px] font-semibold text-si-4 tracking-wide uppercase truncate">
             {userName || 'Usuário'}
           </span>
         )}
@@ -176,12 +178,14 @@ export function Sidebar({
         <div className="space-y-0.5">
           {primaryNav.map((item) => {
             const active = isActive(item.path);
+            const tourMap: Record<string, string> = { '/dashboard': 'dashboard', '/lancamentos': 'lancamentos', '/consultor-ia': 'consultor' };
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 title={collapsed ? item.label : undefined}
                 className={collapsed ? itemCollapsed(active) : itemExpanded(active)}
+                {...(tourMap[item.path] ? { 'data-tour': tourMap[item.path] } : {})}
               >
                 <item.icon className={iconCls(active)} />
                 {!collapsed && item.label}
@@ -233,13 +237,13 @@ export function Sidebar({
                         to={item.path}
                         className={cn(
                           itemBase,
-                          'px-3 py-2 w-full text-sm font-medium',
+                          'px-3 py-1.5 w-full text-[10px] font-semibold tracking-[0.08em] uppercase',
                           active
-                            ? 'text-white bg-white/[0.06]'
-                            : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]'
+                            ? 'text-si-2 bg-si-over-1'
+                            : 'text-si-5 hover:text-si-3 hover:bg-si-over-1'
                         )}
                       >
-                        <item.icon className="w-3.5 h-3.5 shrink-0" />
+                        <item.icon className="w-3 h-3 shrink-0" />
                         {item.label}
                       </Link>
                     );
@@ -266,6 +270,7 @@ export function Sidebar({
               to={item.path}
               title={collapsed ? item.label : undefined}
               className={collapsed ? itemCollapsed(active) : itemExpanded(active)}
+              {...(item.path === '/perfil' ? { 'data-tour': 'perfil' } : {})}
             >
               <item.icon className={iconCls(active)} />
               {!collapsed && item.label}

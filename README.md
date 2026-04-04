@@ -2,6 +2,8 @@
 
 App de controle financeiro pessoal com IA, Bot Telegram (e **bot WhatsApp previsto**), Modo Família, investimentos, metas e relatórios. PWA + Firebase.
 
+- ![Functions Tests](https://github.com/joaoschaun/sibanki-app/actions/workflows/functions-tests.yml/badge.svg)
+
 - **App:** [virtus-financeiro-cd7bd.web.app](https://virtus-financeiro-cd7bd.web.app)
 - **Docs:** [docs/](docs/) (análises e roadmap)
 

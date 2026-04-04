@@ -8,7 +8,9 @@ import {
   renameAccount,
 } from '../services/persistUserData';
 import { Modal } from '../components/ui/Modal';
-import { Wallet, Plus, Pencil, List, Trash2, Eye, EyeOff, ChevronLeft, Smartphone } from 'lucide-react';
+import { Wallet, Plus, Pencil, List, Trash2, Eye, EyeOff, ChevronLeft, Smartphone, Building2 } from 'lucide-react';
+import { EmptyState } from '../components/ui/EmptyState';
+import { PageTransition } from '../components/ui/PageTransition';
 
 interface BankTheme {
   name: string;
@@ -420,9 +422,13 @@ export default function Accounts() {
       )}
 
       {accounts.length === 0 && (
-        <p className="text-si-5 text-sm">
-          Nenhuma conta ainda. Clique em &quot;Nova conta&quot; para adicionar.
-        </p>
+        <EmptyState
+          icon={<Building2 className="w-7 h-7" />}
+          title="Nenhuma conta cadastrada"
+          description="Adicione suas contas bancárias para acompanhar saldos, movimentações e ter uma visão consolidada das suas finanças."
+          actionLabel="+ Nova conta"
+          onAction={() => setAddOpen(true)}
+        />
       )}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nova conta">

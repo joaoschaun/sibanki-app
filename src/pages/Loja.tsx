@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import {
-  ShoppingBag, Coins, Tag, Star, ExternalLink, ChevronRight,
+  ShoppingBag, Coins, Star, ExternalLink, ChevronRight,
   Gift, Percent, Package, Trophy, Zap, CheckCircle,
 } from 'lucide-react';
 import { useSibcoin } from '../hooks/useSibcoin';
+import { useAppContext } from '../context/AppContext';
+import { updateUserDoc } from '../services/persistUserData';
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 interface Offer {
@@ -70,11 +72,14 @@ type Tab = typeof TABS[number];
 
 // ── Componente ────────────────────────────────────────────────────────────────
 export default function Loja() {
+  const { user, data } = useAppContext();
   const { balance, tier } = useSibcoin();
   const [activeTab, setActiveTab] = useState<Tab>('Ofertas');
   const [filterCat, setFilterCat] = useState('Todos');
   const [redeeming, setRedeeming] = useState<Reward | null>(null);
   const [redeemed, setRedeemed] = useState<string[]>([]);
+  const [redeemBusy, setRedeemBusy] = useState(false);
+  const [redeemError, setRedeemError] = useState<string | null>(null);
 
   const filteredOffers = OFFERS.filter((o) => filterCat === 'Todos' || o.category === filterCat);
 
@@ -86,10 +91,39 @@ export default function Loja() {
     setRedeeming(r);
   };
 
-  const confirmRedeem = () => {
-    if (!redeeming) return;
-    setRedeemed((prev) => [...prev, redeeming.id]);
-    setRedeeming(null);
+  const confirmRedeem = async () => {
+    if (!redeeming || !user?.uid) return;
+    if (balance < redeeming.cost) {
+      setRedeemError('Saldo insuficiente.');
+      setRedeeming(null);
+      return;
+    }
+    setRedeemBusy(true);
+    setRedeemError(null);
+    try {
+      const newBalance = balance - redeeming.cost;
+      const spentTotal = (data?.sibcoinSpent ?? 0) + redeeming.cost;
+      const txn = {
+        id: `redeem_${Date.now()}`,
+        type: 'spend' as const,
+        amount: redeeming.cost,
+        reason: `Resgate: ${redeeming.title}`,
+        date: new Date().toISOString(),
+      };
+      const history = [...((data?.sibcoinHistory ?? []) as unknown[]), txn];
+      await updateUserDoc(user.uid, {
+        sibcoinBalance: newBalance,
+        sibcoinSpent: spentTotal,
+        sibcoinHistory: history,
+      } as any);
+      setRedeemed((prev) => [...prev, redeeming.id]);
+      setRedeeming(null);
+    } catch (err) {
+      setRedeemError(err instanceof Error ? err.message : 'Erro ao processar resgate.');
+      setRedeeming(null);
+    } finally {
+      setRedeemBusy(false);
+    }
   };
 
   return (
@@ -282,7 +316,11 @@ export default function Loja() {
             })}
           </div>
 
-          {/* 1 SC = R$ 0.01 note */}
+          {redeemError && (
+            <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3 text-rose-400 text-sm">
+              {redeemError}
+            </div>
+          )}
           <p className="text-xs text-zinc-600 text-center">
             1 SibCoin = R$ 0,01 · Resgates processados em até 3 dias úteis
           </p>
@@ -370,9 +408,10 @@ export default function Loja() {
             <div className="flex gap-3">
               <button
                 onClick={confirmRedeem}
-                className="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm transition-colors"
+                disabled={redeemBusy}
+                className="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm transition-colors disabled:opacity-50"
               >
-                Confirmar resgate
+                {redeemBusy ? 'Processando...' : 'Confirmar resgate'}
               </button>
               <button
                 onClick={() => setRedeeming(null)}

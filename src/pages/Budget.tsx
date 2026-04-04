@@ -6,6 +6,8 @@ import { DEFAULT_CATEGORIES } from '../constants/defaults';
 import { Modal } from '../components/ui/Modal';
 import { Plus } from 'lucide-react';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
+import { BudgetBarChart } from '../components/charts/BudgetBarChart';
+import type { BudgetRow } from '../components/charts/BudgetBarChart';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
@@ -59,6 +61,16 @@ export default function Budget() {
   const categorias = useMemo(() => {
     const cats = new Set<string>([...Object.keys(budgets), ...Object.keys(gastosByCat), ...DEFAULT_CATEGORIES]);
     return Array.from(cats).sort();
+  }, [budgets, gastosByCat]);
+
+  const budgetChartData: BudgetRow[] = useMemo(() => {
+    return Object.entries(budgets)
+      .map(([category, limite]) => {
+        const gasto = gastosByCat[category] ?? 0;
+        return { category, gasto: +gasto.toFixed(2), limite, over: gasto > limite };
+      })
+      .sort((a, b) => b.gasto - a.gasto)
+      .slice(0, 10);
   }, [budgets, gastosByCat]);
 
   const receitaMes = useMemo(() => {
@@ -156,6 +168,14 @@ export default function Budget() {
       </div>
 
       <SibcoinMissionBanner eventType="budget_created" />
+
+      {budgetChartData.length > 0 && (
+        <section className="bg-si-card rounded-2xl border border-si-border p-6">
+          <h3 className="font-semibold text-si-1 mb-2">Visão geral do mês</h3>
+          <p className="text-si-5 text-sm mb-4">Gasto realizado vs limite definido por categoria.</p>
+          <BudgetBarChart data={budgetChartData} />
+        </section>
+      )}
 
       <div className="bg-si-card rounded-2xl border border-si-border overflow-hidden">
         <div className="divide-y divide-white/5">

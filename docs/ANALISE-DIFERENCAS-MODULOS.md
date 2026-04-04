@@ -1,6 +1,6 @@
 # Análise das diferenças por módulo – Legado vs React
 
-Comparação direta de cada módulo entre o app legado (staging-13a0b.web.app/app/) e o React (staging-13a0b.web.app), para guiar ajustes visuais e de funcionalidade.
+Comparação direta de cada módulo entre o app legado (virtus-financeiro-cd7bd.web.app/app/) e o React (staging-13a0b.web.app), para guiar ajustes visuais e de funcionalidade.
 
 **Comparação visual com Playwright:** defina `TEST_EMAIL` e `TEST_SENHA` e rode `npm run test:compare` (usa `playwright.config.cjs`). Os screenshots vão para `screenshots/compare/legado/` e `screenshots/compare/react/` — compare os mesmos números (ex.: 01-Dashboard, 02-Contas) entre as duas pastas.
 

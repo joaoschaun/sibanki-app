@@ -1,0 +1,57 @@
+name: Functions Tests
+
+on:
+  pull_request:
+    paths:
+      - "functions/**"
+      - ".github/workflows/functions-tests.yml"
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "functions/**"
+      - ".github/workflows/functions-tests.yml"
+
+jobs:
+  test-functions:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run coverage gates
+        run: npm run test:coverage:ci
+
+      - name: Upload coverage (lcov only)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functions-coverage-lcov
+          path: functions/coverage/lcov.info
+          if-no-files-found: warn
+
+      - name: Upload coverage (full — HTML + lcov)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functions-coverage-full
+          path: functions/coverage/
+          if-no-files-found: warn

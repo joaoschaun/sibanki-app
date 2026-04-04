@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { InvestmentInsights } from '../components/ui/InvestmentInsights';
 import { useAppContext } from '../context/AppContext';
 import { useSibcoinToast } from '../hooks/useSibcoinToast';
@@ -10,17 +10,8 @@ import { TrendingUp, Plus, Pencil, Trash2, Calculator, ChevronDown, Zap, ArrowRi
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
 import { useNavigate } from 'react-router-dom';
 import { fetchB3Quote } from '../services/brapi';
-import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
-} from 'recharts';
-import {
-  CHART_COLORS, tooltipStyle as CHART_TOOLTIP_STYLE, gridStyle as CHART_GRID,
-  axisStyle as CHART_AXIS_TICK,
-} from '../components/charts/chartConfig';
-
-const CHART_AXIS = { tick: CHART_AXIS_TICK, axisLine: false as const, tickLine: false as const };
-const CHART_LEGEND_STYLE = { fontSize: 11, color: '#a1a1aa' };
+import { PortfolioChart } from '../components/charts/PortfolioChart';
+import { ProventosBarChart } from '../components/charts/ProventosBarChart';
 
 
 export default function Growth() {
@@ -173,7 +164,10 @@ export default function Growth() {
       const tipo = inv.tipo || 'Outros';
       byType[tipo] = (byType[tipo] ?? 0) + (inv.atual ?? inv.valor ?? 0);
     }
-    return Object.entries(byType).map(([name, value]) => ({ name, value: +value.toFixed(2) }));
+    const total = Object.values(byType).reduce((s, v) => s + v, 0) || 1;
+    return Object.entries(byType).map(([name, value]) => ({
+      name, value: +value.toFixed(2), pct: +((value / total) * 100).toFixed(1),
+    }));
   }, [investments]);
 
   const proventosChart = useMemo(() => {
@@ -310,28 +304,12 @@ export default function Growth() {
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="bg-si-card rounded-2xl border border-si-border p-6">
             <h3 className="font-semibold text-si-1 mb-3">Alocação por tipo</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={portfolioAlloc} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={2} dataKey="value">
-                  {portfolioAlloc.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                </Pie>
-                <Tooltip formatter={(v: any) => [`R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, '']} contentStyle={CHART_TOOLTIP_STYLE} />
-                <Legend iconType="circle" iconSize={8} wrapperStyle={CHART_LEGEND_STYLE} />
-              </PieChart>
-            </ResponsiveContainer>
+            <PortfolioChart data={portfolioAlloc} height={220} />
           </div>
           {proventosChart.length > 0 && (
             <div className="bg-si-card rounded-2xl border border-si-border p-6">
               <h3 className="font-semibold text-si-1 mb-3">Proventos mensais</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={proventosChart} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barCategoryGap="30%">
-                  <CartesianGrid {...CHART_GRID} vertical={false} />
-                  <XAxis dataKey="mes" {...CHART_AXIS} />
-                  <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} {...CHART_AXIS} width={48} />
-                  <Tooltip formatter={(v: any) => [`R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Proventos']} contentStyle={CHART_TOOLTIP_STYLE} />
-                  <Bar dataKey="value" name="Proventos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                </BarChart>
-              </ResponsiveContainer>
+              <ProventosBarChart data={proventosChart.map((p) => ({ label: p.mes, valor: p.value }))} height={220} />
             </div>
           )}
         </div>

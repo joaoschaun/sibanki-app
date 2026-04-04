@@ -1,6 +1,8 @@
 import { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
+import { EmptyState } from '../components/ui/EmptyState';
+import { PageTransition } from '../components/ui/PageTransition';
 import {
   addCard,
   addCardPurchase,
@@ -215,6 +217,7 @@ export default function Cards() {
     const val = parseFloat(lancarVal.replace(',', '.')) || 0;
     if (val <= 0) return;
     setLancarBusy(true);
+    setError(null);
     try {
       await addCardPurchase(user.uid, cards, entries, lancarCardId, {
         desc: lancarDesc.trim(),
@@ -231,6 +234,8 @@ export default function Cards() {
       if (faturaCardId === lancarCardId) {
         setFaturaMonth(getBillingMonth(cards.find((c) => c.id === lancarCardId)!, lancarDate));
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao lançar fatura. Tente novamente.');
     } finally {
       setLancarBusy(false);
     }
@@ -238,8 +243,13 @@ export default function Cards() {
 
   const handleDeletePurchase = async () => {
     if (!user?.uid || !delConfirm) return;
-    await deleteCardPurchase(user.uid, cards, entries, delConfirm.cardId, delConfirm.purchaseId);
-    setDelConfirm(null);
+    setError(null);
+    try {
+      await deleteCardPurchase(user.uid, cards, entries, delConfirm.cardId, delConfirm.purchaseId);
+      setDelConfirm(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao excluir compra. Tente novamente.');
+    }
   };
 
   const parseImportItems = (raw: string, mode: 'csv' | 'ofx') => {
@@ -474,8 +484,14 @@ export default function Cards() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.length === 0 ? (
-          <div className="col-span-full bg-si-card rounded-2xl border border-si-border p-12 text-center text-si-5">
-            Nenhum cartão cadastrado. Clique em &quot;Novo cartão&quot; para adicionar.
+          <div className="col-span-full">
+            <EmptyState
+              icon={<CreditCard className="w-7 h-7" />}
+              title="Nenhum cartão cadastrado"
+              description="Adicione seus cartões de crédito para acompanhar faturas, compras parceladas e controlar o uso do limite."
+              actionLabel="+ Novo cartão"
+              onAction={() => setAddOpen(true)}
+            />
           </div>
         ) : (
           cards.map((card) => {

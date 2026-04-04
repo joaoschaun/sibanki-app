@@ -4,9 +4,12 @@
  * Uso: npx playwright test compare-modulos-react --project=compare-react
  * Screenshots: screenshots/compare/react/
  */
-const { test, expect } = require('@playwright/test');
-const path = require('path');
-const fs = require('fs');
+import { test, expect } from '@playwright/test';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const BASE = process.env.REACT_BASE_URL || process.env.BASE_URL || 'https://staging-13a0b.web.app';
 const SCREENSHOT_DIR = path.join(__dirname, '..', 'screenshots', 'compare', 'react');
@@ -25,6 +28,9 @@ const MODULOS_REACT = [
   { path: '/social', nome: 'Social' },
   { path: '/consultor-ia', nome: 'Consultor-IA' },
   { path: '/educacao', nome: 'Educacao' },
+  { path: '/relatorios', nome: 'Relatorios' },
+  { path: '/calendario', nome: 'Calendario' },
+  { path: '/conquistas', nome: 'Conquistas' },
   { path: '/perfil', nome: 'Perfil' },
   { path: '/configuracoes', nome: 'Configuracoes' },
 ];
@@ -50,7 +56,7 @@ test.describe('Compare módulos - React', () => {
 
     await emailInput.fill(EMAIL);
     await page.getByPlaceholder('Senha').fill(SENHA);
-    await page.getByRole('button', { name: /Entrar/i }).click();
+    await page.getByRole('button', { name: /^Entrar$/i }).click();
 
     // Aguardar sair da tela de login (sidebar ou main com navegação)
     await page.waitForSelector('nav a[href="/"], aside a[href="/"]', { state: 'visible', timeout: 20000 });

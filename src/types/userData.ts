@@ -2,6 +2,12 @@
  * Formato do documento users/{uid} no Firestore (mesmo do app atual).
  * Não perdemos nada: todos os campos que o app atual usa ficam aqui.
  */
+import type {
+  OpenFinanceConsentItemSummary,
+  OpenFinanceCreditBill,
+  OpenFinanceIdentitySnapshot,
+} from './openFinance';
+
 export interface UserData {
   name?: string;
   email?: string;
@@ -67,6 +73,33 @@ export interface UserData {
   openFinanceItems?: string[];
   /** Última sincronização Open Finance. */
   openFinanceSyncedAt?: string;
+  /**
+   * Versão do esquema de dados OF no documento (migrações).
+   * @see functions/services/pluggy/openFinanceResourceCatalog.js
+   */
+  openFinanceDataSchemaVersion?: number;
+  /** Identidade por item Pluggy (CPF/CNPJ apenas mascarados). */
+  openFinanceIdentityByItem?: Record<string, OpenFinanceIdentitySnapshot>;
+  /** Faturas de cartão vindas da API bills (não confundir com DDA). */
+  openFinanceCreditBills?: OpenFinanceCreditBill[];
+  /** Resumo de consentimentos OF por item. */
+  openFinanceConsentsByItem?: Record<string, OpenFinanceConsentItemSummary>;
+  /** Metadados da última sync Pluggy (contas, lançamentos novos, investimentos). */
+  openFinanceLastSyncSummary?: {
+    at: string;
+    accounts: number;
+    transactionsNew: number;
+    investments: number;
+    creditCards: number;
+    loans: number;
+    identityItems?: number;
+    creditBills?: number;
+    consentsTotal?: number;
+    /** Lançamentos Pluggy movidos para subcoleção (limite do documento). */
+    entriesArchived?: number;
+    periodFrom: string;
+    periodTo: string;
+  };
 
   // ─── CPF Monitoring ────────────────────────────────────────────────────────
   /** Snapshot do monitoramento CPF. */
@@ -172,6 +205,8 @@ export interface CreditAccount {
   closeDay?: number;
   dueDay?: number;
   updatedAt?: string;
+  pluggyLoanId?: string;
+  pluggyItemId?: string;
   [key: string]: unknown;
 }
 
@@ -189,6 +224,7 @@ export interface CreditObligation {
   installmentNumber?: number;
   installmentTotal?: number;
   updatedAt?: string;
+  pluggyLoanId?: string;
   [key: string]: unknown;
 }
 
@@ -277,6 +313,12 @@ export interface Entry {
   status?: string;
   formaPgto?: string;
   isTransfer?: boolean;
+  /** IDs Pluggy quando o lançamento veio do Open Finance */
+  pluggyTransactionId?: string;
+  pluggyAccountId?: string;
+  source?: 'open-finance' | 'manual';
+  /** Lançamento no doc principal vs arquivado em entriesOverflow (Pluggy). */
+  entryLocation?: 'inline' | 'overflow';
   [key: string]: unknown;
 }
 

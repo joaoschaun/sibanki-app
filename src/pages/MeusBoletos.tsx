@@ -8,6 +8,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSibcoinToast } from '../hooks/useSibcoinToast';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
+import { ComingSoonOverlay } from '../components/ui/ComingSoonBadge';
 import {
   FileText, Bell, Zap, Brain, CheckCircle, AlertTriangle,
   Clock, XCircle, Calendar, Filter, Wifi, Building2,
@@ -312,7 +313,8 @@ export default function MeusBoletos() {
 
       {/* ── AGENDAMENTO ── */}
       {activeTab === 'Agendamento' && (
-        <div className="space-y-4">
+        <div className="space-y-4 relative">
+          <ComingSoonOverlay />
           <div className="bg-si-card rounded-2xl border border-si-border p-6">
             <h3 className="font-semibold text-si-1 flex items-center gap-2 mb-4">
               <Calendar className="w-5 h-5 text-violet-400" />
@@ -356,7 +358,8 @@ export default function MeusBoletos() {
 
       {/* ── INTELIGÊNCIA ── */}
       {activeTab === 'Inteligência' && (
-        <div className="space-y-4">
+        <div className="space-y-4 relative">
+          <ComingSoonOverlay />
           <div className="bg-si-card rounded-2xl border border-si-border p-5">
             <h3 className="font-semibold text-si-1 flex items-center gap-2 mb-1">
               <Brain className="w-5 h-5 text-violet-400" />

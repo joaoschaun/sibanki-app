@@ -2,14 +2,14 @@
 
 Sempre que você **atualizar um módulo** no app React, use o Playwright para comparar visualmente com o legado e garantir que a experiência está alinhada.
 
-## URLs no Staging (mesmo host)
+## URLs (React vs Legado)
 
 | App    | URL |
 |--------|-----|
-| **Legado** | https://staging-13a0b.web.app/app/ |
+| **Legado** | https://virtus-financeiro-cd7bd.web.app/app/ |
 | **React**  | https://staging-13a0b.web.app |
 
-Os dois rodam no mesmo staging; o legado fica em `/app/`, o React na raiz.
+O React fica em `/` no staging. O Legado está em `/app/` na produção.
 
 ## O que foi configurado
 
@@ -33,11 +33,11 @@ export TEST_EMAIL=seu-teste@email.com
 export TEST_SENHA=suasenha
 ```
 
-### 2. Legado e React no Staging (padrão)
+### 2. Legado e React (padrão)
 
-Por padrão os dois testes usam o **staging**:
+Por padrão os dois testes usam:
 
-- **Legado:** `https://staging-13a0b.web.app/app`
+- **Legado:** `https://virtus-financeiro-cd7bd.web.app/app`
 - **React:** `https://staging-13a0b.web.app`
 
 Não é preciso subir nada localmente; basta ter deploy em staging e as credenciais acima.

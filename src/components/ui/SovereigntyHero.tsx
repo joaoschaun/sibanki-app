@@ -128,15 +128,16 @@ export function SovereigntyHero({
             <p className="text-si-5 text-xs mt-0.5 capitalize">{dateStr}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="bg-emerald-500/10 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-lg border border-emerald-500/20 flex items-center gap-1">
-              <Shield className="w-3 h-3" /> Score {score}
+            <span className="bg-si-over-2 text-si-4 text-[10px] font-bold px-2 py-1 rounded-md border border-si-border hidden sm:flex items-center gap-1">
+              <Shield className="w-3 h-3" /> {score}
             </span>
             <Link
               to="/lancamentos"
-              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 transition-colors"
+              className="bg-si-over-3 hover:bg-si-over-4 border border-si-border text-si-2 px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-colors"
             >
-              <ArrowUpRight className="w-4 h-4" />
-              Lançamento
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Lançamento</span>
+              <span className="sm:hidden">+</span>
             </Link>
           </div>
         </div>
@@ -147,10 +148,10 @@ export function SovereigntyHero({
             Dias de Liberdade
           </p>
           <div className="flex items-end gap-2 leading-none">
-            <span className={`text-[72px] font-black tracking-tight leading-none ${STATUS_NUM[freedom.status]}`}>
+            <span className={`text-[52px] sm:text-[72px] font-black tracking-tight leading-none ${STATUS_NUM[freedom.status]}`}>
               {freedom.days}
             </span>
-            <span className="text-si-4 text-2xl mb-2">dias</span>
+            <span className="text-si-4 text-xl sm:text-2xl mb-1.5">dias</span>
           </div>
           <p className="text-si-5 text-xs mt-2">
             {freedom.coverageMonths.toFixed(1)} meses&nbsp;·&nbsp;queima R$&nbsp;
@@ -181,7 +182,7 @@ export function SovereigntyHero({
         <div className="border-t border-si-border" />
 
         {/* ── Bottom strip: receita / despesa / saldo / spread ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           <div>
             <p className="text-si-5 text-xs">Receitas (mês)</p>
             <p className="text-sm font-bold text-emerald-400 mt-0.5">R$ {fmtBRL2(receitaMes)}</p>

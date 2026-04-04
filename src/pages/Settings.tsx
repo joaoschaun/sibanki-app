@@ -2,19 +2,22 @@ import { useEffect, useState, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { resetUserData, updateUserDoc } from '../services/persistUserData';
 import type { Entry, Investment, Goal, Recurrent } from '../types/userData';
-import { generateReportPdf } from '../utils/generateReportPdf';
+// generateReportPdf carregado via dynamic import (evita vendor-pdf no load inicial)
 import { Modal } from '../components/ui/Modal';
-import { Database, Trash2, Upload, FileDown, FileText, MapPin, ArrowRight, Sparkles, Building2 } from 'lucide-react';
+import { Database, Trash2, Upload, FileDown, FileText, MapPin, ArrowRight, Sparkles, Building2, RefreshCw, Bell } from 'lucide-react';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { functions as firebaseFunctions } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
 import { useLanguage } from '../hooks/useLanguage';
 import { useDashboardMode } from '../hooks/useDashboardMode';
 /** Acao 18: Modo Sugestivo (insights proativos da IA) */
 import { useSuggestiveMode } from '../hooks/useSuggestiveMode';
+import { OpenFinanceConnect } from '../components/openFinance/OpenFinanceConnect';
 
 export default function Settings() {
-  const { user, data, entries, accounts, accountBalances, cards, goals, investments, budgets, categories, recurrents, loading } = useAppContext();
+  const { user, data, entries, entriesInline, accounts, accountBalances, cards, goals, investments, budgets, categories, recurrents, loading } = useAppContext();
   const userName = user?.displayName ?? (data?.name as string) ?? '';
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,16 +25,21 @@ export default function Settings() {
   const [importMessage, setImportMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   /** Acao 17: ativo enquanto o Gemini categoriza lancamentos do CSV */
   const [aiCategorizing, setAiCategorizing] = useState(false);
+  const [ofSyncBusy, setOfSyncBusy] = useState(false);
+  const [ofSyncMsg, setOfSyncMsg] = useState<string | null>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null);
   const [planType, setPlanType] = useState<'gratuito' | 'pro'>('gratuito');
   const [telegramEnabled, setTelegramEnabled] = useState(false);
   const [whatsEnabled, setWhatsEnabled] = useState(false);
+  const [emailWeekly, setEmailWeekly] = useState(false);
+  const [budgetAlerts, setBudgetAlerts] = useState(false);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
   const { mode: dashboardMode, setMode: setDashboardMode } = useDashboardMode();
+  const push = usePushNotifications(user?.uid);
   /** Acao 18 */
   const { suggestiveMode, toggleSuggestiveMode } = useSuggestiveMode();
   const quickActions = [
@@ -48,6 +56,8 @@ export default function Settings() {
     if (s.planType === 'pro' || s.planType === 'gratuito') setPlanType(s.planType);
     setTelegramEnabled(Boolean(s.telegramEnabled));
     setWhatsEnabled(Boolean(s.whatsEnabled));
+    setEmailWeekly(Boolean(s.emailWeekly));
+    setBudgetAlerts(Boolean(s.budgetAlerts));
   }, [data]);
 
   useEffect(() => {
@@ -110,7 +120,7 @@ export default function Settings() {
           ...e,
           id: typeof (e as Entry).id === 'number' ? (e as Entry).id : base + i,
         })) as Entry[];
-        const newEntries = [...entries, ...importedEntries];
+        const newEntries = [...entriesInline, ...importedEntries];
         const newInvestments = [...investments, ...(parsed.investments ?? [])] as Investment[];
         const newGoals = [...goals, ...(parsed.goals ?? [])] as Goal[];
         const newBudgets = { ...budgets, ...(parsed.budgets ?? {}) };
@@ -259,7 +269,7 @@ export default function Settings() {
           }
         }
 
-        const merged = [...entries, ...newEntries];
+        const merged = [...entriesInline, ...newEntries];
         await updateUserDoc(user.uid, { entries: merged });
 
         const aiNote = toAiCategorize.length > 0
@@ -309,6 +319,8 @@ export default function Settings() {
           planType,
           telegramEnabled,
           whatsEnabled,
+          emailWeekly,
+          budgetAlerts,
         },
       } as any);
       setImportMessage({ type: 'ok', text: 'Configurações de plano e integrações salvas.' });
@@ -340,6 +352,26 @@ export default function Settings() {
         : ofRaw === 'expirado'
           ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
           : 'bg-si-over-2 text-si-4 border-si-border-md';
+  const handlePluggySyncAccounts = async () => {
+    if (!user?.uid) return;
+    setOfSyncMsg(null);
+    setOfSyncBusy(true);
+    try {
+      const sync = httpsCallable<unknown, { ok?: boolean; synced?: number; message?: string }>(
+        firebaseFunctions,
+        'pluggySyncAccounts',
+      );
+      const res = await sync({});
+      const m = res.data?.message ?? (res.data?.synced ? `${res.data.synced} conta(s) atualizada(s).` : 'Sincronizado.');
+      setOfSyncMsg(m);
+    } catch (e: unknown) {
+      const msg = (e as { message?: string })?.message ?? 'Falha ao sincronizar.';
+      setOfSyncMsg(msg);
+    } finally {
+      setOfSyncBusy(false);
+    }
+  };
+
   const ofBadgeText = ofConnected
     ? 'Conectado'
     : ofRaw === 'conectando'
@@ -379,26 +411,53 @@ export default function Settings() {
               para você enxergar saldo, cartões e lançamentos com menos trabalho manual.
             </p>
             <ul className="mt-3 text-sm text-si-4 space-y-1 list-disc list-inside">
-              <li>Transações e extratos podem entrar automaticamente após a autorização</li>
+              <li>
+                <strong className="text-si-3">Sincronizar</strong> importa contas, saldos,{' '}
+                <strong className="text-si-3">lançamentos</strong> (últimos {90} dias), cartões de crédito, investimentos e{' '}
+                <strong className="text-si-3">empréstimos</strong> (contratos Pluggy); atualiza também o resumo de crédito e o
+                finScore
+              </li>
+              <li>Lançamentos vindos da Pluggy ficam marcados como Open Finance e podem coexistir com lançamentos manuais</li>
               <li>Você pode revogar o acesso quando quiser no fluxo do banco ou do conector</li>
             </ul>
           </div>
-          <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
+          <div className="flex flex-col items-stretch sm:items-end gap-3 shrink-0 min-w-[min(100%,280px)]">
             <span
-              className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-full border ${ofBadgeClass}`}
+              className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-full border self-end ${ofBadgeClass}`}
             >
               {ofBadgeText}
             </span>
+            {user?.uid ? (
+              <OpenFinanceConnect uid={user.uid} data={data} theme={theme} disabled={busy} />
+            ) : null}
+            {user?.uid && ofConnected ? (
+              <button
+                type="button"
+                onClick={handlePluggySyncAccounts}
+                disabled={ofSyncBusy}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-si-over-2 border border-blue-500/30 text-blue-300 text-sm font-medium hover:bg-blue-500/10 disabled:opacity-50"
+              >
+                {ofSyncBusy ? (
+                  <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 shrink-0" />
+                )}
+                Sincronizar contas (Pluggy)
+              </button>
+            ) : null}
+            {ofSyncMsg ? (
+              <p className="text-[11px] text-si-4 text-left sm:text-right max-w-[280px]">{ofSyncMsg}</p>
+            ) : null}
             <a
               href="/app"
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 text-sm font-semibold"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-2 text-sm font-medium hover:bg-si-over-3"
             >
-              Abrir app web para conectar
+              Abrir app web (legado)
               <ArrowRight className="w-4 h-4" />
             </a>
-            <p className="text-[11px] text-si-5 text-left sm:text-right max-w-[260px]">
-              O assistente completo de conexão de instituições está no app web em <span className="text-si-4">/app</span>{' '}
-              (mesma conta). Use este atalho na primeira vez ou para reconectar.
+            <p className="text-[11px] text-si-5 text-left sm:text-right max-w-[280px]">
+              A conexão Open Finance pode ser feita aqui com o mesmo login. Se preferir o fluxo antigo ou o widget não
+              abrir, use <span className="text-si-4">/app</span> (mesma conta).
             </p>
           </div>
         </div>
@@ -511,11 +570,21 @@ export default function Settings() {
         </div>
         <label className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md">
           <span className="text-sm text-si-3">Resumo semanal por e-mail</span>
-          <input type="checkbox" className="rounded border-si-border-xl bg-si-bg" />
+          <input
+            type="checkbox"
+            checked={emailWeekly}
+            onChange={(e) => setEmailWeekly(e.target.checked)}
+            className="rounded border-si-border-xl bg-si-bg"
+          />
         </label>
         <label className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md">
           <span className="text-sm text-si-3">Alertas de orçamento (quando ultrapassar limite)</span>
-          <input type="checkbox" className="rounded border-si-border-xl bg-si-bg" />
+          <input
+            type="checkbox"
+            checked={budgetAlerts}
+            onChange={(e) => setBudgetAlerts(e.target.checked)}
+            className="rounded border-si-border-xl bg-si-bg"
+          />
         </label>
         <label className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md">
           <span className="text-sm text-si-3">Telegram</span>
@@ -535,6 +604,23 @@ export default function Settings() {
             className="rounded border-si-border-xl bg-si-bg"
           />
         </label>
+        <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md">
+          <div className="flex items-center gap-2">
+            <Bell className="w-4 h-4 text-si-4" />
+            <span className="text-sm text-si-3">Notificações push</span>
+          </div>
+          {push.isEnabled ? (
+            <span className="text-xs font-bold text-emerald-400 px-2 py-1 rounded-lg bg-emerald-500/10">Ativo</span>
+          ) : push.supported ? (
+            <button type="button" onClick={push.requestPermission} disabled={push.loading}
+              className="px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 text-xs font-bold hover:bg-blue-600/30 disabled:opacity-50">
+              {push.loading ? 'Ativando…' : 'Ativar'}
+            </button>
+          ) : (
+            <span className="text-xs text-si-5">Não suportado</span>
+          )}
+        </div>
+        {push.error && <p className="text-xs text-rose-400">{push.error}</p>}
         <button
           type="button"
           onClick={handleSaveIntegrations}
@@ -621,8 +707,9 @@ export default function Settings() {
           <p className="text-si-5 text-xs mb-2">Gera um PDF com resumo do mês, lançamentos e despesas por categoria.</p>
           <button
             type="button"
-            onClick={() => {
+            onClick={async () => {
               try {
+                const { generateReportPdf } = await import('../utils/generateReportPdf');
                 generateReportPdf({
                   userName,
                   entries,

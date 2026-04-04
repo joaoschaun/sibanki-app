@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import {
   Calculator, TrendingUp, Flame, PiggyBank, Target, DollarSign,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, Home,
 } from 'lucide-react';
+import { analyzeFgtsAmortization } from '../utils/decisionEngine';
 
 // ── tipos ──────────────────────────────────────────────────────────────────
-type ToolId = 'compostos' | 'meta' | 'rendafixa' | 'rendapassiva' | 'fire' | 'precomedio';
+type ToolId = 'compostos' | 'meta' | 'rendafixa' | 'rendapassiva' | 'fire' | 'precomedio' | 'fgts' | 'portabilidade';
 
 interface ToolCard {
   id: ToolId;
@@ -21,7 +22,9 @@ const TOOLS: ToolCard[] = [
   { id: 'rendafixa',    icon: PiggyBank,   color: '#06B6D4', title: 'Renda Fixa',          desc: 'CDB, LCI/LCA — rendimento bruto' },
   { id: 'rendapassiva', icon: DollarSign,  color: '#8B5CF6', title: 'Renda Passiva',       desc: 'Capital necessário para renda mensal' },
   { id: 'fire',         icon: Flame,       color: '#F59E0B', title: 'FIRE',                desc: 'Independência financeira e aposentadoria' },
-  { id: 'precomedio',   icon: TrendingUp,  color: '#10B981', title: 'Preço Médio',         desc: 'Calcule novo PM após aporte em ação' },
+  { id: 'precomedio',   icon: TrendingUp,  color: '#10B981', title: 'Pre\u00e7o M\u00e9dio',         desc: 'Calcule novo PM ap\u00f3s aporte em a\u00e7\u00e3o' },
+  { id: 'fgts',         icon: Home,        color: '#F97316', title: 'Simulador FGTS',      desc: 'Vale usar FGTS para amortizar seu financiamento?' },
+  { id: 'portabilidade',icon: TrendingUp,  color: '#8B5CF6', title: 'Portabilidade de Cr\u00e9dito', desc: 'Compare sua taxa atual com o mercado e calcule a economia' },
 ];
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -180,13 +183,203 @@ function SimPrecoMedio() {
   );
 }
 
+// ── Simulador FGTS ────────────────────────────────────────────────────────────
+function SimFgts() {
+  const [fgts,     setFgts]     = useState('30000');
+  const [debt,     setDebt]     = useState('150000');
+  const [payment,  setPayment]  = useState('1200');
+  const [rate,     setRate]     = useState('10.5');
+  const [months,   setMonths]   = useState('180');
+  const [result,   setResult]   = useState<ReturnType<typeof analyzeFgtsAmortization> | null>(null);
+
+  const fmt = (v: number) => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '%';
+
+  function simulate() {
+    const r = analyzeFgtsAmortization({
+      fgtsBalance:           parseFloat(fgts.replace(',', '.'))    || 0,
+      remainingDebt:         parseFloat(debt.replace(',', '.'))    || 0,
+      currentMonthlyPayment: parseFloat(payment.replace(',', '.')) || 0,
+      annualInterestRate:    parseFloat(rate.replace(',', '.')) / 100 || 0,
+      remainingMonths:       parseInt(months) || 0,
+    });
+    setResult(r);
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div><label className={labelCls}>Saldo FGTS (R$)</label>
+          <input className={inputCls} value={fgts} onChange={e => setFgts(e.target.value.replace(/[^0-9,.]/g, ''))} placeholder="30000" /></div>
+        <div><label className={labelCls}>Saldo devedor restante (R$)</label>
+          <input className={inputCls} value={debt} onChange={e => setDebt(e.target.value.replace(/[^0-9,.]/g, ''))} placeholder="150000" /></div>
+        <div><label className={labelCls}>Parcela atual (R$)</label>
+          <input className={inputCls} value={payment} onChange={e => setPayment(e.target.value.replace(/[^0-9,.]/g, ''))} placeholder="1200" /></div>
+        <div><label className={labelCls}>Taxa de juros do financiamento (% a.a.)</label>
+          <input className={inputCls} value={rate} onChange={e => setRate(e.target.value.replace(/[^0-9,.]/g, ''))} placeholder="10.5" /></div>
+        <div><label className={labelCls}>Meses restantes</label>
+          <input className={inputCls} value={months} onChange={e => setMonths(e.target.value.replace(/[^0-9]/g, ''))} placeholder="180" /></div>
+      </div>
+
+      <button type="button" onClick={simulate}
+        className="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white text-sm font-bold transition-colors">
+        Simular amortização
+      </button>
+
+      {result && (
+        <div className="space-y-4">
+          {/* Veredicto */}
+          <div className={`rounded-xl border px-4 py-3 text-sm font-semibold ${
+            result.worthIt
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+              : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+          }`}>
+            {result.worthIt ? '✅ Vale usar o FGTS para amortizar' : '⚠️ Avalie com cuidado antes de usar o FGTS'}
+          </div>
+
+          {/* Métricas */}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <ResultBox color="#F97316" label="Nova parcela" value={fmt(result.newMonthlyPayment)}
+              sub={`Economia: ${fmt(result.monthlySavings)}/mês`} />
+            <ResultBox color="#10B981" label="Break-even"   value={`${result.monthsToBreakeven} meses`}
+              sub="Tempo para recuperar o FGTS usado" />
+            <ResultBox
+              color={result.totalSaved10y > 0 ? '#4F8CFF' : '#F87171'}
+              label="Ganho líq. 10 anos"
+              value={fmt(Math.abs(result.totalSaved10y))}
+              sub={result.totalSaved10y >= 0 ? 'a favor da amortização' : 'a favor de manter o FGTS'} />
+          </div>
+
+          {/* Narrativa do Arquiteto */}
+          <div className="bg-si-over-1 border border-si-border rounded-xl p-4 text-sm text-si-3 whitespace-pre-wrap leading-relaxed">
+            {result.narrativa}
+          </div>
+
+          {/* Comparativo visual */}
+          <div className="grid gap-3 sm:grid-cols-2 text-xs text-si-5">
+            <div className="bg-si-over-1 rounded-xl p-3 space-y-1">
+              <p className="font-bold text-si-4 mb-2">Sem usar FGTS</p>
+              <p>Parcela: <span className="text-si-2 font-semibold">{fmt(result.currentMonthlyPayment)}/mês</span></p>
+              <p>FGTS rendendo ~3,5% a.a. → em 10 anos: <span className="text-si-2 font-semibold">{fmt(result.fgtsBalance * Math.pow(1.035, 10))}</span></p>
+            </div>
+            <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 space-y-1">
+              <p className="font-bold text-emerald-400 mb-2">Usando FGTS agora</p>
+              <p>Parcela: <span className="text-emerald-300 font-semibold">{fmt(result.newMonthlyPayment)}/mês</span></p>
+              <p>Economia em 10 anos: <span className="text-emerald-300 font-semibold">{fmt(result.monthlySavings * 120)}</span></p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Simulador Portabilidade de Crédito ───────────────────────────────────────
+const MARKET_RATES = [
+  { label: 'Consignado público',    min: 1.40, max: 2.10 },
+  { label: 'Consignado privado',    min: 1.80, max: 2.80 },
+  { label: 'CDC bancário',          min: 1.60, max: 2.50 },
+  { label: 'Crédito pessoal banco', min: 3.50, max: 6.00 },
+  { label: 'Fintech digital',       min: 1.90, max: 3.50 },
+  { label: 'Crédito com garantia',  min: 0.80, max: 1.60 },
+] as const;
+
+function SimPortabilidade() {
+  const [debt,    setDebt]    = useState('20000');
+  const [rate,    setRate]    = useState('4.5');
+  const [months,  setMonths]  = useState('24');
+
+  const fmt = (v: number) => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const D  = parseFloat(debt.replace(',', '.'))   || 0;
+  const r  = parseFloat(rate.replace(',', '.')) / 100 || 0;
+  const n  = parseInt(months) || 0;
+
+  // Parcela Price: P = D * r / (1 - (1+r)^-n)
+  const calcPayment = (principal: number, monthlyRate: number, nMonths: number) =>
+    monthlyRate > 0 && nMonths > 0
+      ? (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -nMonths))
+      : principal / nMonths;
+
+  const currentPayment = calcPayment(D, r, n);
+  const currentTotal   = currentPayment * n;
+
+  const alternatives = MARKET_RATES.map(opt => {
+    const midRate    = ((opt.min + opt.max) / 2) / 100;
+    const newPayment = calcPayment(D, midRate, n);
+    const newTotal   = newPayment * n;
+    const saving     = currentTotal - newTotal;
+    const worthIt    = midRate < r && saving > 500;
+    return { ...opt, midRate, newPayment, newTotal, saving, worthIt };
+  }).sort((a, b) => b.saving - a.saving);
+
+  const hasResult = D > 0 && r > 0 && n > 0;
+
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div><label className={labelCls}>Saldo devedor (R$)</label>
+          <input className={inputCls} value={debt}   onChange={e => setDebt(e.target.value.replace(/[^0-9,.]/g,''))}   placeholder="20000" /></div>
+        <div><label className={labelCls}>Taxa atual (% a.m.)</label>
+          <input className={inputCls} value={rate}   onChange={e => setRate(e.target.value.replace(/[^0-9,.]/g,''))}   placeholder="4.5" /></div>
+        <div><label className={labelCls}>Meses restantes</label>
+          <input className={inputCls} value={months} onChange={e => setMonths(e.target.value.replace(/[^0-9]/g,''))} placeholder="24" /></div>
+      </div>
+
+      {hasResult && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-si-5">Sua parcela atual:</span>
+            <span className="font-bold text-rose-300">{fmt(currentPayment)}/mês</span>
+            <span className="text-si-5">· Total: {fmt(currentTotal)}</span>
+          </div>
+
+          <div className="space-y-2">
+            {alternatives.map(opt => (
+              <div key={opt.label} className={`rounded-xl border px-4 py-3 flex flex-wrap items-center gap-3 text-sm ${
+                opt.worthIt ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-si-over-1 border-si-border'
+              }`}>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-si-2">{opt.label}</p>
+                  <p className="text-xs text-si-5">{opt.min}%–{opt.max}% a.m. · médio {(opt.midRate*100).toFixed(2)}%</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className={`font-bold ${opt.worthIt ? 'text-emerald-300' : 'text-si-3'}`}>{fmt(opt.newPayment)}/mês</p>
+                  {opt.saving > 0
+                    ? <p className="text-xs text-emerald-400">economia {fmt(opt.saving)} total</p>
+                    : <p className="text-xs text-rose-400">mais caro</p>}
+                </div>
+                {opt.worthIt && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shrink-0">
+                    ✓ Vale portar
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-violet-500/5 border border-violet-500/20 rounded-xl p-4 text-xs text-si-4 space-y-1">
+            <p className="font-bold text-violet-300 text-sm mb-2">⚡ Como fazer a portabilidade</p>
+            <p>1. Solicite a proposta de portabilidade diretamente no banco destino (não precisa ir ao banco atual)</p>
+            <p>2. O banco destino tem 5 dias úteis para concluir a transferência via sistema BCB</p>
+            <p>3. Sua taxa não pode ser maior do que a atual — é garantia legal (Lei 4.595/64)</p>
+            <p>4. Compare o CET (Custo Efetivo Total), não apenas a taxa nominal</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const TOOL_COMPONENTS: Record<ToolId, React.ElementType> = {
-  compostos: SimCompostos,
-  meta: SimMeta,
-  rendafixa: SimRendaFixa,
-  rendapassiva: SimRendaPassiva,
-  fire: SimFire,
-  precomedio: SimPrecoMedio,
+  compostos:     SimCompostos,
+  meta:          SimMeta,
+  rendafixa:     SimRendaFixa,
+  rendapassiva:  SimRendaPassiva,
+  fire:          SimFire,
+  precomedio:    SimPrecoMedio,
+  fgts:          SimFgts,
+  portabilidade: SimPortabilidade,
 };
 
 // ── Página principal ───────────────────────────────────────────────────────

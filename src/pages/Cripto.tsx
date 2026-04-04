@@ -6,6 +6,7 @@
  * Fase 2: substituir por dados reais Parfin/Liqi com preços BRL nativos.
  */
 import { useState, useEffect, useCallback } from 'react';
+import { ComingSoonOverlay } from '../components/ui/ComingSoonBadge';
 import {
   Bitcoin, TrendingUp, TrendingDown, RefreshCw, Wallet,
   ArrowRightLeft, Layers, Globe, ChevronRight, Shield, BarChart2,
@@ -272,7 +273,8 @@ export default function Cripto() {
 
       {/* ── CARTEIRA ── */}
       {activeTab === 'Carteira' && (
-        <div className="space-y-4">
+        <div className="space-y-4 relative">
+          <ComingSoonOverlay />
           <div className="grid grid-cols-3 gap-4">
             {[
               { label: 'Valor total', value: fmtBRL(portfolioValue),   cls: 'text-si-1' },
@@ -326,7 +328,8 @@ export default function Cripto() {
 
       {/* ── TRADE ── */}
       {activeTab === 'Trade' && (
-        <div className="bg-si-card rounded-2xl border border-si-border p-6">
+        <div className="bg-si-card rounded-2xl border border-si-border p-6 relative">
+          <ComingSoonOverlay />
           <h3 className="font-semibold text-si-1 flex items-center gap-2 mb-4">
             <ArrowRightLeft className="w-5 h-5 text-blue-400" />
             Order Book Simplificado
@@ -371,7 +374,8 @@ export default function Cripto() {
 
       {/* ── STAKING ── */}
       {activeTab === 'Staking' && (
-        <div className="space-y-4">
+        <div className="space-y-4 relative">
+          <ComingSoonOverlay />
           {[
             { coin: 'ETH',   apy: '4.2%', minimo: '0.01 ETH',  lock: '7 dias',   symbol: 'ETH'   },
             { coin: 'SOL',   apy: '6.8%', minimo: '0.1 SOL',   lock: '1 dia',    symbol: 'SOL'   },
@@ -404,7 +408,8 @@ export default function Cripto() {
 
       {/* ── RWA ── */}
       {activeTab === 'RWA' && (
-        <div className="bg-si-card rounded-2xl border border-si-border p-6">
+        <div className="bg-si-card rounded-2xl border border-si-border p-6 relative">
+          <ComingSoonOverlay />
           <div className="flex items-center gap-3 mb-4">
             <Globe className="w-6 h-6 text-blue-400" />
             <h3 className="font-semibold text-si-1">Real World Assets (RWA)</h3>

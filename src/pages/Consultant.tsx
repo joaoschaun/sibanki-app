@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { functions } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
 import { buildFinancialContextString } from '../utils/consultantContext';
 import { analyzeInstallmentDecision } from '../utils/decisionEngine';
-import { MessageCircle, Send, AlertTriangle, Scale } from 'lucide-react';
+import { MessageCircle, Send, AlertTriangle, Scale, Lock } from 'lucide-react';
 import { trackPlatformEvent } from '../services/platformEvents';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
 interface ChatMessage {
   role: 'user' | 'ai';
@@ -40,6 +42,8 @@ const PILLS = [
 ];
 
 export default function Consultant() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const {
     user,
     entries,
@@ -58,6 +62,9 @@ export default function Consultant() {
     loading: dataLoading,
   } = useAppContext();
 
+  const { requireFeature } = useFeatureFlags();
+  const { allowed: consultorAllowed, upsellInfo } = requireFeature('ia_consultor');
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -67,12 +74,24 @@ export default function Consultant() {
   const [decisionValues, setDecisionValues] = useState({ totalValue: '', installments: '', cashDiscount: '' });
   const historyRef = useRef<HTMLDivElement>(null);
   const openedTrackedRef = useRef(false);
+  /** Mensagem vinda da Início (Arquiteto); enviada após dados carregarem. */
+  const pendingFromHomeRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (messages.length === 0 && !dataLoading) {
       setMessages([{ role: 'ai', content: formatReply(WELCOME), time: Date.now() }]);
     }
   }, [dataLoading]);
+
+  useEffect(() => {
+    const raw = (location.state as { initialMessage?: string } | null)?.initialMessage;
+    if (typeof raw === 'string' && raw.trim()) {
+      pendingFromHomeRef.current = raw.trim();
+      navigate(location.pathname, { replace: true, state: null });
+    }
+    // Somente estado da navegação inicial ao abrir a página
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     historyRef.current?.scrollTo({ top: historyRef.current.scrollHeight, behavior: 'smooth' });
@@ -139,8 +158,8 @@ export default function Consultant() {
     setError(null);
   };
 
-  const handleSend = async () => {
-    const txt = input.trim();
+  const handleSend = async (overrideText?: string) => {
+    const txt = (overrideText !== undefined ? overrideText : input).trim();
     if (!txt || sending) return;
     if (!user) {
       setError('Faça login para usar o consultor.');
@@ -235,6 +254,28 @@ export default function Consultant() {
       setSending(false);
     }
   };
+
+  useEffect(() => {
+    if (dataLoading || !user || !pendingFromHomeRef.current) return;
+    const msg = pendingFromHomeRef.current;
+    pendingFromHomeRef.current = null;
+    const t = window.setTimeout(() => {
+      void handleSend(msg);
+    }, 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- envio único ao receber mensagem da Início
+  }, [dataLoading, user]);
+
+  if (!consultorAllowed && upsellInfo) {
+    return (
+      <div className="max-w-lg mx-auto py-20 text-center space-y-4">
+        <Lock className="w-12 h-12 text-blue-400 mx-auto" />
+        <h2 className="text-xl font-bold text-si-1">{upsellInfo.label}</h2>
+        <p className="text-si-4 text-sm">{upsellInfo.upsell}</p>
+        <a href="/configuracoes" className="inline-block px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm">Ver planos</a>
+      </div>
+    );
+  }
 
   if (dataLoading) {
     return (
@@ -395,7 +436,7 @@ export default function Consultant() {
           />
           <button
             type="button"
-            onClick={handleSend}
+            onClick={() => void handleSend()}
             disabled={sending || !input.trim()}
             className="p-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 disabled:opacity-50 shrink-0"
             aria-label="Enviar"

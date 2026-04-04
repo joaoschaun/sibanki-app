@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AppProvider, useAppContext } from './context/AppContext';
+import { IntelligenceProvider } from './context/IntelligenceContext';
 /**
  * Acao 6 (29/03/2026): Multi-tenant rollout.
  * TenantProvider resolve o tenant pelo host, aplica branding (CSS vars,
@@ -16,8 +17,14 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { OnboardingTour } from './components/ui/OnboardingTour';
 import { BriefingModal } from './components/ui/BriefingModal';
 import { SibcoinToastContainer } from './components/sibcoin/SibcoinToastContainer';
+import { RegistrationWizard } from './components/onboarding/RegistrationWizard';
+import { SpotlightTour, GLOBAL_TOUR_STEPS } from './components/ui/SpotlightTour';
+import { InstallPrompt } from './components/ui/InstallPrompt';
+import { captureRefParam, useReferral } from './hooks/useReferral';
 import Login from './pages/Login';
 import { useState } from 'react';
+
+captureRefParam();
 
 // ── Lazy-loaded pages (code splitting — cada rota vira chunk separado) ──────
 const Dashboard   = lazy(() => import('./pages/Dashboard'));
@@ -50,13 +57,14 @@ const MeusBoletos  = lazy(() => import('./pages/MeusBoletos'));
 const Sibcoin      = lazy(() => import('./pages/Sibcoin'));
 // Acao 12 (29/03/2026): Hub de Credito — visao consolidada do passivo financeiro
 const CreditHub    = lazy(() => import('./pages/CreditHub'));
+const Filiados     = lazy(() => import('./pages/Filiados'));
 const Home         = lazy(() => import('./pages/Home'));
 
 // ── Spinner reutilizável para Suspense ───────────────────────────────────────
 function PageLoader() {
   return (
     <div className="flex items-center justify-center py-24">
-      <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+      <div className="w-8 h-8 border-2 border-si-border border-t-si-3 rounded-full animate-spin" />
     </div>
   );
 }
@@ -72,11 +80,24 @@ function AuthenticatedShell() {
   const { theme } = useTheme();
   const { sidebarCollapsed, toggleSidebar } = useUiStore();
   const [sidebarOpenGroup, setSidebarOpenGroup] = useState<SidebarOpenGroup>(null);
+  // Mobile drawer state (independente do collapse desktop)
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const showWizard = user && !authLoading && !(data as any)?.cadastroCompleto;
+  const [wizardDismissed, setWizardDismissed] = useState(false);
+  useReferral();
 
   const handleToggle = () => {
-    toggleSidebar();
-    if (!sidebarCollapsed) setSidebarOpenGroup(null);
+    // Em mobile (< lg): abre/fecha drawer overlay
+    // Em desktop: colapsa/expande sidebar normal
+    if (window.innerWidth < 1024) {
+      setMobileOpen((v) => !v);
+    } else {
+      toggleSidebar();
+      if (!sidebarCollapsed) setSidebarOpenGroup(null);
+    }
   };
+
+  const closeMobile = () => setMobileOpen(false);
 
   if (authLoading) {
     return (
@@ -92,18 +113,49 @@ function AuthenticatedShell() {
 
   return (
     <div className={`min-h-screen ${rootBg} font-sans flex overflow-hidden`}>
-      <Sidebar
-        userName={user.displayName || data?.name || undefined}
-        userEmail={user.email || undefined}
-        avatarURL={avatarURL ?? undefined}
-        score={score}
-        collapsed={sidebarCollapsed}
-        openGroup={sidebarOpenGroup}
-        setOpenGroup={setSidebarOpenGroup}
-      />
+
+      {/* ── Mobile: backdrop + drawer overlay ─────────────────────────── */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/70 z-40 lg:hidden"
+          onClick={closeMobile}
+          aria-hidden="true"
+        />
+      )}
+      <div
+        className={[
+          // Mobile: drawer fixo, entra/sai pela esquerda
+          'fixed inset-y-0 left-0 z-50 transition-transform duration-200 lg:hidden',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full',
+        ].join(' ')}
+      >
+        <Sidebar
+          userName={user.displayName || data?.name || undefined}
+          userEmail={user.email || undefined}
+          avatarURL={avatarURL ?? undefined}
+          score={score}
+          collapsed={false}
+          openGroup={sidebarOpenGroup}
+          setOpenGroup={setSidebarOpenGroup}
+        />
+      </div>
+
+      {/* ── Desktop: sidebar inline ────────────────────────────────────── */}
+      <div className="hidden lg:flex">
+        <Sidebar
+          userName={user.displayName || data?.name || undefined}
+          userEmail={user.email || undefined}
+          avatarURL={avatarURL ?? undefined}
+          score={score}
+          collapsed={sidebarCollapsed}
+          openGroup={sidebarOpenGroup}
+          setOpenGroup={setSidebarOpenGroup}
+        />
+      </div>
+
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Header onMenuClick={handleToggle} sidebarCollapsed={sidebarCollapsed} />
-        <main className="flex-1 overflow-y-auto p-8 space-y-8">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 lg:space-y-8">
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
@@ -132,6 +184,7 @@ function AuthenticatedShell() {
               <Route path="/meu-cpf" element={<ErrorBoundary><MeuCpf /></ErrorBoundary>} />
               <Route path="/meus-boletos" element={<ErrorBoundary><MeusBoletos /></ErrorBoundary>} />
               <Route path="/sibcoin" element={<ErrorBoundary><Sibcoin /></ErrorBoundary>} />
+              <Route path="/filiados" element={<ErrorBoundary><Filiados /></ErrorBoundary>} />
               <Route path="/perfil" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
               <Route path="/configuracoes" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
               <Route path="/relatorios" element={<ErrorBoundary><Reports /></ErrorBoundary>} />
@@ -145,6 +198,12 @@ function AuthenticatedShell() {
       <OnboardingTourRedirect />
       <BriefingModal />
       <SibcoinToastContainer />
+      <RegistrationWizard
+        open={!!showWizard && !wizardDismissed}
+        onClose={() => setWizardDismissed(true)}
+      />
+      <SpotlightTour tourId="global" steps={GLOBAL_TOUR_STEPS} />
+      <InstallPrompt uid={user?.uid} />
     </div>
   );
 }
@@ -154,9 +213,11 @@ export default function App() {
   return (
     <TenantProvider>
       <AppProvider>
-        <BrowserRouter>
-          <AuthenticatedShell />
-        </BrowserRouter>
+        <IntelligenceProvider>
+          <BrowserRouter>
+            <AuthenticatedShell />
+          </BrowserRouter>
+        </IntelligenceProvider>
       </AppProvider>
     </TenantProvider>
   );

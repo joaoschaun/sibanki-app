@@ -1,14 +1,20 @@
 /**
  * Comparação visual: captura screenshots de cada módulo do APP LEGADO.
- * Staging: legado em https://staging-13a0b.web.app/app/
+ * Legado: por padrão em https://virtus-financeiro-cd7bd.web.app/app/
  * Uso: npx playwright test compare-modulos-legado --project=compare-legado
  * Screenshots: screenshots/compare/legado/
  */
-const { test, expect } = require('@playwright/test');
-const path = require('path');
-const fs = require('fs');
+import { test, expect } from '@playwright/test';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-const BASE = process.env.LEGACY_BASE_URL || 'https://staging-13a0b.web.app/app';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const BASE =
+  process.env.LEGACY_BASE_URL ||
+  process.env.BASE_URL ||
+  'https://virtus-financeiro-cd7bd.web.app/app';
 const SCREENSHOT_DIR = path.join(__dirname, '..', 'screenshots', 'compare', 'legado');
 const EMAIL = process.env.TEST_EMAIL || process.env.EMAIL || '';
 const SENHA = process.env.TEST_SENHA || process.env.SENHA || '';

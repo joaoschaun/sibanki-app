@@ -4,8 +4,9 @@ import { auth } from '../../firebase';
 import { signOut } from 'firebase/auth';
 // ✅ FIX: Removido useAuth + useFinancialData duplicados → usa AppContext (único listener Firestore)
 import { useAppContext } from '../../context/AppContext';
-import { Menu, Download, Eye, Sun, Moon, Bell, User, LogOut, FileBarChart, Trophy, Calendar } from 'lucide-react';
+import { Menu, Sun, Moon, Bell, User, LogOut, FileBarChart, Trophy, Calendar, MessageSquarePlus } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
+import { FeedbackModal } from '../ui/FeedbackModal';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -17,6 +18,7 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
   const { user, data } = useAppContext();
   const { theme, toggleTheme } = useTheme();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   const avatarURL = data?.avatarURL ?? user?.photoURL ?? null;
@@ -40,57 +42,49 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
   return (
     // ✅ FIX: Removido onMouseLeave do header — causava fechamento prematuro do dropdown
     //        ao mover o mouse para o sidebar ou conteúdo principal
-    <header className="h-20 bg-si-card/60 backdrop-blur-xl border-b border-si-border shadow-[0_4px_30px_rgba(0,0,0,0.1)] flex items-center justify-between px-8 shrink-0 relative z-50">
+    <header className="h-14 bg-[#0a0a0a] border-b border-si-border flex items-center justify-between px-6 shrink-0 relative z-50">
       <div className="flex items-center gap-4">
         <button
           type="button"
           onClick={onMenuClick}
-          className="p-2 hover:bg-si-over-3 rounded-lg hover:scale-105 active:scale-95 transition-all"
+          className="p-1.5 hover:bg-si-over-2 rounded-md transition-colors"
+          data-tour="menu"
           aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
           aria-pressed={sidebarCollapsed}
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-4 h-4 text-si-4" />
         </button>
-        <h1 className="text-3xl font-black tracking-tighter text-si-1">Sibanki</h1>
+        <h1 className="text-xs font-bold tracking-[0.2em] uppercase text-si-3">Sibanki</h1>
       </div>
 
-      <div className="flex items-center gap-3">
-        {([Download, Eye] as const).map((Icon, i) => (
-          <button
-            key={i}
-            type="button"
-            className="p-2.5 hover:bg-si-over-3 rounded-xl border border-si-border relative hover:scale-[1.05] active:scale-95 transition-all"
-          >
-            <Icon className="w-5 h-5 text-si-4" />
-          </button>
-        ))}
-
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={toggleTheme}
           title={theme === 'light' ? 'Mudar para tema escuro' : 'Mudar para tema claro'}
-          className="p-2.5 hover:bg-si-over-3 rounded-xl border border-si-border hover:scale-[1.05] active:scale-95 transition-all"
+          className="p-2 hover:bg-si-over-2 rounded-md transition-colors"
           aria-label={theme === 'light' ? 'Mudar para tema escuro' : 'Mudar para tema claro'}
         >
           {theme === 'light'
-            ? <Moon className="w-5 h-5 text-indigo-500" />
-            : <Sun className="w-5 h-5 text-amber-400" />}
+            ? <Moon className="w-4 h-4 text-si-4" />
+            : <Sun className="w-4 h-4 text-si-4" />}
         </button>
 
         <button
           type="button"
-          className="p-2.5 hover:bg-si-over-3 rounded-xl border border-si-border relative hover:scale-[1.05] active:scale-95 transition-all"
+          className="p-2 hover:bg-si-over-2 rounded-md relative transition-colors"
           aria-label="Notificações"
+          data-tour="notificacoes"
         >
-          <Bell className="w-5 h-5 text-si-4" />
-          <div className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border-2 border-si-card" />
+          <Bell className="w-4 h-4 text-si-4" />
+          <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-si-3 rounded-full" />
         </button>
 
         <div className="relative" ref={ref}>
           <button
             type="button"
             onClick={() => setDropdownOpen((o) => !o)}
-            className="w-10 h-10 rounded-full border-2 border-transparent bg-gradient-to-tr from-blue-500/20 to-emerald-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)] flex items-center justify-center overflow-hidden hover:scale-105 active:scale-95 transition-all"
+            className="w-8 h-8 rounded-full border border-si-border bg-si-over-2 flex items-center justify-center overflow-hidden hover:bg-si-over-3 transition-colors"
             aria-label="Menu da conta"
             aria-haspopup="true"
             aria-expanded={dropdownOpen}
@@ -98,7 +92,7 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
             {avatarURL ? (
               <img src={avatarURL} alt="" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-sm font-bold text-si-4">
+              <span className="text-[11px] font-bold text-si-3">
                 {(user?.displayName || user?.email || 'U').slice(0, 2).toUpperCase()}
               </span>
             )}
@@ -133,6 +127,15 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
               >
                 <Calendar className="w-4 h-4" /> Calendário
               </Link>
+              <div className="my-1 h-px bg-si-border mx-4" />
+              <button
+                type="button"
+                onClick={() => { setDropdownOpen(false); setFeedbackOpen(true); }}
+                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-si-3 hover:bg-si-over-2"
+              >
+                <MessageSquarePlus className="w-4 h-4" /> Feedback
+              </button>
+              <div className="my-1 h-px bg-si-border mx-4" />
               <button
                 type="button"
                 onClick={handleLogout}
@@ -144,6 +147,8 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
           )}
         </div>
       </div>
+
+      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </header>
   );
 }

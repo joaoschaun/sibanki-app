@@ -160,6 +160,11 @@ select.form-inp{cursor:pointer}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       Planos & Billing
     </div>
+    <div class="nav-sep">Comunidade</div>
+    <div class="nav-item" onclick="goPage('feedbacks')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Feedbacks
+    </div>
     <div class="nav-sep">Marketing</div>
     <div class="nav-item" onclick="goPage('social')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -434,6 +439,64 @@ select.form-inp{cursor:pointer}
       </div>
     </div>
 
+    <!-- ═══════ PAGE: FEEDBACKS ═══════ -->
+    <div id="pgFeedbacks" class="page">
+      <div class="page-title">Feedbacks dos Usuários</div>
+      <div class="page-sub">Sugestões, críticas e erros reportados pelos usuários</div>
+      <div class="cards-grid" id="fbKpis">
+        <div class="stat-card"><div class="stat-label">Total</div><div class="stat-val" id="fbTotal">—</div></div>
+        <div class="stat-card"><div class="stat-label">Novos</div><div class="stat-val" id="fbNovos" style="color:var(--blue)">—</div></div>
+        <div class="stat-card"><div class="stat-label">Em Análise</div><div class="stat-val" id="fbAnalise" style="color:var(--yellow)">—</div></div>
+        <div class="stat-card"><div class="stat-label">Resolvidos</div><div class="stat-val" id="fbResolvidos" style="color:var(--green)">—</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          Todos os Feedbacks
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="fbFilterCat" class="form-inp" style="width:150px;margin:0;padding:6px 10px;font-size:.78rem" onchange="renderFeedbacks()">
+              <option value="">Todas as categorias</option>
+              <option value="sugestao">Sugestão</option>
+              <option value="critica">Crítica</option>
+              <option value="erro">Erro</option>
+            </select>
+            <select id="fbFilterStatus" class="form-inp" style="width:150px;margin:0;padding:6px 10px;font-size:.78rem" onchange="renderFeedbacks()">
+              <option value="">Todos os status</option>
+              <option value="novo">Novo</option>
+              <option value="em-analise">Em Análise</option>
+              <option value="resolvido">Resolvido</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="loadFeedbacks()">↺ Atualizar</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Categoria</th>
+            <th>Título</th>
+            <th>Usuário</th>
+            <th>Página</th>
+            <th>Data</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr></thead>
+          <tbody id="feedbacksTable"><tr><td colspan="7"><div class="loading-row"><div class="spin"></div> Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+      <!-- Detail modal -->
+      <div id="fbDetailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;align-items:center;justify-content:center">
+        <div style="background:var(--card);border:1px solid var(--brd);border-radius:16px;width:100%;max-width:520px;padding:28px;position:relative">
+          <button onclick="closeFbDetail()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--t2);font-size:1.2rem;cursor:pointer">✕</button>
+          <div style="font-size:.7rem;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px" id="fbDetailMeta"></div>
+          <div style="font-size:1rem;font-weight:700;color:var(--t1);margin-bottom:8px" id="fbDetailTitle"></div>
+          <div style="font-size:.86rem;color:var(--t2);line-height:1.7;white-space:pre-wrap;margin-bottom:20px" id="fbDetailDesc"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="setFbStatus(currentFbId,'novo')">🔵 Novo</button>
+            <button class="btn btn-ghost btn-sm" onclick="setFbStatus(currentFbId,'em-analise')">🟡 Em Análise</button>
+            <button class="btn btn-success btn-sm" onclick="setFbStatus(currentFbId,'resolvido')">✅ Resolvido</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -456,8 +519,10 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const fns = firebase.functions();
 
-// ADMIN EMAILS — quem pode acessar
-const ADMIN_EMAILS = ['jscharnberg@gmail.com','admin@sibanki.com.br'];
+// ─── SEGURANÇA: lista de admins removida do cliente ───────────────────────────
+// A validação agora é 100% server-side via Cloud Function + Custom Claims.
+// Mesmo que alguém inspecione este JS, não há lista de e-mails para explorar.
+// ──────────────────────────────────────────────────────────────────────────────
 
 let currentUser = null;
 let allUsers = [];
@@ -468,18 +533,43 @@ let calYear = new Date().getFullYear();
 let selectedPlats = ['instagram'];
 
 // ═══════════════════════════════════════════════
-// AUTH
+// AUTH — Custom Claims via Cloud Function
 // ═══════════════════════════════════════════════
-auth.onAuthStateChanged(u => {
-  if (u && ADMIN_EMAILS.includes(u.email)) {
-    currentUser = u;
-    document.getElementById('authScreen').style.display = 'none';
-    document.getElementById('adminApp').style.display = 'block';
-    document.getElementById('sbUserEmail').textContent = u.email;
-    initAdmin();
-  } else if (u) {
-    auth.signOut();
-    document.getElementById('authErr').textContent = 'Acesso negado. Este e-mail não tem permissão de administrador.';
+auth.onAuthStateChanged(async (u) => {
+  if (!u) return; // não autenticado — tela de login já visível
+
+  const errEl = document.getElementById('authErr');
+  try {
+    // 1. Chama Cloud Function para validar no servidor e setar claim admin
+    const validateFn = fns.httpsCallable('validateAdminAccess');
+    await validateFn({});
+
+    // 2. Força refresh do ID token para incluir a nova custom claim
+    await u.getIdToken(true);
+    const tokenResult = await u.getIdTokenResult();
+
+    // 3. Só exibe o admin se o servidor concedeu a claim
+    if (tokenResult.claims.admin === true) {
+      currentUser = u;
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('adminApp').style.display = 'block';
+      document.getElementById('sbUserEmail').textContent = u.email;
+      initAdmin();
+    } else {
+      // Claim não concedida — nega acesso
+      await auth.signOut();
+      errEl.textContent = 'Acesso negado. Permissão de administrador não encontrada.';
+    }
+  } catch (err) {
+    await auth.signOut();
+    if (err.code === 'functions/permission-denied') {
+      errEl.textContent = 'Acesso negado. Este e-mail não tem permissão de administrador.';
+    } else if (err.code === 'functions/unauthenticated') {
+      errEl.textContent = 'Sessão expirada. Faça login novamente.';
+    } else {
+      errEl.textContent = 'Erro ao verificar permissões. Tente novamente.';
+      console.error('[admin auth]', err);
+    }
   }
 });
 
@@ -498,6 +588,16 @@ function doAdminLogin() {
 function doAdminLogout() {
   auth.signOut().then(() => location.reload());
 }
+
+// ─── PROXY CLAUDE — nunca chama Anthropic direto do browser ───────────────────
+// Todas as chamadas à IA passam pela Cloud Function callClaude.
+// A chave da API fica no servidor, nunca exposta no Network tab.
+async function callClaudeProxy(prompt, systemPrompt, maxTokens = 1000) {
+  const fn = fns.httpsCallable('callClaude');
+  const res = await fn({ prompt, systemPrompt, maxTokens, adminOnly: true });
+  return res.data?.text || '';
+}
+// ──────────────────────────────────────────────────────────────────────────────
 
 // ═══════════════════════════════════════════════
 // STATUS DE FEATURES — tabela no dashboard
@@ -539,7 +639,7 @@ function goPage(id) {
   document.querySelectorAll('.nav-item').forEach(n => {
     if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
   });
-  const loaders = { metricas: loadMetricas, usuarios: loadUsuarios, flags: loadFlags, planos: loadPlanos, social: loadSocial, brand: loadBrand, calendario: renderCal };
+  const loaders = { metricas: loadMetricas, usuarios: loadUsuarios, flags: loadFlags, planos: loadPlanos, social: loadSocial, brand: loadBrand, calendario: renderCal, feedbacks: loadFeedbacks };
   if (loaders[id]) loaders[id]();
 }
 
@@ -940,19 +1040,14 @@ Contexto Sibanki: app PWA, plano gratuito e Pro (R$29,90/mês), tem IA Siba, con
 Responda com o conteúdo pronto para copiar e usar, sem explicações adicionais.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{ role:'user', content:prompt }] })
-    });
-    const data = await res.json();
-    const text = data.content?.[0]?.text || 'Erro ao gerar conteúdo.';
+    const text = await callClaudeProxy(prompt, null, 1000);
     result.className = 'result-area';
-    result.textContent = text;
+    result.textContent = text || 'Erro ao gerar conteúdo.';
     document.getElementById('socialActions').style.display = 'flex';
     window._lastGeneratedContent = { text, plats: selectedPlats, briefing, tom, objetivo };
   } catch(e) {
     result.textContent = 'Erro ao conectar com a IA. Verifique a conexão.';
+    console.error('[social]', e);
   }
   btn.innerHTML = '✨ Gerar conteúdo com IA'; btn.disabled = false;
 }
@@ -1098,13 +1193,9 @@ Contexto: Sibanki é um app PWA de finanças com IA, plano Pro R$29,90. Site sib
 Seja específico e prático.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1200, messages:[{role:'user',content:prompt}] })
-    });
-    const data = await res.json();
-    el.className = 'result-area'; el.textContent = data.content?.[0]?.text || 'Erro ao gerar';
-  } catch(e) { el.textContent = 'Erro ao conectar com a IA.'; }
+    const text = await callClaudeProxy(prompt, null, 1200);
+    el.className = 'result-area'; el.textContent = text || 'Erro ao gerar';
+  } catch(e) { el.textContent = 'Erro ao conectar com a IA.'; console.error('[calendar]', e); }
 }
 
 // ═══════════════════════════════════════════════
@@ -1131,15 +1222,11 @@ Liste 6 oportunidades de conteúdo que os concorrentes NÃO estão explorando be
 Para cada oportunidade: título curto, plataforma ideal, tipo de conteúdo, potencial de engajamento (1-5 estrelas).
 Formato: lista numerada, direto ao ponto.`;
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:700, messages:[{role:'user',content:prompt}] })
-    });
-    const data = await res.json();
-    const text = data.content?.[0]?.text || '';
-    document.getElementById('contentGaps').innerHTML = `<div style="font-size:.84rem;color:var(--t1);line-height:1.8;white-space:pre-wrap;padding:4px">${text}</div>`;
+    const text = await callClaudeProxy(prompt, null, 700);
+    document.getElementById('contentGaps').innerHTML = `<div style="font-size:.84rem;color:var(--t1);line-height:1.8;white-space:pre-wrap;padding:4px">${escHtml(text)}</div>`;
   } catch(e) {
     document.getElementById('contentGaps').innerHTML = '<div class="empty-state">Erro ao conectar com IA</div>';
+    console.error('[contentGaps]', e);
   }
 }
 
@@ -1152,13 +1239,105 @@ async function getBrandInsight() {
 Pergunta do time: ${query}
 Responda de forma estratégica, prática e específica para o contexto do Sibanki. Seja direto e acionável.`;
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:800, messages:[{role:'user',content:prompt}] })
-    });
-    const data = await res.json();
-    el.className = 'result-area'; el.textContent = data.content?.[0]?.text || 'Erro';
-  } catch(e) { el.textContent = 'Erro ao conectar com a IA.'; }
+    const text = await callClaudeProxy(prompt, null, 800);
+    el.className = 'result-area'; el.textContent = text || 'Erro';
+  } catch(e) { el.textContent = 'Erro ao conectar com a IA.'; console.error('[brandInsight]', e); }
+}
+
+// ═══════════════════════════════════════════════
+// FEEDBACKS
+// ═══════════════════════════════════════════════
+let allFeedbacks = [];
+let currentFbId = null;
+
+async function loadFeedbacks() {
+  try {
+    const snap = await db.collection('feedbacks').orderBy('createdAt','desc').limit(200).get();
+    allFeedbacks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    updateFbKpis();
+    renderFeedbacks();
+  } catch(e) {
+    console.error('[Admin] Erro ao carregar feedbacks:', e);
+    document.getElementById('feedbacksTable').innerHTML = '<tr><td colspan="7"><div class="empty-state">Erro ao carregar feedbacks</div></td></tr>';
+  }
+}
+
+function updateFbKpis() {
+  const total = allFeedbacks.length;
+  const novos = allFeedbacks.filter(f => f.status === 'novo').length;
+  const analise = allFeedbacks.filter(f => f.status === 'em-analise').length;
+  const resolvidos = allFeedbacks.filter(f => f.status === 'resolvido').length;
+  document.getElementById('fbTotal').textContent = total;
+  document.getElementById('fbNovos').textContent = novos;
+  document.getElementById('fbAnalise').textContent = analise;
+  document.getElementById('fbResolvidos').textContent = resolvidos;
+}
+
+function renderFeedbacks() {
+  const catFilter = document.getElementById('fbFilterCat').value;
+  const statusFilter = document.getElementById('fbFilterStatus').value;
+  const filtered = allFeedbacks.filter(f =>
+    (!catFilter || f.category === catFilter) &&
+    (!statusFilter || f.status === statusFilter)
+  );
+  const tbody = document.getElementById('feedbacksTable');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Nenhum feedback encontrado</div></td></tr>';
+    return;
+  }
+  const CAT_LABEL = { sugestao: 'Sugestão', critica: 'Crítica', erro: 'Erro' };
+  const CAT_BADGE = { sugestao: 'blue', critica: 'yellow', erro: 'red' };
+  const STATUS_LABEL = { novo: 'Novo', 'em-analise': 'Em Análise', resolvido: 'Resolvido' };
+  const STATUS_BADGE = { novo: 'blue', 'em-analise': 'yellow', resolvido: 'green' };
+  tbody.innerHTML = filtered.map(f => {
+    const date = f.createdAt ? new Date(f.createdAt.toDate ? f.createdAt.toDate() : f.createdAt).toLocaleDateString('pt-BR') : '—';
+    const page = f.page || '—';
+    return `<tr>
+      <td><span class="badge ${CAT_BADGE[f.category] || 'gray'}">${CAT_LABEL[f.category] || f.category}</span></td>
+      <td style="color:var(--t1);font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.title || '')}</td>
+      <td style="font-size:.78rem">${escHtml(f.userEmail || f.userName || '—')}</td>
+      <td style="font-size:.74rem;color:var(--t3)">${escHtml(page)}</td>
+      <td style="font-size:.78rem;white-space:nowrap">${date}</td>
+      <td><span class="badge ${STATUS_BADGE[f.status] || 'gray'}">${STATUS_LABEL[f.status] || f.status}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openFbDetail('${f.id}')">Ver</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openFbDetail(id) {
+  const f = allFeedbacks.find(x => x.id === id);
+  if (!f) return;
+  currentFbId = id;
+  const date = f.createdAt ? new Date(f.createdAt.toDate ? f.createdAt.toDate() : f.createdAt).toLocaleString('pt-BR') : '—';
+  document.getElementById('fbDetailMeta').textContent = `${f.category?.toUpperCase() || ''} · ${f.userEmail || f.userName || '—'} · ${date} · ${f.page || ''}`;
+  document.getElementById('fbDetailTitle').textContent = f.title || '';
+  document.getElementById('fbDetailDesc').textContent = f.description || '';
+  const modal = document.getElementById('fbDetailModal');
+  modal.style.display = 'flex';
+}
+
+function closeFbDetail() {
+  document.getElementById('fbDetailModal').style.display = 'none';
+  currentFbId = null;
+}
+
+async function setFbStatus(id, status) {
+  if (!id) return;
+  try {
+    await db.collection('feedbacks').doc(id).update({ status });
+    const fb = allFeedbacks.find(x => x.id === id);
+    if (fb) fb.status = status;
+    updateFbKpis();
+    renderFeedbacks();
+    toast('Status atualizado!');
+    closeFbDetail();
+  } catch(e) {
+    toast('Erro ao atualizar status', 'err');
+  }
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 </script>
 </body>

@@ -64,6 +64,35 @@ node_modules/
 
 # dotenv environment variables file
 .env
+.env.local
+.env.*.local
+functions/.env
 
 # dataconnect generated files
 .dataconnect
+
+# Build output (gerado por npm run build)
+dist/
+
+# Playwright artifacts
+test-results/
+playwright-report/
+screenshots/
+
+# Temp/orphan files
+firebase.json.bak
+lighthouse-report.json
+*.txt.bak
+wa_handler.txt
+scan_fns.js
+set_secrets.ps1
+out.txt
+acoes_raw.txt
+
+# Build artifacts in public/assets (gerados por vite build)
+public/assets/*.js
+public/assets/*.css
+
+# OS files
+.DS_Store
+Thumbs.db

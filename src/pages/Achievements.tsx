@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
+import { updateUserDoc } from '../services/persistUserData';
 import { getMD, getStreak } from '../utils/reportUtils';
 import { isTransferEntry } from '../utils/entryUtils';
 import { Trophy, Target, Hash, Dumbbell, Medal, Wallet, PiggyBank, Layers, Calendar, CalendarDays, Rocket, TrendingUp, Star, Briefcase, ClipboardList, Leaf } from 'lucide-react';
@@ -57,7 +58,8 @@ interface BadgeContext {
 }
 
 export default function Achievements() {
-  const { entries, investments, goals, budgets, achievements, loading } = useAppContext();
+  const { user, entries, investments, goals, budgets, achievements, loading } = useAppContext();
+  const persistedRef = useRef(false);
 
   const entriesNoTransfer = useMemo(() => entries.filter((e) => !isTransferEntry(e)), [entries]);
   const md = useMemo(() => getMD(entries), [entries]);
@@ -74,15 +76,23 @@ export default function Achievements() {
     [entriesNoTransfer, md, investments, goals, budgets]
   );
 
-  const { unlocked, count } = useMemo(() => {
+  const { unlocked, count, hasNew } = useMemo(() => {
     const u: Record<string, { date?: string }> = { ...achievements };
+    let newFound = false;
     for (const b of BADGES) {
       if (!u[b.id] && b.check(ctx)) {
         u[b.id] = { date: new Date().toISOString() };
+        newFound = true;
       }
     }
-    return { unlocked: u, count: Object.keys(u).length };
+    return { unlocked: u, count: Object.keys(u).length, hasNew: newFound };
   }, [achievements, ctx]);
+
+  useEffect(() => {
+    if (!hasNew || !user?.uid || persistedRef.current) return;
+    persistedRef.current = true;
+    updateUserDoc(user.uid, { achievements: unlocked } as any).catch(() => {});
+  }, [hasNew, unlocked, user?.uid]);
 
   const level = getLevel(count);
   const scoreDisplay = count * 100;

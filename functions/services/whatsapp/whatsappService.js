@@ -6,15 +6,10 @@ const fetch = require("node-fetch");
 const { WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID } = require("../../config");
 const { logError, logEvent } = require("../../logger");
 const { extractEntry, generateAnalysis } = require("../llm/llmService");
+const { startWizard, continueWizard, detectCategory, detectFormaPgto, detectType, DEFAULT_CATS } = require("../entryWizard");
 
 const META_API = "https://graph.facebook.com/v18.0";
 const APP_URL = process.env.APP_URL || "https://sibanki.com.br/app";
-
-const DEFAULT_CATS = [
-  "Moradia","Transporte","Alimentação","Saúde","Bem-estar","Educação",
-  "Lazer","Cartões","Empréstimo","Assinaturas","Imprevisto","Salário",
-  "Freela","Investimentos","Transferencia","Outros"
-];
 
 const fmtBRL = (v) => "R$ " + Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtDate = () => new Date().toISOString().slice(0,10);
@@ -45,54 +40,146 @@ function parseValueRegex(text) {
   return isNaN(v) ? null : Math.round(v*100)/100;
 }
 
-function inferTypeRegex(text) {
-  const t=(text||"").toLowerCase();
-  if(/\b(recebi|ganhei|salário|salario|entrada|venda|freela|pagamento recebido|depósito|deposito|pix recebido)\b/.test(t)) return "receita";
-  return "despesa";
-}
-
-function mapDescToCategory(desc) {
-  const d=(desc||"").toLowerCase();
-  if(/mercado|supermercado|alimentação|comida|restaurante|lanche|ifood|delivery/.test(d)) return "Alimentação";
-  if(/uber|taxi|combustível|gasolina|ônibus|transporte|estacionamento|metro/.test(d)) return "Transporte";
-  if(/luz|energia|água|agua|aluguel|condomínio|internet|net|vivo|claro|oi/.test(d)) return "Moradia";
-  if(/farmácia|remédio|médico|consulta|plano|saúde|drogaria/.test(d)) return "Saúde";
-  if(/salário|salario|freela|freela|venda|entrada/.test(d)) return "Salário";
-  if(/cartão|fatura|parcela/.test(d)) return "Cartões";
-  if(/academia|gym|corrida|esporte/.test(d)) return "Bem-estar";
-  if(/netflix|spotify|amazon|assinatura/.test(d)) return "Assinaturas";
-  return "Outros";
-}
-
-async function parseMessageToEntry(text) {
-  const trimmed=(text||"").trim();
-  if(!trimmed) return null;
+/**
+ * Extrai partial entry de texto livre (sem defaults para campos faltantes).
+ * Retorna null se não houver valor numérico reconhecível.
+ */
+async function parsePartialEntry(text) {
+  const trimmed = (text || "").trim();
+  if (!trimmed) return null;
   try {
+    // Tentar via LLM primeiro (mais preciso)
     let entry = await extractEntry(trimmed, DEFAULT_CATS);
-    if(!entry) {
-      // fallback regex
-      const value=parseValueRegex(trimmed);
-      if(!value||value<=0) return null;
-      const type=inferTypeRegex(trimmed);
-      let desc=trimmed.replace(/\bR\$\s*[\d.,]+\s*(reais?)?/gi,"").replace(/\b\d+[\.,]\d{2}\s*(reais?)?/gi,"").replace(/\b(recebi|ganhei|gastei|paguei|comprei)\b/gi,"").trim();
-      if(!desc) desc=type==="receita"?"Receita":"Despesa";
-      entry={type,value,desc:desc.substring(0,80),category:mapDescToCategory(desc)};
+    if (entry && entry.value > 0) {
+      // Manter apenas campos com confiança — não assumir defaults
+      return {
+        type: entry.type || detectType(trimmed),
+        value: entry.value,
+        desc: (entry.desc || trimmed).substring(0, 80),
+        category: entry.category && entry.category !== "Outros" ? entry.category : detectCategory(entry.desc || trimmed),
+        formaPgto: detectFormaPgto(trimmed) || null,
+        account: null, // sempre perguntar se múltiplas contas
+        date: entry.date || new Date().toISOString().slice(0, 10),
+      };
     }
-    if(!entry.date) entry.date=fmtDate();
-    if(!entry.account) entry.account="Carteira física";
-    return entry;
-  } catch(e) { logError("parseMessageToEntry",e); return null; }
+    // Fallback regex
+    const value = parseValueRegex(trimmed);
+    if (!value || value <= 0) return null;
+    const type = detectType(trimmed);
+    let desc = trimmed
+      .replace(/\bR\$\s*[\d.,]+\s*(reais?)?/gi, "")
+      .replace(/\b\d+[\.,]\d{2}\s*(reais?)?/gi, "")
+      .replace(/\b(recebi|ganhei|gastei|paguei|comprei|foi|era)\b/gi, "")
+      .trim();
+    if (!desc) desc = type === "receita" ? "Receita" : "Despesa";
+    return {
+      type,
+      value,
+      desc: desc.substring(0, 80),
+      category: detectCategory(desc),
+      formaPgto: detectFormaPgto(trimmed) || null,
+      account: null,
+      date: new Date().toISOString().slice(0, 10),
+    };
+  } catch (e) {
+    logError("parsePartialEntry", e);
+    return null;
+  }
+}
+
+// Manter compatibilidade com código existente
+async function parseMessageToEntry(text) {
+  const partial = await parsePartialEntry(text);
+  if (!partial) return null;
+  // Versão legacy: preencher defaults para não quebrar código que usa diretamente
+  return {
+    ...partial,
+    category: partial.category || "Outros",
+    account: partial.account || "Carteira física",
+    formaPgto: partial.formaPgto || "",
+  };
+}
+
+/**
+ * Gerencia o fluxo multi-turn de lançamento via WhatsApp.
+ * Lê e salva o estado do wizard em users/{uid}.waPendingWizard no Firestore.
+ *
+ * @returns {{ handled: true, reply: string } | { handled: false }}
+ */
+async function handleWizardMessage(db, uid, userData, text) {
+  const wizardState = userData.waPendingWizard || null;
+  const userAccounts = Array.isArray(userData.accounts) && userData.accounts.length > 0
+    ? userData.accounts
+    : ["Carteira física"];
+  const userCats = Array.isArray(userData.categories) && userData.categories.length > 0
+    ? userData.categories
+    : DEFAULT_CATS;
+
+  // ── Se há wizard em andamento, continuar ─────────────────────────────────
+  if (wizardState && wizardState.step) {
+    const result = continueWizard(wizardState, text);
+
+    if (result.cancelled) {
+      await db.collection("users").doc(uid).update({ waPendingWizard: null });
+      return { handled: true, reply: "❌ Lançamento cancelado. Tudo bem, pode enviar um novo quando quiser!" };
+    }
+
+    if (result.done) {
+      // Salvar lançamento e limpar wizard
+      const newEntry = await addEntryToUser(db, uid, result.entry);
+      await db.collection("users").doc(uid).update({ waPendingWizard: null });
+      const ico = result.entry.type === "receita" ? "📈 +" : "📉 -";
+      const fmtBRL = (v) => "R$ " + Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+      logEvent("waWizardComplete", { uid });
+      return {
+        handled: true,
+        reply: `✅ *Lançado com sucesso!*\n\n${ico} ${fmtBRL(result.entry.value)}\n📂 ${result.entry.category}\n💳 ${result.entry.formaPgto || "—"}\n🏦 ${result.entry.account}\n\nEnvie *resumo* para ver o balanço do mês. 💡`
+      };
+    }
+
+    // Próxima pergunta
+    await db.collection("users").doc(uid).update({ waPendingWizard: result });
+    return { handled: true, reply: result.question };
+  }
+
+  // ── Tentar iniciar novo wizard ────────────────────────────────────────────
+  const partial = await parsePartialEntry(text);
+  if (!partial || !partial.value || partial.value <= 0) {
+    return { handled: false }; // não é um lançamento, deixar ir para consultor IA
+  }
+
+  const wizardResult = startWizard(partial, userAccounts, userCats);
+
+  if (wizardResult.done) {
+    // Todos os campos preenchidos → ir direto para confirmação
+    await db.collection("users").doc(uid).update({ waPendingWizard: wizardResult });
+    return { handled: true, reply: wizardResult.question };
+  }
+
+  // Salvar estado e enviar primeira pergunta
+  await db.collection("users").doc(uid).update({ waPendingWizard: wizardResult });
+  return { handled: true, reply: wizardResult.question };
 }
 
 async function addEntryToUser(db, uid, entry) {
-  const userRef=db.collection("users").doc(uid);
-  const doc=await userRef.get();
-  if(!doc.exists) return false;
-  const data=doc.data();
-  const entries=Array.isArray(data.entries)?data.entries:[];
-  const newEntry={id:Date.now(),date:entry.date,type:entry.type,desc:entry.desc||entry.category,category:entry.category,value:entry.value,account:entry.account,status:"pago",formaPgto:""};
+  const userRef = db.collection("users").doc(uid);
+  const doc = await userRef.get();
+  if (!doc.exists) return false;
+  const data = doc.data();
+  const entries = Array.isArray(data.entries) ? data.entries : [];
+  const newEntry = {
+    id: Date.now(),
+    date: entry.date || new Date().toISOString().slice(0, 10),
+    type: entry.type,
+    desc: entry.desc || entry.category,
+    category: entry.category,
+    value: entry.value,
+    account: entry.account || "Carteira física",
+    status: "pago",
+    formaPgto: entry.formaPgto || "",
+  };
   entries.push(newEntry);
-  await userRef.update({entries,updated:new Date().toISOString()});
+  await userRef.update({ entries, updated: new Date().toISOString() });
   return newEntry;
 }
 
@@ -132,17 +219,60 @@ async function consultorIA(uid, pergunta, contextoFinanceiro) {
 async function sendWhatsAppText(phoneNumberId, to, text) {
   const token = WHATSAPP_TOKEN;
   const pid = phoneNumberId || WHATSAPP_PHONE_NUMBER_ID;
-  if (!token || !pid) { logError("wa send","missing token/phoneId"); return false; }
+  if (!token || !pid) {
+    logError(
+      "wa send",
+      "missing token/phone_number_id",
+      new Error("WHATSAPP_TOKEN e/ou WHATSAPP_PHONE_NUMBER_ID não configurados"),
+      { pid }
+    );
+    return false;
+  }
+
+  // Meta Cloud API espera um número em formato E.164 sem o '+', ex.: 5511999999999
+  // O legacy remove não-dígitos, mas pode chegar só com DDD+numero (10/11 dígitos).
+  // Para o Sibanki (Brasil), prefixamos 55 quando aplicável.
+  const rawDigits = String(to || "").replace(/\D/g, "");
+  let digits = rawDigits;
+  if (digits && (digits.length === 10 || digits.length === 11) && !digits.startsWith("55")) {
+    digits = "55" + digits;
+  }
+  if (!digits || digits.length < 10) {
+    logError(
+      "wa send",
+      "invalid recipient phone",
+      new Error("Telefone inválido para enviar WhatsApp"),
+      { toRaw: to, digits }
+    );
+    return false;
+  }
   try {
     const res = await fetch(`${META_API}/${pid}/messages`, {
       method:"POST",
       headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},
-      body:JSON.stringify({messaging_product:"whatsapp",recipient_type:"individual",to:String(to).replace(/\D/g,""),type:"text",text:{body:text,preview_url:false}})
+      body:JSON.stringify({
+        messaging_product:"whatsapp",
+        recipient_type:"individual",
+        to: digits,
+        type:"text",
+        text:{body:text,preview_url:false}
+      })
     });
     const json=await res.json();
-    if(json.error){logError("wa send error",json.error);return false;}
+    if(json.error){
+      logError(
+        "wa send error",
+        "graph api",
+        new Error(json.error.message || "Erro ao enviar mensagem (WhatsApp)"),
+        { pid, to: digits, error: json.error }
+      );
+      return false;
+    }
     return true;
-  } catch(e){logError("wa send",e);return false;}
+  } catch(e){
+    logError("wa send","fetch exception", e, { pid, to: digits });
+    return false;
+  }
 }
 
 // ── Mensagens de convite via WhatsApp ──
@@ -196,7 +326,8 @@ async function notifyCrediAmigoVencimento(phone, nome, nomeCredor, valorParcela,
 }
 
 module.exports = {
-  parseMessageToEntry, addEntryToUser,
+  parseMessageToEntry, parsePartialEntry, addEntryToUser,
+  handleWizardMessage,
   sendWhatsAppText, consultorIA,
   sendWhatsAppInviteFamilia, sendWhatsAppInviteConsorcio, sendWhatsAppInviteCrediAmigo,
   notifyConsorcioVencimento, notifyConsorcioInadimplente, notifyConsorcioSorteio,

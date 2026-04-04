@@ -5,6 +5,7 @@ import {
   ChevronRight, RefreshCw, Info,
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { ComingSoonOverlay } from '../components/ui/ComingSoonBadge';
 
 // ── Tipos demo ───────────────────────────────────────────────────────────────
 interface Negativacao {
@@ -227,7 +228,8 @@ export default function MeuCpf() {
 
       {/* ── NEGATIVAÇÕES ── */}
       {activeTab === 'Negativações' && (
-        <div className="bg-si-card rounded-2xl border border-si-border">
+        <div className="bg-si-card rounded-2xl border border-si-border relative">
+          <ComingSoonOverlay />
           {negativacoesCount === 0 ? (
             <div className="text-center py-16">
               <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
@@ -257,7 +259,8 @@ export default function MeuCpf() {
 
       {/* ── CONSULTAS ── */}
       {activeTab === 'Consultas' && (
-        <div className="bg-si-card rounded-2xl border border-si-border">
+        <div className="bg-si-card rounded-2xl border border-si-border relative">
+          <ComingSoonOverlay />
           <div className="px-6 py-3 border-b border-si-border flex items-center justify-between">
             <span className="text-sm font-semibold text-si-3">{consultasCount} consultas nos últimos 90 dias</span>
             <span className={`text-xs font-bold px-2 py-1 rounded-full ${
@@ -324,7 +327,8 @@ export default function MeuCpf() {
 
       {/* ── PROTEÇÃO ── */}
       {activeTab === 'Proteção' && (
-        <div className="space-y-4">
+        <div className="space-y-4 relative">
+          <ComingSoonOverlay />
           <div className="bg-gradient-to-br from-indigo-500/10 to-blue-500/10 rounded-2xl border border-indigo-500/20 p-6">
             <div className="flex items-center gap-3 mb-3">
               <Lock className="w-6 h-6 text-indigo-400" />

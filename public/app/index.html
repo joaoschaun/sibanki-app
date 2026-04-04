@@ -358,6 +358,7 @@
 <div class="drawer-nav-item" data-go="solucoes-investimentos"><div class="module-icon module-icon-invest"><i data-lucide="line-chart"></i></div><div class="dni-text"><span class="dni-label">Investimentos</span><span class="dni-desc">Parceiros e produtos</span></div></div>
 </div>
 </div>
+<div class="drawer-nav-item" data-go="ferramentas"><div class="module-icon module-icon-invest" style="background:rgba(99,102,241,.15)"><i data-lucide="wrench" style="color:#6366F1"></i></div><div class="dni-text"><span class="dni-label">Ferramentas</span><span class="dni-desc">Calculadoras financeiras</span></div></div>
 </nav>
 <div class="drawer-footer">
 <button class="drawer-upgrade-btn" id="drawerUpgradeBtn" onclick="closeDrawer();showPlansModal()" style="display:none" data-i18n="upgrade_pro">Upgrade para Pro</button>
@@ -830,7 +831,7 @@
 </div>
 
 <!-- SUB-TAB NAVIGATION (1. Minha Carteira, 2. Análise B3, 3. Proventos, 4. Simuladores, 5. Perfil) -->
-<div class="inv-nav" id="invNav">
+<div class="inv-nav" id="invNav" style="display:none">
 <button class="inv-tab active" onclick="showInvSub('invCarteira')" id="invTabCarteira">
 <span class="inv-tab-icon"><i data-lucide="briefcase" style="width:18px;height:18px"></i></span>
 <span class="inv-tab-text" data-i18n="minha_carteira">Minha Carteira</span>
@@ -936,100 +937,126 @@
 </div>
 
 <!-- ============================================ -->
-<!-- SUB-TAB: MINHA CARTEIRA (1ª aba, default) -->
+<!-- SUB-TAB: MINHA CARTEIRA (1ª aba, default)  -->
 <!-- ============================================ -->
 <div class="inv-sub active" id="invCarteira">
 
-<!-- 1. RESUMO E AÇÕES -->
-<div class="cb" style="margin-bottom:16px;border:1px solid var(--brd2);background:linear-gradient(135deg,rgba(79,140,255,.04),rgba(124,92,252,.02));border-radius:16px;overflow:hidden">
-<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:16px 20px;border-bottom:1px solid var(--brd)">
-<span style="display:inline-flex;align-items:center;gap:8px;font-size:1rem;font-weight:800;color:var(--t1)"><i data-lucide="bar-chart-2" style="width:20px;height:20px;color:var(--pri)"></i> Resumo da Carteira</span>
-<div style="display:flex;gap:8px;flex-wrap:wrap">
-<button class="btn btn-r btn-sm" onclick="go('ia');setTimeout(function(){iaAnalyze('investimentos');},300)" style="padding:8px 14px;font-size:.82em;display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,rgba(76,123,244,.2),rgba(124,92,252,.15));border:1px solid rgba(76,123,244,.3);color:var(--pri)"><i data-lucide="bot" style="width:14px;height:14px"></i> Perguntar ao Consultor</button>
-<button class="btn btn-r btn-sm" onclick="updateInvestQuotes();updateRendaFixaValues();refreshPortfolio()" style="padding:8px 14px;font-size:.82em;display:inline-flex;align-items:center;gap:5px"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Atualizar Cotações</button>
-<button class="b3-chip" onclick="exportPortfolioPDF()" style="font-size:.78em;display:inline-flex;align-items:center;gap:4px"><i data-lucide="download" style="width:14px;height:14px"></i> Exportar PDF</button>
-</div>
-</div>
-<div id="portfolioKPIs" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:16px 20px"></div>
-</div>
+<!-- ★ VISTA PRIMÁRIA: sempre visível ★ -->
+<div id="invPrimaryView">
 
-<!-- 2. REGISTRAR INVESTIMENTO -->
-<div class="fb inv-register-fb" style="margin-bottom:20px;overflow:visible">
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-<div style="width:30px;height:30px;border-radius:8px;background:rgba(16,185,129,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="plus-circle" style="width:16px;height:16px;color:#10B981"></i></div>
-<h3 style="font-size:.95rem;font-weight:700;margin:0;color:var(--t1)">Registrar Investimento</h3>
-</div>
-<div class="fg-grid">
-<div class="fg"><label>Data</label><input type="date" id="invDate"></div>
-<div class="fg inv-ticker-wrap" style="position:relative"><label>Nome/Ticker</label><input type="text" id="invNome" placeholder="Ex: PETR4, HGLG11, BOVA11, Tesouro IPCA+" aria-label="Nome ou ticker do ativo" autocomplete="off"><div id="invTickerDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:1050;max-height:220px;overflow-y:auto;overflow-x:hidden;background:var(--bg2);border:1px solid var(--brd);border-radius:8px;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,.3);min-width:100%;box-sizing:border-box"></div></div>
-<div class="fg"><label>Tipo</label><select id="invTipo">
-<option value="Renda Fixa">Renda Fixa</option>
-<option value="Tesouro Direto">Tesouro Direto</option>
-<option value="CDB">CDB</option>
-<option value="LCI/LCA">LCI/LCA</option>
-<option value="Ações">Ações</option>
-<option value="FIIs">FIIs</option>
-<option value="ETFs">ETFs</option>
-<option value="Cripto">Cripto</option>
-<option value="Poupança">Poupança</option>
-<option value="Previdência">Previdência</option>
-<option value="Outros">Outros</option>
-</select></div>
-<div class="fg"><label>Valor Investido (R$)</label><input type="number" id="invValor" step="0.01" min="0" placeholder="0.00" aria-label="0.00"><div id="invQtdStatus" style="font-size:.75em;margin-top:4px;min-height:18px;color:var(--t2)"></div></div>
-<div class="fg"><label>Valor Atual (R$)</label><input type="text" inputmode="decimal" id="invAtual" step="0.01" min="0" placeholder="0.00" aria-label="0.00"></div>
-<div class="fg"><label>Conta/Corretora</label><select id="invConta"></select></div>
-</div>
-<div class="fbtns">
-<button class="btn btn-g" onclick="addInv()">Registrar Investimento</button>
-</div>
-</div>
+  <!-- KPIs -->
+  <div id="portfolioKPIs" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px"></div>
 
-<!-- 3. ANÁLISE DA CARTEIRA (evolução, rentabilidade, alocação) -->
-<div class="cb" style="margin-bottom:20px;border:1px solid var(--brd);border-radius:16px;overflow:hidden">
-<div class="ch" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:14px 18px;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(5,150,105,.04));border-bottom:1px solid var(--brd)">
-<div style="display:flex;align-items:center;gap:8px">
-<i data-lucide="trending-up" style="width:20px;height:20px;color:#10B981"></i>
-<span style="font-size:1rem;font-weight:700;color:var(--t1)"><span data-i18n="analise_carteira">Análise da Carteira</span></span>
-<span style="font-size:.72em;color:var(--t3)"><span data-i18n="evolucao_rent_alocacao">Evolução, rentabilidade e alocação</span></span>
-</div>
-<div id="portfolioAnaliseSummary" style="font-size:.8em;font-weight:600;color:var(--t2)"></div>
-</div>
-<div style="padding:16px 18px">
-<div class="inv-analise-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-<div style="background:var(--bg2);border-radius:12px;padding:16px;border:1px solid var(--brd)">
-<div style="font-size:.78em;color:var(--t3);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px"><span data-i18n="evolucao_patrimonial"><span data-i18n="evolucao_patrimonial">Evolução Patrimonial</span></span></div>
-<p style="font-size:.72em;color:var(--t2);margin:-4px 0 8px">Investido acumulado vs valor atual por mês</p>
-<canvas id="portfolioEvolutionChart" height="200"></canvas>
-</div>
-<div style="background:var(--bg2);border-radius:12px;padding:16px;border:1px solid var(--brd)">
-<div style="font-size:.78em;color:var(--t3);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px"><span data-i18n="alocacao_por_tipo">Alocação por Tipo</span></div>
-<p style="font-size:.72em;color:var(--t2);margin:-4px 0 8px">Distribuição do patrimônio</p>
-<canvas id="portfolioTypeChart"></canvas>
-<div id="portfolioTypeLegend" style="margin-top:8px"></div>
-</div>
-</div>
-<div style="background:var(--bg2);border-radius:12px;padding:14px;border:1px solid var(--brd);overflow:visible">
-<div style="font-size:.78em;color:var(--t3);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Rentabilidade por Ativo</div>
-<p style="font-size:.72em;color:var(--t2);margin:-4px 0 8px">Retorno % de cada ativo na carteira</p>
-<canvas id="portfolioReturnChart" height="240"></canvas>
-</div>
-</div>
-</div>
+  <!-- Ações rápidas -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
+    <button onclick="toggleInvForm()" id="invFormToggleBtn"
+      style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.35);color:#10B981;font-size:.88em;font-weight:700;cursor:pointer;transition:all .2s">
+      <i data-lucide="plus-circle" style="width:16px;height:16px"></i>
+      <span id="invFormToggleLabel">Novo investimento</span>
+    </button>
+    <button onclick="updateInvestQuotes();updateRendaFixaValues();refreshPortfolio()"
+      style="display:inline-flex;align-items:center;gap:6px;padding:10px 14px;border-radius:12px;border:1px solid var(--brd);background:transparent;color:var(--t2);font-size:.82em;font-weight:600;cursor:pointer;transition:all .2s">
+      <i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Atualizar cotações
+    </button>
+    <button onclick="go('ia');setTimeout(function(){iaAnalyze('investimentos');},300)"
+      style="display:inline-flex;align-items:center;gap:6px;padding:10px 14px;border-radius:12px;border:1px solid rgba(76,123,244,.3);background:rgba(76,123,244,.08);color:var(--pri);font-size:.82em;font-weight:600;cursor:pointer;transition:all .2s">
+      <i data-lucide="bot" style="width:14px;height:14px"></i> Consultor IA
+    </button>
+  </div>
 
-<!-- 4. DETALHAMENTO -->
-<div class="cb" style="margin-bottom:20px">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-<span style="font-size:.95em;font-weight:700;color:var(--t1);display:inline-flex;align-items:center;gap:6px"><i data-lucide="list" style="width:18px;height:18px"></i> Detalhamento da Carteira</span>
-<select id="portfolioSort" onchange="renderPortfolioTable()" style="padding:6px 10px;border:1px solid var(--brd);border-radius:8px;background:var(--bg2);color:var(--t1);font-size:.8em;outline:none">
-<option value="valor"><span data-i18n="maior_posicao">Maior Posição</span></option>
-<option value="retorno">Maior Retorno %</option>
-<option value="perda">Maior Perda %</option>
-<option value="tipo">Por Tipo</option>
-<option value="nome">Alfabético</option>
-</select>
-</div>
-<div id="portfolioTable" style="max-height:400px;overflow-y:auto"></div>
-</div>
+  <!-- Formulário de registro — colapsável -->
+  <div id="invFormPanel" style="display:none;margin-bottom:20px">
+    <div class="fb inv-register-fb" style="overflow:visible">
+      <div class="fg-grid">
+        <div class="fg"><label>Data</label><input type="date" id="invDate"></div>
+        <div class="fg inv-ticker-wrap" style="position:relative"><label>Nome/Ticker</label><input type="text" id="invNome" placeholder="Ex: PETR4, HGLG11, Tesouro IPCA+" aria-label="Nome ou ticker do ativo" autocomplete="off"><div id="invTickerDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:1050;max-height:220px;overflow-y:auto;overflow-x:hidden;background:var(--bg2);border:1px solid var(--brd);border-radius:8px;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,.3);min-width:100%;box-sizing:border-box"></div></div>
+        <div class="fg"><label>Tipo</label><select id="invTipo">
+          <option value="Renda Fixa">Renda Fixa</option>
+          <option value="Tesouro Direto">Tesouro Direto</option>
+          <option value="CDB">CDB</option>
+          <option value="LCI/LCA">LCI/LCA</option>
+          <option value="Ações">Ações</option>
+          <option value="FIIs">FIIs</option>
+          <option value="ETFs">ETFs</option>
+          <option value="Cripto">Cripto</option>
+          <option value="Poupança">Poupança</option>
+          <option value="Previdência">Previdência</option>
+          <option value="Outros">Outros</option>
+        </select></div>
+        <div class="fg"><label>Valor Investido (R$)</label><input type="number" id="invValor" step="0.01" min="0" placeholder="0.00" aria-label="0.00"><div id="invQtdStatus" style="font-size:.75em;margin-top:4px;min-height:18px;color:var(--t2)"></div></div>
+        <div class="fg"><label>Valor Atual (R$)</label><input type="text" inputmode="decimal" id="invAtual" step="0.01" min="0" placeholder="0.00" aria-label="0.00"></div>
+        <div class="fg"><label>Conta/Corretora</label><select id="invConta"></select></div>
+      </div>
+      <div class="fbtns">
+        <button class="btn btn-g" onclick="addInv()">Registrar Investimento</button>
+        <button class="btn" onclick="toggleInvForm()" style="margin-left:8px;background:transparent;border:1px solid var(--brd);color:var(--t2)">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de ativos (sempre visível) -->
+  <div class="cb" style="margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <span style="font-size:.95em;font-weight:700;color:var(--t1);display:inline-flex;align-items:center;gap:6px">
+        <i data-lucide="list" style="width:18px;height:18px"></i> Meus investimentos
+      </span>
+      <select id="portfolioSort" onchange="renderPortfolioTable()" style="padding:6px 10px;border:1px solid var(--brd);border-radius:8px;background:var(--bg2);color:var(--t1);font-size:.8em;outline:none">
+        <option value="valor">Maior Posição</option>
+        <option value="retorno">Maior Retorno %</option>
+        <option value="perda">Maior Perda %</option>
+        <option value="tipo">Por Tipo</option>
+        <option value="nome">Alfabético</option>
+      </select>
+    </div>
+    <div id="portfolioTable" style="max-height:500px;overflow-y:auto"></div>
+  </div>
+
+  <!-- Botão "Ver análise completa" -->
+  <div style="display:flex;justify-content:center;padding:8px 0 24px">
+    <button onclick="toggleInvDetail()" id="invDetailToggleBtn"
+      style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:16px;border:1px solid var(--brd2);background:var(--bg2);color:var(--t2);font-size:.88em;font-weight:700;cursor:pointer;transition:all .25s;letter-spacing:.01em">
+      <i data-lucide="zap" style="width:16px;height:16px;color:var(--pri)"></i>
+      <span id="invDetailToggleLabel">Ver análise completa e ferramentas</span>
+      <i data-lucide="chevron-down" id="invDetailToggleChevron" style="width:15px;height:15px;transition:transform .25s"></i>
+    </button>
+  </div>
+
+</div><!-- /invPrimaryView -->
+
+<!-- ★ PAINEL DE DETALHE: gráficos + ferramentas + abas avançadas ★ -->
+<div id="invDetailPanel" style="display:none">
+
+  <!-- Análise da Carteira (gráficos) -->
+  <div class="cb" style="margin-bottom:20px;border:1px solid var(--brd);border-radius:16px;overflow:hidden">
+    <div class="ch" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:14px 18px;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(5,150,105,.04));border-bottom:1px solid var(--brd)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <i data-lucide="trending-up" style="width:20px;height:20px;color:#10B981"></i>
+        <span style="font-size:1rem;font-weight:700;color:var(--t1)">Análise da Carteira</span>
+        <span style="font-size:.72em;color:var(--t3)">Evolução, rentabilidade e alocação</span>
+      </div>
+      <div id="portfolioAnaliseSummary" style="font-size:.8em;font-weight:600;color:var(--t2)"></div>
+    </div>
+    <div style="padding:16px 18px">
+      <div class="inv-analise-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div style="background:var(--bg2);border-radius:12px;padding:16px;border:1px solid var(--brd)">
+          <div style="font-size:.78em;color:var(--t3);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Evolução Patrimonial</div>
+          <p style="font-size:.72em;color:var(--t2);margin:-4px 0 8px">Investido acumulado vs valor atual por mês</p>
+          <canvas id="portfolioEvolutionChart" height="200"></canvas>
+        </div>
+        <div style="background:var(--bg2);border-radius:12px;padding:16px;border:1px solid var(--brd)">
+          <div style="font-size:.78em;color:var(--t3);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Alocação por Tipo</div>
+          <p style="font-size:.72em;color:var(--t2);margin:-4px 0 8px">Distribuição do patrimônio</p>
+          <canvas id="portfolioTypeChart"></canvas>
+          <div id="portfolioTypeLegend" style="margin-top:8px"></div>
+        </div>
+      </div>
+      <div style="background:var(--bg2);border-radius:12px;padding:14px;border:1px solid var(--brd);overflow:visible">
+        <div style="font-size:.78em;color:var(--t3);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Rentabilidade por Ativo</div>
+        <p style="font-size:.72em;color:var(--t2);margin:-4px 0 8px">Retorno % de cada ativo na carteira</p>
+        <canvas id="portfolioReturnChart" height="240"></canvas>
+      </div>
+    </div>
+  </div>
 
 <!-- 5. FERRAMENTAS -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">
@@ -1076,6 +1103,9 @@
 <!-- ============================================ -->
 <!-- SUB-TAB: ANÁLISE B3 -->
 <!-- ============================================ -->
+</div><!-- /invDetailPanel -->
+</div><!-- /invCarteira -->
+
 <div class="inv-sub" id="invAnalise">
 
 <!-- MÓDULO B3 - DADOS REAIS -->
@@ -1423,9 +1453,6 @@
 </div>
 
 
-
-</div>
-
 <!-- ============================================ -->
 <!-- SUB-TAB: PROVENTOS & RENDA -->
 <!-- ============================================ -->
@@ -1481,86 +1508,22 @@
 <!-- ============================================ -->
 <div class="inv-sub" id="invSimuladores">
 
-<!-- 1. SIMULADOR FIRE (Independência Financeira) -->
-<div class="cb" style="margin-bottom:16px;border:1px solid rgba(34,197,94,.25);background:linear-gradient(135deg,rgba(34,197,94,.03),rgba(16,185,129,.02))">
-<div class="ch" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-<span><i data-lucide="flame" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i><span data-i18n="simulador_fire">Simulador FIRE — Independência Financeira</span></span>
-<button class="b3-chip" onclick="toggleFireHelp()" style="font-size:.68em">O que é FIRE?</button>
+<div class="cb" style="margin:16px 0;border-radius:16px;padding:24px;border:1px solid rgba(99,102,241,.25);background:linear-gradient(135deg,rgba(99,102,241,.05),rgba(79,140,255,.03))">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+<div style="width:44px;height:44px;border-radius:12px;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="wrench" style="width:22px;height:22px;color:#6366F1"></i></div>
+<div><div style="font-size:1em;font-weight:800;color:var(--t1)">Calculadoras e Simuladores</div><div style="font-size:.82em;color:var(--t3);margin-top:2px">Movidos para a aba Ferramentas</div></div>
 </div>
-<div id="fireHelp" style="display:none;margin-bottom:12px;padding:12px;background:var(--bg2);border-radius:10px;border:1px solid var(--brd);font-size:.82em;color:var(--t2);line-height:1.7">
-<strong style="color:var(--t1)">FIRE (Financial Independence, Retire Early)</strong> = Independência financeira e aposentadoria antecipada. A ideia é acumular patrimônio suficiente para que seus rendimentos cubram seus gastos mensais, sem depender de salario. A regra dos 4% sugere que voce pode retirar 4% ao ano do seu patrimônio de forma sustentavel.
+<p style="font-size:.85em;color:var(--t2);line-height:1.6;margin-bottom:16px">Os simuladores foram movidos para <strong>Ferramentas</strong> — acessível pelo menu lateral.</p>
+<button onclick="go('ferramentas',null)" class="btn btn-b" style="display:inline-flex;align-items:center;gap:8px;font-size:.88em;border-radius:12px;padding:10px 20px">
+<i data-lucide="wrench" style="width:16px;height:16px"></i> Abrir Ferramentas
+</button>
 </div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin:12px 0">
-<div class="fg"><label style="font-size:.72em;color:var(--t2)">Patrimonio Atual (R$)</label><input type="number" id="firePatrimonio" value="0" step="1000" style="width:100%;padding:6px 8px;border:1px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--t1);font-size:.85em;outline:none"></div>
-<div class="fg"><label style="font-size:.72em;color:var(--t2)">Aporte Mensal (R$)</label><input type="number" id="fireAporte" value="2000" step="100" style="width:100%;padding:6px 8px;border:1px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--t1);font-size:.85em;outline:none"></div>
-<div class="fg"><label style="font-size:.72em;color:var(--t2)">Gasto Mensal (R$)</label><input type="number" id="fireGasto" value="5000" step="100" style="width:100%;padding:6px 8px;border:1px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--t1);font-size:.85em;outline:none"></div>
-<div class="fg"><label style="font-size:.72em;color:var(--t2)">Rentabilidade Anual (%)</label><input type="number" id="fireRent" value="10" step="0.5" style="width:100%;padding:6px 8px;border:1px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--t1);font-size:.85em;outline:none"></div>
-<div class="fg"><label style="font-size:.72em;color:var(--t2)">Inflação Anual (%)</label><input type="number" id="fireInflacao" value="4.5" step="0.5" style="width:100%;padding:6px 8px;border:1px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--t1);font-size:.85em;outline:none"></div>
-<div class="fg"><label style="font-size:.72em;color:var(--t2)">Sua Idade Atual</label><input type="number" id="fireIdade" value="30" step="1" style="width:100%;padding:6px 8px;border:1px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--t1);font-size:.85em;outline:none"></div>
-</div>
-<div style="display:flex;gap:8px;margin-bottom:12px">
-<button class="btn btn-b btn-sm" onclick="calcFIRE()" style="font-size:.82em"><i data-lucide="flame" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i>Simular FIRE</button>
-<button class="btn btn-r btn-sm" onclick="autoFillFIRE()" style="font-size:.78em"><i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Preencher com meus dados</button>
-</div>
-<div id="fireResult"></div>
-<div style="margin-top:12px"><canvas id="fireChart" height="200"></canvas></div>
-</div>
-
-
-
-<!-- 4. CALCULADORA DE IR -->
-<div class="cb" style="margin-bottom:16px">
-<div class="ch" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-<span><i data-lucide="calculator" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"></i>Calculadora de IR sobre Investimentos</span>
-<button class="b3-chip" onclick="toggleIRHelp()" style="font-size:.68em">Regras de IR</button>
-</div>
-<div id="irHelp" style="display:none;margin-bottom:12px;padding:12px;background:var(--bg2);border-radius:10px;border:1px solid var(--brd);font-size:.78em;color:var(--t2);line-height:1.8">
-<strong style="color:var(--t1)">Regras principais:</strong><br>
-<strong>Ações:</strong> Isento até R$ 20.000 em vendas/mês. Acima: 15% (swing) ou 20% (day trade).<br>
-<strong>FIIs:</strong> 20% sobre lucro na venda. Dividendos são isentos.<br>
-<strong>Renda Fixa:</strong> Tabela regressiva: 22.5% (até 180d), 20% (181-360d), 17.5% (361-720d), 15% (acima 720d).<br>
-<strong>Cripto:</strong> Isento até R$ 35.000 em vendas/mês. Acima: 15% a 22.5%.<br>
-<strong>LCI/LCA e Poupança:</strong> Isentos de IR.
-</div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin:12px 0">
-<div class="fg"><label style="font-size:.72em;color:var(--t2)">Tipo de Ativo</label>
-<select id="irTipo" onchange="updateIRFields()" style="width:100%;padding:6px 8px;border:1px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--t1);font-size:.85em;outline:none">
-<option value="acoes">Ações (Swing Trade)</option>
-<option value="acoes_dt">Ações (Day Trade)</option>
-<option value="fiis">FIIs</option>
-<option value="rf">Renda Fixa</option>
-<option value="cripto">Criptomoedas</option>
-</select></div>
-<div class="fg"><label style="font-size:.72em;color:var(--t2)">Valor de Compra (R$)</label><input type="number" id="irCompra" value="10000" step="100" style="width:100%;padding:6px 8px;border:1px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--t1);font-size:.85em;outline:none"></div>
-<div class="fg"><label style="font-size:.72em;color:var(--t2)">Valor de Venda (R$)</label><input type="number" id="irVenda" value="15000" step="100" style="width:100%;padding:6px 8px;border:1px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--t1);font-size:.85em;outline:none"></div>
-<div class="fg"><label style="font-size:.72em;color:var(--t2)">Total Vendido no Mes (R$)</label><input type="number" id="irTotalMes" value="15000" step="1000" style="width:100%;padding:6px 8px;border:1px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--t1);font-size:.85em;outline:none"></div>
-<div class="fg" id="irDiasGroup"><label style="font-size:.72em;color:var(--t2)">Dias de Aplicação</label><input type="number" id="irDias" value="365" step="30" style="width:100%;padding:6px 8px;border:1px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--t1);font-size:.85em;outline:none"></div>
-<div class="fg"><label style="font-size:.72em;color:var(--t2)">Prejuízo Acumulado (R$)</label><input type="number" id="irPrejuizo" value="0" step="100" style="width:100%;padding:6px 8px;border:1px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--t1);font-size:.85em;outline:none"></div>
-</div>
-<button class="btn btn-b btn-sm" onclick="calcIR()" style="font-size:.82em"><i data-lucide="calculator" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i>Calcular IR</button>
-<div id="irResult" style="margin-top:12px"></div>
-</div>
-
-
-
-<!-- CALCULADORA JUROS COMPOSTOS -->
-<div class="fb">
-<h3 style="margin-bottom:14px;font-size:1rem">Calculadora de Juros Compostos</h3>
-<div class="fg-grid">
-<div class="fg"><label>Investimento Inicial (R$)</label><input type="number" id="calcIni" value="1000" step="100"></div>
-<div class="fg"><label>Aporte Mensal (R$)</label><input type="number" id="calcMensal" value="500" step="50"></div>
-<div class="fg"><label>Taxa Mensal (%)</label><input type="number" id="calcTaxa" value="1" step="0.1"></div>
-<div class="fg"><label>Período (meses)</label><input type="number" id="calcMeses" value="120" step="12"></div>
-</div>
-<button class="btn btn-b" onclick="calcJuros()">Calcular</button>
-<div id="calcResult"></div>
-</div>
-
-
-
 
 </div>
 
+<!-- ============================================ -->
+<!-- SUB-TAB: PERFIL DO INVESTIDOR -->
+<!-- ============================================ -->
 <!-- ============================================ -->
 <!-- SUB-TAB: PERFIL DO INVESTIDOR -->
 <!-- ============================================ -->
@@ -1599,6 +1562,160 @@
 </div>
 
 <!-- TAB: METAS (padrão orçamento/contas) -->
+<!-- TAB: FERRAMENTAS -->
+<div id="ferramentas" class="tab">
+<div class="fin-header">
+<div class="fin-header-text">
+<h2 style="margin:0;font-size:1.2em;display:inline-flex;align-items:center;gap:10px"><i data-lucide="wrench" style="width:26px;height:26px;color:#6366F1"></i> Ferramentas</h2>
+<p style="margin:4px 0 0;font-size:.82em;color:var(--t2)">Calculadoras e simuladores financeiros</p>
+</div>
+</div>
+
+<div id="ferramentasAccordion" style="display:flex;flex-direction:column;gap:12px;max-width:740px">
+
+<!-- JUROS COMPOSTOS -->
+<div class="cb ferra-card" style="border-radius:16px;overflow:hidden;border:1px solid var(--brd)">
+<button class="ferra-header" onclick="toggleFerra('ferraCompostos')" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px 18px;background:none;border:none;cursor:pointer;text-align:left">
+<div style="width:40px;height:40px;border-radius:12px;background:rgba(79,140,255,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="calculator" style="width:20px;height:20px;color:#4F8CFF"></i></div>
+<div style="flex:1"><div style="font-weight:700;color:var(--t1)">Juros Compostos</div><div style="font-size:.78em;color:var(--t3)">Simule montante futuro com aportes mensais</div></div>
+<i data-lucide="chevron-down" id="chevCompostos" style="width:18px;height:18px;color:var(--t3);transition:transform .2s;flex-shrink:0"></i>
+</button>
+<div id="ferraCompostos" style="display:none;padding:0 18px 18px;border-top:1px solid var(--brd)">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px">
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Valor inicial (R$)</label><input type="number" id="fcIni" value="1000" step="100" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Aporte mensal (R$)</label><input type="number" id="fcMensal" value="200" step="50" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Taxa ao ano (%)</label><input type="number" id="fcTaxa" value="10" step="0.5" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Prazo (meses)</label><input type="number" id="fcMeses" value="60" step="12" class="fi" style="font-size:.9em"></div>
+</div>
+<button class="btn btn-b btn-sm" onclick="calcFerraCompostos()" style="margin-top:12px;font-size:.85em">Calcular</button>
+<div id="fcResult" style="margin-top:10px"></div>
+</div>
+</div>
+
+<!-- ATINGIR META -->
+<div class="cb ferra-card" style="border-radius:16px;overflow:hidden;border:1px solid var(--brd)">
+<button class="ferra-header" onclick="toggleFerra('ferraMeta')" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px 18px;background:none;border:none;cursor:pointer;text-align:left">
+<div style="width:40px;height:40px;border-radius:12px;background:rgba(16,185,129,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="target" style="width:20px;height:20px;color:#10B981"></i></div>
+<div style="flex:1"><div style="font-weight:700;color:var(--t1)">Atingir Meta</div><div style="font-size:.78em;color:var(--t3)">Descubra quanto investir por mês</div></div>
+<i data-lucide="chevron-down" id="chevMeta" style="width:18px;height:18px;color:var(--t3);transition:transform .2s;flex-shrink:0"></i>
+</button>
+<div id="ferraMeta" style="display:none;padding:0 18px 18px;border-top:1px solid var(--brd)">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px">
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Meta (R$)</label><input type="number" id="fmMeta" value="100000" step="1000" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Valor inicial (R$)</label><input type="number" id="fmIni" value="0" step="100" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Taxa ao ano (%)</label><input type="number" id="fmTaxa" value="10" step="0.5" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Prazo (anos)</label><input type="number" id="fmAnos" value="10" step="1" class="fi" style="font-size:.9em"></div>
+</div>
+<button class="btn btn-g btn-sm" onclick="calcFerraMeta()" style="margin-top:12px;font-size:.85em">Calcular</button>
+<div id="fmResult" style="margin-top:10px"></div>
+</div>
+</div>
+
+<!-- RENDA FIXA -->
+<div class="cb ferra-card" style="border-radius:16px;overflow:hidden;border:1px solid var(--brd)">
+<button class="ferra-header" onclick="toggleFerra('ferraRendaFixa')" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px 18px;background:none;border:none;cursor:pointer;text-align:left">
+<div style="width:40px;height:40px;border-radius:12px;background:rgba(6,182,212,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="piggy-bank" style="width:20px;height:20px;color:#06B6D4"></i></div>
+<div style="flex:1"><div style="font-weight:700;color:var(--t1)">Renda Fixa</div><div style="font-size:.78em;color:var(--t3)">CDB, LCI/LCA, Tesouro — rendimento bruto</div></div>
+<i data-lucide="chevron-down" id="chevRendaFixa" style="width:18px;height:18px;color:var(--t3);transition:transform .2s;flex-shrink:0"></i>
+</button>
+<div id="ferraRendaFixa" style="display:none;padding:0 18px 18px;border-top:1px solid var(--brd)">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px">
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Valor inicial (R$)</label><input type="number" id="frfIni" value="10000" step="1000" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Taxa ao ano (%)</label><input type="number" id="frfTaxa" value="12" step="0.5" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Prazo (meses)</label><input type="number" id="frfMeses" value="24" step="1" class="fi" style="font-size:.9em"></div>
+</div>
+<button class="btn btn-sm" onclick="calcFerraRendaFixa()" style="margin-top:12px;font-size:.85em;background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);color:#06B6D4;border-radius:8px;padding:7px 16px;cursor:pointer;font-weight:700">Calcular</button>
+<div id="frfResult" style="margin-top:10px"></div>
+</div>
+</div>
+
+<!-- RENDA PASSIVA -->
+<div class="cb ferra-card" style="border-radius:16px;overflow:hidden;border:1px solid var(--brd)">
+<button class="ferra-header" onclick="toggleFerra('ferraRendaPassiva')" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px 18px;background:none;border:none;cursor:pointer;text-align:left">
+<div style="width:40px;height:40px;border-radius:12px;background:rgba(139,92,246,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="dollar-sign" style="width:20px;height:20px;color:#8B5CF6"></i></div>
+<div style="flex:1"><div style="font-weight:700;color:var(--t1)">Renda Passiva</div><div style="font-size:.78em;color:var(--t3)">Capital necessário para renda mensal</div></div>
+<i data-lucide="chevron-down" id="chevRendaPassiva" style="width:18px;height:18px;color:var(--t3);transition:transform .2s;flex-shrink:0"></i>
+</button>
+<div id="ferraRendaPassiva" style="display:none;padding:0 18px 18px;border-top:1px solid var(--brd)">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:14px">
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Renda mensal desejada (R$)</label><input type="number" id="frpRenda" value="2000" step="100" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Rendimento mensal (%)</label><input type="number" id="frpYield" value="0.8" step="0.1" class="fi" style="font-size:.9em"></div>
+</div>
+<button class="btn btn-sm" onclick="calcFerraRendaPassiva()" style="margin-top:12px;font-size:.85em;background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.3);color:#8B5CF6;border-radius:8px;padding:7px 16px;cursor:pointer;font-weight:700">Calcular</button>
+<div id="frpResult" style="margin-top:10px"></div>
+</div>
+</div>
+
+<!-- FIRE -->
+<div class="cb ferra-card" style="border-radius:16px;overflow:hidden;border:1px solid var(--brd)">
+<button class="ferra-header" onclick="toggleFerra('ferraFire')" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px 18px;background:none;border:none;cursor:pointer;text-align:left">
+<div style="width:40px;height:40px;border-radius:12px;background:rgba(245,158,11,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="flame" style="width:20px;height:20px;color:#F59E0B"></i></div>
+<div style="flex:1"><div style="font-weight:700;color:var(--t1)">FIRE — Independência Financeira</div><div style="font-size:.78em;color:var(--t3)">Calcule quando pode se aposentar</div></div>
+<i data-lucide="chevron-down" id="chevFire" style="width:18px;height:18px;color:var(--t3);transition:transform .2s;flex-shrink:0"></i>
+</button>
+<div id="ferraFire" style="display:none;padding:0 18px 18px;border-top:1px solid var(--brd)">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px">
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Gasto mensal (R$)</label><input type="number" id="ffGasto" value="5000" step="100" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Taxa segura anual (%)</label><input type="number" id="ffTaxaSegura" value="4" step="0.5" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Capital atual (R$)</label><input type="number" id="ffCapital" value="50000" step="1000" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Aporte mensal (R$)</label><input type="number" id="ffAporte" value="2000" step="100" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Retorno anual (%)</label><input type="number" id="ffRetorno" value="10" step="0.5" class="fi" style="font-size:.9em"></div>
+</div>
+<button class="btn btn-sm" onclick="calcFerraFire()" style="margin-top:12px;font-size:.85em;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:#F59E0B;border-radius:8px;padding:7px 16px;cursor:pointer;font-weight:700"><i data-lucide="flame" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Simular FIRE</button>
+<div id="ffResult" style="margin-top:10px"></div>
+</div>
+</div>
+
+<!-- PREÇO MÉDIO -->
+<div class="cb ferra-card" style="border-radius:16px;overflow:hidden;border:1px solid var(--brd)">
+<button class="ferra-header" onclick="toggleFerra('ferraPrecoMedio')" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px 18px;background:none;border:none;cursor:pointer;text-align:left">
+<div style="width:40px;height:40px;border-radius:12px;background:rgba(16,185,129,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="trending-up" style="width:20px;height:20px;color:#10B981"></i></div>
+<div style="flex:1"><div style="font-weight:700;color:var(--t1)">Preço Médio</div><div style="font-size:.78em;color:var(--t3)">Calcule o novo PM após compra adicional</div></div>
+<i data-lucide="chevron-down" id="chevPrecoMedio" style="width:18px;height:18px;color:var(--t3);transition:transform .2s;flex-shrink:0"></i>
+</button>
+<div id="ferraPrecoMedio" style="display:none;padding:0 18px 18px;border-top:1px solid var(--brd)">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px">
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Quantidade atual</label><input type="number" id="fpmQtdAtual" value="100" step="1" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">PM atual (R$)</label><input type="number" id="fpmPmAtual" value="25" step="0.01" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Nova compra (qtd)</label><input type="number" id="fpmQtdNova" value="50" step="1" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Preço de compra (R$)</label><input type="number" id="fpmPreco" value="22" step="0.01" class="fi" style="font-size:.9em"></div>
+</div>
+<button class="btn btn-g btn-sm" onclick="calcFerraPrecoMedio()" style="margin-top:12px;font-size:.85em">Calcular PM</button>
+<div id="fpmResult" style="margin-top:10px"></div>
+</div>
+</div>
+
+<!-- IR SOBRE INVESTIMENTOS -->
+<div class="cb ferra-card" style="border-radius:16px;overflow:hidden;border:1px solid var(--brd)">
+<button class="ferra-header" onclick="toggleFerra('ferraIR')" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px 18px;background:none;border:none;cursor:pointer;text-align:left">
+<div style="width:40px;height:40px;border-radius:12px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="receipt" style="width:20px;height:20px;color:#EF4444"></i></div>
+<div style="flex:1"><div style="font-weight:700;color:var(--t1)">IR sobre Investimentos</div><div style="font-size:.78em;color:var(--t3)">Ações, FIIs, renda fixa e cripto</div></div>
+<i data-lucide="chevron-down" id="chevIR" style="width:18px;height:18px;color:var(--t3);transition:transform .2s;flex-shrink:0"></i>
+</button>
+<div id="ferraIR" style="display:none;padding:0 18px 18px;border-top:1px solid var(--brd)">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px">
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Tipo de ativo</label>
+<select id="firTipo" onchange="updateFerraIRFields()" class="fi" style="font-size:.9em">
+<option value="acoes">Ações (Swing Trade)</option>
+<option value="acoes_dt">Ações (Day Trade)</option>
+<option value="fiis">FIIs</option>
+<option value="rf">Renda Fixa</option>
+<option value="cripto">Criptomoedas</option>
+</select></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Valor de compra (R$)</label><input type="number" id="firCompra" value="10000" step="100" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Valor de venda (R$)</label><input type="number" id="firVenda" value="15000" step="100" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Total vendido no mês (R$)</label><input type="number" id="firTotalMes" value="15000" step="1000" class="fi" style="font-size:.9em"></div>
+<div class="fg" id="firDiasGrp"><label style="font-size:.78em;color:var(--t2)">Dias de aplicação</label><input type="number" id="firDias" value="365" step="30" class="fi" style="font-size:.9em"></div>
+<div class="fg"><label style="font-size:.78em;color:var(--t2)">Prejuízo acumulado (R$)</label><input type="number" id="firPrejuizo" value="0" step="100" class="fi" style="font-size:.9em"></div>
+</div>
+<button class="btn btn-sm" onclick="calcFerraIR()" style="margin-top:12px;font-size:.85em;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#EF4444;border-radius:8px;padding:7px 16px;cursor:pointer;font-weight:700"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Calcular IR</button>
+<div id="firResult" style="margin-top:10px"></div>
+</div>
+</div>
+
+</div><!-- /ferramentasAccordion -->
+</div><!-- /tab ferramentas -->
+
 <div id="metas" class="tab">
 <div id="metasWrap" class="metas-wrap">
 <header class="metas-header">
@@ -3122,6 +3239,7 @@
 </div>
 
 </div>
+
 </div>
 
 <!-- TAB: COMUNIDADE -->
@@ -3695,7 +3813,7 @@
 </div>
 </div>
 </div>
-</div><div id="termsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:99999;align-items:center;justify-content:center;overflow-y:auto">
+<div id="termsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:99999;align-items:center;justify-content:center;overflow-y:auto">
 <div style="background:var(--c1,var(--card));border-radius:16px;padding:28px;width:92%;max-width:600px;max-height:85vh;overflow-y:auto;margin:20px auto">
 <h2 style="margin:0 0 16px;color:var(--t1)" id="termsTitle">Termos de Uso</h2>
 <div id="termsBody" style="color:var(--t2);font-size:.88em;line-height:1.7">
@@ -4111,7 +4229,7 @@
 </div></div>
 
 
-<script src="app.js?v=20260324-v8"></script>
+<script src="app.js?v=20260326-v10"></script>
 <!-- BRIEFING MODAL (pós-login) -->
 <div id="sibBriefingModal" class="sib-bf-ov" onclick="if(event.target===this)closeBriefing()" role="dialog" aria-modal="true" aria-labelledby="sibBriefTitle" style="display:none">
   <div class="sib-bf-box">

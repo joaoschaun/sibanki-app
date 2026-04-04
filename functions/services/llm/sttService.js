@@ -87,10 +87,12 @@ async function transcribeAudio(audioBuffer, mimeType) {
     return { text: null, provider: "none" };
   }
 
-  const text = await _groqWhisper(audioBuffer, mimeType)
-    || await _googleSpeech(audioBuffer, mimeType);
+  let text = await _groqWhisper(audioBuffer, mimeType);
+  if (text) return { text, provider: "groq" };
 
-  if (text) return { text, provider: text === await _groqWhisper(audioBuffer, mimeType) ? "groq" : "google" };
+  text = await _googleSpeech(audioBuffer, mimeType);
+  if (text) return { text, provider: "google" };
+
   return { text: null, provider: "none" };
 }
 

@@ -1,19 +1,14 @@
 // Configuração centralizada de ambiente e integrações
+// Todas as variáveis lidas de process.env (dotenv em dev, env vars do Firebase em produção)
+// Para configurar em produção: firebase functions:secrets:set NOME_DA_VAR
+// Para desenvolvimento: editar functions/.env
 try {
-  // Carrega variáveis de ambiente em desenvolvimento local
-  require("dotenv").config();
+  const path = require("path");
+  require("dotenv").config({ path: path.join(__dirname, ".env") });
 } catch (e) {}
 
-// BRAPI / mercado: .env (local) ou Firebase config (produção: firebase functions:config:set brapi.token="SEU_TOKEN_PRO")
-let BRAPI_TOKEN = process.env.BRAPI_TOKEN || "";
-if (!BRAPI_TOKEN) {
-  try {
-    const fn = require("firebase-functions");
-    if (fn.config && fn.config().brapi && fn.config().brapi.token) {
-      BRAPI_TOKEN = fn.config().brapi.token;
-    }
-  } catch (e) {}
-}
+// BRAPI / mercado
+const BRAPI_TOKEN = process.env.BRAPI_TOKEN || "";
 const BRAPI_BASE = "https://brapi.dev/api";
 
 // News providers (HTTP functions)
@@ -29,44 +24,14 @@ const TELEGRAM_API = TELEGRAM_TOKEN
   ? `https://api.telegram.org/bot${TELEGRAM_TOKEN}`
   : "";
 
-// Gemini (.env local / Firebase config em produção)
-let GEMINI_KEY = process.env.GEMINI_KEY || "";
-if (!GEMINI_KEY) {
-  try {
-    const fn = require("firebase-functions");
-    if (fn.config && fn.config().gemini && fn.config().gemini.key) {
-      GEMINI_KEY = fn.config().gemini.key;
-    }
-  } catch (e) {}
-}
-
-// OpenAI (fallback para Gemini)
+// IA — providers (fallback chain: Gemini → Groq → OpenAI → Claude)
+const GEMINI_KEY = process.env.GEMINI_KEY || "";
+const GROQ_KEY = process.env.GROQ_KEY || "";
 const OPENAI_KEY = process.env.OPENAI_KEY || "";
-
-// Anthropic Claude (segundo fallback)
 const CLAUDE_KEY = process.env.CLAUDE_KEY || "";
 
-// Groq — LLM gratuita (14.400 req/dia) + Whisper STT gratuito
-let GROQ_KEY = process.env.GROQ_KEY || "";
-if (!GROQ_KEY) {
-  try {
-    const fn = require("firebase-functions");
-    if (fn.config && fn.config().groq && fn.config().groq.key) {
-      GROQ_KEY = fn.config().groq.key;
-    }
-  } catch (e) {}
-}
-
-// Google Cloud — Vision OCR (1.000 imgs/mês grátis) + Speech STT (60min/mês grátis)
-let GOOGLE_CLOUD_KEY = process.env.GOOGLE_CLOUD_KEY || "";
-if (!GOOGLE_CLOUD_KEY) {
-  try {
-    const fn = require("firebase-functions");
-    if (fn.config && fn.config().google && fn.config().google.cloud_key) {
-      GOOGLE_CLOUD_KEY = fn.config().google.cloud_key;
-    }
-  } catch (e) {}
-}
+// Google Cloud — Vision OCR + Speech STT
+const GOOGLE_CLOUD_KEY = process.env.GOOGLE_CLOUD_KEY || "";
 
 // Stripe
 const STRIPE_SECRET = process.env.STRIPE_SECRET || "";
@@ -76,19 +41,10 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const RESEND_FROM = process.env.RESEND_FROM || "Sibanki Familia <familia@sibanki.com.br>";
 
-// WhatsApp Business (Meta Cloud API) - .env ou firebase functions:config:set whatsapp.token=...
-let WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || "";
-let WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || "";
-let WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "sibanki_wa_verify";
-if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
-  try {
-    const fn = require("firebase-functions");
-    const c = fn.config().whatsapp || {};
-    if (c.token) WHATSAPP_TOKEN = c.token;
-    if (c.phone_number_id) WHATSAPP_PHONE_NUMBER_ID = c.phone_number_id;
-    if (c.verify_token) WHATSAPP_VERIFY_TOKEN = c.verify_token;
-  } catch (e) {}
-}
+// WhatsApp Business (Meta Cloud API)
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || "";
+const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || "";
+const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "sibanki_wa_verify";
 
 let stripeInstance = null;
 function getStripe() {
@@ -111,14 +67,17 @@ module.exports = {
   TELEGRAM_TOKEN,
   TELEGRAM_API,
   GEMINI_KEY,
+  GROQ_KEY,
+  OPENAI_KEY,
+  CLAUDE_KEY,
+  GOOGLE_CLOUD_KEY,
+  STRIPE_SECRET,
   STRIPE_WEBHOOK_SECRET,
   getStripe,
   RESEND_API_KEY,
   RESEND_FROM,
-  OPENAI_KEY,
-  CLAUDE_KEY,
   WHATSAPP_TOKEN,
   WHATSAPP_PHONE_NUMBER_ID,
-  WHATSAPP_VERIFY_TOKEN
+  WHATSAPP_VERIFY_TOKEN,
 };
 

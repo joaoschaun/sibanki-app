@@ -13,7 +13,41 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
-import { calculateDaysOfFreedom } from '../utils/sovereigntyEngine';
+import { useIntelligence } from '../context/IntelligenceContext';
+
+// ── Mapeamentos de inteligência ──────────────────────────────────────────────
+const FREEDOM_COLORS: Record<string, string> = {
+  'fragil':        'text-rose-400',
+  'em-construcao': 'text-amber-400',
+  'resiliente':    'text-blue-400',
+  'soberano':      'text-emerald-400',
+  'inabalavel':    'text-violet-400',
+};
+
+const HEALTH_COLORS: Record<string, string> = {
+  'critico': 'text-rose-400',
+  'pressao': 'text-amber-400',
+  'atencao': 'text-blue-300',
+  'saudavel': 'text-emerald-400',
+};
+
+const JOURNEY_LABELS: Record<string, string> = {
+  'primeiros-passos':   'Começando',
+  'pressionado':        'Sob pressão',
+  'organizando-base':   'Organizando base',
+  'estabilizando':      'Estabilizando',
+  'pronto-para-crescer':'Pronto p/ crescer',
+};
+
+const ACTION_MAP: Record<string, { label: string; to: string }> = {
+  'conectar-open-finance': { label: 'Conectar banco',        to: '/configuracoes' },
+  'revisar-credito':       { label: 'Revisar crédito',       to: '/cartoes' },
+  'organizar-dividas':     { label: 'Organizar dívidas',     to: '/consultor-ia' },
+  'ajustar-orcamento':     { label: 'Ajustar orçamento',     to: '/orcamento' },
+  'criar-meta':            { label: 'Criar uma meta',        to: '/planejamento' },
+  'avaliar-investimentos': { label: 'Avaliar investimentos', to: '/crescimento' },
+  'aprofundar-consultoria':{ label: 'Falar com consultor',   to: '/consultor-ia' },
+};
 import {
   LayoutDashboard, PlusCircle, Bot, Target,
   CreditCard, CalendarDays, TrendingUp, Shield, Send, RefreshCw,
@@ -284,12 +318,12 @@ function buildBriefingItems(ctx: ReturnType<typeof useAppContext>): BriefingItem
 
 // ─── quick actions ────────────────────────────────────────────────────────────
 const ACTIONS = [
-  { icon: PlusCircle,      label: 'Registrar gasto',   to: '/lancamentos',  color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20' },
-  { icon: LayoutDashboard, label: 'Ver painel',         to: '/dashboard',    color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20' },
-  { icon: Bot,             label: 'Consultor IA',       to: '/consultor-ia', color: 'text-violet-400',  bg: 'bg-violet-500/10 border-violet-500/20 hover:bg-violet-500/20' },
-  { icon: Target,          label: 'Metas',              to: '/planejamento', color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20' },
-  { icon: CreditCard,      label: 'Cartões',            to: '/cartoes',      color: 'text-rose-400',    bg: 'bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20' },
-  { icon: CalendarDays,    label: 'Calendário',         to: '/calendario',   color: 'text-cyan-400',    bg: 'bg-cyan-500/10 border-cyan-500/20 hover:bg-cyan-500/20' },
+  { icon: PlusCircle,      label: 'Registrar gasto',   to: '/lancamentos'  },
+  { icon: LayoutDashboard, label: 'Ver painel',         to: '/dashboard'    },
+  { icon: Bot,             label: 'Consultor IA',       to: '/consultor-ia' },
+  { icon: Target,          label: 'Metas',              to: '/planejamento' },
+  { icon: CreditCard,      label: 'Cartões',            to: '/cartoes'      },
+  { icon: CalendarDays,    label: 'Calendário',         to: '/calendario'   },
 ];
 
 // ─── bold renderer (simple **text** → <strong>) ───────────────────────────────
@@ -344,7 +378,7 @@ export default function Home() {
   const ctx = useAppContext();
   const navigate = useNavigate();
   const {
-    user, score, entries, accountBalances, accountMeta, investments, loading,
+    user, score, loading,
     hasOpenFinance, openFinanceSyncedAt, dataFreshness, isSyncing, syncOpenFinance,
   } = ctx;
   const [architectReply, setArchitectReply] = useState('');
@@ -358,10 +392,8 @@ export default function Home() {
     navigate('/consultor-ia', { state: { initialMessage: t } });
   };
 
-  const freedom = useMemo(
-    () => calculateDaysOfFreedom({ entries, accountBalances, accountMeta, investments }),
-    [entries, accountBalances, accountMeta, investments],
-  );
+  // Inteligência via IntelligenceContext — calculada uma vez, compartilhada
+  const { freedom, healthLevel, journeyStage, nextBestActions } = useIntelligence();
 
   const briefingItems = useMemo(
     () => (loading ? [] : buildBriefingItems(ctx)),
@@ -379,19 +411,62 @@ export default function Home() {
   });
 
   return (
-    <div className="w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[90rem] mx-auto flex flex-col gap-10 lg:gap-12 xl:gap-14 py-2 lg:py-4">
+    <div className="w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[90rem] mx-auto flex flex-col gap-6 lg:gap-10 xl:gap-12 py-1 lg:py-4">
 
       {/* ── top: greeting + date ── */}
       <div>
-        <p className="text-si-3 text-xl lg:text-2xl font-semibold capitalize tracking-tight">{dateStr}</p>
+        <p className="text-si-3 text-base lg:text-2xl font-semibold capitalize tracking-tight">{dateStr}</p>
       </div>
 
+      {/* ── sovereignty metrics strip ── */}
+      {!loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 lg:gap-4">
+
+          {/* Dias de Liberdade */}
+          <div className="bg-si-card border border-si-border rounded-xl p-4 lg:p-5 flex sm:flex-col items-center sm:items-start gap-4 sm:gap-0">
+            <p className="text-[10px] font-bold text-si-5 uppercase tracking-widest sm:mb-2 shrink-0">Dias de Liberdade</p>
+            <p className={`text-3xl lg:text-5xl font-black tabular-nums leading-none ${FREEDOM_COLORS[freedom.status] ?? 'text-si-1'}`}>
+              {freedom.days > 9999 ? '∞' : freedom.days}
+            </p>
+            <p className="text-[10px] text-si-5 sm:mt-1.5 uppercase tracking-wide hidden sm:block">
+              {freedom.status.replace(/-/g, ' ')}
+            </p>
+          </div>
+
+          {/* Status Financeiro */}
+          <div className="bg-si-card border border-si-border rounded-xl p-4 lg:p-5 flex sm:flex-col items-center sm:items-start gap-4 sm:gap-0">
+            <p className="text-[10px] font-bold text-si-5 uppercase tracking-widest sm:mb-2 shrink-0">Status</p>
+            <p className={`text-lg lg:text-2xl font-black uppercase tracking-tight leading-none ${HEALTH_COLORS[healthLevel] ?? 'text-si-1'}`}>
+              {healthLevel}
+            </p>
+            <p className="text-[10px] text-si-5 sm:mt-1.5 hidden sm:block">
+              {JOURNEY_LABELS[journeyStage] ?? journeyStage}
+            </p>
+          </div>
+
+          {/* Próxima Ação */}
+          <div className="bg-si-card border border-si-border rounded-xl p-4 lg:p-5 flex sm:flex-col items-center sm:items-start gap-4 sm:gap-0">
+            <p className="text-[10px] font-bold text-si-5 uppercase tracking-widest sm:mb-2 shrink-0">Próxima Ação</p>
+            {nextBestActions[0] ? (
+              <Link
+                to={ACTION_MAP[nextBestActions[0]]?.to ?? '/consultor-ia'}
+                className="text-xs font-bold text-si-1 hover:text-si-2 leading-tight block uppercase tracking-wide"
+              >
+                {ACTION_MAP[nextBestActions[0]]?.label ?? nextBestActions[0]}
+              </Link>
+            ) : (
+              <p className="text-xs font-bold text-si-3 uppercase tracking-wide">Em dia</p>
+            )}
+          </div>
+
+        </div>
+      )}
+
       {/* ── chat bubble: briefing ── */}
-      <div className="flex gap-4 lg:gap-6 items-start">
+      <div className="flex gap-3 lg:gap-6 items-start">
         {/* Avatar */}
         <div
-          className="w-12 h-12 lg:w-14 lg:h-14 rounded-full shrink-0 flex items-center justify-center text-white text-sm lg:text-base font-black shadow-xl shadow-emerald-500/20"
-          style={{ background: 'linear-gradient(135deg,#10b981,#7c3aed)' }}
+          className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-si-3 text-[11px] font-bold border border-si-border bg-si-card"
         >
           AS
         </div>
@@ -400,7 +475,7 @@ export default function Home() {
         <div className="flex-1 min-w-0">
           {/* Header: nome + badge OF */}
           <div className="flex items-center justify-between mb-2 gap-3">
-            <p className="text-xs lg:text-sm font-bold text-emerald-400">Arquiteto Soberano</p>
+            <p className="text-[10px] font-bold text-si-4 uppercase tracking-[0.15em]">Arquiteto Soberano</p>
             {hasOpenFinance && (
               <SyncBadge
                 syncedAt={openFinanceSyncedAt}
@@ -509,7 +584,7 @@ export default function Home() {
                     type="button"
                     onClick={sendToConsultant}
                     disabled={!architectReply.trim()}
-                    className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 text-sm font-semibold disabled:opacity-40 disabled:pointer-events-none"
+                    className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-si-over-3 hover:bg-si-over-4 border border-si-border text-si-2 px-4 py-3 text-sm font-semibold disabled:opacity-30 disabled:pointer-events-none transition-colors"
                     aria-label="Enviar ao Consultor IA"
                   >
                     <Send className="w-4 h-4" />
@@ -523,35 +598,38 @@ export default function Home() {
       </div>
 
       {/* ── quick actions grid ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4 xl:gap-5">
-        {ACTIONS.map(({ icon: Icon, label, to, color, bg }) => (
-          <Link
-            key={to}
-            to={to}
-            className={`flex items-center gap-3 lg:gap-4 p-4 sm:p-5 lg:p-6 rounded-2xl border transition-colors min-h-[4.5rem] sm:min-h-[5rem] ${bg}`}
-          >
-            <Icon className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 ${color}`} />
-            <span className="text-si-2 text-sm sm:text-base font-semibold leading-tight">{label}</span>
-          </Link>
-        ))}
+      <div>
+        <p className="text-[10px] font-bold text-si-5 uppercase tracking-[0.18em] mb-3">Acesso Rápido</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 lg:gap-3">
+          {ACTIONS.map(({ icon: Icon, label, to }) => (
+            <Link
+              key={to}
+              to={to}
+              className="flex items-center gap-3 p-4 rounded-xl border border-si-border bg-si-card hover:bg-si-over-1 hover:border-si-border-md transition-colors min-h-[4rem]"
+            >
+              <Icon className="w-4 h-4 shrink-0 text-si-4" />
+              <span className="text-si-2 text-xs font-semibold uppercase tracking-[0.06em] leading-tight">{label}</span>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* ── footer: dias de liberdade + score ── */}
       {!loading && (
-        <div className="flex items-center justify-center gap-4 lg:gap-6 text-xs sm:text-sm text-si-5 pt-4 lg:pt-6">
-          <span className="flex items-center gap-1">
-            <Shield className="w-3.5 h-3.5 text-violet-400" />
+        <div className="flex items-center justify-center gap-4 lg:gap-6 text-[10px] text-si-5 pt-2 pb-2 uppercase tracking-[0.12em]">
+          <span className="flex items-center gap-1.5">
+            <Shield className="w-3 h-3 text-si-5" />
             {freedom.days} dias de liberdade
           </span>
           <span className="w-px h-3 bg-si-border" />
-          <span className="flex items-center gap-1">
-            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="flex items-center gap-1.5">
+            <TrendingUp className="w-3 h-3 text-si-5" />
             Score {score}
           </span>
           {hasOpenFinance && dataFreshness === 'fresh' && (
             <>
               <span className="w-px h-3 bg-si-border" />
-              <span className="text-emerald-400/70">● dados verificados</span>
+              <span className="text-si-5">dados verificados</span>
             </>
           )}
         </div>

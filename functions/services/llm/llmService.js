@@ -283,9 +283,16 @@ async function generateInsight(context, type = "geral") {
 /**
  * Análise profunda (relatório, consultor IA, análise B3).
  * Usa task "smart" — prioriza qualidade sobre custo.
+ * Quando `question` já contém o system prompt embutido (via prefixo),
+ * ele é passado diretamente para o LLM sem duplicação.
  */
 async function generateAnalysis(context, question) {
-  const prompt = `Você é o Siba, consultor financeiro IA do Sibanki. Dados do usuário:\n${context}\n\nPergunta: ${question}\n\nResponda de forma clara, com emojis e estrutura. Seja específico com valores em R$. Máx 300 palavras.`;
+  // Se o question já traz o system prompt embutido (começa com "Você é o Sibanki")
+  // usamos ele direto como prompt completo. Caso contrário, montamos o padrão genérico.
+  const hasSystemPrefix = /^Você é o Sibanki IA/i.test((question || '').trim());
+  const prompt = hasSystemPrefix
+    ? question
+    : `Você é o Siba, consultor financeiro IA do Sibanki. Dados do usuário:\n${context}\n\nPergunta: ${question}\n\nResponda de forma clara, com emojis e estrutura. Seja específico com valores em R$. Máx 300 palavras.`;
 
   return callLLM(prompt, {
     task: "smart",

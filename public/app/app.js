@@ -755,6 +755,8 @@ try{
     setTimeout(function(){if(appContent){appContent.style.transition='';appContent.style.removeProperty('margin-left')}},420);
   }
 }catch(z){}
+// Disparar resize após animação para que gráficos se ajustem ao novo espaço
+setTimeout(function(){try{window.dispatchEvent(new Event('resize'));}catch(z){}},440);
 // Guardar cliques durante a animação de largura/posição (desktop)
 try{
   if(window._drawerAnimTimer) clearTimeout(window._drawerAnimTimer);
@@ -819,6 +821,8 @@ try{
     setTimeout(function(){if(appContent){appContent.style.transition='';appContent.style.removeProperty('margin-left')}},420);
   }
 }catch(z){}
+// Disparar resize após animação para que gráficos se ajustem ao novo espaço
+setTimeout(function(){try{window.dispatchEvent(new Event('resize'));}catch(z){}},440);
 // Guardar cliques durante a animação (desktop)
 try{
   var body=document.body;
@@ -1412,12 +1416,14 @@ setTimeout(openInvestorProfilePopup,400);
 }
 if(id==='metas'||id==='lanc'||id==='orçamento'||id==='cartões'||id==='credito'||id==='contas'||id==='ia'||id==='config'||id==='casal'||id==='calendario'||id==='conq'){
 var mid=id;
-if(!tourModulos[mid]&&typeof startModuleTour==='function'&&typeof getModuleTourSteps==='function'&&getModuleTourSteps(mid).length>0){
+var _tm=(typeof tourModulos==='object'&&tourModulos)?tourModulos:{};
+var _steps=(typeof getModuleTourSteps==='function')?getModuleTourSteps(mid):[];
+if(!_tm[mid]&&typeof startModuleTour==='function'&&Array.isArray(_steps)&&_steps.length>0){
 setTimeout(function(){startModuleTour(mid);},600);
 }
 }
 if(id==='casal'){
-if(typeof loadCoupleStatus==='function')loadCoupleStatus();
+if(typeof loadCoupleStatus==='function'){try{loadCoupleStatus();}catch(e){console.warn('loadCoupleStatus error:',e);}}
 setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons();},50);
 if(typeof loadFamilyChildren==='function'){
 setTimeout(function(){
@@ -1431,8 +1437,19 @@ if(admin)admin.style.display='block';
 
 var t=document.querySelectorAll('.tab');for(var i=0;i<t.length;i++){t[i].classList.remove('on');t[i].style.animation='none';t[i].style.display=''}
 document.body.setAttribute('data-tab',id);
-if(id!=='invest'&&typeof showInvSub==='function'){var _subs=["invOverview","invCarteira","invAnalise","invProventos","invSimuladores","invPerfil"];_subs.forEach(function(s){var _el=document.getElementById(s);if(_el){_el.classList.remove("active");_el.style.setProperty("display","none","important");}});var _c=document.getElementById("invCarteira");if(_c){_c.classList.add("active");_c.style.setProperty("display","block","important");}var _tabs=["invTabCarteira","invTabAnalise","invTabProventos","invTabSimuladores","invTabPerfil"];_tabs.forEach(function(tid){var _tb=document.getElementById(tid);if(_tb)_tb.classList.remove("active");});var _ct=document.getElementById("invTabCarteira");if(_ct)_ct.classList.add("active");}
-var tb=document.getElementById(id);if(!tb){console.warn('Tab not found: '+id);return;}tb.offsetHeight;tb.style.animation='slideUp2 .5s cubic-bezier(.16,1,.3,1)';tb.classList.add('on');
+if(id!=='invest'&&typeof showInvSub==='function'){
+try{
+var _subs=["invOverview","invCarteira","invAnalise","invProventos","invSimuladores","invPerfil"];
+_subs.forEach(function(s){var _el=document.getElementById(s);if(_el){_el.classList.remove("active");_el.style.setProperty("display","none","important");}});
+var _c=document.getElementById("invCarteira");
+if(_c){_c.classList.add("active");_c.style.setProperty("display","block","important");}
+var _tabs=["invTabCarteira","invTabAnalise","invTabProventos","invTabSimuladores","invTabPerfil"];
+_tabs.forEach(function(tid){var _tb=document.getElementById(tid);if(_tb)_tb.classList.remove("active");});
+var _ct=document.getElementById("invTabCarteira");
+if(_ct)_ct.classList.add("active");
+}catch(e){console.warn('showInvSub reset error:',e);}
+}
+var tb=document.getElementById(id);if(!tb){console.warn('Tab not found: '+id);return;}tb.offsetHeight;tb.style.animation='slideUp2 .5s cubic-bezier(.16,1,.3,1)';tb.style.display='block';tb.classList.add('on');
 if(typeof syncDrawerActiveTab==='function')syncDrawerActiveTab(id);
 if(window.innerWidth<768&&typeof closeDrawer==='function')closeDrawer();
 window.scrollTo({top:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0;
@@ -1441,6 +1458,12 @@ if(id==='lanc'&&typeof initLancDate==='function'){try{initLancDate()}catch(e){}}
 if(id==='ia'&&window._proactiveConsultorQuestion){setTimeout(function(){var q=document.getElementById('iaQ');if(q){q.value=window._proactiveConsultorQuestion;q.focus();window._proactiveConsultorQuestion=null;}},400);}
 /* Calendar hook - render calendar when tab is selected */
 if(id==='calendario'&&typeof rCal==='function'){try{rCal()}catch(e){console.warn('rCal error:',e)}}
+/* Reforço de render para módulos com conteúdo dinâmico */
+if(id==='calendario'){setTimeout(function(){try{if(typeof rCal==='function')rCal();}catch(e){console.warn('rCal delayed error:',e);}},80);}
+if(id==='comunidade'){setTimeout(function(){try{if(typeof initCommunity==='function')initCommunity();}catch(e){console.warn('initCommunity delayed error:',e);}},80);}
+if(id==='crediamigo'){setTimeout(function(){try{if(typeof initCrediAmigo==='function')initCrediAmigo();}catch(e){console.warn('initCrediAmigo delayed error:',e);}},80);}
+if(id==='consorcioamigos'){setTimeout(function(){try{if(typeof initConsorcioAmigos==='function')initConsorcioAmigos();}catch(e){console.warn('initConsorcioAmigos delayed error:',e);}},80);}
+if(id==='casal'){setTimeout(function(){try{if(typeof loadCoupleStatus==='function')loadCoupleStatus();}catch(e){console.warn('loadCoupleStatus delayed error:',e);}},80);}
 /* Sempre re-renderizar o conteúdo da aba ao trocar (metas, dashboard, etc.) */
 if(typeof renderAll==='function'){setTimeout(renderAll,0);}
 }
@@ -7678,6 +7701,9 @@ draggable:'.vcard',
 filter:'.card-novo-cartao',
 preventOnFilter:true,
 ghostClass:'sortable-ghost',
+delay:500,
+delayOnTouchOnly:true,
+touchStartThreshold:12,
 onEnd:function(){
 var vcards=carousel.querySelectorAll('.vcard');
 var orderedIds=[];for(var i=0;i<vcards.length;i++){var id=vcards[i].getAttribute('data-card-id');if(id)orderedIds.push(id);}
@@ -7711,6 +7737,32 @@ var vcards=document.querySelectorAll('.vcard');
 for(var i=0;i<vcards.length;i++){vcards[i].classList.remove('vcard-active')}
 if(el)el.classList.add('vcard-active');
 }
+function lockScrollForCardFaturaModal(){
+if(window._cardFaturaScrollLocked)return;
+window._cardFaturaScrollLocked=true;
+window._cardFaturaScrollY=window.scrollY||window.pageYOffset||0;
+var y=window._cardFaturaScrollY;
+document.documentElement.style.overflow='hidden';
+document.body.style.overflow='hidden';
+document.body.style.position='fixed';
+document.body.style.top='-'+y+'px';
+document.body.style.left='0';
+document.body.style.right='0';
+document.body.style.width='100%';
+}
+function unlockScrollForCardFaturaModal(){
+if(!window._cardFaturaScrollLocked)return;
+window._cardFaturaScrollLocked=false;
+var y=window._cardFaturaScrollY||0;
+document.body.style.position='';
+document.body.style.top='';
+document.body.style.left='';
+document.body.style.right='';
+document.body.style.width='';
+document.documentElement.style.overflow='';
+document.body.style.overflow='';
+window.scrollTo(0,y);
+}
 function showCardFaturaModal(cardId){
 var cid=typeof cardId==='string'?parseInt(cardId,10):cardId;
 var card=cards.find(function(c){return c.id==cid||c.id===cid});
@@ -7743,12 +7795,14 @@ h+='<tr><td>'+new Date(p.date+'T12:00:00').toLocaleDateString('pt-BR')+'</td><td
 h+='</tbody></table>';
 content.innerHTML=h;
 }
+lockScrollForCardFaturaModal();
 modal.classList.add('show');
 setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons();},80);
 }
 function closeCardFaturaModal(){
 var modal=document.getElementById('cardFaturaModal');
 if(modal)modal.classList.remove('show');
+unlockScrollForCardFaturaModal();
 }
 
 
@@ -13948,7 +14002,7 @@ loadWatchlist();
 
 // Register SW (cache-first) - usa arquivo sw.js para evitar erro de blob: em alguns hosts
 if('serviceWorker' in navigator){
-var swPath='/app/sw.js?v=20260324-v8';
+var swPath='/app/sw.js?v=20260326-v10';
 navigator.serviceWorker.register(swPath,{scope:'/app/'}).then(function(reg){
 if(reg&&typeof reg.update==='function')reg.update();
 console.log('SW OK');
@@ -14881,6 +14935,10 @@ ref.set({userMessage:ctx.userMessage||'',contextStr:(ctx.contextStr||'').substri
 }
 function openModalConsultorFAB(){
 try{
+if(typeof closeCardFaturaModal==='function'){
+var _cf=document.getElementById('cardFaturaModal');
+if(_cf&&_cf.classList.contains('show'))closeCardFaturaModal();
+}
 if(!document.getElementById('modalContent')){if(typeof toast==='function')toast(typeof t==='function'?t('toast_erro_abrir'):'Erro ao abrir. Recarregue a página.','err');return;}
 trackLegacyPlatformEvent('advisor_opened',{source:'legacy_fab',journeyStage:getLegacyFinancialProfile().journeyStage,healthLevel:getLegacyFinancialProfile().healthLevel,hasOpenFinance:getLegacyFinancialProfile().hasOpenFinance});
 var welcome='';
@@ -18424,6 +18482,21 @@ ct.innerHTML=h;
 
 
 function showInvSub(id){
+// Se for uma aba avançada, garantir que o painel avançado esteja visível
+var advancedSubs=["invAnalise","invSimuladores","invPerfil"];
+if(advancedSubs.indexOf(id)!==-1){
+var advPanel=document.getElementById("invAdvancedTabs");
+if(advPanel&&advPanel.style.display==="none"){
+advPanel.style.display="";
+var lbl=document.getElementById("invAdvancedToggleLabel");
+if(lbl)lbl.textContent="Ocultar ferramentas";
+var chev=document.getElementById("invAdvancedToggleChevron");
+if(chev)chev.style.transform="rotate(180deg)";
+var btn=document.getElementById("invAdvancedToggleBtn");
+if(btn){btn.style.borderColor="rgba(76,123,244,.4)";btn.style.color="var(--pri)";btn.style.background="rgba(76,123,244,.08)";}
+if(typeof lucide!=="undefined")setTimeout(function(){lucide.createIcons();},60);
+}
+}
 var subs=["invOverview","invCarteira","invAnalise","invProventos","invSimuladores","invPerfil"];
 subs.forEach(function(s){var el=document.getElementById(s);if(el){el.classList.remove("active");el.style.setProperty("display","none","important");}});
 var target=document.getElementById(id);if(target){target.classList.add("active");target.style.setProperty("display","block","important");}
@@ -18431,6 +18504,157 @@ var tabs=["invTabCarteira","invTabAnalise","invTabProventos","invTabSimuladores"
 tabs.forEach(function(t){var el=document.getElementById(t);if(el)el.classList.remove("active");});
 var activeTab=document.getElementById("invTab"+id.replace("inv",""));if(activeTab)activeTab.classList.add("active");
 if(id==="invPerfil"&&typeof initProfileQuiz==="function")initProfileQuiz();
+// Forçar resize para que gráficos desta aba se renderizem corretamente após display:block
+setTimeout(function(){try{window.dispatchEvent(new Event('resize'));}catch(z){}},80);
+}
+
+function toggleInvForm(){
+var panel=document.getElementById('invFormPanel');
+var btn=document.getElementById('invFormToggleBtn');
+var lbl=document.getElementById('invFormToggleLabel');
+if(!panel)return;
+var open=panel.style.display!=='none';
+if(open){
+panel.style.display='none';
+if(lbl)lbl.textContent='Novo investimento';
+if(btn){btn.style.background='rgba(16,185,129,.15)';btn.style.borderColor='rgba(16,185,129,.35)';btn.style.color='#10B981';}
+}else{
+panel.style.display='block';
+if(lbl)lbl.textContent='Cancelar';
+if(btn){btn.style.background='rgba(239,68,68,.12)';btn.style.borderColor='rgba(239,68,68,.35)';btn.style.color='#f87171';}
+var d=document.getElementById('invDate');if(d&&!d.value)d.value=new Date().toISOString().slice(0,10);
+var n=document.getElementById('invNome');if(n)setTimeout(function(){n.focus();},60);
+}
+}
+
+function toggleInvDetail(){
+var panel=document.getElementById('invDetailPanel');
+var nav=document.getElementById('invNav');
+var btn=document.getElementById('invDetailToggleBtn');
+var lbl=document.getElementById('invDetailToggleLabel');
+var chev=document.getElementById('invDetailToggleChevron');
+if(!panel)return;
+var open=panel.style.display!=='none';
+if(open){
+panel.style.display='none';
+if(nav)nav.style.display='none';
+if(lbl)lbl.textContent='Ver an\u00e1lise completa e ferramentas';
+if(chev)chev.style.transform='rotate(0deg)';
+if(btn){btn.style.borderColor='var(--brd2)';btn.style.background='var(--bg2)';btn.style.color='var(--t2)';}
+showInvSub('invCarteira');
+}else{
+panel.style.display='block';
+if(nav)nav.style.display='';
+if(lbl)lbl.textContent='Ocultar an\u00e1lise';
+if(chev)chev.style.transform='rotate(180deg)';
+if(btn){btn.style.borderColor='rgba(76,123,244,.4)';btn.style.background='rgba(76,123,244,.08)';btn.style.color='var(--pri)';}
+if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},80);
+try{if(typeof refreshPortfolio==='function')refreshPortfolio();}catch(e){}
+}
+}
+
+function toggleInvAdvanced(){toggleInvDetail();}
+
+// ── Aba FERRAMENTAS — accordion + calculadoras ──────────────────────────────
+function toggleFerra(id){
+var el=document.getElementById(id);
+if(!el)return;
+var open=el.style.display!=='none';
+el.style.display=open?'none':'block';
+var chevId='chev'+id.replace('ferra','').replace('ferramentas','');
+// map to chev IDs
+var chevMap={ferraCompostos:'chevCompostos',ferraMeta:'chevMeta',ferraRendaFixa:'chevRendaFixa',ferraRendaPassiva:'chevRendaPassiva',ferraFire:'chevFire',ferraPrecoMedio:'chevPrecoMedio',ferraIR:'chevIR'};
+var chev=document.getElementById(chevMap[id]);
+if(chev)chev.style.transform=open?'rotate(0deg)':'rotate(180deg)';
+}
+
+function calcFerraCompostos(){
+var P=parseFloat(document.getElementById('fcIni').value)||0;
+var PMT=parseFloat(document.getElementById('fcMensal').value)||0;
+var r=parseFloat(document.getElementById('fcTaxa').value)||0;
+var n=parseInt(document.getElementById('fcMeses').value)||0;
+var i=r/100/12;
+var FV=P*Math.pow(1+i,n);
+if(i>0)FV+=PMT*((Math.pow(1+i,n)-1)/i);
+else FV+=PMT*n;
+var inv=P+PMT*n;
+document.getElementById('fcResult').innerHTML='<div style="background:rgba(79,140,255,.1);border:1px solid rgba(79,140,255,.2);border-radius:12px;padding:14px;margin-top:8px">'+'<div style="font-size:.82em;color:var(--t3)">Montante estimado</div>'+'<div style="font-size:1.5em;font-weight:800;color:#4F8CFF">'+fmt(FV)+'</div>'+'<div style="font-size:.78em;color:var(--t2);margin-top:4px">Investido: '+fmt(inv)+' · Juros: '+fmt(FV-inv)+'</div></div>';
+}
+
+function calcFerraMeta(){
+var target=parseFloat(document.getElementById('fmMeta').value)||0;
+var ini=parseFloat(document.getElementById('fmIni').value)||0;
+var r=parseFloat(document.getElementById('fmTaxa').value)||0;
+var y=parseFloat(document.getElementById('fmAnos').value)||0;
+var n=Math.round(y*12),i=r/100/12;
+var base=target-ini*Math.pow(1+i,n);
+var PMT=base>0&&i>0&&n>0?base*i/(Math.pow(1+i,n)-1):0;
+document.getElementById('fmResult').innerHTML='<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:12px;padding:14px;margin-top:8px">'+'<div style="font-size:.82em;color:var(--t3)">Aporte mensal necessário</div>'+'<div style="font-size:1.5em;font-weight:800;color:#10B981">'+fmt(PMT)+'</div>'+'<div style="font-size:.78em;color:var(--t2);margin-top:4px">Prazo: '+y+' anos · Total investido: '+fmt(ini+PMT*n)+'</div></div>';
+}
+
+function calcFerraRendaFixa(){
+var P=parseFloat(document.getElementById('frfIni').value)||0;
+var r=parseFloat(document.getElementById('frfTaxa').value)||0;
+var n=parseInt(document.getElementById('frfMeses').value)||0;
+var mRate=r/100/12;
+var gross=P*Math.pow(1+mRate,n);
+document.getElementById('frfResult').innerHTML='<div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);border-radius:12px;padding:14px;margin-top:8px">'+'<div style="font-size:.82em;color:var(--t3)">Valor bruto estimado</div>'+'<div style="font-size:1.5em;font-weight:800;color:#06B6D4">'+fmt(gross)+'</div>'+'<div style="font-size:.78em;color:var(--t2);margin-top:4px">Aplicado: '+fmt(P)+' · Rendimento: '+fmt(gross-P)+'</div></div>';
+}
+
+function calcFerraRendaPassiva(){
+var T=parseFloat(document.getElementById('frpRenda').value)||0;
+var Y=parseFloat(document.getElementById('frpYield').value)||0;
+var capital=Y>0?T/(Y/100):0;
+document.getElementById('frpResult').innerHTML='<div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25);border-radius:12px;padding:14px;margin-top:8px">'+'<div style="font-size:.82em;color:var(--t3)">Capital necessário</div>'+'<div style="font-size:1.5em;font-weight:800;color:#8B5CF6">'+fmt(capital)+'</div>'+'<div style="font-size:.78em;color:var(--t2);margin-top:4px">Para gerar '+fmt(T)+'/mês com '+Y+'% ao mês</div></div>';
+}
+
+function calcFerraFire(){
+var C=parseFloat(document.getElementById('ffGasto').value)||0;
+var S=parseFloat(document.getElementById('ffTaxaSegura').value)||0;
+var K=parseFloat(document.getElementById('ffCapital').value)||0;
+var A=parseFloat(document.getElementById('ffAporte').value)||0;
+var R=parseFloat(document.getElementById('ffRetorno').value)||0;
+var targetC=S>0?(C*12)/(S/100):0;
+var cur=K,months=0,mRate=R/100/12;
+while(cur<targetC&&months<720){cur=cur*(1+mRate)+A;months++;}
+var ok=cur>=targetC;
+document.getElementById('ffResult').innerHTML='<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:14px;margin-top:8px">'+'<div style="font-size:.82em;color:var(--t3)">Capital alvo FIRE</div>'+'<div style="font-size:1.5em;font-weight:800;color:#F59E0B">'+fmt(targetC)+'</div>'+'<div style="font-size:.78em;color:var(--t2);margin-top:4px">'+(ok?'Tempo estimado: '+(months/12).toFixed(1)+' anos ('+months+' meses)':'Meta não atingida em 60 anos com estes parâmetros.')+'</div></div>';
+}
+
+function calcFerraPrecoMedio(){
+var QA=parseFloat(document.getElementById('fpmQtdAtual').value)||0;
+var PA=parseFloat(document.getElementById('fpmPmAtual').value)||0;
+var QN=parseFloat(document.getElementById('fpmQtdNova').value)||0;
+var PN=parseFloat(document.getElementById('fpmPreco').value)||0;
+var total=QA+QN;
+var pm=total>0?(QA*PA+QN*PN)/total:0;
+document.getElementById('fpmResult').innerHTML='<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:12px;padding:14px;margin-top:8px">'+'<div style="font-size:.82em;color:var(--t3)">Novo preço médio</div>'+'<div style="font-size:1.5em;font-weight:800;color:#10B981">'+fmt(pm)+'</div>'+'<div style="font-size:.78em;color:var(--t2);margin-top:4px">Total: '+total.toLocaleString('pt-BR')+' ações · Custo total: '+fmt(QA*PA+QN*PN)+'</div></div>';
+}
+
+function updateFerraIRFields(){
+var t=document.getElementById('firTipo').value;
+var dg=document.getElementById('firDiasGrp');
+if(dg)dg.style.display=(t==='rf')?'block':'none';
+}
+
+function calcFerraIR(){
+var t=document.getElementById('firTipo').value;
+var compra=parseFloat(document.getElementById('firCompra').value)||0;
+var venda=parseFloat(document.getElementById('firVenda').value)||0;
+var totalMes=parseFloat(document.getElementById('firTotalMes').value)||0;
+var dias=parseInt(document.getElementById('firDias').value)||0;
+var prej=parseFloat(document.getElementById('firPrejuizo').value)||0;
+var lucro=Math.max(0,venda-compra-prej);
+var ir=0,obs='';
+if(t==='acoes'||t==='acoes_dt'){
+var dt=t==='acoes_dt';
+if(!dt&&totalMes<=20000){ir=0;obs='Isento (vendas ≤ R$ 20.000 no mês)';}
+else{ir=lucro*(dt?0.20:0.15);obs=(dt?'20%':'15%')+' sobre o lucro'+(prej>0?' (após deduzir prejuízo acumulado)':'');}
+}else if(t==='fiis'){ir=lucro*0.20;obs='20% sobre o lucro';}
+else if(t==='cripto'){if(totalMes<=35000){ir=0;obs='Isento (vendas ≤ R$ 35.000 no mês)';}else{ir=lucro*0.15;obs='15% sobre o lucro';}}
+else if(t==='rf'){var aliq=dias<=180?0.225:dias<=360?0.20:dias<=720?0.175:0.15;ir=lucro*aliq;obs=(aliq*100).toFixed(1)+'% ('+dias+' dias de aplicação)';}
+var color=ir===0?'#10B981':'#EF4444';
+document.getElementById('firResult').innerHTML='<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:12px;padding:14px;margin-top:8px">'+'<div style="font-size:.82em;color:var(--t3)">IR a pagar</div>'+'<div style="font-size:1.5em;font-weight:800;color:'+color+'">'+fmt(ir)+'</div>'+'<div style="font-size:.78em;color:var(--t2);margin-top:4px">'+obs+' · Lucro líquido: '+fmt(lucro-ir)+'</div></div>';
 }
 
 function generateTelegramCode(){

@@ -1,5 +1,6 @@
 import { db } from '../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, writeBatch } from 'firebase/firestore';
+import { mergeInlineAndOverflowEntries } from '../utils/entryUtils';
 import { calculateFinScore } from '../utils/calculateScore';
 import type {
   Entry,
@@ -14,6 +15,33 @@ import type {
   CreditObligation,
   CreditSnapshot,
 } from '../types/userData';
+
+async function loadInlineEntries(uid: string): Promise<Entry[]> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  return ((snap.exists() ? snap.data()?.entries : []) ?? []) as Entry[];
+}
+
+async function loadOverflowEntries(uid: string): Promise<Entry[]> {
+  const col = collection(db, 'users', uid, 'entriesOverflow');
+  const snap = await getDocs(col);
+  const list: Entry[] = [];
+  snap.forEach((d) => {
+    list.push({ ...(d.data() as Entry), entryLocation: 'overflow' });
+  });
+  return list;
+}
+
+async function deleteEntriesOverflowCollection(uid: string): Promise<void> {
+  const col = collection(db, 'users', uid, 'entriesOverflow');
+  const snap = await getDocs(col);
+  const refs = snap.docs.map((d) => d.ref);
+  for (let i = 0; i < refs.length; i += 450) {
+    const batch = writeBatch(db);
+    refs.slice(i, i + 450).forEach((r) => batch.delete(r));
+    await batch.commit();
+  }
+}
 
 /**
  * Atualiza apenas alguns campos do documento users/{uid} (merge).
@@ -67,12 +95,12 @@ export async function setCreditSnapshot(uid: string, creditSnapshot: CreditSnaps
 }
 
 /**
- * Adiciona um lançamento ao array entries e persiste.
+ * Adiciona um lançamento ao array entries e persiste (só documento users; lê inline atual do Firestore).
  */
-export async function addEntry(uid: string, currentEntries: Entry[], newEntry: Omit<Entry, 'id'>): Promise<void> {
+export async function addEntry(uid: string, _currentEntries: Entry[], newEntry: Omit<Entry, 'id'>): Promise<void> {
+  const inline = await loadInlineEntries(uid);
   const id = Date.now();
-  const entries = [...currentEntries, { ...newEntry, id } as Entry];
-  await updateUserDoc(uid, { entries });
+  await updateUserDoc(uid, { entries: [...inline, { ...newEntry, id } as Entry] });
 }
 
 /**
@@ -120,8 +148,9 @@ export async function addTransfer(
     isTransfer: true,
   };
 
+  const inline = await loadInlineEntries(uid);
   const entries: Entry[] = [
-    ...currentEntries,
+    ...inline,
     { ...despesa, id: now } as Entry,
     { ...receita, id: now + 1 } as Entry,
   ];
@@ -130,24 +159,37 @@ export async function addTransfer(
 }
 
 /**
- * Atualiza um lançamento por id e persiste.
+ * Atualiza um lançamento por id. `mergedEntries` deve incluir entriesOverflow (via merge do hook).
  */
 export async function updateEntry(
   uid: string,
-  currentEntries: Entry[],
+  mergedEntries: Entry[],
   id: number,
   updates: Partial<Entry>
 ): Promise<void> {
-  const entries = currentEntries.map((e) => (e.id === id ? { ...e, ...updates, id } : e)) as Entry[];
+  const target = mergedEntries.find((e) => e.id === id);
+  if (!target) return;
+  if (target.entryLocation === 'overflow' && target.pluggyTransactionId) {
+    const dref = doc(db, 'users', uid, 'entriesOverflow', `pg_${target.pluggyTransactionId}`);
+    await setDoc(dref, { ...target, ...updates, id } as Entry, { merge: true });
+    return;
+  }
+  const inline = await loadInlineEntries(uid);
+  const entries = inline.map((e) => (e.id === id ? { ...e, ...updates, id } : e)) as Entry[];
   await updateUserDoc(uid, { entries });
 }
 
 /**
- * Remove um lançamento por id e persiste.
+ * Remove um lançamento por id. `mergedEntries` deve incluir overflow para excluir arquivados Pluggy.
  */
-export async function deleteEntry(uid: string, currentEntries: Entry[], id: number): Promise<void> {
-  const entries = currentEntries.filter((e) => e.id !== id);
-  await updateUserDoc(uid, { entries });
+export async function deleteEntry(uid: string, mergedEntries: Entry[], id: number): Promise<void> {
+  const target = mergedEntries.find((e) => e.id === id);
+  if (target?.entryLocation === 'overflow' && target.pluggyTransactionId) {
+    await deleteDoc(doc(db, 'users', uid, 'entriesOverflow', `pg_${target.pluggyTransactionId}`));
+    return;
+  }
+  const inline = await loadInlineEntries(uid);
+  await updateUserDoc(uid, { entries: inline.filter((e) => e.id !== id) });
 }
 
 /**
@@ -203,7 +245,7 @@ export async function addCard(
 export async function addCardPurchase(
   uid: string,
   currentCards: Card[],
-  currentEntries: Entry[],
+  _currentEntries: Entry[],
   cardId: number,
   opts: { desc: string; category: string; value: number; date: string; parcelas?: number }
 ): Promise<void> {
@@ -253,7 +295,8 @@ export async function addCardPurchase(
   const updatedCards = currentCards.map((c) =>
     c.id === cardId ? { ...c, purchases: [...purchases, ...newPurchases] } : c
   ) as Card[];
-  await updateUserDoc(uid, { cards: updatedCards, entries: [...currentEntries, ...newEntries] });
+  const inline = await loadInlineEntries(uid);
+  await updateUserDoc(uid, { cards: updatedCards, entries: [...inline, ...newEntries] });
 }
 
 /**
@@ -263,7 +306,7 @@ export async function addCardPurchase(
 export async function importCardPurchases(
   uid: string,
   currentCards: Card[],
-  currentEntries: Entry[],
+  _currentEntries: Entry[],
   cardId: number,
   items: { desc: string; category: string; value: number; date: string; parcelas?: number }[]
 ): Promise<void> {
@@ -318,7 +361,8 @@ export async function importCardPurchases(
   const updatedCards = currentCards.map((c) =>
     c.id === cardId ? { ...c, purchases: [...purchases, ...allPurchases] } : c
   ) as Card[];
-  await updateUserDoc(uid, { cards: updatedCards, entries: [...currentEntries, ...allEntries] });
+  const inline = await loadInlineEntries(uid);
+  await updateUserDoc(uid, { cards: updatedCards, entries: [...inline, ...allEntries] });
 }
 
 /**
@@ -356,7 +400,7 @@ export async function deleteCard(uid: string, currentCards: Card[], cardId: numb
 export async function deleteCardPurchase(
   uid: string,
   currentCards: Card[],
-  currentEntries: Entry[],
+  _currentEntries: Entry[],
   cardId: number,
   purchaseId: number
 ): Promise<void> {
@@ -365,7 +409,8 @@ export async function deleteCardPurchase(
     const purchases = (c.purchases ?? []).filter((p) => p.purchaseId !== purchaseId && p.id !== purchaseId);
     return { ...c, purchases };
   }) as Card[];
-  const entries = currentEntries.filter((e) => (e as Entry & { cardPurchaseId?: number }).cardPurchaseId !== purchaseId);
+  const inline = await loadInlineEntries(uid);
+  const entries = inline.filter((e) => (e as Entry & { cardPurchaseId?: number }).cardPurchaseId !== purchaseId);
   await updateUserDoc(uid, { cards: updatedCards, entries });
 }
 
@@ -532,7 +577,7 @@ export async function renameAccount(
   currentAccounts: string[],
   currentBalances: Record<string, number>,
   currentMeta: Record<string, AccountMetaEntry>,
-  currentEntries: Entry[],
+  _currentEntries: Entry[],
   oldName: string,
   newName: string
 ): Promise<void> {
@@ -546,10 +591,21 @@ export async function renameAccount(
   const accountMeta = { ...currentMeta };
   accountMeta[trimmed] = accountMeta[oldName] ?? {};
   delete accountMeta[oldName];
-  const entries = currentEntries.map((e) =>
+  const inline = await loadInlineEntries(uid);
+  const entries = inline.map((e) =>
     e.account === oldName ? { ...e, account: trimmed } : e
   ) as Entry[];
   await updateUserDoc(uid, { accounts, accountBalances, accountMeta, entries });
+  const overflow = await loadOverflowEntries(uid);
+  for (const e of overflow) {
+    if (e.account === oldName && e.pluggyTransactionId) {
+      await setDoc(
+        doc(db, 'users', uid, 'entriesOverflow', `pg_${e.pluggyTransactionId}`),
+        { ...e, account: trimmed } as Entry,
+        { merge: true },
+      );
+    }
+  }
 }
 
 /**
@@ -593,16 +649,19 @@ const FREQ_LABEL: Record<string, string> = {
  */
 export async function generateEntriesFromRecurrents(
   uid: string,
-  currentEntries: Entry[],
+  _currentEntries: Entry[],
   currentRecurrents: Recurrent[]
 ): Promise<number> {
+  const inline = await loadInlineEntries(uid);
+  const overflow = await loadOverflowEntries(uid);
+  const mergedForTags = mergeInlineAndOverflowEntries(inline, overflow);
   const now = new Date();
   const y = now.getFullYear();
   const m = now.getMonth();
   const ym = `${y}-${String(m + 1).padStart(2, '0')}`;
   const maxDay = new Date(y, m + 1, 0).getDate();
   const existingTags = new Set(
-    currentEntries.map((e) => (e as { rcTag?: string }).rcTag).filter(Boolean)
+    mergedForTags.map((e) => (e as { rcTag?: string }).rcTag).filter(Boolean)
   );
 
   const toAdd: Entry[] = [];
@@ -647,7 +706,7 @@ export async function generateEntriesFromRecurrents(
   }
 
   if (toAdd.length === 0) return 0;
-  const newEntries = [...currentEntries, ...toAdd];
+  const newEntries = [...inline, ...toAdd];
   await updateUserDoc(uid, { entries: newEntries });
   return toAdd.length;
 }
@@ -667,6 +726,7 @@ export async function resetUserData(
   uid: string,
   keep: { name?: string; email?: string }
 ): Promise<void> {
+  await deleteEntriesOverflowCollection(uid);
   const emptyData: Partial<UserData> = {
     entries: [],
     investments: [],
