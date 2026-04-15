@@ -7,7 +7,7 @@
  *
  * COMO USAR:
  *   const { buildConsultantPrompt } = require('./sovereignSystemPrompt');
- *   const fullPrompt = buildConsultantPrompt(financialContext, userQuestion, ragChunks);
+ *   const fullPrompt = buildConsultantPrompt(financialContext, userQuestion, ragChunks, opts);
  *   // Passe para generateAnalysis() no llmService.js
  */
 
@@ -143,9 +143,10 @@ const FORMATO_RESPOSTA = `FORMATO DAS RESPOSTAS:
  * @param {string} financialContext  - Saída de buildFinancialContextString()
  * @param {string} userQuestion      - Pergunta do usuário
  * @param {string[]} ragChunks       - Trechos relevantes da base de conhecimento (opcional)
+ * @param {{ raioXQuote?: boolean; ticker?: string }} [opts] - Modo Raio-X de ativo B3: prioriza análise do papel vs. parecer só sobre saldo do usuário
  * @returns {string} Prompt completo pronto para o LLM
  */
-function buildConsultantPrompt(financialContext, userQuestion, ragChunks = []) {
+function buildConsultantPrompt(financialContext, userQuestion, ragChunks = [], opts = {}) {
   const systemInstruction = [
     ARQUITETO_PERSONA,
     '',
@@ -162,6 +163,20 @@ function buildConsultantPrompt(financialContext, userQuestion, ragChunks = []) {
     ? `\nCONHECIMENTO ADICIONAL RELEVANTE:\n${ragChunks.join('\n\n')}\n`
     : '';
 
+  const tk = String(opts.ticker || "").toUpperCase().trim();
+  const raioXAtivoBlock =
+    opts.raioXQuote && tk
+      ? `
+
+[MODO RAIO-X — ATIVO B3: ${tk}]
+O pedido é ANÁLISE DO ATIVO (o que é, preço, custos, riscos, benchmark quando houver dados), não um relatório centrado só na situação pessoal.
+• O "Veredito" e a "Matemática" devem tratar do ativo ${tk} e dos dados em [DADOS DE MERCADO] quando existirem.
+• Não substitua a análise do papel por apenas "sem receita" ou "saldo negativo" — isso pode aparecer só ao final, como adequação ao perfil (no máximo 2 frases curtas).
+• Se [DADOS DE MERCADO] estiver vazio ou incompleto, diga o que faltou e descreva o tipo de produto pelo ticker (ex.: ETF terminado em 11) sem inventar preço.
+• A regra de conduta sobre reserva de emergência aplica-se à recomendação de COMPRAR ou não; não dispensa explicar o ativo em si.
+`
+      : "";
+
   return `${systemInstruction}
 
 ---
@@ -170,7 +185,7 @@ DADOS FINANCEIROS DO USUÁRIO:
 ${financialContext}
 ${ragSection}
 ---
-
+${raioXAtivoBlock}
 PERGUNTA DO USUÁRIO: ${userQuestion}
 
 Responda como o Arquiteto Soberano. Baseie-se nos dados acima. Seja preciso com os valores.`;

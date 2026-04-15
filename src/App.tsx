@@ -1,7 +1,9 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { MessageCircle } from 'lucide-react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { IntelligenceProvider } from './context/IntelligenceContext';
+import { ConsultantSessionProvider } from './context/ConsultantSessionContext';
 // TenantProvider fica em main.tsx (resolve branding pelo host antes do AppProvider)
 import { useUiStore } from './store/useUiStore';
 import { useTheme } from './hooks/useTheme';
@@ -9,14 +11,14 @@ import { Sidebar, type SidebarOpenGroup } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { OnboardingTour } from './components/ui/OnboardingTour';
-import { BriefingModal } from './components/ui/BriefingModal';
 import { SibcoinToastContainer } from './components/sibcoin/SibcoinToastContainer';
 import { RegistrationWizard } from './components/onboarding/RegistrationWizard';
 import { SpotlightTour, GLOBAL_TOUR_STEPS } from './components/ui/SpotlightTour';
 import { InstallPrompt } from './components/ui/InstallPrompt';
+import { ConsultantDrawer } from './components/consultant/ConsultantDrawer';
 import { captureRefParam, useReferral } from './hooks/useReferral';
 import Login from './pages/Login';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 captureRefParam();
 
@@ -54,8 +56,6 @@ const CreditHub    = lazy(() => import('./pages/CreditHub'));
 const Filiados     = lazy(() => import('./pages/Filiados'));
 const Quarentena   = lazy(() => import('./pages/Quarentena'));
 const FilhosPage   = lazy(() => import('./pages/Filhos'));
-const AgentCouncil = lazy(() => import('./pages/AgentCouncil'));
-const Home         = lazy(() => import('./pages/Home'));
 
 // ── Spinner reutilizável para Suspense ───────────────────────────────────────
 function PageLoader() {
@@ -68,19 +68,48 @@ function PageLoader() {
 
 function OnboardingTourRedirect() {
   const navigate = useNavigate();
-  return <OnboardingTour onComplete={() => navigate('/lancamentos', { replace: true })} />;
+  return <OnboardingTour onComplete={() => navigate('/consultor-ia', { replace: true })} />;
+}
+
+function FloatingConsultantButton() {
+  const location = useLocation();
+  const openDrawer = useUiStore((s) => s.openConsultantDrawer);
+  const drawerOpen = useUiStore((s) => s.consultantDrawerOpen);
+
+  if (drawerOpen) return null;
+  /** Na página do Assistente o painel já está na sidebar e no toggle do header — sem FAB duplicado. */
+  if (location.pathname === '/consultor-ia') return null;
+
+  return (
+    <button
+      type="button"
+      onClick={openDrawer}
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-si-card border border-si-border-md text-si-1 shadow-lg hover:bg-si-over-2 transition-all duration-200 hover:scale-[1.02]"
+      aria-label="Abrir o Assistente"
+    >
+      <MessageCircle className="w-5 h-5 text-si-3 shrink-0" aria-hidden />
+      <span className="text-sm font-medium hidden sm:inline">Falar com o Assistente</span>
+    </button>
+  );
 }
 
 // ── Shell autenticado (usa AppContext — sem chamadas extras de hook) ──────────
 function AuthenticatedShell() {
+  const location = useLocation();
   const { user, authLoading, score, data, avatarURL } = useAppContext();
   const { theme } = useTheme();
-  const { sidebarCollapsed, toggleSidebar } = useUiStore();
+  const { sidebarCollapsed, toggleSidebar, syncRoute } = useUiStore();
+  useEffect(() => {
+    syncRoute(location.pathname);
+  }, [location.pathname, syncRoute]);
   const [sidebarOpenGroup, setSidebarOpenGroup] = useState<SidebarOpenGroup>(null);
   // Mobile drawer state (independente do collapse desktop)
   const [mobileOpen, setMobileOpen] = useState(false);
   const showWizard = user && !authLoading && !(data as any)?.cadastroCompleto;
   const [wizardDismissed, setWizardDismissed] = useState(false);
+
+  /** Sempre no topo do shell (efeito interno ignora se !user) — não colocar após return condicional. */
+  useReferral();
 
   const handleToggle = () => {
     // Em mobile (< lg): abre/fecha drawer overlay
@@ -105,12 +134,10 @@ function AuthenticatedShell() {
 
   if (!user) return <Login />;
 
-  // Hooks que dependem de usuário logado — chamados após o guard de auth
-  useReferral();
-
   const rootBg = theme === 'light' ? 'bg-zinc-50 text-zinc-950' : 'bg-si-bg text-si-1';
 
   return (
+    <ConsultantSessionProvider>
     <div className={`min-h-screen ${rootBg} font-sans flex overflow-hidden`}>
 
       {/* ── Mobile: backdrop + drawer overlay ─────────────────────────── */}
@@ -157,14 +184,18 @@ function AuthenticatedShell() {
         <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 lg:space-y-8">
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              <Route path="/login" element={<Navigate to="/" replace />} />
-              <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
+              <Route path="/login" element={<Navigate to="/consultor-ia" replace />} />
+              <Route path="/" element={<Navigate to="/consultor-ia" replace />} />
               <Route path="/dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
               <Route path="/contas" element={<ErrorBoundary><Accounts /></ErrorBoundary>} />
-              <Route path="/cartoes" element={<ErrorBoundary><Cards /></ErrorBoundary>} />
+              <Route path="/cartoes" element={<Navigate to="/credito/cartoes" replace />} />
               <Route path="/lancamentos" element={<ErrorBoundary><Transactions /></ErrorBoundary>} />
               <Route path="/recorrentes" element={<ErrorBoundary><Recurring /></ErrorBoundary>} />
               <Route path="/transactions" element={<Navigate to="/lancamentos" replace />} />
+              {/* Aliases (URLs em inglês / legado / concorrentes) → rotas canônicas PT-BR */}
+              <Route path="/settings" element={<Navigate to="/configuracoes" replace />} />
+              <Route path="/dashboard/settings" element={<Navigate to="/configuracoes" replace />} />
+              <Route path="/my-account" element={<Navigate to="/perfil" replace />} />
               <Route path="/planejamento" element={<ErrorBoundary><Planning /></ErrorBoundary>} />
               <Route path="/orcamento" element={<ErrorBoundary><Budget /></ErrorBoundary>} />
               <Route path="/crescimento" element={<ErrorBoundary><Growth /></ErrorBoundary>} />
@@ -177,8 +208,14 @@ function AuthenticatedShell() {
               <Route path="/solucoes/seguro" element={<ErrorBoundary><SolucaoSeguro /></ErrorBoundary>} />
               <Route path="/solucoes/investimentos" element={<ErrorBoundary><SolucaoInvestimentosParceiros /></ErrorBoundary>} />
               {/* ── Novos módulos de expansão ──────────────────────────────── */}
-              {/* Acao 12: Hub de Credito */}
-              <Route path="/credito" element={<ErrorBoundary><CreditHub /></ErrorBoundary>} />
+              {/* Crédito como módulo pai + submódulos por rota */}
+              <Route path="/credito" element={<Navigate to="/credito/visao-geral" replace />} />
+              <Route path="/credito/visao-geral" element={<ErrorBoundary><CreditHub /></ErrorBoundary>} />
+              <Route path="/credito/cartoes" element={<ErrorBoundary><Cards /></ErrorBoundary>} />
+              <Route path="/credito/emprestimos" element={<ErrorBoundary><CreditHub /></ErrorBoundary>} />
+              <Route path="/credito/plano" element={<ErrorBoundary><CreditHub /></ErrorBoundary>} />
+              <Route path="/credito/oportunidades" element={<ErrorBoundary><CreditHub /></ErrorBoundary>} />
+              <Route path="/credito/educacao" element={<ErrorBoundary><CreditHub /></ErrorBoundary>} />
               <Route path="/cripto" element={<ErrorBoundary><Cripto /></ErrorBoundary>} />
               <Route path="/loja" element={<ErrorBoundary><Loja /></ErrorBoundary>} />
               <Route path="/meu-cpf" element={<ErrorBoundary><MeuCpf /></ErrorBoundary>} />
@@ -187,7 +224,6 @@ function AuthenticatedShell() {
               <Route path="/filiados" element={<ErrorBoundary><Filiados /></ErrorBoundary>} />
               <Route path="/quarentena" element={<ErrorBoundary><Quarentena /></ErrorBoundary>} />
               <Route path="/filhos" element={<ErrorBoundary><FilhosPage /></ErrorBoundary>} />
-              <Route path="/agentes" element={<ErrorBoundary><AgentCouncil /></ErrorBoundary>} />
               <Route path="/perfil" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
               <Route path="/configuracoes" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
               <Route path="/relatorios" element={<ErrorBoundary><Reports /></ErrorBoundary>} />
@@ -198,8 +234,10 @@ function AuthenticatedShell() {
           </Suspense>
         </main>
       </div>
+      {/* ── Botão flutuante + drawer do Assistente ───────────────────── */}
+      <FloatingConsultantButton />
+      <ConsultantDrawer />
       <OnboardingTourRedirect />
-      <BriefingModal />
       <SibcoinToastContainer />
       <RegistrationWizard
         open={!!showWizard && !wizardDismissed}
@@ -208,6 +246,7 @@ function AuthenticatedShell() {
       <SpotlightTour tourId="global" steps={GLOBAL_TOUR_STEPS} />
       <InstallPrompt uid={user?.uid} />
     </div>
+    </ConsultantSessionProvider>
   );
 }
 

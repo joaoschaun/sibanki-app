@@ -46,6 +46,18 @@ const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || "";
 const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || "";
 const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "sibanki_wa_verify";
 
+// Afiliados / Cashback (Lomadee + Monetizze)
+const LOMADEE_APP_TOKEN = process.env.LOMADEE_APP_TOKEN || "";
+const LOMADEE_SOURCE_ID = process.env.LOMADEE_SOURCE_ID || "";
+const LOMADEE_WEBHOOK_SECRET = process.env.LOMADEE_WEBHOOK_SECRET || "";
+const MONETIZZE_API_KEY = process.env.MONETIZZE_API_KEY || "";
+const MONETIZZE_TOKEN = process.env.MONETIZZE_TOKEN || "";
+const MONETIZZE_WEBHOOK_SECRET = process.env.MONETIZZE_WEBHOOK_SECRET || "";
+
+// Parâmetros de economia interna (defaults conservadores)
+const CASHBACK_CONVERSION_RATE = Number(process.env.CASHBACK_CONVERSION_RATE || 10); // R$1 => 10 moedas
+const CASHBACK_RELEASE_DAYS = Number(process.env.CASHBACK_RELEASE_DAYS || 7);
+
 let stripeInstance = null;
 function getStripe() {
   if (!stripeInstance) {
@@ -79,5 +91,13 @@ module.exports = {
   WHATSAPP_TOKEN,
   WHATSAPP_PHONE_NUMBER_ID,
   WHATSAPP_VERIFY_TOKEN,
+  LOMADEE_APP_TOKEN,
+  LOMADEE_SOURCE_ID,
+  LOMADEE_WEBHOOK_SECRET,
+  MONETIZZE_API_KEY,
+  MONETIZZE_TOKEN,
+  MONETIZZE_WEBHOOK_SECRET,
+  CASHBACK_CONVERSION_RATE,
+  CASHBACK_RELEASE_DAYS,
 };
 

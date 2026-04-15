@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { useSibcoinToast } from '../hooks/useSibcoinToast';
-import { addGoal, updateGoal, deleteGoal } from '../services/persistUserData';
+import { addGoal, updateGoal, deleteGoal, ValidationError } from '../services/persistUserData';
 import type { Goal } from '../types/userData';
 import { Modal } from '../components/ui/Modal';
 import { Plus, Pencil, Trash2, Target } from 'lucide-react';
 import { EmptyState } from '../components/ui/EmptyState';
-import { PageTransition } from '../components/ui/PageTransition';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
 
 const GOAL_ICONS = ['🎯', '🛡️', '✈️', '🏠', '🚗', '💼', '🎓', '❤️'];
@@ -76,7 +75,8 @@ export default function Planning() {
       triggerWithToast('goal_created'); // fire-and-forget SibCoin (shows toast on mission complete)
       setAddOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao adicionar meta.');
+      if (err instanceof ValidationError) setError(err.errors.join('\n'));
+      else setError(err instanceof Error ? err.message : 'Erro inesperado ao salvar meta.');
     } finally {
       setBusy(false);
     }
@@ -160,7 +160,7 @@ export default function Planning() {
               title="Nenhuma meta financeira"
               description="Defina metas para organizar seus objetivos — reserva de emergência, viagem, investimento ou qualquer sonho que queira alcançar."
               actionLabel="+ Nova meta"
-              onAction={() => { setAddOpen(true); resetForm(); }}
+              onAction={openAdd}
             />
           </div>
         ) : (

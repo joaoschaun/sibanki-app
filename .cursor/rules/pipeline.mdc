@@ -1,0 +1,99 @@
+---
+description: Pipeline Antigravity↔Cursor↔Cowork — lê TASK_QUEUE.md e executa tarefas automaticamente
+globs: "**/*"
+alwaysApply: true
+---
+
+# 🔄 Sibanki AI Pipeline — 3 Agentes
+
+## Arquitetura de agentes
+
+| Agente | Papel | Ferramentas |
+|--------|-------|-------------|
+| **Antigravity** (primário) | Arquiteto + Verificador Sênior | Lê/escreve arquivos, roda comandos, browser |
+| **Cursor** | Executor de código local | Edita arquivos, roda build/testes |
+| **Claude Cowork** (fallback) | Assume quando Antigravity tokens acabam | Lê SESSION_HANDOFF.md + CLAUDE.md |
+
+**Fluxo principal:**
+```
+João → Antigravity → TASK_QUEUE.md (WAITING_CURSOR)
+  → Cursor executa → CURSOR_DONE
+  → João chama Antigravity → verifica → COMPLETED
+```
+
+**Fluxo de fallback (tokens Antigravity acabam):**
+```
+João abre FALLBACK_PROMPT.md → cola no Claude Cowork
+  → Cowork lê SESSION_HANDOFF.md + CLAUDE.md + TASK_QUEUE.md
+  → continua de onde parou
+```
+
+---
+
+## REGRA OBRIGATÓRIA — Execute SEMPRE ao abrir qualquer sessão (Cursor)
+
+**PRIMEIRO PASSO DE TODA SESSÃO:** Leia o arquivo `docs/TASK_QUEUE.md` e verifique o campo `status` no frontmatter YAML.
+
+---
+
+## Comportamento por status
+
+### Se status = `WAITING_CURSOR`
+**Você tem uma tarefa para executar. Comece imediatamente, sem pedir confirmação.**
+
+1. Leia a seção **📋 TAREFA ATUAL** completa (descrição, contexto, arquivos, critérios, notas)
+2. Leia o `CLAUDE.md` na raiz para contexto completo do projeto
+3. Execute a tarefa seguindo os critérios de aceitação
+4. Ao terminar, atualize `docs/TASK_QUEUE.md`:
+   - No frontmatter: mude `status` para `CURSOR_DONE` e atualize `updated_at`
+   - Na seção **🤖 RESULTADO DO CURSOR**: descreva o que foi feito, arquivos modificados, testes realizados
+5. **Não faça deploy** — Antigravity/Claude verifica antes de qualquer deploy
+
+### Se status = `NEEDS_REVISION`
+**Antigravity/Claude pediu ajustes. Leia a seção ✅ VERIFICAÇÃO DO CLAUDE para entender o que corrigir.**
+
+1. Leia os problemas encontrados na verificação
+2. Corrija o que foi indicado
+3. Mude `status` para `CURSOR_DONE` e atualize o resultado
+
+### Se status = `IDLE`, `CURSOR_DONE`, `CLAUDE_REVIEWING`, ou `COMPLETED`
+Não há tarefa para você agora. Responda normalmente ao usuário.
+
+---
+
+## Protocolo de Handoff (SESSION_HANDOFF.md)
+
+O arquivo `docs/SESSION_HANDOFF.md` captura o estado vivo da sessão atual.
+- **Antigravity** atualiza este arquivo em checkpoints durante a sessão
+- **Claude Cowork** lê este arquivo ao assumir quando tokens acabam
+- **Cursor** nunca modifica ou apaga este arquivo
+
+---
+
+## Contexto do projeto
+
+- Stack: React 18 + TypeScript + Vite + TailwindCSS v4 + Firebase
+- Design system: Pierre Finance (fundo `#0a0a0a`, monochromático, sem botões coloridos)
+- Cloud Functions: Node.js 22, região `southamerica-east1` (BR) ou `us-central1`
+- **NUNCA** exponha chaves de API no frontend
+- **NUNCA** faça deploy sem autorização explícita do João
+- Para dados financeiros: use `AppContext` (fonte única de verdade), não crie novos listeners Firestore
+
+---
+
+## Formato obrigatório ao atualizar TASK_QUEUE.md
+
+Ao marcar `CURSOR_DONE`, atualize o frontmatter assim:
+```yaml
+---
+pipeline_version: "1.0"
+status: CURSOR_DONE
+task_id: "<mesmo id da tarefa>"
+priority: "<mesmo valor>"
+created_at: "<mesma data>"
+updated_at: "<data/hora atual ISO>"
+assigned_to: "cursor"
+---
+```
+
+E preencha a seção de resultado com detalhes reais do que foi implementado.

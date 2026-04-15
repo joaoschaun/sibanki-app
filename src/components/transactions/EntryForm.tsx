@@ -2,6 +2,12 @@ import { useState } from 'react';
 import type { Entry } from '../../types/userData';
 import { DEFAULT_CATEGORIES, DEFAULT_ACCOUNTS } from '../../constants/defaults';
 import { X, RefreshCw, Calendar, Hash, Infinity } from 'lucide-react';
+import { useIntelligence } from '../../context/IntelligenceContext';
+import { useAppContext } from '../../context/AppContext';
+import { calculateSovereigntyScore } from '../../utils/sovereigntyEngine';
+import type { SovereigntyScoreResult } from '../../utils/sovereigntyEngine';
+import { SentinelGuardModal } from './SentinelGuardModal';
+import { isTransferEntry } from '../../utils/entryUtils';
 
 interface RecurrenceSettings {
   freq: string;
@@ -174,12 +180,23 @@ function RecurrenceModal({
 
 // ── Componente principal do formulário ───────────────────────────────────────
 export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
+  const { entries, budgets } = useAppContext();
+  const { freedom } = useIntelligence();
+
   const [type, setType] = useState<'receita' | 'despesa'>(entry?.type ?? 'despesa');
   const [desc, setDesc] = useState(entry?.desc ?? '');
   const [category, setCategory] = useState(entry?.category ?? 'Outros');
   const [value, setValue] = useState(entry?.value !== undefined ? String(entry.value) : '');
   const [date, setDate] = useState(entry?.date ?? new Date().toISOString().slice(0, 10));
   const [account, setAccount] = useState(entry?.account ?? '');
+
+  const [sentinelPayload, setSentinelPayload] = useState<{
+    scoreData: SovereigntyScoreResult;
+    pendingTarget: {
+      entryData: Omit<Entry, 'id'>, 
+      recurrentSettings?: RecurrenceSettings
+    };
+  } | null>(null);
 
   // Recorrência
   const [isRecurring, setIsRecurring] = useState(false);
@@ -195,18 +212,64 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
     e.preventDefault();
     const numValue = parseFloat(value.replace(',', '.'));
     if (Number.isNaN(numValue) || numValue <= 0) return;
-    onSubmit(
-      {
-        type,
-        desc: desc.trim() || category,
-        category: category || 'Outros',
-        value: Math.round(numValue * 100) / 100,
-        date,
-        account: account || undefined,
-        status: 'pago',
-      },
-      isRecurring ? recurrenceSettings : undefined
-    );
+    
+    const entryData = {
+      type,
+      desc: desc.trim() || category,
+      category: category || 'Outros',
+      value: Math.round(numValue * 100) / 100,
+      date,
+      account: account || undefined,
+      status: 'pago' as const,
+    };
+    const rSettings = isRecurring ? recurrenceSettings : undefined;
+
+    // 🔥 SENTINEL: Intercepta a transação localmente antes de salvar
+    if (type === 'despesa' && !entry) { // Não bloqueia edição, só criação
+      const liquidity = freedom.totalLiquidity ?? 0;
+      const dailyBurnRate = freedom.dailyBurnRate > 0 ? freedom.dailyBurnRate : 50;
+      const budgetLimit = budgets ? Number((budgets as any)[entryData.category]) || undefined : undefined;
+      
+      const nowMonth = new Date().toISOString().slice(0, 7);
+      let catSpent = 0;
+      let impulseStreakCount = 0;
+      const limit30 = new Date(); limit30.setDate(limit30.getDate() - 30);
+      const limit30Str = limit30.toISOString().slice(0,10);
+      const dayOfWeek = new Date(entryData.date).getDay();
+      
+      for (const en of entries) {
+        if (en.type === 'despesa' && !isTransferEntry(en)) {
+          if ((en.date || '').startsWith(nowMonth) && en.category === entryData.category) {
+            catSpent += Number(en.value) || 0;
+          }
+          if (en.category === entryData.category && new Date(en.date || '').getDay() === dayOfWeek) {
+             if ((en.date || '') >= limit30Str) {
+               impulseStreakCount++;
+             }
+          }
+        }
+      }
+      
+      const ESSENTIAL_CATS = new Set(['Moradia', 'Saúde', 'Educação', 'Transporte', 'Alimentação', 'Utilidades', 'Serviços essenciais']);
+      const isEssential = ESSENTIAL_CATS.has(entryData.category);
+      
+      const scoreData = calculateSovereigntyScore({
+         value: entryData.value,
+         category: entryData.category,
+         isEssential,
+         liquidity,
+         dailyBurnRate,
+         budgetRemaining: budgetLimit != null ? budgetLimit - catSpent : undefined,
+         impulseStreakCount: Math.max(0, impulseStreakCount - 1)
+      });
+
+      if (scoreData.verdict === 'atencao' || scoreData.verdict === 'auto-sabotagem') {
+         setSentinelPayload({ scoreData, pendingTarget: { entryData, recurrentSettings: rSettings } });
+         return; // Interrompe o envio nativo e mostra o modal
+      }
+    }
+
+    onSubmit(entryData, rSettings);
   };
 
   const freqLabel: Record<string, string> = {
@@ -216,6 +279,24 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
 
   return (
     <>
+      {sentinelPayload && (
+        <SentinelGuardModal
+          open={true}
+          scoreData={sentinelPayload.scoreData}
+          entryName={String(sentinelPayload.pendingTarget.entryData.desc || '')}
+          entryValue={Number(sentinelPayload.pendingTarget.entryData.value || 0)}
+          onConfirm={() => {
+            const { entryData, recurrentSettings } = sentinelPayload.pendingTarget;
+            setSentinelPayload(null);
+            onSubmit(entryData, recurrentSettings); // O usuário pecou, mas confirmou. Libera a catraca.
+          }}
+          onCancel={() => {
+            setSentinelPayload(null);
+            onCancel(); // Fecha o form principal ou as abas
+          }}
+        />
+      )}
+
       {/* Modal de configuração de recorrência (aparece sobre o form) */}
       {showRecurrenceModal && (
         <RecurrenceModal

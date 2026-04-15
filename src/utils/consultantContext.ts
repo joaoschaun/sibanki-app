@@ -6,9 +6,57 @@
  * integradas ao modelo de dados real do Sibanki.
  */
 
-import type { CreditSnapshot, Entry, Goal, Investment, CreditObligation, Card } from '../types/userData';
+import type {
+  CreditSnapshot,
+  Entry,
+  Goal,
+  Investment,
+  CreditObligation,
+  Card,
+  CardBenefits,
+} from '../types/userData';
 import { isTransferEntry } from './entryUtils';
 import { buildSovereigntySnapshot } from './sovereigntyEngine';
+
+function formatBenefitsConcise(b?: CardBenefits): string {
+  if (!b) return 'sem benefícios cadastrados';
+  const parts: string[] = [];
+  if (b.cashbackPct != null && b.cashbackPct > 0) parts.push(`cashback ${b.cashbackPct}%`);
+  if (b.pointsProgram) parts.push(String(b.pointsProgram));
+  if (b.vipLounge) parts.push('sala VIP');
+  if (b.travelInsurance) parts.push('seguro viagem');
+  if (b.purchaseProtection) parts.push('proteção de compra');
+  if (b.extendedWarranty) parts.push('garantia estendida');
+  if (b.concierge) parts.push('concierge');
+  if (parts.length === 0) return 'sem benefícios cadastrados';
+  return parts.join(', ');
+}
+
+function formatCardContextLine(c: {
+  name?: string;
+  flag?: string;
+  limit?: number;
+  currentBill?: number;
+  cardBenefits?: CardBenefits;
+}): string {
+  const nm = c.name || '?';
+  const fl = c.flag || '?';
+  const lim = (Number(c.limit) || 0).toFixed(0);
+  const bill = (Number(c.currentBill) || 0).toFixed(0);
+  const benefitsText = formatBenefitsConcise(c.cardBenefits);
+  const headFull = `${nm} (${fl}): lim. R$ ${lim}, fat. R$ ${bill}`;
+  const tail = ` | ${benefitsText}`;
+  const max = 80;
+  if (headFull.length + tail.length <= max) return headFull + tail;
+  const headBudget = max - tail.length;
+  if (headBudget >= 12) {
+    const head =
+      headFull.length > headBudget ? `${headFull.slice(0, Math.max(8, headBudget - 1))}…` : headFull;
+    const line = head + tail;
+    return line.length > max ? `${line.slice(0, max - 3)}...` : line;
+  }
+  return `${benefitsText.slice(0, max - 3)}...`;
+}
 
 /** Dados necessários para montar o contexto enviado ao chatApi. */
 export interface FinancialContextInput {
@@ -19,7 +67,14 @@ export interface FinancialContextInput {
   accounts: string[];
   accountBalances: Record<string, number>;
   accountMeta?: Record<string, { incluirNaSoma?: boolean; tipo?: string }>;
-  cards: { name?: string; limit?: number; active?: boolean; currentBill?: number }[];
+  cards: {
+    name?: string;
+    limit?: number;
+    active?: boolean;
+    currentBill?: number;
+    flag?: string;
+    cardBenefits?: CardBenefits;
+  }[];
   recurrents?: unknown[];
   investorProfile?: { profile?: string; score?: number } | null;
   creditSnapshot?: CreditSnapshot | null;
@@ -153,12 +208,10 @@ export function buildFinancialContextString(input: FinancialContextInput): strin
       : 'Nenhum orçamento definido';
 
   // ── 7. Cartões ─────────────────────────────────────────────────────────────
+  const activeCards = cards.filter((c) => c.active !== false);
   const cartoesInfo =
-    cards.filter((c) => c.active !== false).length > 0
-      ? cards
-          .filter((c) => c.active !== false)
-          .map((c) => `${c.name || '?'}: limite R$ ${(Number(c.limit) || 0).toFixed(2)}`)
-          .join('; ')
+    activeCards.length > 0
+      ? ['Cartões ativos:', ...activeCards.map((c) => `- ${formatCardContextLine(c)}`)].join('\n')
       : 'Nenhum cartão';
 
   // ── 8. Métricas de Soberania (novo) ───────────────────────────────────────
@@ -184,7 +237,7 @@ export function buildFinancialContextString(input: FinancialContextInput): strin
   ctx += `Contas: ${accStr}\n`;
   ctx += `Investimentos: ${invInfo}\n`;
   ctx += `Orçamentos: ${orcInfo}\n`;
-  ctx += `Cartões: ${cartoesInfo}\n`;
+  ctx += `${cartoesInfo}\n`;
 
   // Recorrentes
   if (recurrents.length > 0) {

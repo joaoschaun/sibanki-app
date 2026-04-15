@@ -188,13 +188,31 @@ export function ImportEntries({ open, onClose }: Props) {
     if (items.length === 0) return;
     setAiCatBusy(true);
     try {
-      const batch = items.slice(0, 50).map((it, i) => ({ index: i, desc: it.desc, type: it.type }));
-      const aiCat = httpsCallable<{ items: typeof batch }, { results: { index: number; category: string }[] }>(functions, 'aiCategorizeCsv');
-      const res = await aiCat({ items: batch });
-      if (res.data?.results) {
+      const toCategorize = items.map((it, i) => ({ index: i, desc: it.desc, type: it.type }));
+      const BATCH_SIZE = 50;
+      const MAX_CONCURRENT = 3;
+      const batches = [];
+      for (let b = 0; b < toCategorize.length; b += BATCH_SIZE) {
+        batches.push(toCategorize.slice(b, b + BATCH_SIZE));
+      }
+
+      const aiCat = httpsCallable<{ items: any[] }, { results: { index: number; category: string }[] }>(functions, 'aiCategorizeCsv');
+      let allResults: { index: number; category: string }[] = [];
+      
+      let i = 0;
+      while (i < batches.length) {
+        const currentTasks = batches.slice(i, i + MAX_CONCURRENT).map((b) => aiCat({ items: b }).catch(() => null));
+        const resList = await Promise.all(currentTasks);
+        resList.forEach((r) => {
+          if (r?.data?.results) allResults.push(...r.data.results);
+        });
+        i += MAX_CONCURRENT;
+      }
+
+      if (allResults.length > 0) {
         setItems((prev) => {
           const updated = [...prev];
-          for (const r of res.data.results) {
+          for (const r of allResults) {
             if (updated[r.index] && r.category) updated[r.index] = { ...updated[r.index], category: r.category };
           }
           return updated;

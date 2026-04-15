@@ -2,10 +2,20 @@ import { db } from '../firebase';
 import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, writeBatch, runTransaction } from 'firebase/firestore';
 import { mergeInlineAndOverflowEntries } from '../utils/entryUtils';
 import { calculateFinScore } from '../utils/calculateScore';
+import {
+  validateEntry,
+  validateCard,
+  validateCardPurchase,
+  validateGoal,
+  validateInvestment,
+  validateRecurrent,
+  validateAccount,
+} from './validators';
 import type {
   Entry,
   UserData,
   Card,
+  CardBenefits,
   CardPurchase,
   Goal,
   Investment,
@@ -21,6 +31,23 @@ import type {
   FilhoTarefa,
   FilhoTransacao,
 } from '../types/userData';
+
+/** Erro lançado quando dados falham na validação antes de persistir. */
+export class ValidationError extends Error {
+  readonly errors: string[];
+  constructor(errors: string[]) {
+    super(errors.join(' | '));
+    this.name = 'ValidationError';
+    this.errors = errors;
+  }
+}
+
+/** Lança ValidationError se result.ok === false. */
+function assertValid(result: { ok: boolean; errors: string[] }, _context: string): void {
+  if (!result.ok) {
+    throw new ValidationError(result.errors);
+  }
+}
 
 async function loadInlineEntries(uid: string): Promise<Entry[]> {
   const ref = doc(db, 'users', uid);
@@ -104,6 +131,7 @@ export async function setCreditSnapshot(uid: string, creditSnapshot: CreditSnaps
  * Se round-up estiver ativo e for despesa, acumula a diferença no cofre.
  */
 export async function addEntry(uid: string, _currentEntries: Entry[], newEntry: Omit<Entry, 'id'>): Promise<void> {
+  assertValid(validateEntry(newEntry), 'addEntry');
   const inline = await loadInlineEntries(uid);
   const id = Date.now();
   const payload: Partial<UserData> = { entries: [...inline, { ...newEntry, id } as Entry] };
@@ -198,6 +226,7 @@ export async function updateEntry(
 ): Promise<void> {
   const target = mergedEntries.find((e) => e.id === id);
   if (!target) return;
+  assertValid(validateEntry({ ...target, ...updates, id: target.id }), 'updateEntry');
   if (target.entryLocation === 'overflow' && target.pluggyTransactionId) {
     const dref = doc(db, 'users', uid, 'entriesOverflow', `pg_${target.pluggyTransactionId}`);
     await setDoc(dref, { ...target, ...updates, id } as Entry, { merge: true });
@@ -232,6 +261,7 @@ export async function addAccount(
   initialBalance: number = 0
 ): Promise<void> {
   const nameTrim = name.trim();
+  assertValid(validateAccount(nameTrim, initialBalance), 'addAccount');
   if (!nameTrim || currentAccounts.includes(nameTrim)) return;
   const accounts = [...currentAccounts, nameTrim];
   const accountBalances = { ...currentBalances, [nameTrim]: initialBalance };
@@ -263,6 +293,7 @@ export async function addCard(
   currentCards: Card[],
   newCard: Omit<Card, 'id'>
 ): Promise<void> {
+  assertValid(validateCard(newCard), 'addCard');
   const id = Date.now();
   const cards = [...currentCards, { ...newCard, id, purchases: (newCard as Card).purchases ?? [] } as Card];
   await updateUserDoc(uid, { cards });
@@ -278,6 +309,7 @@ export async function addCardPurchase(
   cardId: number,
   opts: { desc: string; category: string; value: number; date: string; parcelas?: number }
 ): Promise<void> {
+  assertValid(validateCardPurchase(opts), 'addCardPurchase');
   const card = currentCards.find((c) => c.id === cardId);
   if (!card) throw new Error('Cartão não encontrado');
   const purchases = card.purchases ?? [];
@@ -402,13 +434,18 @@ export async function updateCard(
   currentCards: Card[],
   cardId: number,
   updates: Partial<
-    Pick<Card, 'name' | 'limit' | 'closeDay' | 'dueDay' | 'flag' | 'color'> & {
+    Pick<Card, 'name' | 'limit' | 'closeDay' | 'dueDay' | 'flag' | 'color' | 'cardBenefits'> & {
       bank?: string;
       annualFee?: number;
       annualFeeMonth?: number;
+      cardBenefits?: CardBenefits;
     }
   >
 ): Promise<void> {
+  const existing = currentCards.find((c) => c.id === cardId);
+  if (existing && (updates.name !== undefined || updates.limit !== undefined)) {
+    assertValid(validateCard({ ...existing, ...updates }), 'updateCard');
+  }
   const cards = currentCards.map((c) =>
     c.id === cardId ? { ...c, ...updates } : c
   ) as Card[];
@@ -451,6 +488,7 @@ export async function addGoal(
   currentGoals: Goal[],
   newGoal: Omit<Goal, 'id'>
 ): Promise<void> {
+  assertValid(validateGoal(newGoal), 'addGoal');
   const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `g_${Date.now()}`;
   const goals = [...currentGoals, { ...newGoal, id, current: newGoal.current ?? 0 } as Goal];
   await updateUserDoc(uid, { goals });
@@ -487,6 +525,7 @@ export async function addInvestment(
   currentInvestments: Investment[],
   newInv: Omit<Investment, 'id'>
 ): Promise<void> {
+  assertValid(validateInvestment(newInv), 'addInvestment');
   const id = Date.now();
   const investments = [...currentInvestments, { ...newInv, id } as Investment];
   await updateUserDoc(uid, { investments });
@@ -645,6 +684,7 @@ export async function addRecurrent(
   currentRecurrents: Recurrent[],
   newRecurrent: Omit<Recurrent, 'id'>
 ): Promise<void> {
+  assertValid(validateRecurrent(newRecurrent), 'addRecurrent');
   const id = Date.now();
   const recurrents = [...currentRecurrents, { ...newRecurrent, id, active: newRecurrent.active ?? true } as Recurrent];
   await updateUserDoc(uid, { recurrents });

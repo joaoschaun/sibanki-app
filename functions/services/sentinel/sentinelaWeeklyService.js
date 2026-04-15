@@ -58,9 +58,53 @@ function calcSpreadGap(investments = [], creditObligations = []) {
 }
 
 
+// ─── Dicas de benefícios de cartão ──────────────────────────────────────────
+
+function buildBenefitsTips(cards = [], entries = []) {
+  const tips = [];
+  const cutoff90 = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+  const last90 = entries.filter((e) => (e.date || "") >= cutoff90);
+
+  const vipCards = cards.filter((c) => c.cardBenefits && c.cardBenefits.vipLounge);
+  const hasTravel = last90.some((e) =>
+    /passagem|hotel|aeroport|viagem|airbnb/i.test(String(e.desc || "")),
+  );
+  if (vipCards.length && hasTravel) {
+    tips.push(
+      `✈️ *Benefício disponível:* ${vipCards[0].name || "Cartão"} tem acesso a sala VIP — use no próximo embarque.`,
+    );
+  }
+
+  const cashbackCards = cards
+    .filter((c) => c.cardBenefits && Number(c.cardBenefits.cashbackPct) > 0)
+    .sort(
+      (a, b) =>
+        (Number(b.cardBenefits && b.cardBenefits.cashbackPct) || 0) -
+        (Number(a.cardBenefits && a.cardBenefits.cashbackPct) || 0),
+    );
+  if (cashbackCards.length && tips.length < 2) {
+    const top = cashbackCards[0];
+    tips.push(
+      `💳 *Cashback disponível:* ${top.name || "Cartão"} tem ${top.cardBenefits.cashbackPct}% de cashback — prefira-o para compras recorrentes.`,
+    );
+  }
+
+  const warrantyCards = cards.filter((c) => c.cardBenefits && c.cardBenefits.extendedWarranty);
+  const hasElectronics = last90.some((e) =>
+    /notebook|celular|tv |monitor|iphone|galaxy/i.test(String(e.desc || "")),
+  );
+  if (warrantyCards.length && hasElectronics && tips.length < 2) {
+    tips.push(
+      `🔧 *Garantia estendida:* ${warrantyCards[0].name || "Cartão"} cobre seu eletrônico recente — guarde a nota fiscal.`,
+    );
+  }
+
+  return tips.slice(0, 2);
+}
+
 // ─── Construtor de mensagem semanal ─────────────────────────────────────────
 
-function buildWeeklyMessage(userName, freedom, spread, budgetAlerts = []) {
+function buildWeeklyMessage(userName, freedom, spread, budgetAlerts = [], benefitTips = []) {
   const nome = userName ? userName.split(" ")[0] : "Investidor";
   const lines = [];
 
@@ -88,6 +132,13 @@ function buildWeeklyMessage(userName, freedom, spread, budgetAlerts = []) {
     lines.push(`Seus investimentos rendem mais do que o custo da dívida. Continue assim.`);
   }
   lines.push(``);
+
+  if (benefitTips.length > 0) {
+    for (const tip of benefitTips) {
+      lines.push(tip);
+    }
+    lines.push(``);
+  }
 
   // Alertas de orçamento
   if (budgetAlerts.length > 0) {
@@ -167,7 +218,8 @@ async function processSentinelaUser(db, uid, sendFn) {
   }
   budgetAlerts.sort((a, b) => b.pct - a.pct);
 
-  const message = buildWeeklyMessage(userName, freedom, spread, budgetAlerts);
+  const benefitTips = buildBenefitsTips(data.cards || [], allEntries);
+  const message = buildWeeklyMessage(userName, freedom, spread, budgetAlerts, benefitTips);
   await sendFn(phone, message);
 
   logEvent("sentinelaWeekly_user", { uid, days: freedom.days, spreadGap: spread.spreadGap, phone: phone.slice(-4) });
@@ -215,4 +267,10 @@ async function runSentinelaWeekly(db, sendWhatsAppText) {
   return { processed: uids.length, sent, errors };
 }
 
-module.exports = { runSentinelaWeekly, buildWeeklyMessage, calcDaysOfFreedom, calcSpreadGap };
+module.exports = {
+  runSentinelaWeekly,
+  buildWeeklyMessage,
+  buildBenefitsTips,
+  calcDaysOfFreedom,
+  calcSpreadGap,
+};

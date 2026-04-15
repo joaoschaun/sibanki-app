@@ -18,15 +18,35 @@ const {
   GEMINI_KEY,
   WHATSAPP_TOKEN,
   WHATSAPP_PHONE_NUMBER_ID,
-  WHATSAPP_VERIFY_TOKEN
+  WHATSAPP_VERIFY_TOKEN,
+  LOMADEE_APP_TOKEN,
+  LOMADEE_SOURCE_ID,
+  LOMADEE_WEBHOOK_SECRET,
+  MONETIZZE_API_KEY,
+  MONETIZZE_TOKEN,
+  MONETIZZE_WEBHOOK_SECRET,
+  CASHBACK_CONVERSION_RATE,
+  CASHBACK_RELEASE_DAYS
 } = require("./config");
 const brapiService = require("./services/market/brapiService");
+const fixedIncomeService = require("./services/market/fixedIncomeService");
+const lomadeeCatalogService = require("./services/affiliate/lomadeeCatalogService");
 const newsService = require("./services/news/newsService");
 const stripeService = require("./services/billing/stripeService");
 const whatsappService = require("./services/whatsapp/whatsappService");
-const { generateAnalysis, generateProactiveInsight } = require("./services/llm/llmService");
+const { generateAnalysis, generateProactiveInsight, generateAnalysisStream } = require("./services/llm/llmService");
 const { buildConsultantPrompt, buildProactiveInsightPrompt } = require("./services/llm/sovereignSystemPrompt");
 const { retrieveRelevantChunks } = require("./services/llm/brazilianFinanceKnowledge");
+const { detectMarketIntent } = require("./services/llm/marketIntentService");
+const {
+  runAssistantAnalysis,
+  runAssistantAnalysisStream,
+} = require("./services/assistant/assistantOrchestrator");
+const {
+  processEntryCapture,
+  runVoiceToEntry,
+  runVisionToEntry,
+} = require("./services/assistant/entryCaptureOrchestrator");
 const { runSentinelaGeo } = require("./services/sentinel/sentinelaGeoService");
 const adminAuth = require("./services/admin/adminAuth");
 const { runSentinelaWeekly } = require("./services/sentinel/sentinelaWeeklyService");
@@ -34,6 +54,7 @@ const tenantRoutes = require("./services/tenant/tenantRoutes");
 const { onUserCreated } = require("./services/user/userService");
 const pluggyService = require("./services/pluggy/pluggyService");
 const pluggySyncService = require("./services/pluggy/pluggySyncService");
+const recorrentesService = require("./services/recorrentes/recorrentesService");
 
 // Load .env for local development (sempre functions/.env, mesmo com cwd na raiz)
 try {
@@ -72,6 +93,12 @@ app.get("/health", async (_req, res) => {
   checks.services.resend = process.env.RESEND_API_KEY ? "configured" : "missing";
   checks.services.whatsapp = process.env.WHATSAPP_TOKEN ? "configured" : "missing";
   checks.services.pluggy = process.env.PLUGGY_CLIENT_ID ? "configured" : "missing";
+  checks.services.lomadee = LOMADEE_APP_TOKEN ? "configured" : "missing";
+  checks.services.monetizze = MONETIZZE_API_KEY ? "configured" : "missing";
+  checks.services.monetizzeToken = MONETIZZE_TOKEN ? "configured" : "missing";
+  checks.services.cashbackEngine = (CASHBACK_CONVERSION_RATE > 0 && CASHBACK_RELEASE_DAYS >= 0)
+    ? "configured"
+    : "invalid";
   const code = checks.status === "ok" ? 200 : 503;
   res.status(code).json(checks);
 });
@@ -120,13 +147,17 @@ function brapiRateCheck(context) {
   const uid = context.auth.uid;
   const now = Date.now();
   const entry = _brapiRateMap.get(uid);
+
   if (entry && now - entry.start < BRAPI_RATE_WINDOW) {
     entry.count++;
     if (entry.count > BRAPI_RATE_LIMIT) {
       throw new functions.https.HttpsError("resource-exhausted", "Limite de requisições atingido. Tente novamente em 1 minuto.");
     }
   } else {
-    _brapiRateMap.set(uid, { start: now, count: 1 });
+    // Limpa entrada expirada antes de criar nova (evita memory leak)
+    if (entry && entry.cleanupTimer) clearTimeout(entry.cleanupTimer);
+    const cleanupTimer = setTimeout(() => _brapiRateMap.delete(uid), BRAPI_RATE_WINDOW + 1000);
+    _brapiRateMap.set(uid, { start: now, count: 1, cleanupTimer });
   }
 }
 
@@ -154,6 +185,120 @@ exports.brapiInflation = functions.https.onCall(async (data, context) => {
   brapiRateCheck(context);
   return brapiService.inflation(data, context);
 });
+
+exports.fixedIncomeCatalogApi = functions.https.onCall(async (data, context) => {
+  brapiRateCheck(context);
+  const forceRefresh = !!data?.forceRefresh;
+  return fixedIncomeService.getFixedIncomeCatalog(forceRefresh);
+});
+
+/**
+ * Valores a Receber — BCB (Banco Central do Brasil)
+ * Consulta a API pública do BC para verificar se o CPF tem valores esquecidos
+ * (contas inativas, cotas de consórcio, tarifas cobradas indevidamente, etc.).
+ * Não requer autenticação externa — apenas CPF do usuário.
+ * Para resgatar: https://valoresareceber.bcb.gov.br (requer gov.br)
+ */
+exports.valoresAReceberApi = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login necessário.");
+  }
+  const cpf = String(data?.cpf || "").replace(/\D/g, "");
+  if (cpf.length !== 11) {
+    throw new functions.https.HttpsError("invalid-argument", "CPF inválido.");
+  }
+
+  // Cascata de endpoints BCB — a URL exata varia por versão da API
+  const BCB_ENDPOINTS = [
+    `https://valoresareceber.bcb.gov.br/publico/api/v1/cpf/${cpf}`,
+    `https://valoresareceber.bcb.gov.br/publico/api/v1/cliente/${cpf}`,
+  ];
+
+  for (const url of BCB_ENDPOINTS) {
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": "Sibanki/1.0" },
+        timeout: 12_000,
+      });
+      if (!res.ok) continue;
+      const json = await res.json();
+
+      // Normaliza resposta — BCB mudou o formato ao longo das versões
+      const items = Array.isArray(json)
+        ? json
+        : Array.isArray(json?.resultado)
+        ? json.resultado
+        : Array.isArray(json?.data)
+        ? json.data
+        : [];
+
+      const available = items.filter(
+        (i) => i?.valorDisponivel !== false && i?.habilitado !== false
+      );
+      const institutions = [
+        ...new Set(
+          available
+            .map((i) => i?.nomeInstituicao || i?.nome || i?.instituicao || "")
+            .filter(Boolean)
+        ),
+      ];
+
+      // Salva snapshot em Firestore para o Consultor IA usar depois
+      if (available.length > 0) {
+        try {
+          await db.collection("users").doc(context.auth.uid).set(
+            {
+              valoresAReceber: {
+                hasValues: true,
+                institutions,
+                total: available.length,
+                checkedAt: new Date().toISOString(),
+                claimUrl: "https://valoresareceber.bcb.gov.br",
+              },
+            },
+            { merge: true }
+          );
+        } catch (_) { /* não bloqueia resposta */ }
+      }
+
+      return {
+        hasValues: available.length > 0,
+        count: available.length,
+        institutions,
+        claimUrl: "https://valoresareceber.bcb.gov.br",
+        source: "bcb",
+      };
+    } catch (e) {
+      console.warn("[valoresAReceberApi] endpoint falhou:", url, e.message);
+    }
+  }
+
+  // API BCB indisponível — retorna null para o front tratar
+  return { hasValues: null, error: "API do Banco Central indisponível agora.", institutions: [] };
+});
+
+/**
+ * Catálogo da Loja (Lomadee) — `southamerica-east1` (latência/região BR; a API Lomadee é alcançável de qualquer região GCP).
+ * O app DEVE chamar esta callable com `getFunctions(app, 'southamerica-east1')` — o default `us-central1` não a encontra.
+ */
+exports.affiliateStoreCatalogApi = functions
+  .region("southamerica-east1")
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Faça login para ver a loja.");
+    }
+    const page = Math.max(1, parseInt(String(data?.page || "1"), 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(String(data?.limit || "24"), 10) || 24));
+    const search = typeof data?.search === "string" ? data.search : "";
+    const price = typeof data?.price === "string" ? data.price : "";
+    const organizationIds = typeof data?.organizationIds === "string" ? data.organizationIds : "";
+    const forceRefresh = !!data?.forceRefresh;
+    const includeFacets = data?.includeFacets !== false;
+    return lomadeeCatalogService.getCatalog({
+      page, limit, search, forceRefresh, price, organizationIds, includeFacets,
+    });
+  });
 
 // =============================================
 // NEWS: RSS PARSER HELPER
@@ -450,6 +595,94 @@ exports.weeklySummary = functions.pubsub
   });
 
 // =============================================
+// RECORRENTES: aplicar lançamentos mensais automáticos
+// =============================================
+exports.aplicarRecorrentesDoMes = functions.pubsub
+  .schedule("0 6 1 * *")
+  .timeZone("America/Sao_Paulo")
+  .onRun(async () => {
+    logEvent("recorrentes", "inicio", { at: new Date().toISOString() });
+
+    const BATCH_SIZE = 100;
+    let lastDoc = null;
+    let totalUsers = 0;
+    let totalEntries = 0;
+    let errors = 0;
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      let query = db.collection("users").limit(BATCH_SIZE);
+      if (lastDoc) query = query.startAfter(lastDoc);
+
+      const snap = await query.get();
+      if (snap.empty) break;
+
+      lastDoc = snap.docs[snap.docs.length - 1];
+
+      for (const doc of snap.docs) {
+        const data = doc.data();
+        const recurrents = Array.isArray(data.recurrents) ? data.recurrents : [];
+        const active = recurrents.filter((r) => r.active !== false);
+        if (active.length === 0) continue;
+
+        totalUsers++;
+        try {
+          const generated = await recorrentesService.applyRecurrentesForUser(doc.id, active);
+          totalEntries += generated;
+          if (generated > 0) {
+            logEvent("recorrentes", "user_ok", { uid: doc.id, generated });
+          }
+        } catch (e) {
+          errors++;
+          logError("aplicarRecorrentesDoMes", { uid: doc.id, error: e.message });
+        }
+      }
+
+      if (snap.docs.length < BATCH_SIZE) break;
+    }
+
+    logEvent("recorrentes", "fim", { totalUsers, totalEntries, errors });
+    return null;
+  });
+
+exports.aplicarRecorrentesManual = functions
+  .region("southamerica-east1")
+  .https.onCall(async (_data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Login necessário.");
+    }
+    const uid = context.auth.uid;
+    const userRef = db.collection("users").doc(uid);
+    const userSnap = await userRef.get();
+    if (!userSnap.exists) {
+      throw new functions.https.HttpsError("not-found", "Usuário não encontrado.");
+    }
+    const recurrents = Array.isArray(userSnap.data().recurrents)
+      ? userSnap.data().recurrents
+      : [];
+    const active = recurrents.filter((r) => r.active !== false);
+    if (active.length === 0) {
+      return { ok: true, generated: 0, message: "Nenhum recorrente ativo." };
+    }
+
+    try {
+      const generated = await recorrentesService.applyRecurrentesForUser(uid, active);
+      logEvent("recorrentes", "manual", { uid, generated });
+      return {
+        ok: true,
+        generated,
+        message:
+          generated > 0
+            ? `${generated} lançamento(s) gerado(s) com sucesso.`
+            : "Todos os recorrentes deste mês já foram aplicados.",
+      };
+    } catch (e) {
+      logError("aplicarRecorrentesManual", { uid, error: e.message });
+      throw new functions.https.HttpsError("internal", "Erro ao aplicar recorrentes.");
+    }
+  });
+
+// =============================================
 // CHAT IA (Gemini) - usado pelo FAB e módulo IA do app
 // =============================================
 const PLATFORM_EVENT_ALLOWLIST = new Set([
@@ -568,7 +801,259 @@ COMUNICAÇÃO:
 - Não invente dados que não foram fornecidos no contexto.`;
 
 const enforceAppCheck = process.env.ENFORCE_APP_CHECK === "true";
-const chatApiOptions = enforceAppCheck ? { enforceAppCheck: true } : {};
+const chatApiOptions = {
+  timeoutSeconds: 300,
+  memory: '512MB',
+  ...(enforceAppCheck ? { enforceAppCheck: true } : {}),
+};
+
+/** Separa histórico (se houver) da última mensagem do usuário no streaming. */
+function extractConsultantStreamParts(rawMessage) {
+  const m = String(rawMessage || "");
+  const marker = "[NOVA MENSAGEM DO USUÁRIO]";
+  if (m.includes(marker)) {
+    const idx = m.lastIndexOf(marker);
+    let historySection = m.slice(0, idx).replace(/^\[HISTÓRICO RECENTE DA CONVERSA\]\s*/i, "").trim();
+    const latestUser = m.slice(idx + marker.length).trim();
+    const consolidated = historySection
+      ? `${historySection}\n\n(Mensagem atual do usuário)\n${latestUser}`
+      : latestUser;
+    return { latestUser, consolidated };
+  }
+  return { latestUser: m.trim(), consolidated: m.trim() };
+}
+
+function classifyQuoteAsset(ticker = "", payload = null) {
+  const tk = String(ticker || "").toUpperCase();
+  const profile = payload?.results?.[0]?.summaryProfile || {};
+  const longName = String(payload?.results?.[0]?.longName || "");
+  const sector = String(profile?.sector || "").toLowerCase();
+  if (tk.endsWith("11") && /fundo|imobili|fii|real estate/i.test(`${longName} ${sector}`)) return "fii";
+  if (tk.endsWith("11")) return "etf";
+  return "equity";
+}
+
+function buildRaioXDirective(intentData, assetClass = "equity") {
+  if (intentData?.analysisMode !== "raio_x") return "";
+
+  if (intentData.intent === "quote" && assetClass === "equity") {
+    return `
+[MODO RAIO-X AÇÕES — OBRIGATÓRIO]
+Estruture em: 1) Veredito curto 2) Graham (P/L, P/VP, preço justo) 3) Bazin (DY/teto) 4) Lynch (PEG/ROE/dívida) 5) Buffett (moat/qualidade) 6) Checklist final com ✅/⚠️.
+Se algum indicador faltar no payload, declare explicitamente "dado indisponível" sem inventar.
+NÃO use critérios de cripto (trilema/tokenomics/on-chain), ETF (tracking error/top10) ou renda fixa (duration/FGC) neste modo.
+`;
+  }
+  if (intentData.intent === "quote" && assetClass === "etf") {
+    return `
+[MODO RAIO-X ETF — OBRIGATÓRIO]
+Estruture em: 1) Veredito curto 2) Custo (taxa/erro de tracking quando disponível) 3) Risco (volatilidade/beta/Sharpe quando disponível) 4) Composição (concentração/setores quando disponível) 5) Checklist final ✅/⚠️.
+NÃO use Graham/Bazin/Lynch/Buffett neste modo.
+`;
+  }
+  if (intentData.intent === "quote" && assetClass === "fii") {
+    return `
+[MODO RAIO-X FII — OBRIGATÓRIO]
+Estruture em: 1) Veredito curto 2) Renda (DY/proventos) 3) Qualidade (vacância/gestão/alavancagem quando disponível) 4) Risco de concentração 5) Checklist final ✅/⚠️.
+NÃO use Graham/Lynch/Buffett de ações tradicionais neste modo.
+`;
+  }
+  if (intentData.intent === "crypto") {
+    return `
+[MODO RAIO-X CRIPTO — OBRIGATÓRIO]
+Estruture em: 1) Veredito curto 2) Trilema (descentralização/segurança/escalabilidade) 3) Tokenomics (oferta, inflação/queima) 4) Adoção on-chain (volume/atividade quando disponível) 5) Checklist de risco ✅/⚠️.
+PROIBIDO usar Graham, Bazin, Lynch, Buffett, P/L, P/VP ou preço justo de ações.
+Se faltar dado on-chain no payload, diga explicitamente "dado on-chain indisponível no feed atual" e mantenha a análise no framework cripto.
+`;
+  }
+  if (intentData.intent === "fixed_income" || intentData.intent === "inflation") {
+    return `
+[MODO RAIO-X RENDA FIXA — OBRIGATÓRIO]
+Estruture em: 1) Veredito curto 2) Crédito (rating/garantia) 3) Ganho real (taxa nominal - inflação) 4) Liquidez e prazo (duration/carência) 5) Checklist final ✅/⚠️.
+Se faltar taxa do ativo específico, explique quais dados faltam e simule cenário didático com faixas realistas do Brasil.
+NÃO use Graham/Bazin/Lynch/Buffett nem critérios de trilema/tokenomics.
+`;
+  }
+  return "";
+}
+
+function enforceMarketClassOutput(text, intentData, assetClass, payloadResponse) {
+  const raw = String(text || "").trim();
+  if (!raw) return raw;
+  const intent = intentData?.intent;
+
+  if (intent === "crypto") {
+    const hasCryptoAnchors =
+      /trilema|tokenomics|on-?chain|descentraliza|escalabil|seguran[çc]a/i.test(raw);
+    const hasStockAnchors = /graham|bazin|lynch|buffett|p\/l|p\/vp|pre[çc]o justo/i.test(raw);
+    if (hasCryptoAnchors && !hasStockAnchors) return raw;
+
+    const coinData = payloadResponse?.payload?.coins?.[0] || payloadResponse?.payload?.results?.[0] || {};
+    const coinName = coinData?.coin || coinData?.symbol || coinData?.name || "ativo cripto";
+    const price = coinData?.regularMarketPrice || coinData?.price;
+    const priceLabel = Number.isFinite(Number(price)) ? `Preço de referência: ${Number(price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.` : "Preço de referência indisponível no feed atual.";
+
+    return [
+      `Veredito: ⚠️ ${String(coinName).toUpperCase()} é cripto de alta volatilidade; trate como posição de risco.`,
+      "",
+      "Trilema (Descentralização · Segurança · Escalabilidade):",
+      "- Segurança e descentralização variam por rede e ciclo; valide robustez operacional antes de alocar.",
+      "- Escalabilidade depende de uso real e custos de transação no período.",
+      "",
+      "Tokenomics (Oferta · Emissão/Queima):",
+      "- Analise inflação de oferta e pressão de venda estrutural.",
+      "- Sem mecanismo claro de escassez, o risco de diluição aumenta.",
+      "",
+      "Adoção On-Chain (Uso real):",
+      "- Verifique volume, atividade de rede e utilidade econômica além de narrativa.",
+      `- ${priceLabel}`,
+      "",
+      "Checklist de risco:",
+      "✅ Classe correta: cripto (sem critérios de ações/ETF/renda fixa)",
+      "⚠️ Alta volatilidade e sensibilidade a ciclo de mercado",
+      "⚠️ Invista apenas com tamanho pequeno e gestão de risco",
+      "",
+      "Ação recomendada: manter alocação tática, diversificada e limitada ao perfil de risco."
+    ].join("\n");
+  }
+
+  if (intent === "quote" && assetClass === "etf") {
+    const hasEtfAnchors = /tracking|taxa|sharpe|beta|concentra|composi|setor/i.test(raw);
+    const hasCryptoOrStock = /tokenomics|on-?chain|trilema|graham|bazin|lynch|buffett/i.test(raw);
+    if (hasEtfAnchors && !hasCryptoOrStock) return raw;
+    return [
+      "Veredito: análise em modo ETF.",
+      "",
+      "Custo:",
+      "- Taxa de administração e tracking error são os principais filtros iniciais.",
+      "",
+      "Risco:",
+      "- Avalie volatilidade, beta e Sharpe no horizonte da sua carteira.",
+      "",
+      "Composição:",
+      "- Revise concentração (Top 10) e diversificação setorial.",
+      "",
+      "Checklist final:",
+      "✅ Framework ETF aplicado",
+      "⚠️ Sem mistura de critérios de ações ou cripto",
+      "",
+      "Ação recomendada: confirmar aderência ao benchmark e função do ETF na carteira."
+    ].join("\n");
+  }
+
+  return raw;
+}
+
+function compactMarketPayload(intent, payload) {
+  if (!payload) return null;
+  try {
+    if (intent === "quote") {
+      const r = payload?.results?.[0] || {};
+      const fd = r?.financialData || {};
+      const dks = r?.defaultKeyStatistics || {};
+      return {
+        symbol: r.symbol,
+        longName: r.longName,
+        regularMarketPrice: r.regularMarketPrice,
+        currency: r.currency,
+        priceEarnings: r.priceEarnings,
+        priceToBookRatio: r.priceToBookRatio,
+        dividendYield: r.dividendYield,
+        earningsPerShare: r.earningsPerShare,
+        marketCap: r.marketCap,
+        financialData: {
+          returnOnEquity: fd.returnOnEquity,
+          debtToEquity: fd.debtToEquity,
+          currentRatio: fd.currentRatio,
+          profitMargins: fd.profitMargins,
+          operatingMargins: fd.operatingMargins,
+          freeCashflow: fd.freeCashflow,
+          revenueGrowth: fd.revenueGrowth,
+          earningsGrowth: fd.earningsGrowth,
+        },
+        defaultKeyStatistics: {
+          trailingPE: dks.trailingPE,
+          forwardPE: dks.forwardPE,
+          bookValue: dks.bookValue,
+          priceToBook: dks.priceToBook,
+          trailingEps: dks.trailingEps,
+          yield: dks.yield,
+        },
+      };
+    }
+    if (intent === "crypto") {
+      const first = payload?.coins?.[0] || payload?.results?.[0] || {};
+      return {
+        coin: first.coin || first.symbol || first.name,
+        currency: first.currency,
+        regularMarketPrice: first.regularMarketPrice || first.price,
+        marketCap: first.marketCap,
+        volume24h: first.regularMarketVolume || first.volume24h,
+        changePercent24h: first.regularMarketChangePercent || first.changePercent24h,
+      };
+    }
+    if (intent === "inflation" || intent === "fixed_income") {
+      const arr = Array.isArray(payload?.inflation) ? payload.inflation.slice(0, 12) : payload?.results?.slice?.(0, 12);
+      return { inflation: arr || payload };
+    }
+    return payload;
+  } catch (_) {
+    return payload;
+  }
+}
+
+function normalizeTickerInput(raw) {
+  return String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, "").trim();
+}
+
+function extractSearchTickers(searchResult) {
+  const buckets = [];
+  if (Array.isArray(searchResult)) buckets.push(searchResult);
+  if (Array.isArray(searchResult?.stocks)) buckets.push(searchResult.stocks);
+  if (Array.isArray(searchResult?.results)) buckets.push(searchResult.results);
+  if (Array.isArray(searchResult?.quotes)) buckets.push(searchResult.quotes);
+  if (Array.isArray(searchResult?.indexes)) buckets.push(searchResult.indexes);
+  if (Array.isArray(searchResult?.funds)) buckets.push(searchResult.funds);
+
+  const all = buckets.flat();
+  const out = [];
+  for (const item of all) {
+    const candidate =
+      item?.stock ||
+      item?.symbol ||
+      item?.ticker ||
+      item?.code ||
+      item?.asset ||
+      item?.name;
+    const tk = normalizeTickerInput(candidate);
+    if (/^[A-Z0-9]{4,12}$/.test(tk)) out.push(tk);
+  }
+  return Array.from(new Set(out));
+}
+
+async function resolveTickerWithFallback(rawTicker) {
+  const clean = normalizeTickerInput(rawTicker);
+  if (!clean) return "";
+  try {
+    await brapiService.quote({ ticker: clean });
+    return clean;
+  } catch (e) {
+    // tenta sugestão via busca quando ticker tiver possível typo
+    try {
+      const search = await brapiService.search({ query: clean });
+      const tickers = extractSearchTickers(search);
+      if (tickers.includes(clean)) return clean;
+      const starts = tickers.find((t) => t.startsWith(clean.slice(0, 4)));
+      if (starts) return starts;
+      const contains = tickers.find((t) => t.includes(clean.slice(0, 4)));
+      if (contains) return contains;
+      const first = tickers[0];
+      return first || clean;
+    } catch (_) {
+      return clean;
+    }
+  }
+}
 
 exports.chatApi = functions.runWith(chatApiOptions).https.onCall(async (data, context) => {
   if (!context.auth) {
@@ -578,28 +1063,126 @@ exports.chatApi = functions.runWith(chatApiOptions).https.onCall(async (data, co
   if (!message) {
     throw new functions.https.HttpsError("invalid-argument", "Mensagem vazia.");
   }
-  // GEMINI_KEY ainda pode ser usada mas o llmService tem fallback automático para Groq/OpenAI/Claude
   const contextStr = (data && data.context) ? String(data.context).trim() : "";
-  const isLegacyFullPrompt = /DADOS (DO USUARIO|DA FAMÍLIA|DO USUÁRIO)/i.test(message);
-  let userContent = (contextStr && !isLegacyFullPrompt)
-    ? `DADOS DO USUÁRIO (use para personalizar a resposta):\n${contextStr}\n\nPERGUNTA DO USUÁRIO:\n${message}`
-    : message;
-  // Arquiteto Soberano: RAG semântico + persona + regras brasileiras + contexto financeiro
-  const ragChunks = retrieveRelevantChunks(message);
-  const fullPrompt = buildConsultantPrompt(userContent, message, ragChunks);
-  // Chama o llmService com fallback automático: Gemini → Groq → OpenAI → Claude
   const t = timer("chatApi", "generate");
   try {
-    const result = await generateAnalysis(contextStr, fullPrompt);
-    if (!result || !result.text) {
+    const result = await runAssistantAnalysis({ message, contextStr });
+    if (!result || !result.reply) {
       throw new functions.https.HttpsError("resource-exhausted", "Todos os provedores de IA atingiram o limite. Tente em alguns minutos.");
     }
-    t.end({ provider: result.provider, uid: context.auth.uid });
-    return { reply: result.text };
+    t.end({ uid: context.auth.uid });
+    return { reply: result.reply, marketPayload: result.marketPayload || null };
   } catch (e) {
     if (e instanceof functions.https.HttpsError) throw e;
     logError("chatApi", e);
     throw new functions.https.HttpsError("internal", e.message || "Erro ao processar. Tente novamente.");
+  }
+});
+
+/** Conversa com Consultor usando SSE (Server-Sent Events) para Efeito Máquina de Escrever */
+exports.chatStreamApi = functions.runWith(chatApiOptions).https.onRequest((req, res) => {
+  return cors(req, res, async () => {
+    // Apenas POST é permitido
+    if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+    
+    // Validação Manual de Auth via Bearer Token
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Auth header missing or malformed' });
+    }
+    const token = authHeader.split('Bearer ')[1];
+    let decodedToken;
+    try {
+      decodedToken = await admin.auth().verifyIdToken(token);
+    } catch (e) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const { context: contextStr, message } = req.body;
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ error: 'Mensagem ausente ou estruturada incorretamente' });
+    }
+
+    // Prepara Cabeçalhos SSE
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    try {
+      const result = await runAssistantAnalysisStream({ message, contextStr });
+      const safeStreamText = result.text || "";
+
+      const chunks = String(safeStreamText || "").match(/[\s\S]{1,220}/g) || [];
+      for (const part of chunks) {
+        res.write(`data: ${JSON.stringify({ text: part })}\n\n`);
+      }
+
+      if (result.marketPayload) {
+         res.write(`data: ${JSON.stringify({ marketPayload: result.marketPayload })}\n\n`);
+      }
+
+      res.write("data: [DONE]\n\n");
+      res.end();
+    } catch (error) {
+      logError("chatStreamApi", error);
+      res.write(`data: ${JSON.stringify({ error: "Erro interno no servidor de streaming." })}\n\n`);
+      res.end();
+    }
+  });
+});
+
+/** Visão Mágica: OCR de Notas fiscais diretamente extraindo para JSON via Gemini 1.5 Flash */
+exports.visionToEntryApi = functions.runWith({ timeoutSeconds: 30, memory: "512MB" }).https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login necessário para usar Visão IA.");
+  const base64Image = data.image; // base64 payload
+  const mimeType = data.mimeType || "image/jpeg";
+  if (!base64Image) throw new functions.https.HttpsError("invalid-argument", "Nenhuma imagem enviada.");
+
+  try {
+    const result = await runVisionToEntry({
+      imageBase64: base64Image,
+      mimeType,
+      uid: context.auth.uid,
+    });
+    if (!result.entryPayload) {
+      throw new functions.https.HttpsError("internal", "Não foi possível extrair os dados do recibo.");
+    }
+    return {
+      reply: result.reply,
+      entryPayload: result.entryPayload,
+    };
+  } catch (error) {
+    if (error instanceof functions.https.HttpsError) throw error;
+    if (error.code === "invalid-argument") {
+      throw new functions.https.HttpsError("invalid-argument", error.message);
+    }
+    logError("visionToEntryApi", "process", error);
+    throw new functions.https.HttpsError("internal", "Falha de processamento na Visão Gemini.");
+  }
+});
+
+/** Callable única: { kind: 'voice'|'vision', ... } → mesmo contrato entry_draft (reply + entryPayload). */
+exports.assistantEntryCaptureApi = functions.runWith({ timeoutSeconds: 30, memory: "512MB" }).https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Faça login.");
+  }
+  try {
+    return await processEntryCapture({
+      kind: data?.kind,
+      audioBase64: data?.audioBase64,
+      mimeType: data?.mimeType,
+      image: data?.image,
+      imageBase64: data?.imageBase64,
+      uid: context.auth.uid,
+      db,
+    });
+  } catch (e) {
+    if (e.code === "invalid-argument") {
+      throw new functions.https.HttpsError("invalid-argument", e.message);
+    }
+    logError("assistantEntryCaptureApi", "process", e, { uid: context.auth.uid });
+    throw new functions.https.HttpsError("internal", "Falha ao processar seu envio. Tente novamente.");
   }
 });
 
@@ -1098,7 +1681,7 @@ exports.pluggyCreateConnectToken = functions.https.onCall(async (data, context) 
 /**
  * Callable: puxa contas dos itens Pluggy do usuário e grava em accounts / accountBalances / accountMeta
  */
-exports.pluggySyncAccounts = functions.https.onCall(async (data, context) => {
+exports.pluggySyncAccounts = functions.runWith({ timeoutSeconds: 540, memory: '1GB' }).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Login necessário");
   }
@@ -1148,6 +1731,172 @@ const SOL_NOMES = {
   seg_vida:     'Seguro de Vida (Simple2u)',
   cons_imovel:  'Consórcio de Imóvel (Embracon)',
 };
+
+const AFFILIATE_PRODUCT_MAP = {
+  lomadee: parseJsonEnv("LOMADEE_PRODUCT_MAP"),
+  monetizze: parseJsonEnv("MONETIZZE_PRODUCT_MAP"),
+};
+
+function parseJsonEnv(key) {
+  try {
+    const raw = process.env[key];
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_e) {
+    return {};
+  }
+}
+
+function toFiniteNumber(v, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function parseReference(raw) {
+  if (!raw || typeof raw !== "string") return {};
+  const out = {};
+  const parts = raw.split("|");
+  for (const p of parts) {
+    const [k, ...rest] = p.split(":");
+    if (!k || rest.length === 0) continue;
+    out[k.trim().toLowerCase()] = rest.join(":").trim();
+  }
+  return out;
+}
+
+function normalizeAffiliateStatus(raw) {
+  const s = String(raw || "").trim().toLowerCase();
+  if (!s) return "pending";
+  if (["approved", "aprovado", "confirmado", "completed", "paid", "2", "3"].includes(s)) {
+    return "approved";
+  }
+  if (["canceled", "cancelado", "refunded", "reprovado", "chargeback", "0", "4", "5"].includes(s)) {
+    return "canceled";
+  }
+  return "pending";
+}
+
+function inferPartnerFromRequest(req, payload) {
+  const fromHeader = String(req.headers["x-affiliate-partner"] || "").toLowerCase();
+  const fromBody = String(payload?.parceiro || payload?.partner || "").toLowerCase();
+  const fromPath = String(req.path || "").toLowerCase();
+  if (fromHeader.includes("lomadee") || fromBody.includes("lomadee") || fromPath.includes("lomadee")) return "lomadee";
+  if (fromHeader.includes("monetizze") || fromBody.includes("monetizze") || fromPath.includes("monetizze")) return "monetizze";
+  return "generic";
+}
+
+function resolveProdutoId(partner, payload, refMeta) {
+  const direct = payload?.produtoId || payload?.productId || payload?.produto_id;
+  if (direct && SOL_CASHBACK[String(direct)]) return String(direct);
+
+  const aliasKey = String(
+    payload?.offer_id ||
+    payload?.campaign_id ||
+    payload?.campaign ||
+    payload?.product_code ||
+    payload?.prod ||
+    refMeta?.produto ||
+    ""
+  );
+  if (!aliasKey) return null;
+  const map = AFFILIATE_PRODUCT_MAP[partner] || {};
+  const resolved = map[aliasKey] || map[aliasKey.toLowerCase()];
+  return resolved && SOL_CASHBACK[resolved] ? resolved : null;
+}
+
+function extractWebhookPayload(req) {
+  return { ...(req.query || {}), ...(req.body || {}) };
+}
+
+function validateAffiliateSecret(partner, req) {
+  const genericExpected = process.env.WEBHOOK_PARCEIRO_SECRET || "";
+  const partnerExpected = partner === "lomadee" ? LOMADEE_WEBHOOK_SECRET
+    : partner === "monetizze" ? MONETIZZE_WEBHOOK_SECRET
+    : "";
+  const provided = String(
+    req.headers["x-sibanki-secret"] ||
+    req.headers["x-webhook-secret"] ||
+    req.headers["x-affiliate-secret"] ||
+    req.query?.secret ||
+    req.body?.secret ||
+    ""
+  );
+  const expected = partnerExpected || genericExpected;
+  if (!expected) return { ok: true, mode: "disabled" };
+  return { ok: provided === expected, mode: partnerExpected ? "partner" : "generic" };
+}
+
+function normalizeAffiliateEvent(req) {
+  const payload = extractWebhookPayload(req);
+  const partner = inferPartnerFromRequest(req, payload);
+  const refMeta = parseReference(String(payload?.reference || payload?.ref || payload?.sub_id || ""));
+  const uid = String(
+    payload?.uid ||
+    payload?.userId ||
+    payload?.sub_id ||
+    payload?.subid ||
+    payload?.s1 ||
+    refMeta?.uid ||
+    ""
+  );
+  const produtoId = resolveProdutoId(partner, payload, refMeta);
+  const valorContratado = toFiniteNumber(
+    payload?.valorContratado ??
+    payload?.sale_amount ??
+    payload?.order_amount ??
+    payload?.valor ??
+    payload?.amount ??
+    payload?.value ??   // Lomadee: {{value}} = valor total da compra
+    payload?.preco ??
+    0
+  );
+  // commission = comissão que nos cabe (pode ser menor que o valor total)
+  const commissionValue = toFiniteNumber(
+    payload?.commission ??  // Lomadee: {{commission}}
+    payload?.comissao ??
+    null
+  );
+  const externalId = String(
+    payload?.contratoId ||
+    payload?.transaction_id ||  // Lomadee: {{transaction_id}}
+    payload?.transaction ||
+    payload?.order_id ||
+    payload?.order ||            // Lomadee: {{order}} = número do pedido
+    payload?.click_id ||
+    payload?.venda ||
+    ""
+  );
+  // mdasc = identificador de clique Lomadee para atribuição a usuário
+  const mdasc = String(payload?.mdasc || "");
+  const organizationId = String(payload?.organization_id || ""); // Lomadee: {{organization_id}} = ID da marca
+  const status = normalizeAffiliateStatus(
+    payload?.status ||
+    payload?.sale_status ||
+    payload?.transaction_status ||
+    payload?.event ||
+    payload?.evento
+  );
+  return {
+    partner,
+    payload,
+    uid,
+    produtoId,
+    valorContratado,
+    commissionValue,
+    mdasc,
+    organizationId,
+    externalId: externalId || `${partner}:${mdasc || uid}:${Date.now()}`,
+    status,
+    rawStatus: String(payload?.status || payload?.sale_status || payload?.event || payload?.transaction_status || ""),
+    refMeta,
+  };
+}
+
+function calculateSibcoinFromReais(reais) {
+  // Ex.: CASHBACK_CONVERSION_RATE=10 => R$1 vira 10 moedas
+  return Math.round(Number(reais || 0) * Math.max(0, CASHBACK_CONVERSION_RATE || 10));
+}
 
 /**
  * Callable interno: creditar cashback SibCoin após confirmação de contratação.
@@ -1237,93 +1986,179 @@ exports.creditarCashbackSibCoin = functions.https.onCall(async (data, context) =
  * Header: X-Sibanki-Secret: <WEBHOOK_SECRET do .env>
  * Body JSON: { uid, produtoId, valorContratado, contratoId, parceiro }
  */
-exports.webhookParceiro = functions.https.onRequest(async (req, res) => {
-  // Validar método
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+async function handleAffiliateWebhook(req, res, forcedPartner = null) {
+  // Lomadee envia GET com query params; outros parceiros enviam POST JSON.
+  // Aceitamos ambos — extractWebhookPayload já faz o merge de req.query + req.body.
+  if (req.method !== "POST" && req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Validar secret do parceiro
-  const secret = req.headers['x-sibanki-secret'];
-  const expectedSecret = process.env.WEBHOOK_PARCEIRO_SECRET;
-  if (!expectedSecret || secret !== expectedSecret) {
-    console.warn('webhookParceiro: secret inválido');
-    return res.status(401).json({ error: 'Unauthorized' });
+  const event = normalizeAffiliateEvent(req);
+  if (forcedPartner) event.partner = forcedPartner;
+
+  const secretValidation = validateAffiliateSecret(event.partner, req);
+  if (!secretValidation.ok) {
+    console.warn(`webhookParceiro: secret inválido (${event.partner})`);
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { uid, produtoId, valorContratado, contratoId, parceiro } = req.body;
-
-  if (!uid || !produtoId || !valorContratado) {
-    return res.status(400).json({ error: 'Parâmetros obrigatórios: uid, produtoId, valorContratado' });
+  // Se não veio uid direto, tenta resolver via mdasc (Lomadee click attribution)
+  if (!event.uid && event.mdasc) {
+    try {
+      const clickSnap = await db.collection("lomadee_clicks")
+        .where("mdasc", "==", event.mdasc)
+        .orderBy("ts", "desc")
+        .limit(1)
+        .get();
+      if (!clickSnap.empty) {
+        event.uid = clickSnap.docs[0].data().uid || "";
+      }
+    } catch { /* atribuição opcional — não bloqueia o webhook */ }
   }
 
-  const db = admin.firestore();
+  // Sem uid e sem valorContratado: rejeitar
+  if (!event.valorContratado) {
+    return res.status(400).json({
+      error: "Parâmetro obrigatório ausente: valorContratado (ou value)",
+      required: ["valorContratado"],
+    });
+  }
+
+  // Se não tem uid: salva a conversão sem atribuição para revisão manual
+  if (!event.uid) {
+    try {
+      await db.collection("lomadee_conversions_unattributed").add({
+        partner: event.partner,
+        mdasc: event.mdasc || null,
+        organizationId: event.organizationId || null,
+        externalId: event.externalId,
+        valorContratado: event.valorContratado,
+        commissionValue: event.commissionValue || null,
+        status: event.status,
+        rawStatus: event.rawStatus,
+        payload: event.payload,
+        receivedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch { /* best effort */ }
+    return res.status(200).json({
+      success: true,
+      status: event.status,
+      credited: false,
+      note: "Conversão salva sem atribuição de usuário. mdasc não encontrado em lomadee_clicks.",
+    });
+  }
 
   try {
-    // Verificar se usuário existe
-    const userSnap = await db.collection('users').doc(uid).get();
+    const userSnap = await db.collection("users").doc(event.uid).get();
     if (!userSnap.exists) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
+      return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    // Idempotência: verificar contrato já processado
-    if (contratoId) {
-      const existing = await db.collection('users').doc(uid)
-        .collection('sibcoin').where('contratoId', '==', String(contratoId)).limit(1).get();
-      if (!existing.empty) {
-        return res.status(200).json({ success: true, msg: 'Já processado', sibCoins: 0 });
-      }
-    }
+    const txDocId = `${event.partner}:${String(event.externalId).slice(0, 180)}`;
+    const txRef = db.collection("affiliate_transactions").doc(txDocId);
+    const txSnap = await txRef.get();
+    const previous = txSnap.exists ? (txSnap.data() || {}) : null;
 
-    // Calcular cashback
-    const taxaCashback = SOL_CASHBACK[produtoId] || 0;
-    if (taxaCashback <= 0) {
-      return res.status(400).json({ error: `Produto '${produtoId}' sem cashback configurado` });
-    }
+    const produtoId = event.produtoId || previous?.produtoId || null;
+    const taxaCashback = produtoId ? (SOL_CASHBACK[produtoId] || 0) : 0;
+    const cashbackReais = Number((event.valorContratado * taxaCashback).toFixed(2));
+    const sibCoins = calculateSibcoinFromReais(cashbackReais);
+    const releaseAt = new Date(Date.now() + (Math.max(0, CASHBACK_RELEASE_DAYS) * 86_400_000)).toISOString();
 
-    const cashbackReais = Number(valorContratado) * taxaCashback;
-    const sibCoins = Math.round(cashbackReais / 0.10);
-
-    const batch = db.batch();
-
-    // Transação SibCoin
-    const txRef = db.collection('users').doc(uid).collection('sibcoin').doc();
-    batch.set(txRef, {
-      tipo: 'emissao', origem: 'parceiro',
-      produtoId, produto: SOL_NOMES[produtoId] || produtoId,
-      valor: sibCoins, valorReais: Number(valorContratado),
-      cashbackPct: taxaCashback, cashbackReais,
-      contratoId: contratoId ? String(contratoId) : null,
-      parceiro: parceiro || null,
-      desc: `Cashback por contratar ${SOL_NOMES[produtoId]}`,
-      ts: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    // Saldo filiado
-    const filRef = db.collection('users').doc(uid).collection('filiado').doc('dados');
-    batch.set(filRef, {
-      totalSibCoins:    admin.firestore.FieldValue.increment(sibCoins),
-      totalCashbackSC:  admin.firestore.FieldValue.increment(sibCoins),
+    await txRef.set({
+      uid: event.uid,
+      partner: event.partner,
+      externalId: event.externalId,
+      status: event.status,
+      rawStatus: event.rawStatus,
+      produtoId,
+      valorContratado: event.valorContratado,
+      taxaCashback,
+      cashbackReais,
+      sibCoins,
+      releaseDays: CASHBACK_RELEASE_DAYS,
+      releaseAt,
+      sourceId: event.payload?.sourceId || event.payload?.source_id || LOMADEE_SOURCE_ID || null,
+      credited: previous?.credited === true,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: previous?.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+      payload: event.payload,
     }, { merge: true });
 
-    // Log global
-    const logRef = db.collection('cashback_log').doc();
-    batch.set(logRef, {
-      uid, produtoId, parceiro: parceiro || null,
-      valorContratado: Number(valorContratado),
-      sibCoins, cashbackReais, contratoId: contratoId || null,
-      ts: admin.firestore.FieldValue.serverTimestamp(),
+    // Aprovação => crédito imediato se ainda não creditado e produto mapeado
+    const alreadyCredited = previous?.credited === true;
+    if (event.status === "approved" && !alreadyCredited && produtoId && taxaCashback > 0 && sibCoins > 0) {
+      const batch = db.batch();
+      const sibRef = db.collection("users").doc(event.uid).collection("sibcoin").doc();
+      batch.set(sibRef, {
+        tipo: "emissao",
+        origem: "parceiro",
+        parceiro: event.partner,
+        produtoId,
+        produto: SOL_NOMES[produtoId] || produtoId,
+        valor: sibCoins,
+        valorReais: event.valorContratado,
+        cashbackPct: taxaCashback,
+        cashbackReais,
+        contratoId: event.externalId,
+        desc: `Cashback por contratação via ${event.partner}`,
+        ts: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      const filRef = db.collection("users").doc(event.uid).collection("filiado").doc("dados");
+      batch.set(filRef, {
+        totalSibCoins: admin.firestore.FieldValue.increment(sibCoins),
+        totalCashbackSC: admin.firestore.FieldValue.increment(sibCoins),
+      }, { merge: true });
+
+      const logRef = db.collection("cashback_log").doc();
+      batch.set(logRef, {
+        uid: event.uid,
+        produtoId,
+        parceiro: event.partner,
+        valorContratado: event.valorContratado,
+        sibCoins,
+        cashbackReais,
+        contratoId: event.externalId,
+        source: "affiliate_webhook",
+        ts: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      batch.set(txRef, {
+        credited: true,
+        creditedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+
+      await batch.commit();
+      console.log(`webhookParceiro(${event.partner}): uid=${event.uid} contrato=${event.externalId} -> +${sibCoins} SC`);
+      return res.status(200).json({ success: true, status: event.status, credited: true, sibCoins, cashbackReais });
+    }
+
+    return res.status(200).json({
+      success: true,
+      status: event.status,
+      credited: alreadyCredited,
+      sibCoins,
+      cashbackReais,
+      produtoId,
+      note: produtoId ? "stored" : "produtoId não mapeado (aguardando map/env)",
     });
-
-    await batch.commit();
-
-    console.log(`webhookParceiro: uid=${uid} ${produtoId} R$${valorContratado} → +${sibCoins} SC`);
-    return res.status(200).json({ success: true, sibCoins, cashbackReais });
-
   } catch (err) {
-    console.error('webhookParceiro erro:', err.message);
-    return res.status(500).json({ error: 'Erro interno', details: err.message });
+    console.error("webhookParceiro erro:", err.message);
+    return res.status(500).json({ error: "Erro interno", details: err.message });
   }
+}
+
+exports.webhookParceiro = functions.https.onRequest(async (req, res) => {
+  return handleAffiliateWebhook(req, res);
+});
+
+exports.webhookLomadee = functions.https.onRequest(async (req, res) => {
+  return handleAffiliateWebhook(req, res, "lomadee");
+});
+
+exports.webhookMonetizze = functions.https.onRequest(async (req, res) => {
+  return handleAffiliateWebhook(req, res, "monetizze");
 });
 
 /**
@@ -1334,10 +2169,31 @@ exports.registrarCliqueSolucao = functions.https.onCall(async (data, context) =>
   if (!context.auth) return { success: false };
   const uid = context.auth.uid;
   const db = admin.firestore();
-  await db.collection('sol_cliques_global').add({
+  const batch = db.batch();
+
+  // Log global de cliques
+  const globalRef = db.collection('sol_cliques_global').doc();
+  batch.set(globalRef, {
     uid, ...data,
     ts: admin.firestore.FieldValue.serverTimestamp(),
-  }).catch(() => {});
+  });
+
+  // Se veio mdasc (deeplink Lomadee), salva o mapeamento mdasc→uid
+  // para que o postback de conversão possa atribuir o cashback ao usuário correto
+  const mdasc = data?.mdasc || data?.clickId || null;
+  if (mdasc) {
+    const clickRef = db.collection('lomadee_clicks').doc();
+    batch.set(clickRef, {
+      uid,
+      mdasc,
+      produtoId: data?.produtoId || null,
+      merchant: data?.produto || null,
+      network: data?.parceiro || null,
+      ts: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  await batch.commit().catch(() => {});
   return { success: true };
 });
 
@@ -1570,8 +2426,11 @@ exports.sentinelaGeoCheck = functions.https.onCall(async (data, context) => {
       const whatsappSvc = require("./services/whatsapp/whatsappService");
       sendFn = (msg) => whatsappSvc.sendWhatsAppText(null, phone, msg);
     }
+    const userSnap = await db.collection("users").doc(context.auth.uid).get();
+    const userData = userSnap.exists ? userSnap.data() || {} : {};
+    const cards = Array.isArray(userData.cards) ? userData.cards : [];
 
-    const result = await runSentinelaGeo(lat, lng, snapshot, sendFn);
+    const result = await runSentinelaGeo(lat, lng, snapshot, sendFn, cards);
 
     logEvent("sentinelaGeoCheck", {
       uid: context.auth.uid,
@@ -1652,27 +2511,19 @@ exports.sttToEntry = functions.runWith({ timeoutSeconds: 30, memory: "512MB" }).
   if (!audioBase64 || typeof audioBase64 !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "audioBase64 é obrigatório.");
   }
-  const maxSize = 10 * 1024 * 1024;
-  const buf = Buffer.from(audioBase64, "base64");
-  if (buf.length > maxSize) {
-    throw new functions.https.HttpsError("invalid-argument", "Áudio excede 10MB.");
-  }
-  const t = timer("sttToEntry", "process");
   try {
-    const { transcribeAudio } = require("./services/llm/sttService");
-    const { extractEntry } = require("./services/llm/llmService");
-    const stt = await transcribeAudio(buf, mimeType || "audio/webm");
-    if (!stt.text) {
-      t.end({ uid: context.auth.uid, provider: "none", hasEntry: false });
-      return { entry: null, transcript: null, provider: "none" };
-    }
-    const userSnap = await db.collection("users").doc(context.auth.uid).get();
-    const categories = userSnap.exists ? (userSnap.data().categories || []) : [];
-    const entry = await extractEntry(stt.text, categories);
-    t.end({ uid: context.auth.uid, provider: stt.provider, hasEntry: !!entry });
-    return { entry, transcript: stt.text, provider: stt.provider };
+    const result = await runVoiceToEntry({
+      audioBase64,
+      mimeType,
+      uid: context.auth.uid,
+      db,
+    });
+    return { entry: result.entry, transcript: result.transcript, provider: result.provider };
   } catch (e) {
-    logError("sttToEntry", e);
+    if (e.code === "invalid-argument") {
+      throw new functions.https.HttpsError("invalid-argument", e.message);
+    }
+    logError("sttToEntry", "process", e);
     throw new functions.https.HttpsError("internal", "Falha ao processar áudio.");
   }
 });
@@ -1704,24 +2555,4 @@ exports.sendPushNotification = functions.https.onCall(async (data, context) => {
   const result = await sendPush(uid, { title, body }, { click_action: clickAction || "/" });
   logEvent("sendPushNotification", { uid, sent: result.sent });
   return result;
-});
-
-// ── Conselho de Agentes — multi-agente com orquestrador ─────────────────────
-exports.agentCouncil = functions.runWith({ timeoutSeconds: 60, memory: "512MB" }).https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Faça login.");
-  }
-  const { financialContext } = data || {};
-  if (!financialContext || typeof financialContext !== "string") {
-    throw new functions.https.HttpsError("invalid-argument", "Contexto financeiro é obrigatório.");
-  }
-  try {
-    const { runCouncil } = require("./services/agents/agentCouncil");
-    const result = await runCouncil(financialContext);
-    logEvent("agentCouncil", { uid: context.auth.uid, duration: result.duracaoMs });
-    return result;
-  } catch (e) {
-    logError("agentCouncil", e);
-    throw new functions.https.HttpsError("internal", "Erro ao executar conselho de agentes.");
-  }
 });

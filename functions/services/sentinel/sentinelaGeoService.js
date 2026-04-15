@@ -5,6 +5,7 @@
  */
 
 const fetch = require("node-fetch");
+const { suggestBestCardForLocation } = require("./cardSuggestionService");
 
 // ─── Overpass API ───────────────────────────────────────────────────────────
 
@@ -292,16 +293,27 @@ async function detectFinancialScenario(lat, lng) {
  * @param {number} lng
  * @param {object} snapshot — buildSovereigntySnapshot (opcional)
  * @param {Function} sendFn — função (message: string) => Promise<void>
+ * @param {Array} cards
  * @returns {{ scenario: string|null, placeName: string, message: string|null, sent: boolean }}
  */
-async function runSentinelaGeo(lat, lng, snapshot = {}, sendFn = null) {
+async function runSentinelaGeo(lat, lng, snapshot = {}, sendFn = null, cards = []) {
   const { scenario, placeName } = await detectFinancialScenario(lat, lng);
 
   if (!scenario) {
     return { scenario: null, placeName, message: null, sent: false };
   }
 
-  const message = buildGeoAlert(scenario, snapshot, placeName);
+  let message = buildGeoAlert(scenario, snapshot, placeName);
+  const bestCardInfo = suggestBestCardForLocation(cards, scenario);
+  if (message && bestCardInfo) {
+    message += `\n\n💳 *Sugestão Tática:* Se for gastar, utilize o **${bestCardInfo.name}**.`;
+    if (bestCardInfo.daysToClose > 0) {
+      message += `\n• Fatura com mais prazo (fecha em ${bestCardInfo.daysToClose} dias).`;
+    }
+    if (bestCardInfo.reason) {
+      message += `\n• Benefício: ${bestCardInfo.reason}`;
+    }
+  }
 
   if (message && sendFn) {
     await sendFn(message);

@@ -45,21 +45,25 @@ async function quote(data) {
     );
   }
 
-  const rawModules = data.modules || "defaultKeyStatistics,financialData,balanceSheetHistory,incomeStatementHistory";
+  const rawModules =
+    data.modules ||
+    "summaryProfile,defaultKeyStatistics,financialData,balanceSheetHistory,incomeStatementHistory";
   const range = data.range || "1mo";
   const interval = data.interval || "1d";
-  const cacheKey = `quote:${ticker}:${range}:${interval}`;
+  /** Incluir histórico de proventos na resposta (melhora DY / Bazin). `dividends: false` desliga. */
+  const includeDividends = data.dividends !== false;
+  const cacheKey = `quote:${ticker}:${range}:${interval}:div:${includeDividends ? 1 : 0}`;
 
   const cached = cacheGet(cacheKey);
   if (cached) {
-    logEvent("market", "brapi_quote_cache_hit", { ticker });
+    logEvent("market", "brapi_quote_cache_hit", { ticker, dividends: includeDividends });
     return cached;
   }
 
   try {
     const blocked = ["cashflowStatementHistory", "dividendsData"];
     const modules = rawModules.split(",").map((m) => m.trim()).filter((m) => m && !blocked.includes(m)).join(",");
-    const dividends = data.dividends ? "&dividends=true" : "";
+    const dividends = includeDividends ? "&dividends=true" : "";
 
     let url = `${BRAPI_BASE}/quote/${ticker}?token=${BRAPI_TOKEN}&fundamental=true&modules=${modules}&range=${range}&interval=${interval}${dividends}`;
     let result;
@@ -79,6 +83,13 @@ async function quote(data) {
     return result;
   } catch (error) {
     logError("market", "brapi_quote_error", error, { ticker });
+    const status = error && error.status;
+    if (status === 404) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        `Ativo "${ticker}" não encontrado na BRAPI. Verifique o ticker (ex.: PETR4 para Petrobras).`,
+      );
+    }
     throw new functions.https.HttpsError("internal", "Erro ao buscar dados: " + error.message);
   }
 }

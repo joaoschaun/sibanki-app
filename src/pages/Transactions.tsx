@@ -2,7 +2,15 @@ import { useState, useMemo, useRef, useEffect, useReducer, useCallback } from 'r
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { useSibcoinToast } from '../hooks/useSibcoinToast';
-import { addEntry, addTransfer, updateEntry, deleteEntry, generateEntriesFromRecurrents, addRecurrent } from '../services/persistUserData';
+import {
+  addEntry,
+  addTransfer,
+  updateEntry,
+  deleteEntry,
+  generateEntriesFromRecurrents,
+  addRecurrent,
+  ValidationError,
+} from '../services/persistUserData';
 import type { Entry } from '../types/userData';
 import { Modal } from '../components/ui/Modal';
 import { EntryForm } from '../components/transactions/EntryForm';
@@ -297,7 +305,10 @@ export default function Transactions() {
         });
       }
       setAddOpen(false);
-    } catch (err) { setError(err instanceof Error ? err.message : 'Erro ao adicionar'); }
+    } catch (err) {
+      if (err instanceof ValidationError) setError(err.errors.join('\n'));
+      else setError(err instanceof Error ? err.message : 'Erro inesperado ao salvar lançamento.');
+    }
     finally { setBusy(false); }
   }, [user?.uid, entries, recurrents]);
 
@@ -328,7 +339,10 @@ export default function Transactions() {
     if (!user?.uid || !editing) return;
     setError(null); setBusy(true);
     try { await updateEntry(user.uid, entries, editing.id, entryData); setEditing(null); }
-    catch (err) { setError(err instanceof Error ? err.message : 'Erro ao salvar'); }
+    catch (err) {
+      if (err instanceof ValidationError) setError(err.errors.join('\n'));
+      else setError(err instanceof Error ? err.message : 'Erro inesperado ao salvar lançamento.');
+    }
     finally { setBusy(false); }
   }, [user?.uid, entries, editing]);
 
@@ -409,7 +423,8 @@ export default function Transactions() {
       triggerWithToast('entry_added');
       setAiResult(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar lançamento.');
+      if (err instanceof ValidationError) setError(err.errors.join('\n'));
+      else setError(err instanceof Error ? err.message : 'Erro inesperado ao salvar lançamento.');
     } finally { setBusy(false); }
   }, [aiResult, user?.uid, entries, triggerWithToast]);
 

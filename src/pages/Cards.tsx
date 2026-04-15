@@ -2,7 +2,6 @@ import { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { EmptyState } from '../components/ui/EmptyState';
-import { PageTransition } from '../components/ui/PageTransition';
 import {
   addCard,
   addCardPurchase,
@@ -11,10 +10,19 @@ import {
   deleteCard,
   importCardPurchases,
   getBillingMonth,
+  ValidationError,
 } from '../services/persistUserData';
 import { Modal } from '../components/ui/Modal';
-import { CreditCard, Plus, FileText, Trash2, Pencil } from 'lucide-react';
-import type { Card, CardPurchase } from '../types/userData';
+import { CreditModuleTabs } from '../components/credit/CreditModuleTabs';
+import { CreditKpiGrid, pressurePillClasses } from '../components/credit/CreditVisuals';
+import { CreditCard, Plus, FileText, Trash2, Pencil, ShieldCheck } from 'lucide-react';
+import type { Card, CardBenefits, CardPurchase } from '../types/userData';
+import {
+  getCatalogEntry,
+  listCatalogByFlag,
+  type CardBenefitsCatalogEntry,
+} from '../constants/cardBenefitsCatalog';
+import { inferCardBenefitsFromMeta } from '../utils/inferCardBenefitsFromMeta';
 
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -54,7 +62,7 @@ function getDiasParaFecha(card: Card): number {
 }
 
 export default function Cards() {
-  const { user, cards, entries, categories, financialProfile, creditAccounts, creditObligations, loading } = useAppContext();
+  const { user, cards, entries, categories, financialProfile, creditObligations, loading } = useAppContext();
   const [modalOpen, setModalOpen] = useState(false);
   const [name, setName] = useState('');
   const [limit, setLimit] = useState('');
@@ -100,6 +108,27 @@ export default function Cards() {
   const [lancarParcelas, setLancarParcelas] = useState(1);
   const [lancarBusy, setLancarBusy] = useState(false);
   const [delConfirm, setDelConfirm] = useState<{ cardId: number; purchaseId: number } | null>(null);
+  const [benefitsCardId, setBenefitsCardId] = useState<number | null>(null);
+  const [benefitsVipLounge, setBenefitsVipLounge] = useState(false);
+  const [benefitsVipNetwork, setBenefitsVipNetwork] = useState('');
+  const [benefitsVipVisitsPerYear, setBenefitsVipVisitsPerYear] = useState('');
+  const [benefitsTravelInsurance, setBenefitsTravelInsurance] = useState(false);
+  const [benefitsPurchaseProtection, setBenefitsPurchaseProtection] = useState(false);
+  const [benefitsExtendedWarranty, setBenefitsExtendedWarranty] = useState(false);
+  const [benefitsConcierge, setBenefitsConcierge] = useState(false);
+  const [benefitsPointsProgram, setBenefitsPointsProgram] = useState('');
+  const [benefitsCashbackPct, setBenefitsCashbackPct] = useState('');
+  const [benefitsNotes, setBenefitsNotes] = useState('');
+  const [benefitsBusy, setBenefitsBusy] = useState(false);
+  const [benefitsCatalogId, setBenefitsCatalogId] = useState('');
+  const [benefitsFromCatalog, setBenefitsFromCatalog] = useState(false);
+
+  const [addBenefitsManual, setAddBenefitsManual] = useState(false);
+  const [addPendingBenefits, setAddPendingBenefits] = useState<CardBenefits | null>(null);
+  const [addBenefitsBadge, setAddBenefitsBadge] = useState(false);
+  const [editBenefitsManual, setEditBenefitsManual] = useState(false);
+  const [editPendingBenefits, setEditPendingBenefits] = useState<CardBenefits | null>(null);
+  const [editBenefitsBadge, setEditBenefitsBadge] = useState(false);
 
   const userCats = categories?.length ? categories : ['Alimentação', 'Transporte', 'Lazer', 'Outros'];
   const faturaCard = faturaCardId != null ? cards.find((c) => c.id === faturaCardId) : null;
@@ -119,6 +148,56 @@ export default function Cards() {
     return out;
   }, []);
 
+  const benefitsModalCard = useMemo(
+    () => (benefitsCardId != null ? cards.find((c) => c.id === benefitsCardId) : undefined),
+    [benefitsCardId, cards],
+  );
+  const catalogRowsForModal = useMemo(
+    () => (benefitsModalCard ? listCatalogByFlag(benefitsModalCard.flag ?? 'Outros') : []),
+    [benefitsModalCard],
+  );
+  const resolvedBenefitsCatalogId =
+    catalogRowsForModal.length > 0 && catalogRowsForModal.some((r) => r.id === benefitsCatalogId)
+      ? benefitsCatalogId
+      : catalogRowsForModal[0]?.id ?? '';
+  const selectedCatalogPreview = resolvedBenefitsCatalogId
+    ? getCatalogEntry(resolvedBenefitsCatalogId)
+    : undefined;
+
+  const touchManualBenefits = () => setBenefitsFromCatalog(false);
+
+  const tryInferAddBenefits = () => {
+    if (addBenefitsManual) return;
+    const inf = inferCardBenefitsFromMeta(name.trim(), flag);
+    if (inf && (inf.confidence === 'high' || inf.confidence === 'medium')) {
+      setAddPendingBenefits({
+        ...inf.benefits,
+        source: 'catalog',
+        updatedAt: new Date().toISOString(),
+      });
+      setAddBenefitsBadge(true);
+    } else {
+      setAddPendingBenefits(null);
+      setAddBenefitsBadge(false);
+    }
+  };
+
+  const tryInferEditBenefits = () => {
+    if (editBenefitsManual) return;
+    const inf = inferCardBenefitsFromMeta(editName.trim(), editFlag);
+    if (inf && (inf.confidence === 'high' || inf.confidence === 'medium')) {
+      setEditPendingBenefits({
+        ...inf.benefits,
+        source: 'catalog',
+        updatedAt: new Date().toISOString(),
+      });
+      setEditBenefitsBadge(true);
+    } else {
+      setEditPendingBenefits(null);
+      setEditBenefitsBadge(false);
+    }
+  };
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.uid || !name.trim()) return;
@@ -137,6 +216,7 @@ export default function Cards() {
         color,
         annualFee: Math.round(annualFeeNum * 100) / 100,
         annualFeeMonth,
+        ...(addPendingBenefits && !addBenefitsManual ? { cardBenefits: addPendingBenefits } : {}),
       });
       setModalOpen(false);
       setName('');
@@ -148,8 +228,12 @@ export default function Cards() {
       setColor('#4F8CFF');
       setAnnualFee('');
       setAnnualFeeMonth(1);
+      setAddBenefitsManual(false);
+      setAddPendingBenefits(null);
+      setAddBenefitsBadge(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao adicionar cartão.');
+      if (err instanceof ValidationError) setError(err.errors.join('\n'));
+      else setError(err instanceof Error ? err.message : 'Erro inesperado ao salvar cartão.');
     } finally {
       setBusy(false);
     }
@@ -166,6 +250,9 @@ export default function Cards() {
     setEditColor(card.color ?? '#4F8CFF');
     setEditAnnualFee(String((card as Card & { annualFee?: number }).annualFee ?? ''));
     setEditAnnualFeeMonth((card as Card & { annualFeeMonth?: number }).annualFeeMonth ?? 1);
+    setEditBenefitsManual(card.cardBenefits?.source === 'manual');
+    setEditPendingBenefits(null);
+    setEditBenefitsBadge(false);
     setError(null);
   };
 
@@ -187,10 +274,12 @@ export default function Cards() {
         color: editColor,
         annualFee: Math.round(annualFeeNum * 100) / 100,
         annualFeeMonth: editAnnualFeeMonth,
+        ...(editPendingBenefits && !editBenefitsManual ? { cardBenefits: editPendingBenefits } : {}),
       });
       setEditCardId(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar.');
+      if (err instanceof ValidationError) setError(err.errors.join('\n'));
+      else setError(err instanceof Error ? err.message : 'Erro inesperado ao salvar cartão.');
     } finally {
       setBusy(false);
     }
@@ -235,7 +324,8 @@ export default function Cards() {
         setFaturaMonth(getBillingMonth(cards.find((c) => c.id === lancarCardId)!, lancarDate));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao lançar fatura. Tente novamente.');
+      if (err instanceof ValidationError) setError(err.errors.join('\n'));
+      else setError(err instanceof Error ? err.message : 'Erro inesperado ao salvar cartão.');
     } finally {
       setLancarBusy(false);
     }
@@ -249,6 +339,86 @@ export default function Cards() {
       setDelConfirm(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao excluir compra. Tente novamente.');
+    }
+  };
+
+  const applyCatalogEntry = (entry: CardBenefitsCatalogEntry) => {
+    const b = entry.benefits;
+    setBenefitsVipLounge(!!b.vipLounge);
+    setBenefitsTravelInsurance(!!b.travelInsurance);
+    setBenefitsPurchaseProtection(!!b.purchaseProtection);
+    setBenefitsExtendedWarranty(!!b.extendedWarranty);
+    setBenefitsConcierge(!!b.concierge);
+    setBenefitsVipVisitsPerYear(b.vipVisitsPerYear != null ? String(b.vipVisitsPerYear) : '');
+    setBenefitsVipNetwork(entry.vipNetworkHint ?? '');
+    setBenefitsPointsProgram(entry.pointsProgramHint ?? '');
+    setBenefitsCashbackPct('');
+    setBenefitsNotes(entry.notesHint ?? '');
+    setBenefitsCatalogId(entry.id);
+    setBenefitsFromCatalog(true);
+    setError(null);
+  };
+
+  const openBenefits = (card: Card) => {
+    const b = card.cardBenefits ?? {};
+    setBenefitsCardId(card.id);
+    setBenefitsVipLounge(!!b.vipLounge);
+    setBenefitsVipNetwork(b.vipNetwork ?? '');
+    setBenefitsVipVisitsPerYear(b.vipVisitsPerYear != null ? String(b.vipVisitsPerYear) : '');
+    setBenefitsTravelInsurance(!!b.travelInsurance);
+    setBenefitsPurchaseProtection(!!b.purchaseProtection);
+    setBenefitsExtendedWarranty(!!b.extendedWarranty);
+    setBenefitsConcierge(!!b.concierge);
+    setBenefitsPointsProgram(b.pointsProgram ?? '');
+    setBenefitsCashbackPct(b.cashbackPct != null ? String(b.cashbackPct) : '');
+    setBenefitsNotes(b.notes ?? '');
+    setBenefitsFromCatalog(b.source === 'catalog');
+    const rows = listCatalogByFlag(card.flag ?? 'Outros');
+    const defaultRow =
+      rows.find((r) => r.id.includes('intermediario')) ?? rows[1] ?? rows[0];
+    setBenefitsCatalogId(defaultRow?.id ?? '');
+    setError(null);
+  };
+
+  const applyPresetFromCurrentCard = () => {
+    if (benefitsCardId == null) return;
+    const card = cards.find((c) => c.id === benefitsCardId);
+    if (!card) return;
+    const rows = listCatalogByFlag(card.flag ?? 'Outros');
+    const row =
+      rows.find((r) => r.id.includes('intermediario')) ?? rows[Math.min(1, rows.length - 1)] ?? rows[0];
+    if (row) applyCatalogEntry(row);
+  };
+
+  const saveBenefits = async () => {
+    if (!user?.uid || benefitsCardId == null) return;
+    setBenefitsBusy(true);
+    setError(null);
+    try {
+      const vipVisitsNum = benefitsVipVisitsPerYear.trim() ? Number(benefitsVipVisitsPerYear) : undefined;
+      const cashbackNum = benefitsCashbackPct.trim()
+        ? Number(benefitsCashbackPct.replace(',', '.'))
+        : undefined;
+      const cardBenefits: CardBenefits = {
+        vipLounge: benefitsVipLounge,
+        vipNetwork: benefitsVipNetwork.trim() || undefined,
+        vipVisitsPerYear: Number.isFinite(vipVisitsNum as number) ? vipVisitsNum : undefined,
+        travelInsurance: benefitsTravelInsurance,
+        purchaseProtection: benefitsPurchaseProtection,
+        extendedWarranty: benefitsExtendedWarranty,
+        concierge: benefitsConcierge,
+        pointsProgram: benefitsPointsProgram.trim() || undefined,
+        cashbackPct: Number.isFinite(cashbackNum as number) ? cashbackNum : undefined,
+        notes: benefitsNotes.trim() || undefined,
+        source: benefitsFromCatalog ? 'catalog' : 'manual',
+        updatedAt: new Date().toISOString(),
+      };
+      await updateCard(user.uid, cards, benefitsCardId, { cardBenefits });
+      setBenefitsCardId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar benefícios.');
+    } finally {
+      setBenefitsBusy(false);
     }
   };
 
@@ -310,10 +480,12 @@ export default function Cards() {
 
   return (
     <div className="space-y-8">
+      <CreditModuleTabs />
+
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-3xl font-bold">Cartões</h2>
-          <p className="text-si-5 text-sm">Faturas e limites – mesmo dados do app atual</p>
+          <h2 className="text-3xl font-bold">Crédito · Cartões</h2>
+          <p className="text-si-5 text-sm">Acompanhe faturas, limites e compras dos seus cartões</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button
@@ -326,7 +498,13 @@ export default function Cards() {
           </button>
           <button
             type="button"
-            onClick={() => { setError(null); setModalOpen(true); }}
+            onClick={() => {
+              setError(null);
+              setAddBenefitsManual(false);
+              setAddPendingBenefits(null);
+              setAddBenefitsBadge(false);
+              setModalOpen(true);
+            }}
             className="bg-blue-600 hover:bg-blue-500 text-si-1 px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> Novo cartão
@@ -334,153 +512,54 @@ export default function Cards() {
         </div>
       </div>
 
-      {(financialProfile.credit.activeCards > 0 || financialProfile.credit.monthlyDebtCommitment > 0) && (
-        <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <h3 className="font-semibold text-si-1">Visão macro de crédito</h3>
-              <p className="text-si-5 text-sm mt-1">
-                Consolidação do que está comprometido no cartão hoje e do peso mensal de dívidas recorrentes.
-              </p>
-            </div>
-            <span
-              className={`px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${
-                financialProfile.credit.pressureLevel === 'critico'
-                  ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
-                  : financialProfile.credit.pressureLevel === 'elevado'
-                    ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
-                    : financialProfile.credit.pressureLevel === 'atencao'
-                      ? 'text-blue-300 bg-blue-500/10 border-blue-500/20'
-                      : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
-              }`}
-            >
-              {financialProfile.credit.pressureLevel}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-            <div className="bg-si-bg border border-si-border-md rounded-xl p-4">
-              <p className="text-si-5 text-xs">Limite total</p>
-              <p className="text-lg font-bold text-blue-400">
-                R$ {financialProfile.credit.totalCardLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="bg-si-bg border border-si-border-md rounded-xl p-4">
-              <p className="text-si-5 text-xs">Uso estimado</p>
-              <p className="text-lg font-bold text-si-1">
-                {financialProfile.credit.cardUtilizationPct.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}%
-              </p>
-            </div>
-            <div className="bg-si-bg border border-si-border-md rounded-xl p-4">
-              <p className="text-si-5 text-xs">Disponível</p>
-              <p className="text-lg font-bold text-emerald-400">
-                R$ {financialProfile.credit.availableLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="bg-si-bg border border-si-border-md rounded-xl p-4">
-              <p className="text-si-5 text-xs">Faturas em 7 dias</p>
-              <p className="text-lg font-bold text-amber-400">
-                R$ {financialProfile.credit.dueSoonAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="bg-si-bg border border-si-border-md rounded-xl p-4">
-              <p className="text-si-5 text-xs">Dívida recorrente</p>
-              <p className="text-lg font-bold text-si-1">
-                R$ {financialProfile.credit.monthlyDebtCommitment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 flex-wrap text-sm">
-            <span className="text-si-4">
-              {financialProfile.credit.highUtilizationCards} cartão(ões) acima de 60% de uso.
-            </span>
-            <Link to="/consultor-ia" className="text-blue-400 hover:text-blue-300 underline">
-              Pedir plano de reorganização
-            </Link>
-            <Link to="/solucoes/credito" className="text-si-4 hover:text-si-2 underline">
-              Comparar soluções de crédito
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {(creditAccounts.length > 0 || creditObligations.length > 0) && (
-        <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
+      <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h3 className="font-semibold text-si-1">Crédito estruturado</h3>
+            <h3 className="font-semibold text-si-1">Resumo de crédito</h3>
             <p className="text-si-5 text-sm mt-1">
-              Base pronta para Open Finance e consolidação completa de empréstimos, financiamentos e obrigações.
+              Esta página fica focada na operação dos cartões. A visão consolidada de crédito está no Hub.
             </p>
           </div>
+          <span className={`px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${pressurePillClasses(financialProfile.credit.pressureLevel)}`}>
+            pressão {financialProfile.credit.pressureLevel}
+          </span>
+        </div>
 
-          {creditAccounts.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-wide text-si-5">Contas de crédito</p>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {creditAccounts.slice(0, 6).map((account) => (
-                  <div key={account.id} className="rounded-xl border border-si-border-md bg-si-bg p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-si-1">{account.label}</p>
-                        <p className="text-xs text-si-5">
-                          {account.institution || 'Instituição não informada'} · {account.kind}
-                        </p>
-                      </div>
-                      <span className="text-xs text-si-4 uppercase">{account.status || 'ativo'}</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
-                      <div>
-                        <p className="text-si-5 text-xs">Saldo usado</p>
-                        <p className="text-si-2">
-                          R$ {Number(account.balanceUsed || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-si-5 text-xs">Parcela mensal</p>
-                        <p className="text-si-2">
-                          R$ {Number(account.monthlyInstallment || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+        <CreditKpiGrid
+          items={[
+            {
+              label: 'Limite total',
+              value: `R$ ${financialProfile.credit.totalCardLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+              toneClassName: 'text-blue-400',
+            },
+            {
+              label: 'Uso estimado',
+              value: `${financialProfile.credit.cardUtilizationPct.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}%`,
+            },
+            {
+              label: 'Faturas em 7 dias',
+              value: `R$ ${financialProfile.credit.dueSoonAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+              toneClassName: 'text-amber-400',
+            },
+            {
+              label: 'Obrigações abertas',
+              value: String(creditObligations.filter((obligation) => obligation.status !== 'paga').length),
+            },
+          ]}
+        />
 
-          {creditObligations.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-wide text-si-5">Próximas obrigações</p>
-              <div className="space-y-2">
-                {creditObligations
-                  .filter((obligation) => obligation.status !== 'paga')
-                  .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
-                  .slice(0, 6)
-                  .map((obligation) => (
-                    <div
-                      key={obligation.id}
-                      className="rounded-xl border border-si-border-md bg-si-bg px-4 py-3 flex items-center justify-between gap-3"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-si-1">{obligation.label}</p>
-                        <p className="text-xs text-si-5">
-                          {obligation.institution || 'Crédito'} · vence em {new Date(`${obligation.dueDate}T12:00:00`).toLocaleDateString('pt-BR')}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-amber-400">
-                          R$ {Number(obligation.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                        <p className="text-xs text-si-5">{obligation.status || 'aberta'}</p>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-        </section>
-      )}
+        <div className="flex items-center gap-3 flex-wrap text-sm">
+          <Link to="/credito/visao-geral" className="text-blue-400 hover:text-blue-300 underline">
+            Abrir visão consolidada
+          </Link>
+          <Link to="/credito/emprestimos" className="text-si-4 hover:text-si-2 underline">
+            Ver empréstimos e financiamentos
+          </Link>
+          <Link to="/consultor-ia" className="text-si-4 hover:text-si-2 underline">
+            Pedir plano com IA
+          </Link>
+        </div>
+      </section>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.length === 0 ? (
@@ -490,7 +569,12 @@ export default function Cards() {
               title="Nenhum cartão cadastrado"
               description="Adicione seus cartões de crédito para acompanhar faturas, compras parceladas e controlar o uso do limite."
               actionLabel="+ Novo cartão"
-              onAction={() => setAddOpen(true)}
+              onAction={() => {
+                setAddBenefitsManual(false);
+                setAddPendingBenefits(null);
+                setAddBenefitsBadge(false);
+                setModalOpen(true);
+              }}
             />
           </div>
         ) : (
@@ -540,6 +624,13 @@ export default function Cards() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <button
                       type="button"
+                      onClick={() => openBenefits(card)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 text-sm"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" /> Benefícios
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => { setLancarCardId(card.id); setLancarCat(lancarCat || userCats[0]); }}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 text-sm"
                     >
@@ -570,6 +661,32 @@ export default function Cards() {
                     </button>
                   </div>
                 </div>
+                {!!card.cardBenefits && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {card.cardBenefits.vipLounge && (
+                      <span className="px-2 py-1 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">Sala VIP</span>
+                    )}
+                    {card.cardBenefits.travelInsurance && (
+                      <span className="px-2 py-1 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">Seguro viagem</span>
+                    )}
+                    {card.cardBenefits.purchaseProtection && (
+                      <span className="px-2 py-1 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">Proteção de compra</span>
+                    )}
+                    {card.cardBenefits.extendedWarranty && (
+                      <span className="px-2 py-1 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">Garantia estendida</span>
+                    )}
+                    {card.cardBenefits.pointsProgram && (
+                      <span className="px-2 py-1 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">
+                        Pontos: {card.cardBenefits.pointsProgram}
+                      </span>
+                    )}
+                    {card.cardBenefits.cashbackPct != null && (
+                      <span className="px-2 py-1 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">
+                        Cashback: {card.cardBenefits.cashbackPct}%
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })
@@ -951,6 +1068,7 @@ export default function Cards() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onBlur={tryInferAddBenefits}
               placeholder="Ex: Nubank, Itaú"
               className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
               required
@@ -1002,12 +1120,31 @@ export default function Cards() {
               id="card-flag"
               value={flag}
               onChange={(e) => setFlag(e.target.value)}
+              onBlur={tryInferAddBenefits}
               className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
             >
               {BANDEIRAS.map((b) => (
                 <option key={b} value={b}>{b}</option>
               ))}
             </select>
+            {addBenefitsBadge && !addBenefitsManual && (
+              <div className="mt-2 space-y-1">
+                <span className="text-amber-400 text-[10px] tracking-[0.18em] uppercase block">
+                  Benefícios sugeridos pela bandeira — confirme no app do banco
+                </span>
+                <button
+                  type="button"
+                  className="text-si-4 text-xs underline"
+                  onClick={() => {
+                    setAddBenefitsManual(true);
+                    setAddBenefitsBadge(false);
+                    setAddPendingBenefits(null);
+                  }}
+                >
+                  Prefiro preencher manualmente
+                </button>
+              </div>
+            )}
           </div>
           <div>
             <label htmlFor="card-bank" className="block text-xs font-medium text-si-5 mb-1">Banco</label>
@@ -1098,6 +1235,7 @@ export default function Cards() {
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
+                onBlur={tryInferEditBenefits}
                 className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
                 required
               />
@@ -1147,12 +1285,31 @@ export default function Cards() {
                 id="edit-card-flag"
                 value={editFlag}
                 onChange={(e) => setEditFlag(e.target.value)}
+                onBlur={tryInferEditBenefits}
                 className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
               >
                 {BANDEIRAS.map((b) => (
                   <option key={b} value={b}>{b}</option>
                 ))}
               </select>
+              {editBenefitsBadge && !editBenefitsManual && (
+                <div className="mt-2 space-y-1">
+                  <span className="text-amber-400 text-[10px] tracking-[0.18em] uppercase block">
+                    Benefícios sugeridos pela bandeira — confirme no app do banco
+                  </span>
+                  <button
+                    type="button"
+                    className="text-si-4 text-xs underline"
+                    onClick={() => {
+                      setEditBenefitsManual(true);
+                      setEditBenefitsBadge(false);
+                      setEditPendingBenefits(null);
+                    }}
+                  >
+                    Prefiro preencher manualmente
+                  </button>
+                </div>
+              )}
             </div>
             <div>
               <label htmlFor="edit-card-bank" className="block text-xs font-medium text-si-5 mb-1">Banco</label>
@@ -1242,6 +1399,179 @@ export default function Cards() {
                 {busy ? 'Excluindo…' : 'Excluir'}
               </button>
               <button type="button" onClick={() => setDeleteCardId(null)} className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+      <Modal
+        open={benefitsCardId != null}
+        onClose={() => { if (!benefitsBusy) setBenefitsCardId(null); }}
+        title="Benefícios do cartão"
+      >
+        {benefitsCardId != null && (
+          <div className="space-y-4">
+            <p className="text-xs text-si-5">
+              Preencha o que você tem confirmado no cartão. Esse bloco será usado pelo Hub de Crédito e pelo consultor.
+            </p>
+            {catalogRowsForModal.length > 0 && (
+              <div className="rounded-xl border border-si-border-md bg-si-over-1 p-3 space-y-3">
+                <p className="text-[10px] font-bold text-si-5 uppercase tracking-[0.18em]">Catálogo de referência</p>
+                <p className="text-xs text-si-5 leading-relaxed">
+                  Perfis típicos para bandeira <span className="text-si-3">{benefitsModalCard?.flag ?? '—'}</span>.
+                  São referências de mercado — confira sempre no app do banco antes de confiar em 100%.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+                  <div className="flex-1 min-w-0">
+                    <label htmlFor="benefits-catalog-tier" className="block text-xs text-si-5 mb-1">
+                      Perfil do catálogo
+                    </label>
+                    <select
+                      id="benefits-catalog-tier"
+                      value={resolvedBenefitsCatalogId}
+                      onChange={(e) => setBenefitsCatalogId(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-si-bg border border-si-border-md text-si-2 text-sm"
+                    >
+                      {catalogRowsForModal.map((row) => (
+                        <option key={row.id} value={row.id}>
+                          {row.tierLabel} — {row.shortLabel}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const entry = resolvedBenefitsCatalogId
+                        ? getCatalogEntry(resolvedBenefitsCatalogId)
+                        : undefined;
+                      if (entry) applyCatalogEntry(entry);
+                    }}
+                    className="px-4 py-2 rounded-lg bg-si-over-3 border border-si-border-md text-si-2 text-sm font-medium hover:bg-si-over-4 shrink-0"
+                  >
+                    Aplicar perfil
+                  </button>
+                </div>
+                {selectedCatalogPreview && (
+                  <p className="text-xs text-si-4 leading-relaxed border-t border-si-border pt-2">
+                    {selectedCatalogPreview.shortLabel}. {selectedCatalogPreview.notesHint ?? ''}
+                  </p>
+                )}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={applyPresetFromCurrentCard}
+              className="px-3 py-2 rounded-lg bg-si-over-2 border border-si-border-md text-si-3 text-xs hover:bg-si-over-3"
+            >
+              Sugestão rápida (perfil intermediário)
+            </button>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                ['Sala VIP', benefitsVipLounge, setBenefitsVipLounge],
+                ['Seguro viagem', benefitsTravelInsurance, setBenefitsTravelInsurance],
+                ['Proteção de compra', benefitsPurchaseProtection, setBenefitsPurchaseProtection],
+                ['Garantia estendida', benefitsExtendedWarranty, setBenefitsExtendedWarranty],
+                ['Concierge', benefitsConcierge, setBenefitsConcierge],
+              ].map(([label, value, setValue]) => (
+                <label key={String(label)} className="flex items-center gap-2 text-sm text-si-3">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(value)}
+                    onChange={(e) => {
+                      touchManualBenefits();
+                      (setValue as (v: boolean) => void)(e.target.checked);
+                    }}
+                    className="w-4 h-4 accent-blue-500"
+                  />
+                  {String(label)}
+                </label>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-si-5 mb-1">Rede Sala VIP</label>
+                <input
+                  type="text"
+                  value={benefitsVipNetwork}
+                  onChange={(e) => {
+                    touchManualBenefits();
+                    setBenefitsVipNetwork(e.target.value);
+                  }}
+                  placeholder="Ex: LoungeKey, DragonPass"
+                  className="w-full px-3 py-2 rounded-lg bg-si-bg border border-si-border-md text-si-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-si-5 mb-1">Visitas/ano</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={benefitsVipVisitsPerYear}
+                  onChange={(e) => {
+                    touchManualBenefits();
+                    setBenefitsVipVisitsPerYear(e.target.value);
+                  }}
+                  placeholder="Ex: 4"
+                  className="w-full px-3 py-2 rounded-lg bg-si-bg border border-si-border-md text-si-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-si-5 mb-1">Programa de pontos</label>
+                <input
+                  type="text"
+                  value={benefitsPointsProgram}
+                  onChange={(e) => {
+                    touchManualBenefits();
+                    setBenefitsPointsProgram(e.target.value);
+                  }}
+                  placeholder="Ex: Livelo, Esfera, TudoAzul"
+                  className="w-full px-3 py-2 rounded-lg bg-si-bg border border-si-border-md text-si-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-si-5 mb-1">Cashback (%)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={benefitsCashbackPct}
+                  onChange={(e) => {
+                    touchManualBenefits();
+                    setBenefitsCashbackPct(e.target.value.replace(/[^0-9,.-]/g, ''));
+                  }}
+                  placeholder="Ex: 1,5"
+                  className="w-full px-3 py-2 rounded-lg bg-si-bg border border-si-border-md text-si-2 text-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-si-5 mb-1">Observações</label>
+              <textarea
+                value={benefitsNotes}
+                onChange={(e) => {
+                  touchManualBenefits();
+                  setBenefitsNotes(e.target.value);
+                }}
+                rows={3}
+                placeholder="Regras de uso, gasto mínimo, validade dos benefícios..."
+                className="w-full px-3 py-2 rounded-lg bg-si-bg border border-si-border-md text-si-2 text-sm"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={saveBenefits}
+                disabled={benefitsBusy}
+                className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm"
+              >
+                {benefitsBusy ? 'Salvando...' : 'Salvar benefícios'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBenefitsCardId(null)}
+                className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3"
+              >
                 Cancelar
               </button>
             </div>

@@ -2,6 +2,7 @@
  * Sibanki - LLM Service (Multi-Provider)
  * Gemini Flash → OpenAI GPT-4o-mini → Claude Haiku → Fallback local
  */
+const crypto = require("crypto");
 const fetch = require("node-fetch");
 const { logError } = require("../../logger");
 const { GEMINI_KEY } = require("../../config");
@@ -18,14 +19,19 @@ setInterval(() => { errorCount.gemini = 0; errorCount.openai = 0; errorCount.cla
 const _cache = new Map();
 const CACHE_TTL = 3600000;
 
+/** Chave estável do prompt inteiro (o prefixo de 120 chars colidia entre chamadas diferentes, ex.: classificador de intenção). */
+function _promptCacheKey(prompt) {
+  return crypto.createHash("sha256").update(String(prompt), "utf8").digest("hex");
+}
+
 function _cacheGet(prompt) {
-  const k = prompt.substring(0, 120).trim();
+  const k = _promptCacheKey(prompt);
   const e = _cache.get(k);
   if (!e || Date.now() - e.ts > CACHE_TTL) { _cache.delete(k); return null; }
   return e.text;
 }
 function _cacheSet(prompt, text) {
-  const k = prompt.substring(0, 120).trim();
+  const k = _promptCacheKey(prompt);
   _cache.set(k, { text, ts: Date.now() });
   if (_cache.size > 500) {
     const old = [..._cache.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
@@ -289,8 +295,12 @@ async function generateInsight(context, type = "geral") {
 async function generateAnalysis(context, question) {
   // Se o question já traz o system prompt embutido (começa com "Você é o Sibanki")
   // usamos ele direto como prompt completo. Caso contrário, montamos o padrão genérico.
-  const hasSystemPrefix = /^Você é o Sibanki IA/i.test((question || '').trim());
-  const prompt = hasSystemPrefix
+  const q = (question || '').trim();
+  const hasSystemPrefix = /^Você é o Sibanki IA/i.test(q);
+  /** Prompt já montado por buildConsultantPrompt (Arquiteto Soberano + dados + pergunta) */
+  const isSovereignFullPrompt =
+    /^Você é o Arquiteto Soberano|DADOS FINANCEIROS DO USUÁRIO:/i.test(q);
+  const prompt = hasSystemPrefix || isSovereignFullPrompt
     ? question
     : `Você é o Siba, consultor financeiro IA do Sibanki. Dados do usuário:\n${context}\n\nPergunta: ${question}\n\nResponda de forma clara, com emojis e estrutura. Seja específico com valores em R$. Máx 300 palavras.`;
 
@@ -374,3 +384,68 @@ module.exports = {
   generateProactiveInsight,
   getProviderStatus,
 };
+
+/**
+ * Streaming Nativo do Arquiteto Soberano (SSE para Efeito Máquina de Escrever).
+ * Retorna uma Promise que resolve quando o stream acaba, e dispara onChunk com os pedaços.
+ */
+async function generateAnalysisStream(_unusedLegacyContext, fullPrompt, onChunk) {
+  const { GEMINI_KEY } = require("../../config");
+  if (!GEMINI_KEY) throw new Error("GEMINI_KEY ausente para habilitar o streaming.");
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_KEY}`;
+
+  /** Dados + persona já vêm em `fullPrompt` (buildConsultantPrompt). Não duplicar contexto aqui. */
+  const systemInstruction =
+    "Você é o consultor financeiro do Sibanki. Siga exatamente instruções, dados e formato do texto do usuário abaixo. Responda em português (Brasil).";
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { role: "system", parts: [{ text: systemInstruction }] },
+      contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+      generationConfig: { maxOutputTokens: 1536, temperature: 0.35 }
+    }),
+    signal: AbortSignal.timeout(30000)
+  });
+
+  if (!res.ok) {
+    throw new Error(`Erro na conexão de Streaming com Gemini: ${res.status}`);
+  }
+
+  return new Promise((resolve, reject) => {
+    let rawBuffer = "";
+    res.body.on('data', (chunk) => {
+      rawBuffer += chunk.toString();
+      const lines = rawBuffer.split('\n');
+      rawBuffer = lines.pop(); // Guarda a última que pode estar incompleta
+      
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          const jsonStr = line.replace("data: ", "").trim();
+          if (!jsonStr) continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const textPart = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (textPart) {
+              onChunk(textPart);
+            }
+          } catch (e) {
+            // Pode haver chunks quebrados, ignora
+          }
+        }
+      }
+    });
+
+    res.body.on('end', () => {
+      resolve();
+    });
+
+    res.body.on('error', (err) => {
+      reject(err);
+    });
+  });
+}
+
+module.exports.generateAnalysisStream = generateAnalysisStream;

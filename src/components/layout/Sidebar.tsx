@@ -1,25 +1,20 @@
 import { useEffect, useState } from 'react';
 import {
-  House,
   LayoutDashboard,
   Receipt,
   TrendingUp,
   MessageCircle,
   Wallet,
   CreditCard,
-  Repeat,
   Target,
   PieChart,
   FileBarChart,
   Calendar,
+  ShoppingBag,
   User,
   Settings,
   MoreHorizontal,
   ChevronDown,
-  Users as UsersIcon,
-  ShieldCheck,
-  Baby,
-  Cpu,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -48,28 +43,23 @@ interface NavItem {
   path: string;
 }
 
-// ── Navegação principal — 5 ações que importam ────────────────────────────────
+// ── Navegação principal — as 4 ações que importam ─────────────────────────────
 const primaryNav: NavItem[] = [
-  { icon: House,           label: 'Início',        path: '/' },
-  { icon: LayoutDashboard, label: 'Dashboard',     path: '/dashboard' },
+  { icon: LayoutDashboard, label: 'Painel',        path: '/dashboard' },
   { icon: Receipt,         label: 'Lançamentos',   path: '/lancamentos' },
   { icon: TrendingUp,      label: 'Investimentos', path: '/crescimento' },
-  { icon: MessageCircle,   label: 'Consultor IA',  path: '/consultor-ia' },
+  { icon: MessageCircle,   label: 'Assistente',    path: '/consultor-ia' },
 ];
 
-// ── Secundário — acessível mas não na frente ──────────────────────────────────
+// ── Secundário — finanças e planejamento ──────────────────────────────────────
 const secondaryNav: NavItem[] = [
   { icon: Wallet,       label: 'Contas',       path: '/contas' },
-  { icon: CreditCard,   label: 'Cartões',      path: '/cartoes' },
-  { icon: Repeat,       label: 'Recorrentes',  path: '/recorrentes' },
-  { icon: Target,       label: 'Metas',        path: '/planejamento' },
+  { icon: CreditCard,   label: 'Crédito',      path: '/credito' },
   { icon: PieChart,     label: 'Orçamento',    path: '/orcamento' },
+  { icon: Target,       label: 'Metas',        path: '/planejamento' },
+  { icon: ShoppingBag,  label: 'Loja',         path: '/loja' },
   { icon: FileBarChart, label: 'Relatórios',   path: '/relatorios' },
   { icon: Calendar,     label: 'Calendário',   path: '/calendario' },
-  { icon: UsersIcon,    label: 'Filiados',     path: '/filiados' },
-  { icon: ShieldCheck,  label: 'Quarentena',   path: '/quarentena' },
-  { icon: Baby,         label: 'Filhos',       path: '/filhos' },
-  { icon: Cpu,          label: 'Agentes IA',   path: '/agentes' },
 ];
 
 // ── Rodapé ────────────────────────────────────────────────────────────────────

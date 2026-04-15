@@ -32,11 +32,14 @@ export function OpenFinanceConnect({
   data,
   theme,
   disabled,
+  onConnected,
 }: {
   uid: string;
   data: Partial<UserData> | null | undefined;
   theme: 'light' | 'dark';
   disabled?: boolean;
+  /** Callback chamado após conexão + sync bem-sucedidos. */
+  onConnected?: () => void;
 }) {
   const [connectToken, setConnectToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -87,9 +90,11 @@ export function OpenFinanceConnect({
     } catch {
       // servidor pode já ter marcado; ignorar
     }
+    let syncOk = false;
     try {
       const sync = httpsCallable<unknown, { ok?: boolean; synced?: number; message?: string }>(functions, 'pluggySyncAccounts');
       await sync({});
+      syncOk = true;
     } catch (e: unknown) {
       const msg = (e as { message?: string })?.message ?? '';
       setLocalError(
@@ -99,6 +104,7 @@ export function OpenFinanceConnect({
       );
     }
     setConnectToken(null);
+    if (syncOk) onConnected?.();
   };
 
   const includeSandbox = shouldIncludePluggySandbox();

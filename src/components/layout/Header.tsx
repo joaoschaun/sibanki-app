@@ -7,6 +7,7 @@ import { useAppContext } from '../../context/AppContext';
 import { Menu, Sun, Moon, Bell, User, LogOut, FileBarChart, Trophy, Calendar, MessageSquarePlus } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import { FeedbackModal } from '../ui/FeedbackModal';
+import { AppModeToggle } from './AppModeToggle';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -42,22 +43,26 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
   return (
     // ✅ FIX: Removido onMouseLeave do header — causava fechamento prematuro do dropdown
     //        ao mover o mouse para o sidebar ou conteúdo principal
-    <header className="h-14 bg-[#0a0a0a] border-b border-si-border flex items-center justify-between px-6 shrink-0 relative z-50">
-      <div className="flex items-center gap-4">
+    <header className="h-14 bg-[#0a0a0a] border-b border-si-border grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-6 shrink-0 relative z-50">
+      <div className="flex items-center gap-3 min-w-0 justify-self-start">
         <button
           type="button"
           onClick={onMenuClick}
-          className="p-1.5 hover:bg-si-over-2 rounded-md transition-colors"
+          className="p-1.5 hover:bg-si-over-2 rounded-md transition-colors shrink-0"
           data-tour="menu"
           aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
           aria-pressed={sidebarCollapsed}
         >
           <Menu className="w-4 h-4 text-si-4" />
         </button>
-        <h1 className="text-xs font-bold tracking-[0.2em] uppercase text-si-3">Sibanki</h1>
+        <h1 className="text-xs font-bold tracking-[0.2em] uppercase text-si-3 truncate">Sibanki</h1>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="justify-self-center">
+        <AppModeToggle />
+      </div>
+
+      <div className="flex items-center gap-2 justify-self-end">
         <button
           type="button"
           onClick={toggleTheme}
