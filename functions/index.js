@@ -141,32 +141,32 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
 // =============================================
 
 exports.brapiQuote = functions.https.onCall(async (data, context) => {
-  brapiRateCheck(context);
+  await brapiRateCheck(context);
   return brapiService.quote(data, context);
 });
 
 exports.brapiMulti = functions.https.onCall(async (data, context) => {
-  brapiRateCheck(context);
+  await brapiRateCheck(context);
   return brapiService.multi(data, context);
 });
 
 exports.brapiSearch = functions.https.onCall(async (data, context) => {
-  brapiRateCheck(context);
+  await brapiRateCheck(context);
   return brapiService.search(data, context);
 });
 
 exports.brapiCrypto = functions.https.onCall(async (data, context) => {
-  brapiRateCheck(context);
+  await brapiRateCheck(context);
   return brapiService.crypto(data, context);
 });
 
 exports.brapiInflation = functions.https.onCall(async (data, context) => {
-  brapiRateCheck(context);
+  await brapiRateCheck(context);
   return brapiService.inflation(data, context);
 });
 
 exports.fixedIncomeCatalogApi = functions.https.onCall(async (data, context) => {
-  brapiRateCheck(context);
+  await brapiRateCheck(context);
   const forceRefresh = !!data?.forceRefresh;
   return fixedIncomeService.getFixedIncomeCatalog(forceRefresh);
 });
