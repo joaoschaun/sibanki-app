@@ -20,7 +20,7 @@
     "test:compare:legado": "playwright test compare-modulos-legado --config=playwright.config.cjs --project=compare-legado",
     "test:react-smoke": "playwright test --config=playwright.config.cjs --project=react-smoke-pwa --project=react-smoke",
     "test:curadoria": "playwright test curadoria --config=playwright.config.cjs --project=curadoria",
-    "test:unit": "vitest run src/constants/creditHub.test.ts src/utils/inferCardBenefitsFromMeta.test.ts src/services/validators.test.ts src/utils/deriveCreditData.test.ts src/utils/creditSnapshot.test.ts",
+    "test:unit": "vitest run --config vitest.config.ts",
     "report": "playwright show-report",
     "deploy:staging": "npm run test:unit && npm run build && node scripts/clean-staging-dist.mjs && firebase deploy --only hosting:staging",
     "deploy:app": "npm run test:unit && npm run build && node scripts/prepare-dist.mjs && firebase deploy --only hosting:app",

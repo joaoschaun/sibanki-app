@@ -543,6 +543,23 @@ async function syncAccountsToUser(uid, db) {
 
   await userRef.set(payload, { merge: true });
 
+  // Dual-write: se o usuário já foi migrado, grava novas transações na subcoleção também
+  if (data.entriesMigratedAt && newTxEntries.length > 0) {
+    const admin = require('firebase-admin');
+    const BATCH_LIMIT = 450;
+    for (let i = 0; i < newTxEntries.length; i += BATCH_LIMIT) {
+      const chunk = newTxEntries.slice(i, i + BATCH_LIMIT);
+      const batch = admin.firestore().batch();
+      for (const entry of chunk) {
+        const clean = { ...entry };
+        delete clean.entryLocation;
+        batch.set(userRef.collection('entries').doc(String(entry.id)), clean);
+      }
+      await batch.commit();
+    }
+    console.log(`[pluggySync] dual-write: ${newTxEntries.length} entries na subcoleção (uid=${uid})`);
+  }
+
   return {
     ok: true,
     accounts: all.length,
