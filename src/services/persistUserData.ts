@@ -1,5 +1,8 @@
 import { db } from '../firebase';
-import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, writeBatch, runTransaction } from 'firebase/firestore';
+import {
+  doc, getDoc, setDoc, collection, getDocs, deleteDoc,
+  writeBatch, runTransaction, addDoc,
+} from 'firebase/firestore';
 import { mergeInlineAndOverflowEntries } from '../utils/entryUtils';
 import { calculateFinScore } from '../utils/calculateScore';
 import {
@@ -65,6 +68,31 @@ async function loadOverflowEntries(uid: string): Promise<Entry[]> {
   return list;
 }
 
+/** Verifica se o usuário já teve entries migradas para subcoleção. */
+async function isEntriesMigrated(uid: string): Promise<boolean> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  return snap.exists() && Boolean(snap.data()?.entriesMigratedAt);
+}
+
+/**
+ * Grava um lançamento na subcoleção /users/{uid}/entries/{id}.
+ * Usado em dual-write durante período de transição.
+ */
+async function writeEntryToSubcollection(uid: string, entry: Entry): Promise<void> {
+  const clean = { ...entry } as Record<string, unknown>;
+  delete clean.entryLocation; // não persistir campo de localização
+  const docId = String(entry.id);
+  await setDoc(doc(db, 'users', uid, 'entries', docId), clean);
+}
+
+/**
+ * Remove um lançamento da subcoleção /users/{uid}/entries/{id}.
+ */
+async function deleteEntryFromSubcollection(uid: string, id: number | string): Promise<void> {
+  await deleteDoc(doc(db, 'users', uid, 'entries', String(id)));
+}
+
 async function deleteEntriesOverflowCollection(uid: string): Promise<void> {
   const col = collection(db, 'users', uid, 'entriesOverflow');
   const snap = await getDocs(col);
@@ -76,14 +104,56 @@ async function deleteEntriesOverflowCollection(uid: string): Promise<void> {
   }
 }
 
+/** Janela mínima entre writes idênticos consecutivos (retries/offline/duplo clique). */
+const UPDATE_USER_DOC_DEBOUNCE_MS = 1500;
+
+let updateUserDocDebouncing = false;
+let lastUpdateUserDocPayloadSig: string | null = null;
+let lastUpdateUserDocAt = 0;
+
+function payloadSignature(payload: Partial<UserData>): string {
+  try {
+    return JSON.stringify(payload);
+  } catch {
+    const keys = Object.keys(payload).sort();
+    const entries = payload.entries;
+    const n = Array.isArray(entries) ? entries.length : 0;
+    return `fallback:${keys.join(',')}:entriesLen=${n}`;
+  }
+}
+
 /**
  * Atualiza apenas alguns campos do documento users/{uid} (merge).
  * Usa runTransaction quando precisa recalcular finScore para evitar race conditions.
+ *
+ * Debounce em memória: bloqueia segunda chamada com o mesmo payload dentro de
+ * {@link UPDATE_USER_DOC_DEBOUNCE_MS} enquanto um write anterior está em curso ou
+ * acabou de completar (mitiga retries do SDK e duplo submit).
  */
 export async function updateUserDoc(
   uid: string,
   payload: Partial<UserData>
 ): Promise<void> {
+  const now = Date.now();
+  const currentSig = payloadSignature(payload);
+
+  if (
+    updateUserDocDebouncing &&
+    lastUpdateUserDocPayloadSig === currentSig &&
+    now - lastUpdateUserDocAt < UPDATE_USER_DOC_DEBOUNCE_MS
+  ) {
+    if (import.meta.env.DEV) {
+      console.warn('[Idempotência] updateUserDoc ignorado (payload idêntico em janela de debounce)', {
+        keys: Object.keys(payload),
+      });
+    }
+    return;
+  }
+
+  updateUserDocDebouncing = true;
+  lastUpdateUserDocPayloadSig = currentSig;
+  lastUpdateUserDocAt = now;
+
   const ref = doc(db, 'users', uid);
 
   const shouldRecalculateScore =
@@ -94,23 +164,29 @@ export async function updateUserDoc(
     'accountMeta' in payload ||
     'creditSnapshot' in payload;
 
-  if (shouldRecalculateScore) {
-    await runTransaction(db, async (transaction) => {
-      const snap = await transaction.get(ref);
-      const current = (snap.exists() ? snap.data() : {}) as Partial<UserData>;
-      const merged = { ...current, ...payload } as Partial<UserData>;
-      const finScore = calculateFinScore(
-        merged.entries ?? [],
-        merged.goals ?? [],
-        (merged.budgets ?? {}) as Record<string, unknown>,
-        merged.accountBalances ?? {},
-        merged.accountMeta ?? {},
-        merged.creditSnapshot ?? null,
-      );
-      transaction.set(ref, { ...payload, finScore, updated: new Date().toISOString() }, { merge: true });
-    });
-  } else {
-    await setDoc(ref, { ...payload, updated: new Date().toISOString() }, { merge: true });
+  try {
+    if (shouldRecalculateScore) {
+      await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(ref);
+        const current = (snap.exists() ? snap.data() : {}) as Partial<UserData>;
+        const merged = { ...current, ...payload } as Partial<UserData>;
+        const finScore = calculateFinScore(
+          merged.entries ?? [],
+          merged.goals ?? [],
+          (merged.budgets ?? {}) as Record<string, unknown>,
+          merged.accountBalances ?? {},
+          merged.accountMeta ?? {},
+          merged.creditSnapshot ?? null,
+        );
+        transaction.set(ref, { ...payload, finScore, updated: new Date().toISOString() }, { merge: true });
+      });
+    } else {
+      await setDoc(ref, { ...payload, updated: new Date().toISOString() }, { merge: true });
+    }
+  } finally {
+    setTimeout(() => {
+      updateUserDocDebouncing = false;
+    }, UPDATE_USER_DOC_DEBOUNCE_MS);
   }
 }
 
@@ -132,9 +208,17 @@ export async function setCreditSnapshot(uid: string, creditSnapshot: CreditSnaps
  */
 export async function addEntry(uid: string, _currentEntries: Entry[], newEntry: Omit<Entry, 'id'>): Promise<void> {
   assertValid(validateEntry(newEntry), 'addEntry');
-  const inline = await loadInlineEntries(uid);
   const id = Date.now();
-  const payload: Partial<UserData> = { entries: [...inline, { ...newEntry, id } as Entry] };
+  const entry: Entry = { ...newEntry, id } as Entry;
+
+  // Dual-write: grava na subcoleção (pós-migração) E mantém inline (retrocompat)
+  const migrated = await isEntriesMigrated(uid);
+  if (migrated) {
+    await writeEntryToSubcollection(uid, entry);
+  }
+
+  const inline = await loadInlineEntries(uid);
+  const payload: Partial<UserData> = { entries: [...inline, entry] };
 
   if (newEntry.type === 'despesa' && !newEntry.isTransfer) {
     const ref = doc(db, 'users', uid);
@@ -227,11 +311,19 @@ export async function updateEntry(
   const target = mergedEntries.find((e) => e.id === id);
   if (!target) return;
   assertValid(validateEntry({ ...target, ...updates, id: target.id }), 'updateEntry');
+
+  // Overflow (Pluggy): atualiza no doc de overflow
   if (target.entryLocation === 'overflow' && target.pluggyTransactionId) {
     const dref = doc(db, 'users', uid, 'entriesOverflow', `pg_${target.pluggyTransactionId}`);
     await setDoc(dref, { ...target, ...updates, id } as Entry, { merge: true });
     return;
   }
+
+  // Subcoleção: atualiza lá + inline (dual-write)
+  if ((target as any).entryLocation === 'subcollection') {
+    await writeEntryToSubcollection(uid, { ...target, ...updates, id } as Entry);
+  }
+
   const inline = await loadInlineEntries(uid);
   const entries = inline.map((e) => (e.id === id ? { ...e, ...updates, id } : e)) as Entry[];
   await updateUserDoc(uid, { entries });
@@ -242,10 +334,18 @@ export async function updateEntry(
  */
 export async function deleteEntry(uid: string, mergedEntries: Entry[], id: number): Promise<void> {
   const target = mergedEntries.find((e) => e.id === id);
+
+  // Overflow (Pluggy)
   if (target?.entryLocation === 'overflow' && target.pluggyTransactionId) {
     await deleteDoc(doc(db, 'users', uid, 'entriesOverflow', `pg_${target.pluggyTransactionId}`));
     return;
   }
+
+  // Subcoleção: remove de lá também (dual-delete)
+  if ((target as any)?.entryLocation === 'subcollection') {
+    await deleteEntryFromSubcollection(uid, id);
+  }
+
   const inline = await loadInlineEntries(uid);
   await updateUserDoc(uid, { entries: inline.filter((e) => e.id !== id) });
 }
@@ -504,6 +604,10 @@ export async function updateGoal(
   updates: Partial<Goal>
 ): Promise<void> {
   const idStr = String(id);
+  const existing = currentGoals.find((g) => String(g.id) === idStr);
+  if (existing) {
+    assertValid(validateGoal({ ...existing, ...updates, id: existing.id }), 'updateGoal');
+  }
   const goals = currentGoals.map((g) => (String(g.id) === idStr ? { ...g, ...updates, id: g.id } : g)) as Goal[];
   await updateUserDoc(uid, { goals });
 }
@@ -540,6 +644,10 @@ export async function updateInvestment(
   id: number,
   updates: Partial<Investment>
 ): Promise<void> {
+  const existing = currentInvestments.find((inv) => inv.id === id);
+  if (existing) {
+    assertValid(validateInvestment({ ...existing, ...updates, id: existing.id }), 'updateInvestment');
+  }
   const investments = currentInvestments.map((inv) =>
     inv.id === id ? { ...inv, ...updates, id } : inv
   ) as Investment[];
@@ -591,6 +699,9 @@ export async function updateAccountBalance(
   accountName: string,
   newBalance: number
 ): Promise<void> {
+  if (typeof newBalance !== 'number' || !isFinite(newBalance) || Math.abs(newBalance) > 1_000_000_000) {
+    throw new ValidationError(['Saldo deve ser um número válido (máx R$ 1 bilhão).']);
+  }
   const accountBalances = { ...currentBalances, [accountName]: newBalance };
   await updateUserDoc(uid, { accountBalances });
 }
@@ -603,6 +714,20 @@ export type AccountMetaEntry = {
   temChequeEspecial?: boolean;
   chequeEspecialLimite?: number;
   chequeEspecialJurosPct?: number;
+  /** Número da agência (ex: "0001-7") */
+  agency?: string;
+  /** Número da conta (ex: "12345-8") */
+  accountNumber?: string;
+  /** Código ISPB / número do banco (ex: "260" para Nubank) */
+  bankCode?: string;
+  /** Moeda da conta (ex: "BRL", "USD", "EUR") */
+  currency?: string;
+  /** Status de conexão Open Finance para esta conta */
+  ofStatus?: 'nao-conectado' | 'ativo' | 'erro' | 'expirado';
+  /** ID do item Pluggy vinculado a esta conta */
+  pluggyItemId?: string;
+  /** ID da conta Pluggy */
+  pluggyAccountId?: string;
 };
 
 /**
@@ -624,7 +749,8 @@ export async function deleteAccount(
 }
 
 /**
- * Atualiza a meta de uma conta (cor, incluirNaSoma, tipo).
+ * Atualiza a meta de uma conta (cor, incluirNaSoma, tipo, agência, etc.).
+ * Remove campos `undefined` antes de salvar para evitar rejeição do Firestore.
  */
 export async function updateAccountMeta(
   uid: string,
@@ -632,8 +758,13 @@ export async function updateAccountMeta(
   accountName: string,
   updates: Partial<AccountMetaEntry>
 ): Promise<void> {
+  // Firestore rejeita valores undefined — removemos antes de salvar
+  const cleanUpdates = Object.fromEntries(
+    Object.entries(updates).filter(([, v]) => v !== undefined)
+  ) as Partial<AccountMetaEntry>;
+
   const accountMeta = { ...currentMeta };
-  accountMeta[accountName] = { ...(accountMeta[accountName] ?? {}), ...updates };
+  accountMeta[accountName] = { ...(accountMeta[accountName] ?? {}), ...cleanUpdates };
   await updateUserDoc(uid, { accountMeta });
 }
 
