@@ -3,7 +3,7 @@ import { db } from '../firebase';
 import { doc, onSnapshot, collection, query, limit, orderBy } from 'firebase/firestore';
 import type { UserData, Entry, Recurrent, InvestorProfile, CreditAccount, CreditObligation, CreditSnapshot } from '../types/userData';
 import { calculateFinScore } from '../utils/calculateScore';
-import { mergeInlineAndOverflowEntries, mergeAllEntries } from '../utils/entryUtils';
+import { mergeAllEntries } from '../utils/entryUtils';
 
 /**
  * Lê users/{uid} + lançamentos arquivados em:

@@ -1,7 +1,7 @@
 import { db } from '../firebase';
 import {
   doc, getDoc, setDoc, collection, getDocs, deleteDoc,
-  writeBatch, runTransaction, addDoc,
+  writeBatch, runTransaction,
 } from 'firebase/firestore';
 import { mergeInlineAndOverflowEntries } from '../utils/entryUtils';
 import { calculateFinScore } from '../utils/calculateScore';
