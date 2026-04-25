@@ -1,7 +1,6 @@
 /**
  * BankLogoSVG.tsx
  * Logos SVG inline como componentes React — zero HTTP requests, zero falha.
- * Cada logo é fiel à identidade visual real do banco.
  */
 import type { BankData } from './bankData';
 
@@ -34,29 +33,33 @@ const Bradesco = ({ size }: P) => (
 // ── Santander ─────────────────────────────────────────────────────────────────
 const Santander = ({ size }: P) => (
   <svg width={size} height={size * 1.2} viewBox="0 0 40 48" fill="none">
-    <path
-      d="M20 44C20 44 6 34 6 22C6 13 12 7 18 10C13 13 12 20 16 26C18 20 21 13 19 5C27 9 34 17 34 26C34 36 20 44 20 44Z"
-      fill="white"
-    />
+    <path d="M20 44C20 44 6 34 6 22C6 13 12 7 18 10C13 13 12 20 16 26C18 20 21 13 19 5C27 9 34 17 34 26C34 36 20 44 20 44Z" fill="white"/>
   </svg>
 );
 
-// ── Banco do Brasil ───────────────────────────────────────────────────────────
+// ── Banco do Brasil — logo geométrico diamante real ───────────────────────────
 const BB = ({ size }: P) => (
-  <svg width={size * 1.5} height={size} viewBox="0 0 60 40" fill="none">
-    {/* Círculo azul */}
-    <circle cx="19" cy="20" r="18" fill="#003882" />
-    {/* Círculo amarelo */}
-    <circle cx="37" cy="20" r="18" fill="#FDDA00" />
-    {/* Sobreposição */}
-    <clipPath id="clipBB">
-      <circle cx="19" cy="20" r="18" />
-    </clipPath>
-    <circle cx="37" cy="20" r="18" fill="#FDDA00" clipPath="url(#clipBB)" opacity="0.5" />
-    <clipPath id="clipBB2">
-      <circle cx="37" cy="20" r="18" />
-    </clipPath>
-    <circle cx="19" cy="20" r="18" fill="#003882" clipPath="url(#clipBB2)" opacity="0.5" />
+  <svg width={size * 1.3} height={size * 1.3} viewBox="0 0 52 52" fill="none">
+    {/*
+      Reprodução fiel do logo BB:
+      Diamante (losango) com dois paralelogramos internos sobrepostos
+      criando o efeito de cubo 3D estilizado característico do Banco do Brasil.
+      Cor oficial: #003882
+    */}
+    {/* Paralelogramo superior-esquerdo */}
+    <path d="M26 4 L10 18 L26 26 L42 12 Z" fill="#003882"/>
+    {/* Paralelogramo inferior-direito */}
+    <path d="M10 18 L10 34 L26 48 L26 32 Z" fill="#003882"/>
+    {/* Paralelogramo central-direito (sobreposição) */}
+    <path d="M26 26 L42 12 L42 28 L26 42 Z" fill="#003882"/>
+    {/* Miolo branco — cria efeito de intersecção */}
+    <path d="M26 26 L18 20 L26 14 L34 20 Z" fill="white"/>
+    {/* Face superior do cubo */}
+    <path d="M26 4 L42 12 L26 20 L10 12 Z" fill="#0050AA"/>
+    {/* Face esquerda do cubo */}
+    <path d="M10 12 L26 20 L26 36 L10 28 Z" fill="#003882"/>
+    {/* Face direita do cubo */}
+    <path d="M42 12 L42 28 L26 36 L26 20 Z" fill="#002060"/>
   </svg>
 );
 
@@ -235,14 +238,12 @@ export function BankLogoSVG({ bank, size = 28, className = '' }: BankLogoSVGProp
 
   if (Logo) {
     return (
-      <span className={`inline-flex items-center ${className}`}
-        style={{ height: size }}>
+      <span className={`inline-flex items-center ${className}`} style={{ height: size }}>
         <Logo size={size} />
       </span>
     );
   }
 
-  // Fallback: abreviação com cor do banco
   return (
     <span
       className={`inline-flex items-center justify-center font-black select-none ${className}`}
