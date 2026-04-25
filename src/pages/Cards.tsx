@@ -2,6 +2,7 @@ import { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { EmptyState } from '../components/ui/EmptyState';
+import { CreditCardVisual } from '../components/banks/CreditCardVisual';
 import {
   addCard,
   addCardPurchase,
@@ -15,8 +16,7 @@ import {
 import { Modal } from '../components/ui/Modal';
 import { CreditModuleTabs } from '../components/credit/CreditModuleTabs';
 import { CreditKpiGrid, pressurePillClasses } from '../components/credit/CreditVisuals';
-import { CreditCard, Plus, FileText, Trash2, Pencil, ShieldCheck } from 'lucide-react';
-import type { Card, CardBenefits, CardPurchase } from '../types/userData';
+import { CreditCard, Plus, FileText, Trash2, Pencil, ShieldCheck } from 'lucide-react';import type { Card, CardBenefits, CardPurchase } from '../types/userData';
 import {
   getCatalogEntry,
   listCatalogByFlag,
@@ -561,6 +561,13 @@ export default function Cards() {
         </div>
       </section>
 
+      {error && !modalOpen && editCardId == null && deleteCardId == null && benefitsCardId == null && lancarCardId == null && !importOpen && (
+        <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3 text-rose-400 text-sm flex items-center justify-between">
+          <span>{error}</span>
+          <button type="button" onClick={() => setError(null)} className="ml-3 text-rose-400/60 hover:text-rose-300 text-xs font-bold">Fechar</button>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.length === 0 ? (
           <div className="col-span-full">
@@ -584,109 +591,70 @@ export default function Cards() {
             const pctUsado = (card.limit ?? 0) > 0 ? Math.round((used / card.limit!) * 100) : 0;
             const diasFecha = getDiasParaFecha(card);
             return (
-              <div
-                key={card.id}
-                className="bg-si-card rounded-2xl border border-si-border p-6 flex flex-col gap-4"
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className="p-3 rounded-xl shrink-0"
-                    style={{
-                      backgroundColor: card.color ? `${card.color}20` : 'rgba(59, 130, 246, 0.2)',
-                      color: card.color || '#60a5fa',
-                    }}
-                  >
-                    <CreditCard className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-si-1 truncate">{card.name || 'Cartão'}</h3>
-                    <p className="text-xs text-si-5">
-                      Fecha dia {card.closeDay} · Vence dia {card.dueDay}
-                    </p>
-                    <p className="text-xs text-si-5">
-                      {(card as Card & { bank?: string }).bank || 'Banco não informado'}
-                      {(card as Card & { annualFee?: number }).annualFee
-                        ? ` · Anuidade R$ ${Number((card as Card & { annualFee?: number }).annualFee ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                        : ' · Sem anuidade'}
-                    </p>
-                    <p className="text-sm font-bold text-si-3 mt-1">
-                      Limite: R$ {Number(card.limit ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
+              <div key={card.id} className="flex flex-col gap-3">
+                {/* ── Cartão visual realista ── */}
+                <div className="w-full">
+                  <CreditCardVisual
+                    name={card.name || 'Cartão'}
+                    limit={card.limit}
+                    flag={card.flag ?? 'Visa'}
+                    color={card.color}
+                    currentBill={used}
+                    size="full"
+                    className="w-full"
+                  />
                 </div>
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-xs text-si-5">
-                    Fatura atual: R$ {used.toFixed(2)} ({pctUsado}% usado)
-                    {diasFecha <= 7 && (
-                      <span className="text-amber-400 ml-1"> · Fecha em {diasFecha} dia(s)</span>
-                    )}
-                  </span>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => openBenefits(card)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 text-sm"
-                    >
+
+                {/* ── Info + ações ── */}
+                <div className="bg-si-card rounded-2xl border border-si-border p-4 flex flex-col gap-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div>
+                      <p className="text-xs text-si-5">
+                        Fecha dia {card.closeDay} · Vence dia {card.dueDay}
+                        {' · '}{(card as Card & { bank?: string }).bank || 'Banco não informado'}
+                      </p>
+                      <p className="text-sm font-bold text-si-1 mt-0.5">
+                        Fatura: R$ {used.toFixed(2)} ({pctUsado}% de R$ {Number(card.limit ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })})
+                        {diasFecha <= 7 && (
+                          <span className="text-amber-400 ml-2 font-semibold">· Fecha em {diasFecha}d</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button type="button" onClick={() => openBenefits(card)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 text-xs font-medium">
                       <ShieldCheck className="w-3.5 h-3.5" /> Benefícios
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => { setLancarCardId(card.id); setLancarCat(lancarCat || userCats[0]); }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 text-sm"
-                    >
+                    <button type="button" onClick={() => { setLancarCardId(card.id); setLancarCat(lancarCat || userCats[0]); }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 text-xs font-medium">
                       <Plus className="w-3.5 h-3.5" /> Lançar
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => { setFaturaCardId(card.id); setFaturaMonth(getBillingMonth(card, new Date().toISOString().split('T')[0])); }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 text-sm"
-                    >
+                    <button type="button" onClick={() => { setFaturaCardId(card.id); setFaturaMonth(getBillingMonth(card, new Date().toISOString().split('T')[0])); }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-si-over-3 hover:bg-si-over-4 border border-si-border-md text-si-2 text-xs font-medium">
                       <FileText className="w-3.5 h-3.5" /> Fatura
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => openEdit(card)}
-                      className="p-2 rounded-lg hover:bg-si-over-3 text-si-4 hover:text-si-1"
-                      title="Editar cartão"
-                    >
+                    <button type="button" onClick={() => openEdit(card)}
+                      className="p-1.5 rounded-lg hover:bg-si-over-3 text-si-4 hover:text-si-1" title="Editar">
                       <Pencil className="w-4 h-4" />
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => { setDeleteCardId(card.id); setError(null); }}
-                      className="p-2 rounded-lg hover:bg-rose-500/20 text-si-4 hover:text-rose-400"
-                      title="Excluir cartão"
-                    >
+                    <button type="button" onClick={() => { setDeleteCardId(card.id); setError(null); }}
+                      className="p-1.5 rounded-lg hover:bg-rose-500/20 text-si-4 hover:text-rose-400" title="Excluir">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
+
+                  {!!card.cardBenefits && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {card.cardBenefits.vipLounge && <span className="px-2 py-0.5 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">Sala VIP</span>}
+                      {card.cardBenefits.travelInsurance && <span className="px-2 py-0.5 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">Seguro viagem</span>}
+                      {card.cardBenefits.purchaseProtection && <span className="px-2 py-0.5 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">Proteção</span>}
+                      {card.cardBenefits.pointsProgram && <span className="px-2 py-0.5 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">Pontos: {card.cardBenefits.pointsProgram}</span>}
+                      {card.cardBenefits.cashbackPct != null && <span className="px-2 py-0.5 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">Cashback {card.cardBenefits.cashbackPct}%</span>}
+                    </div>
+                  )}
                 </div>
-                {!!card.cardBenefits && (
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    {card.cardBenefits.vipLounge && (
-                      <span className="px-2 py-1 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">Sala VIP</span>
-                    )}
-                    {card.cardBenefits.travelInsurance && (
-                      <span className="px-2 py-1 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">Seguro viagem</span>
-                    )}
-                    {card.cardBenefits.purchaseProtection && (
-                      <span className="px-2 py-1 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">Proteção de compra</span>
-                    )}
-                    {card.cardBenefits.extendedWarranty && (
-                      <span className="px-2 py-1 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">Garantia estendida</span>
-                    )}
-                    {card.cardBenefits.pointsProgram && (
-                      <span className="px-2 py-1 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">
-                        Pontos: {card.cardBenefits.pointsProgram}
-                      </span>
-                    )}
-                    {card.cardBenefits.cashbackPct != null && (
-                      <span className="px-2 py-1 rounded-md text-[11px] border border-si-border-md text-si-3 bg-si-over-2">
-                        Cashback: {card.cardBenefits.cashbackPct}%
-                      </span>
-                    )}
-                  </div>
-                )}
               </div>
             );
           })
