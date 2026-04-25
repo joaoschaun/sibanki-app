@@ -15,6 +15,12 @@ import {
   Settings,
   MoreHorizontal,
   ChevronDown,
+  Handshake,
+  Users,
+  RefreshCw,
+  Flame,
+  Heart,
+  FileText,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -45,10 +51,16 @@ interface NavItem {
 
 // ── Navegação principal — as 4 ações que importam ─────────────────────────────
 const primaryNav: NavItem[] = [
-  { icon: LayoutDashboard, label: 'Painel',        path: '/dashboard' },
   { icon: Receipt,         label: 'Lançamentos',   path: '/lancamentos' },
   { icon: TrendingUp,      label: 'Investimentos', path: '/crescimento' },
-  { icon: MessageCircle,   label: 'Assistente',    path: '/consultor-ia' },
+];
+
+// ── Amigos — social finance (loop viral + diferenciador) ─────────────────────
+const amigosNav: NavItem[] = [
+  { icon: Handshake, label: 'Credi Amigo',    path: '/credi-amigo' },
+  { icon: Users,     label: 'Consórcio',       path: '/consorcio-amigo' },
+  { icon: RefreshCw, label: 'Assinaturas',    path: '/assinaturas' },
+  { icon: Heart,     label: 'Casal',           path: '/casal' },
 ];
 
 // ── Secundário — finanças e planejamento ──────────────────────────────────────
@@ -58,6 +70,8 @@ const secondaryNav: NavItem[] = [
   { icon: PieChart,     label: 'Orçamento',    path: '/orcamento' },
   { icon: Target,       label: 'Metas',        path: '/planejamento' },
   { icon: ShoppingBag,  label: 'Loja',         path: '/loja' },
+  { icon: Flame,        label: 'FIRE',          path: '/fire' },
+  { icon: FileText,     label: 'Relatório IR',  path: '/relatorio-ir' },
   { icon: FileBarChart, label: 'Relatórios',   path: '/relatorios' },
   { icon: Calendar,     label: 'Calendário',   path: '/calendario' },
 ];
@@ -90,7 +104,7 @@ export function Sidebar({
     }
   }, [collapsed, setOpenGroup]);
 
-  // Abre "Mais" automaticamente se a rota ativa for secundária
+  // Abre "Mais" automaticamente se a rota ativa for secundária ou amigos
   useEffect(() => {
     if (!collapsed && secondaryPaths.includes(location.pathname)) {
       setMaisOpen(true);
@@ -144,24 +158,16 @@ export function Sidebar({
           collapsed ? 'justify-center px-0 py-4' : 'gap-3 px-4 py-4'
         )}
       >
-        <div
-          className={cn(
-            'rounded-full border border-si-border bg-si-over-2',
-            'flex items-center justify-center font-bold text-si-3 shrink-0 overflow-hidden',
-            collapsed ? 'w-7 h-7 text-[10px]' : 'w-6 h-6 text-[10px]'
-          )}
-        >
-          {avatarURL ? (
-            <img src={avatarURL} alt="" className="w-full h-full object-cover" />
-          ) : (
-            initials
-          )}
+        {/* Brand logo (varia exclusivamente via Tailwind dark mode) */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent: collapsed ? 'center' : 'flex-start', flexShrink:0, width: collapsed ? '40px' : 'auto', height: '40px' }}>
+          <img
+            src="/logo-dark.png"
+            alt="Sibanki"
+            style={{ maxHeight:'100%', maxWidth:'100%', objectFit:'contain', display:'block', transition:'transform 0.2s', opacity: collapsed ? 0 : 1 }}
+          />
         </div>
-        {!collapsed && (
-          <span className="text-[11px] font-semibold text-si-4 tracking-wide uppercase truncate">
-            {userName || 'Usuário'}
-          </span>
-        )}
+
+
       </div>
 
       {/* ── Navegação principal ─────────────────────────────────────────────── */}
@@ -188,6 +194,35 @@ export function Sidebar({
               </Link>
             );
           })}
+        </div>
+
+        {/* ── Amigos (social finance) ───────────────────────────────────── */}
+        <div className="mt-3 pt-3 border-t border-white/[0.06]">
+          {!collapsed && (
+            <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-blue-500/60 px-3 mb-1.5">Amigos</p>
+          )}
+          <div className="space-y-0.5">
+            {amigosNav.map((item) => {
+              const active = isActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  title={collapsed ? item.label : undefined}
+                  className={collapsed ? itemCollapsed(active) : cn(
+                    itemBase,
+                    'px-3 py-2 w-full text-[11px] font-semibold tracking-[0.08em] uppercase',
+                    active
+                      ? 'bg-blue-500/15 text-blue-300'
+                      : 'text-blue-400/70 hover:text-blue-300 hover:bg-blue-500/10'
+                  )}
+                >
+                  <item.icon className={cn('w-3.5 h-3.5 shrink-0', active ? 'text-blue-300' : 'text-blue-400/70')} />
+                  {!collapsed && item.label}
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
         {/* ── Mais ────────────────────────────────────────────────────────── */}
