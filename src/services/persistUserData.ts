@@ -5,6 +5,8 @@ import {
 } from 'firebase/firestore';
 import { mergeInlineAndOverflowEntries } from '../utils/entryUtils';
 import { calculateFinScore } from '../utils/calculateScore';
+import { getCycleKeyForPurchaseDate, expandInstallments } from '../utils/cardCycleUtils';
+import type { CardPurchaseNew } from '../utils/cardCycleUtils';
 import {
   validateEntry,
   validateCard,
@@ -1140,4 +1142,178 @@ export async function resetUserData(
   };
   const ref = doc(db, 'users', uid);
   await setDoc(ref, { ...emptyData, updated: new Date().toISOString() }, { merge: true });
+}
+
+// ─── Ciclos de Fatura (novo modelo) ─────────────────────────────────────────
+
+/**
+ * Adiciona compras (nova API com cycleKey) ao card.purchasesV2.
+ * Dedup por id e pluggyTransactionId. Atualiza currentBill com total do ciclo atual.
+ */
+export async function addCardPurchasesV2(
+  uid: string,
+  cardId: number,
+  newPurchases: CardPurchaseNew[],
+): Promise<void> {
+  if (!newPurchases.length) return;
+  const userRef = doc(db, 'users', uid);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) throw new Error('Usuário não encontrado');
+
+  const data  = snap.data() as UserData;
+  const cards = [...(data.cards ?? [])];
+  const idx   = cards.findIndex(c => c.id === cardId);
+  if (idx === -1) throw new Error('Cartão não encontrado');
+
+  const card = { ...cards[idx] };
+  const existing: CardPurchaseNew[] = (card.purchasesV2 as CardPurchaseNew[]) ?? [];
+  const existingIds      = new Set(existing.map(p => p.id));
+  const existingPluggyIds = new Set(
+    existing.filter(p => p.pluggyTransactionId).map(p => p.pluggyTransactionId!),
+  );
+
+  const toAdd = newPurchases.filter(p => {
+    if (existingIds.has(p.id)) return false;
+    if (p.pluggyTransactionId && existingPluggyIds.has(p.pluggyTransactionId)) return false;
+    return true;
+  });
+  if (!toAdd.length) return;
+
+  const allPurchases = [...existing, ...toAdd] as CardPurchaseNew[];
+  card.purchasesV2 = allPurchases;
+  cards[idx] = card;
+  await updateUserDoc(uid, { cards: cards as Card[] });
+}
+
+/**
+ * Remove uma compra de card.purchasesV2 por id.
+ */
+export async function removeCardPurchaseV2(
+  uid: string,
+  cardId: number,
+  purchaseId: string,
+): Promise<void> {
+  const userRef = doc(db, 'users', uid);
+  const snap    = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const data  = snap.data() as UserData;
+  const cards = [...(data.cards ?? [])];
+  const idx   = cards.findIndex(c => c.id === cardId);
+  if (idx === -1) return;
+
+  const card = { ...cards[idx] };
+  card.purchasesV2 = ((card.purchasesV2 as CardPurchaseNew[]) ?? [])
+    .filter(p => p.id !== purchaseId);
+  cards[idx] = card;
+  await updateUserDoc(uid, { cards: cards as Card[] });
+}
+
+/**
+ * Remove todas as parcelas de um grupo (compra parcelada).
+ */
+export async function removeCardInstallmentGroup(
+  uid: string,
+  cardId: number,
+  groupId: string,
+): Promise<void> {
+  const userRef = doc(db, 'users', uid);
+  const snap    = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const data  = snap.data() as UserData;
+  const cards = [...(data.cards ?? [])];
+  const idx   = cards.findIndex(c => c.id === cardId);
+  if (idx === -1) return;
+
+  const card = { ...cards[idx] };
+  card.purchasesV2 = ((card.purchasesV2 as CardPurchaseNew[]) ?? [])
+    .filter(p => p.installment?.groupId !== groupId);
+  cards[idx] = card;
+  await updateUserDoc(uid, { cards: cards as Card[] });
+}
+
+/**
+ * Marca um ciclo de fatura como pago.
+ * Salva cycleKey em card.paidCycles[] e cria entry de "pagamento de fatura"
+ * para manter o histórico financeiro consistente.
+ *
+ * @param paymentDate  Data do pagamento (default: hoje)
+ */
+export async function payCardCycle(
+  uid: string,
+  cardId: number,
+  cycleKey: string,
+  paymentDate: string = new Date().toISOString().slice(0, 10),
+): Promise<void> {
+  const userRef = doc(db, 'users', uid);
+  const snap    = await getDoc(userRef);
+  if (!snap.exists()) throw new Error('Usuário não encontrado');
+
+  const data  = snap.data() as UserData;
+  const cards = [...(data.cards ?? [])];
+  const idx   = cards.findIndex(c => c.id === cardId);
+  if (idx === -1) throw new Error('Cartão não encontrado');
+
+  const card = { ...cards[idx] };
+  if ((card.paidCycles as string[] ?? []).includes(cycleKey)) return; // já pago
+
+  // Soma do ciclo
+  const cyclePurchases = ((card.purchasesV2 as CardPurchaseNew[]) ?? [])
+    .filter(p => p.cycleKey === cycleKey);
+  const cycleTotal = cyclePurchases.reduce((s, p) => s + (Number(p.value) || 0), 0);
+
+  card.paidCycles = [...((card.paidCycles as string[]) ?? []), cycleKey];
+  cards[idx] = card;
+
+  // Entry de pagamento de fatura
+  const inline = await loadInlineEntries(uid);
+  const paymentEntry: Entry = {
+    id: Date.now(),
+    type: 'despesa',
+    desc: `Pagamento fatura ${card.name} — ${cycleKey}`,
+    category: 'Cartões',
+    value: cycleTotal,
+    date: paymentDate,
+    account: card.name,
+    status: 'confirmado',
+    isCardPayment: true,
+    cardId,
+    cycleKey,
+  } as Entry;
+
+  await updateUserDoc(uid, {
+    cards: cards as Card[],
+    entries: [...inline, paymentEntry],
+  });
+}
+
+/**
+ * Desfaz o pagamento de um ciclo (para correção de erro).
+ */
+export async function unpayCardCycle(
+  uid: string,
+  cardId: number,
+  cycleKey: string,
+): Promise<void> {
+  const userRef = doc(db, 'users', uid);
+  const snap    = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const data  = snap.data() as UserData;
+  const cards = [...(data.cards ?? [])];
+  const idx   = cards.findIndex(c => c.id === cardId);
+  if (idx === -1) return;
+
+  const card = { ...cards[idx] };
+  card.paidCycles = ((card.paidCycles as string[]) ?? []).filter(k => k !== cycleKey);
+  cards[idx] = card;
+
+  const entries = await loadInlineEntries(uid);
+  const filtered = entries.filter(
+    e => !((e as Entry & { isCardPayment?: boolean; cardId?: number; cycleKey?: string })
+      .isCardPayment && (e as any).cardId === cardId && (e as any).cycleKey === cycleKey),
+  );
+
+  await updateUserDoc(uid, { cards: cards as Card[], entries: filtered });
 }

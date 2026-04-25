@@ -7,6 +7,7 @@ import type {
   OpenFinanceCreditBill,
   OpenFinanceIdentitySnapshot,
 } from './openFinance';
+import type { CardPurchaseNew } from '../utils/cardCycleUtils';
 
 export interface UserData {
   name?: string;
@@ -24,6 +25,20 @@ export interface UserData {
     temChequeEspecial?: boolean;
     chequeEspecialLimite?: number;
     chequeEspecialJurosPct?: number;
+    /** Número da agência (ex: "0001-7") */
+    agency?: string;
+    /** Número da conta (ex: "12345-8") */
+    accountNumber?: string;
+    /** Código ISPB / número do banco (ex: "260" para Nubank) */
+    bankCode?: string;
+    /** Moeda da conta (ex: "BRL", "USD", "EUR") */
+    currency?: string;
+    /** Status de conexão Open Finance para esta conta */
+    ofStatus?: 'nao-conectado' | 'ativo' | 'erro' | 'expirado';
+    /** ID do item Pluggy vinculado a esta conta */
+    pluggyItemId?: string;
+    /** ID da conta Pluggy */
+    pluggyAccountId?: string;
   }>;
   accountCesta?: Record<string, unknown>;
   cards?: Card[];
@@ -119,6 +134,8 @@ export interface UserData {
   ddaStatus?: 'nao-ativado' | 'pendente' | 'ativo' | 'erro';
   /** Última sincronização de boletos DDA. */
   ddaSyncedAt?: string;
+  /** Boletos sincronizados via DDA ou Open Finance (quando o backend popular). */
+  ddaBoletos?: DdaBoleto[];
 }
 
 // ─── SibCoin Types ──────────────────────────────────────────────────────────
@@ -138,7 +155,8 @@ export type SibcoinEventType =
   | 'burn_upgrade'
   | 'bridge_to_polygon'
   | 'admin_credit'
-  | 'admin_debit';
+  | 'admin_debit'
+  | 'dda_boleto_detected';
 
 export interface SibcoinTransaction {
   id: string;
@@ -346,6 +364,21 @@ export interface CardPurchase {
   [key: string]: unknown;
 }
 
+export interface CardBenefits {
+  vipLounge?: boolean;
+  vipNetwork?: string;
+  vipVisitsPerYear?: number;
+  travelInsurance?: boolean;
+  purchaseProtection?: boolean;
+  extendedWarranty?: boolean;
+  concierge?: boolean;
+  pointsProgram?: string;
+  cashbackPct?: number;
+  notes?: string;
+  updatedAt?: string;
+  source?: 'manual' | 'open-finance' | 'catalog';
+}
+
 export interface Card {
   id: number;
   name: string;
@@ -355,10 +388,20 @@ export interface Card {
   flag?: string;
   color?: string;
   active?: boolean;
+  /** Compras legadas (sem cycleKey) — mantidas para compatibilidade */
   purchases?: CardPurchase[];
   faturas?: unknown[];
   /** Fatura atual aberta (soma das compras do ciclo em andamento) */
   currentBill?: number;
+  /** Benefícios declarados pelo usuário (sala VIP, seguros, pontos, etc.). */
+  cardBenefits?: CardBenefits;
+  /**
+   * Compras no novo modelo com cycleKey — alimentadas pelo CardBillingCycle.
+   * Substitui `purchases` gradualmente (dual-read enquanto migra).
+   */
+  purchasesV2?: CardPurchaseNew[];
+  /** Ciclos de fatura marcados como pagos pelo usuário (YYYY-MM[]) */
+  paidCycles?: string[];
   [key: string]: unknown;
 }
 
