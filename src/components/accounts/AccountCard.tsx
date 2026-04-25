@@ -1,4 +1,4 @@
-import { Wallet, Smartphone, List, Pencil, Trash2, AlertTriangle, TrendingUp, TrendingDown, Minus, Wifi, WifiOff, Zap } from 'lucide-react';
+import { Smartphone, List, Pencil, Trash2, AlertTriangle, TrendingUp, TrendingDown, Minus, Wifi, WifiOff, Zap } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { BankLogo } from '../banks/BankLogo';
 import type { BankData } from '../banks/bankData';
@@ -129,29 +129,36 @@ export function AccountCard({
       {/* Header */}
       <div className="flex items-center justify-between relative z-10 w-full">
         <div className="flex items-center gap-3 min-w-0 flex-1">
+          {/* Logo do banco — preenchimento colorido ou ícone do banco */}
           <div
             className={cn(
-              "p-3 rounded-2xl transition-transform duration-300 group-hover:scale-110 shrink-0",
-              bank ? "bg-black/20 text-current backdrop-blur-md border border-white/10" : colorClass
+              'p-2.5 rounded-2xl transition-transform duration-300 group-hover:scale-110 shrink-0 flex items-center justify-center',
+              bank ? 'bg-black/25 backdrop-blur-md border border-white/10' : colorClass
             )}
-            style={!bank && corHex ? { backgroundColor: `${corHex}20`, color: corHex, border: `1px solid ${corHex}40` } : undefined}
+            style={!bank && corHex ? { backgroundColor: `${corHex}20`, border: `1px solid ${corHex}40` } : undefined}
           >
-            <Wallet className="w-5 h-5" />
+            {bank ? (
+              <BankLogo
+                bank={bank as unknown as BankData}
+                size={28}
+                onDark={false}
+              />
+            ) : (
+              /* Sem banco reconhecido: inicial estilizada */
+              <span
+                className="font-black text-lg leading-none"
+                style={corHex ? { color: corHex } : undefined}
+              >
+                {name.slice(0, 1).toUpperCase()}
+              </span>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className={cn("font-bold truncate tracking-tight text-base", bank ? "text-current" : "text-si-1")}>
               {name}
             </h3>
             <div className="flex items-center gap-2 mt-0.5">
-              {bank && (
-                <BankLogo
-                  bank={bank as unknown as BankData}
-                  size={16}
-                  onDark={false}
-                  className="opacity-80"
-                />
-              )}
-              {tipo && !bank && <p className="text-[10px] text-si-5 font-semibold uppercase tracking-wider">{tipo}</p>}
+              {tipo && <p className="text-[10px] opacity-60 font-semibold uppercase tracking-wider">{tipo}</p>}
               {currency !== 'BRL' && (
                 <span className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">{currency}</span>
               )}

@@ -191,14 +191,15 @@ export function CreditCardVisual({
         style={{ padding: `${Math.round(h * 0.1)}px ${Math.round(w * 0.07)}px` }}
       >
         {/* ── LINHA SUPERIOR: Logo banco + Chip ─ */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex items-start justify-between">
+          {/* Logo do banco — proeminente no topo esquerdo */}
+          <div className="flex items-center">
             {bank ? (
-              <BankLogo bank={bank} size={Math.round(w * 0.075)} onDark={false} />
+              <BankLogo bank={bank} size={Math.round(w * 0.1)} onDark={false} />
             ) : (
               <span
                 className="font-black tracking-tight"
-                style={{ fontSize: Math.round(w * 0.05), opacity: 0.9 }}
+                style={{ fontSize: Math.round(w * 0.06), opacity: 0.9, color: textColor }}
               >
                 {name.split(' ').slice(0, 2).join(' ')}
               </span>
