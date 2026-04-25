@@ -10,6 +10,7 @@ import { useTheme } from './hooks/useTheme';
 import { Sidebar, type SidebarOpenGroup } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { AppLoadingScreen } from './components/ui/AppLoadingScreen';
 import { OnboardingTour } from './components/ui/OnboardingTour';
 import { SibcoinToastContainer } from './components/sibcoin/SibcoinToastContainer';
 import { RegistrationWizard } from './components/onboarding/RegistrationWizard';
@@ -17,6 +18,7 @@ import { SpotlightTour, GLOBAL_TOUR_STEPS } from './components/ui/SpotlightTour'
 import { InstallPrompt } from './components/ui/InstallPrompt';
 import { ConsultantDrawer } from './components/consultant/ConsultantDrawer';
 import { captureRefParam, useReferral } from './hooks/useReferral';
+import { useSmartAlerts } from './hooks/useSmartAlerts';
 import Login from './pages/Login';
 import { useState, useEffect } from 'react';
 
@@ -56,6 +58,13 @@ const CreditHub    = lazy(() => import('./pages/CreditHub'));
 const Filiados     = lazy(() => import('./pages/Filiados'));
 const Quarentena   = lazy(() => import('./pages/Quarentena'));
 const FilhosPage   = lazy(() => import('./pages/Filhos'));
+const CrediAmigo     = lazy(() => import('./pages/CrediAmigo'));
+const ConsorcioAmigo = lazy(() => import('./pages/ConsorcioAmigo'));
+const Assinaturas    = lazy(() => import('./pages/Assinaturas'));
+const Fire           = lazy(() => import('./pages/Fire'));
+const Envelope       = lazy(() => import('./pages/Envelope'));
+const RelatorioIR    = lazy(() => import('./pages/RelatorioIR'));
+const Casal          = lazy(() => import('./pages/Casal'));
 
 // ── Spinner reutilizável para Suspense ───────────────────────────────────────
 function PageLoader() {
@@ -96,20 +105,34 @@ function FloatingConsultantButton() {
 // ── Shell autenticado (usa AppContext — sem chamadas extras de hook) ──────────
 function AuthenticatedShell() {
   const location = useLocation();
-  const { user, authLoading, score, data, avatarURL } = useAppContext();
+  const { user, authLoading, score, data, avatarURL, entries, recurrents, budgets, accountBalances } = useAppContext();
   const { theme } = useTheme();
   const { sidebarCollapsed, toggleSidebar, syncRoute } = useUiStore();
   useEffect(() => {
     syncRoute(location.pathname);
   }, [location.pathname, syncRoute]);
   const [sidebarOpenGroup, setSidebarOpenGroup] = useState<SidebarOpenGroup>(null);
-  // Mobile drawer state (independente do collapse desktop)
   const [mobileOpen, setMobileOpen] = useState(false);
   const showWizard = user && !authLoading && !(data as any)?.cadastroCompleto;
   const [wizardDismissed, setWizardDismissed] = useState(false);
+  const [minSplashTimeDone, setMinSplashTimeDone] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setMinSplashTimeDone(true), 3000);
+    return () => clearTimeout(t);
+  }, []);
 
   /** Sempre no topo do shell (efeito interno ignora se !user) — não colocar após return condicional. */
   useReferral();
+
+  // Alertas push inteligentes (vencimentos, orçamento, saldo baixo)
+  useSmartAlerts({
+    entries,
+    recurrents,
+    budgets: (budgets as Record<string, unknown>) ?? {},
+    accountBalances: accountBalances as Record<string, number>,
+    uid: user?.uid,
+  });
 
   const handleToggle = () => {
     // Em mobile (< lg): abre/fecha drawer overlay
@@ -124,12 +147,8 @@ function AuthenticatedShell() {
 
   const closeMobile = () => setMobileOpen(false);
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-si-bg flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+  if (authLoading || !minSplashTimeDone) {
+    return <AppLoadingScreen />;
   }
 
   if (!user) return <Login />;
@@ -224,6 +243,13 @@ function AuthenticatedShell() {
               <Route path="/filiados" element={<ErrorBoundary><Filiados /></ErrorBoundary>} />
               <Route path="/quarentena" element={<ErrorBoundary><Quarentena /></ErrorBoundary>} />
               <Route path="/filhos" element={<ErrorBoundary><FilhosPage /></ErrorBoundary>} />
+              <Route path="/credi-amigo" element={<ErrorBoundary><CrediAmigo /></ErrorBoundary>} />
+              <Route path="/consorcio-amigo" element={<ErrorBoundary><ConsorcioAmigo /></ErrorBoundary>} />
+              <Route path="/assinaturas" element={<ErrorBoundary><Assinaturas /></ErrorBoundary>} />
+              <Route path="/fire" element={<ErrorBoundary><Fire /></ErrorBoundary>} />
+              <Route path="/envelope" element={<ErrorBoundary><Envelope /></ErrorBoundary>} />
+              <Route path="/relatorio-ir" element={<ErrorBoundary><RelatorioIR /></ErrorBoundary>} />
+              <Route path="/casal" element={<ErrorBoundary><Casal /></ErrorBoundary>} />
               <Route path="/perfil" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
               <Route path="/configuracoes" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
               <Route path="/relatorios" element={<ErrorBoundary><Reports /></ErrorBoundary>} />
