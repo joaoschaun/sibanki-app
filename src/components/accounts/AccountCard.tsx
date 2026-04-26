@@ -141,7 +141,7 @@ export function AccountCard({
               <BankLogo
                 bank={bank as unknown as BankData}
                 size={28}
-                onDark={false}
+                backgroundHex={bankPrimary ?? undefined}
               />
             ) : (
               /* Sem banco reconhecido: inicial estilizada */
