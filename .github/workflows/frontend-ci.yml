@@ -1,0 +1,96 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    paths-ignore:
+      - "functions/**"
+      - "public/app/**"
+      - "public/admin/**"
+      - "docs/**"
+      - "*.md"
+      - "AGENTS.md"
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - "functions/**"
+      - "public/app/**"
+      - "public/admin/**"
+      - "docs/**"
+      - "*.md"
+
+# REL-02 (auditoria 26/04/2026, decisão sênior): CI no front.
+# Antes só `functions-tests.yml` rodava em PR — frontend só era validado
+# localmente nos scripts deploy:app/deploy:staging. PRs que quebravam tsc/vitest
+# passavam sem sinal.
+#
+# Este workflow cobre: type-check, vitest unit tests, build de produção.
+# Não roda Playwright (E2E) nem deploy — esses ficam manuais por design.
+jobs:
+  typecheck:
+    name: TypeScript no-emit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install (npm ci)
+        run: npm ci
+      - name: tsc --noEmit
+        run: npx tsc --noEmit
+
+  test-unit:
+    name: Vitest unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install (npm ci)
+        run: npm ci
+      - name: vitest run
+        run: npm run test:unit
+
+  lint:
+    name: ESLint (warnings only — não bloqueia)
+    runs-on: ubuntu-latest
+    continue-on-error: true   # estratégia warn-first do REL-03; flip para false depois.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install (npm ci)
+        run: npm ci
+      - name: eslint
+        run: npm run lint -- --max-warnings=10000  # cap absurdo durante transição
+
+  build:
+    name: Vite production build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install (npm ci)
+        run: npm ci
+      - name: vite build
+        run: npm run build
+      - name: Bundle size sanity-check
+        run: |
+          du -sh dist
+          # Falha se o bundle gerado passar de 8 MB total — sentinel grosseiro,
+          # afina depois com bundle-analyzer.
+          SIZE_KB=$(du -sk dist | awk '{print $1}')
+          if [ "$SIZE_KB" -gt 8192 ]; then
+            echo "::error::Bundle gerado em $SIZE_KB KB, acima de 8 MB."
+            exit 1
+          fi

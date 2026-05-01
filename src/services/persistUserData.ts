@@ -192,6 +192,100 @@ export async function updateUserDoc(
   }
 }
 
+/**
+ * PUD-1 (auditoria 26/04/2026, decisão sênior): API atômica para mutações
+ * em arrays do user doc.
+ *
+ * O padrão antigo "load → modify → updateUserDoc(...full array)" tinha race
+ * condition: outro write entre o load e o write sobrescrevia o estado fresco.
+ * Aqui, todas as mutações em `entries` rodam DENTRO de uma `runTransaction`
+ * que lê o array fresco do Firestore e aplica as ops antes de escrever.
+ *
+ * Uso:
+ *   modifyUserDoc(uid, { entries: { append: newEntry } })
+ *   modifyUserDoc(uid, { entries: { update: [{ id: 123, updates: { value: 50 } }] } })
+ *   modifyUserDoc(uid, { entries: { remove: [123] } })
+ *   modifyUserDoc(uid, { patch: { recurrents }, entries: { append: [e1, e2] } })
+ *
+ * Ordem dentro da transação: append → update → remove.
+ */
+export interface UserDocModification {
+  /** Patch direto (substitui campos no doc). NÃO use para `entries` — use o sub-objeto `entries` abaixo. */
+  patch?: Partial<UserData>;
+  /** Mutações atômicas no array `entries`. */
+  entries?: {
+    append?: Entry | Entry[];
+    update?: Array<{ id: number; updates: Partial<Entry> }>;
+    remove?: number[];
+  };
+}
+
+export async function modifyUserDoc(uid: string, mod: UserDocModification): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  const now = new Date().toISOString();
+
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(ref);
+    const current = (snap.exists() ? snap.data() : {}) as Partial<UserData>;
+
+    // 1) Aplica o patch escalar primeiro (entries do patch é ignorado se vier — usar entries.append)
+    const patch = mod.patch ?? {};
+    const merged: Partial<UserData> = { ...current, ...patch };
+
+    // 2) Aplica mutações em entries (estado FRESCO do Firestore)
+    if (mod.entries) {
+      let entriesArr: Entry[] = (Array.isArray(current.entries) ? [...current.entries] : []) as Entry[];
+
+      // append
+      if (mod.entries.append) {
+        const toAppend = Array.isArray(mod.entries.append) ? mod.entries.append : [mod.entries.append];
+        entriesArr = [...entriesArr, ...toAppend];
+      }
+      // update
+      if (Array.isArray(mod.entries.update)) {
+        for (const u of mod.entries.update) {
+          entriesArr = entriesArr.map((e) =>
+            e.id === u.id ? ({ ...e, ...u.updates, id: e.id } as Entry) : e,
+          );
+        }
+      }
+      // remove
+      if (Array.isArray(mod.entries.remove) && mod.entries.remove.length > 0) {
+        const removeSet = new Set(mod.entries.remove);
+        entriesArr = entriesArr.filter((e) => !removeSet.has(e.id));
+      }
+
+      merged.entries = entriesArr;
+    }
+
+    // 3) Recalcula finScore quando algo relevante mudou
+    const shouldRecalc =
+      mod.entries !== undefined ||
+      'goals' in patch ||
+      'budgets' in patch ||
+      'accountBalances' in patch ||
+      'accountMeta' in patch ||
+      'creditSnapshot' in patch;
+
+    const finalPatch: Record<string, unknown> = { ...patch, updated: now };
+    if (mod.entries !== undefined) {
+      finalPatch.entries = merged.entries;
+    }
+    if (shouldRecalc) {
+      finalPatch.finScore = calculateFinScore(
+        merged.entries ?? [],
+        merged.goals ?? [],
+        (merged.budgets ?? {}) as Record<string, unknown>,
+        merged.accountBalances ?? {},
+        merged.accountMeta ?? {},
+        merged.creditSnapshot ?? null,
+      );
+    }
+
+    transaction.set(ref, finalPatch, { merge: true });
+  });
+}
+
 export async function setCreditAccounts(uid: string, creditAccounts: CreditAccount[]): Promise<void> {
   await updateUserDoc(uid, { creditAccounts });
 }
@@ -207,6 +301,10 @@ export async function setCreditSnapshot(uid: string, creditSnapshot: CreditSnaps
 /**
  * Adiciona um lançamento ao array entries e persiste.
  * Se round-up estiver ativo e for despesa, acumula a diferença no cofre.
+ *
+ * PUD-1 (auditoria 26/04/2026): refatorado para `modifyUserDoc`. O array
+ * `entries` agora é lido do Firestore DENTRO da transaction e o novo entry
+ * é apendado lá — sem mais race condition de "load → modify → write".
  */
 export async function addEntry(uid: string, _currentEntries: Entry[], newEntry: Omit<Entry, 'id'>): Promise<void> {
   assertValid(validateEntry(newEntry), 'addEntry');
@@ -219,9 +317,8 @@ export async function addEntry(uid: string, _currentEntries: Entry[], newEntry: 
     await writeEntryToSubcollection(uid, entry);
   }
 
-  const inline = await loadInlineEntries(uid);
-  const payload: Partial<UserData> = { entries: [...inline, entry] };
-
+  // Pré-carrega config de round-up (não-crítico se sair stale; só ajusta cofre)
+  let roundUpPatch: Partial<UserData> | null = null;
   if (newEntry.type === 'despesa' && !newEntry.isTransfer) {
     const ref = doc(db, 'users', uid);
     const snap = await getDoc(ref);
@@ -233,17 +330,24 @@ export async function addEntry(uid: string, _currentEntries: Entry[], newEntry: 
       if (diff > 0) {
         const history = (cfg.cofreHistory ?? []).slice(-99);
         const entryDate = String(newEntry.date);
-        const roundUpEntry: RoundUpEntry = { id, entryId: id, originalValue: val, roundedValue: rounded, diff, date: entryDate };
-        payload.roundUpConfig = {
-          ...cfg,
-          cofreTotal: Math.round(((cfg.cofreTotal ?? 0) + diff) * 100) / 100,
-          cofreHistory: [...history, roundUpEntry],
+        const roundUpEntry: RoundUpEntry = {
+          id, entryId: id, originalValue: val, roundedValue: rounded, diff, date: entryDate,
+        };
+        roundUpPatch = {
+          roundUpConfig: {
+            ...cfg,
+            cofreTotal: Math.round(((cfg.cofreTotal ?? 0) + diff) * 100) / 100,
+            cofreHistory: [...history, roundUpEntry],
+          },
         };
       }
     }
   }
 
-  await updateUserDoc(uid, payload);
+  await modifyUserDoc(uid, {
+    entries: { append: entry },
+    ...(roundUpPatch ? { patch: roundUpPatch } : {}),
+  });
 }
 
 /**
@@ -291,18 +395,23 @@ export async function addTransfer(
     isTransfer: true,
   };
 
-  const inline = await loadInlineEntries(uid);
-  const entries: Entry[] = [
-    ...inline,
-    { ...despesa, id: now } as Entry,
-    { ...receita, id: now + 1 } as Entry,
-  ];
-
-  await updateUserDoc(uid, { entries });
+  // PUD-1: usa modifyUserDoc — append atômico na transação.
+  await modifyUserDoc(uid, {
+    entries: {
+      append: [
+        { ...despesa, id: now } as Entry,
+        { ...receita, id: now + 1 } as Entry,
+      ],
+    },
+  });
 }
 
 /**
  * Atualiza um lançamento por id. `mergedEntries` deve incluir entriesOverflow (via merge do hook).
+ *
+ * PUD-1: a parte que escreve em entries inline agora usa `modifyUserDoc` —
+ * a transação lê o array fresco e aplica o update por id, eliminando race
+ * condition. Subcoleção e overflow continuam com setDoc direto (já são docs únicos).
  */
 export async function updateEntry(
   uid: string,
@@ -322,17 +431,18 @@ export async function updateEntry(
   }
 
   // Subcoleção: atualiza lá + inline (dual-write)
-  if ((target as any).entryLocation === 'subcollection') {
+  // PUD-4: cast `as any` removido — entryLocation tem 'subcollection' no type agora.
+  if (target.entryLocation === 'subcollection') {
     await writeEntryToSubcollection(uid, { ...target, ...updates, id } as Entry);
   }
 
-  const inline = await loadInlineEntries(uid);
-  const entries = inline.map((e) => (e.id === id ? { ...e, ...updates, id } : e)) as Entry[];
-  await updateUserDoc(uid, { entries });
+  await modifyUserDoc(uid, { entries: { update: [{ id, updates }] } });
 }
 
 /**
  * Remove um lançamento por id. `mergedEntries` deve incluir overflow para excluir arquivados Pluggy.
+ *
+ * PUD-1: remove inline agora via `modifyUserDoc` (transação atômica).
  */
 export async function deleteEntry(uid: string, mergedEntries: Entry[], id: number): Promise<void> {
   const target = mergedEntries.find((e) => e.id === id);
@@ -344,16 +454,20 @@ export async function deleteEntry(uid: string, mergedEntries: Entry[], id: numbe
   }
 
   // Subcoleção: remove de lá também (dual-delete)
-  if ((target as any)?.entryLocation === 'subcollection') {
+  // PUD-4: cast `as any` removido.
+  if (target?.entryLocation === 'subcollection') {
     await deleteEntryFromSubcollection(uid, id);
   }
 
-  const inline = await loadInlineEntries(uid);
-  await updateUserDoc(uid, { entries: inline.filter((e) => e.id !== id) });
+  await modifyUserDoc(uid, { entries: { remove: [id] } });
 }
 
 /**
  * Adiciona uma conta e saldo inicial (merge em accounts e accountBalances).
+ *
+ * PUD-2 (auditoria 26/04/2026): comparação de duplicidade era case-sensitive
+ * — "Itaú" e "ITAÚ" passavam como contas distintas. Agora normalizamos
+ * (lowercase + trim) para detectar dupla.
  */
 export async function addAccount(
   uid: string,
@@ -364,7 +478,12 @@ export async function addAccount(
 ): Promise<void> {
   const nameTrim = name.trim();
   assertValid(validateAccount(nameTrim, initialBalance), 'addAccount');
-  if (!nameTrim || currentAccounts.includes(nameTrim)) return;
+  if (!nameTrim) return;
+  const normalizedNew = nameTrim.toLowerCase();
+  const alreadyExists = currentAccounts.some(
+    (a) => String(a).trim().toLowerCase() === normalizedNew,
+  );
+  if (alreadyExists) return;
   const accounts = [...currentAccounts, nameTrim];
   const accountBalances = { ...currentBalances, [nameTrim]: initialBalance };
   await updateUserDoc(uid, { accounts, accountBalances });
@@ -458,8 +577,11 @@ export async function addCardPurchase(
   const updatedCards = currentCards.map((c) =>
     c.id === cardId ? { ...c, purchases: [...purchases, ...newPurchases] } : c
   ) as Card[];
-  const inline = await loadInlineEntries(uid);
-  await updateUserDoc(uid, { cards: updatedCards, entries: [...inline, ...newEntries] });
+  // PUD-1: cards é patch direto, entries.append no mesmo modifyUserDoc atômico.
+  await modifyUserDoc(uid, {
+    patch: { cards: updatedCards },
+    entries: { append: newEntries },
+  });
 }
 
 /**
@@ -524,8 +646,11 @@ export async function importCardPurchases(
   const updatedCards = currentCards.map((c) =>
     c.id === cardId ? { ...c, purchases: [...purchases, ...allPurchases] } : c
   ) as Card[];
-  const inline = await loadInlineEntries(uid);
-  await updateUserDoc(uid, { cards: updatedCards, entries: [...inline, ...allEntries] });
+  // PUD-1: cards é patch, entries.append na mesma transação.
+  await modifyUserDoc(uid, {
+    patch: { cards: updatedCards },
+    entries: { append: allEntries },
+  });
 }
 
 /**
@@ -577,9 +702,20 @@ export async function deleteCardPurchase(
     const purchases = (c.purchases ?? []).filter((p) => p.purchaseId !== purchaseId && p.id !== purchaseId);
     return { ...c, purchases };
   }) as Card[];
-  const inline = await loadInlineEntries(uid);
-  const entries = inline.filter((e) => (e as Entry & { cardPurchaseId?: number }).cardPurchaseId !== purchaseId);
-  await updateUserDoc(uid, { cards: updatedCards, entries });
+  // PUD-1: filtra entries dentro da transaction usando estado fresco.
+  // Resolve o caso de "entries removidas via cardPurchaseId" — fazemos isso
+  // identificando os ids desta compra no array fresco e usando entries.remove.
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const freshEntries = snap.exists() ? ((snap.data()?.entries ?? []) as Entry[]) : [];
+  const idsToRemove = freshEntries
+    .filter((e) => (e as Entry & { cardPurchaseId?: number }).cardPurchaseId === purchaseId)
+    .map((e) => e.id);
+
+  await modifyUserDoc(uid, {
+    patch: { cards: updatedCards },
+    entries: idsToRemove.length > 0 ? { remove: idsToRemove } : undefined,
+  });
 }
 
 /**
@@ -694,17 +830,37 @@ export async function updateBudgets(
 
 /**
  * Atualiza o saldo de uma conta (merge em accountBalances).
+ *
+ * PUD-7 (auditoria 26/04/2026): agora aceita `currentAccounts` opcional. Quando
+ * fornecido, valida que a conta existe — antes era possível criar saldo órfão
+ * para conta inexistente em `accounts`. Para retrocompat, callers que ainda
+ * não passam `currentAccounts` continuam funcionando (validação skipada com warn em DEV).
  */
 export async function updateAccountBalance(
   uid: string,
   currentBalances: Record<string, number>,
   accountName: string,
-  newBalance: number
+  newBalance: number,
+  currentAccounts?: string[]
 ): Promise<void> {
   if (typeof newBalance !== 'number' || !isFinite(newBalance) || Math.abs(newBalance) > 1_000_000_000) {
     throw new ValidationError(['Saldo deve ser um número válido (máx R$ 1 bilhão).']);
   }
-  const accountBalances = { ...currentBalances, [accountName]: newBalance };
+  const trimmed = String(accountName ?? '').trim();
+  if (!trimmed) {
+    throw new ValidationError(['Nome da conta é obrigatório.']);
+  }
+  if (Array.isArray(currentAccounts)) {
+    const norm = trimmed.toLowerCase();
+    const found = currentAccounts.some((a) => String(a).trim().toLowerCase() === norm);
+    if (!found) {
+      throw new ValidationError([`Conta "${trimmed}" não existe — adicione antes de atualizar saldo.`]);
+    }
+  } else if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.warn('[updateAccountBalance] sem currentAccounts — validação de conta existente skipada (PUD-7).');
+  }
+  const accountBalances = { ...currentBalances, [trimmed]: newBalance };
   await updateUserDoc(uid, { accountBalances });
 }
 

@@ -166,6 +166,60 @@ function isMissionCompleted(mission, userData) {
 }
 
 /**
+ * REW-4 (auditoria 26/04/2026, decisão sênior): validação anti-farming.
+ *
+ * Antes: `triggerSibcoinEvent` aceitava qualquer evento da allowlist e creditava
+ * SibCoin imediatamente. Atacante autenticado podia chamar
+ * `{eventType: 'open_finance_connected'}` sem ter Open Finance e ganhar 200 SC.
+ * 7 missões "once" trivialmente farmaveis = ~755 SC (~R$ 75 a 0,10/SC).
+ *
+ * Agora: para cada evento, verificamos se o estado real do usuário no Firestore
+ * comprova a ação. Sem prova de estado, retornamos `false` e não creditamos.
+ */
+function isEventStateValid(eventType, userData) {
+  switch (eventType) {
+    case 'entry_added': {
+      const entries = userData.entries;
+      return Array.isArray(entries) && entries.length > 0;
+    }
+    case 'goal_created': {
+      const goals = userData.goals;
+      return Array.isArray(goals) && goals.length > 0;
+    }
+    case 'open_finance_connected': {
+      // Bandeira escrita por registrarOpenBanking + sync Pluggy bem-sucedido
+      return userData.openBankingAtivo === true ||
+             userData.openFinanceStatus === 'ativo' ||
+             !!userData.openFinanceSyncedAt;
+    }
+    case 'investment_added': {
+      const inv = userData.investments;
+      return Array.isArray(inv) && inv.length > 0;
+    }
+    case 'budget_created': {
+      const b = userData.budgets;
+      return b && typeof b === 'object' && Object.keys(b).length > 0;
+    }
+    case 'profile_completed': {
+      // Definição mínima: nome + telefone + objetivoFinanceiro preenchidos
+      return !!(userData.name && userData.whatsappPhone && userData.objetivoFinanceiro);
+    }
+    case 'dda_boleto_detected': {
+      const boletos = userData.boletosDDA;
+      return Array.isArray(boletos) && boletos.length > 0;
+    }
+    case 'login_streak':
+    case 'referral_signup':
+      // Eventos de fluxo: difícil validar estado retroativo. Mantemos liberados
+      // mas com rate limit natural por frequência (daily/once com requiredCount).
+      return true;
+    default:
+      // Evento desconhecido — caller já filtrou via VALID_EVENTS, mas defensivo:
+      return false;
+  }
+}
+
+/**
  * processEvent — credita SibCoin atomicamente no Firestore.
  * Exportado para uso interno por outras Cloud Functions.
  */
@@ -179,6 +233,20 @@ async function processEvent(uid, eventType, eventMeta = {}) {
     if (!userSnap.exists) throw new Error(`Usuário ${uid} não encontrado`);
 
     const userData = userSnap.data();
+
+    // REW-4: validar estado real do usuário antes de creditar.
+    // Sem essa checagem, atacante autenticado farma SC simplesmente chamando
+    // `triggerSibcoinEvent({eventType: 'open_finance_connected'})` sem ter
+    // Open Finance conectado.
+    if (!isEventStateValid(eventType, userData)) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[REW-4] processEvent rejeitado para uid=${uid} eventType=${eventType}: ` +
+        "estado do usuário não comprova o evento."
+      );
+      return;
+    }
+
     const now = new Date().toISOString();
     let totalCredit = 0;
     const newCompletions = {};
@@ -249,7 +317,8 @@ async function processEvent(uid, eventType, eventMeta = {}) {
 
 // ── Callable: front-end dispara evento ───────────────────────────────────────
 exports.triggerSibcoinEvent = onCall(
-  { region: 'southamerica-east1', enforceAppCheck: false },
+  // REW-2 (auditoria 26/04/2026): App Check honra env. Em prod recomendo ON.
+  { region: 'southamerica-east1', enforceAppCheck: process.env.ENFORCE_APP_CHECK === 'true' },
   async (request) => {
     const { auth, data } = request;
     if (!auth) throw new HttpsError('unauthenticated', 'Autenticação necessária');
@@ -282,7 +351,8 @@ exports.triggerSibcoinEvent = onCall(
 
 // ── Callable: buscar missões com status do usuário ───────────────────────────
 exports.getSibcoinMissions = onCall(
-  { region: 'southamerica-east1', enforceAppCheck: false },
+  // REW-2 (auditoria 26/04/2026): App Check honra env. Em prod recomendo ON.
+  { region: 'southamerica-east1', enforceAppCheck: process.env.ENFORCE_APP_CHECK === 'true' },
   async (request) => {
     const { auth } = request;
     if (!auth) throw new HttpsError('unauthenticated', 'Autenticação necessária');
@@ -313,7 +383,8 @@ exports.getSibcoinMissions = onCall(
 
 // ── Callable: crédito manual (admin) ─────────────────────────────────────────
 exports.adminCreditSibcoin = onCall(
-  { region: 'southamerica-east1', enforceAppCheck: false },
+  // REW-2 (auditoria 26/04/2026): App Check honra env. Em prod recomendo ON.
+  { region: 'southamerica-east1', enforceAppCheck: process.env.ENFORCE_APP_CHECK === 'true' },
   async (request) => {
     const { auth, data } = request;
     if (!auth?.token?.admin) {

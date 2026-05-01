@@ -115,7 +115,20 @@ function validateAffiliateSecret(partner, req) {
     req.headers["x-affiliate-secret"] || req.query?.secret || req.body?.secret || ""
   );
   const expected = partnerExpected || genericExpected;
-  if (!expected) return { ok: true, mode: "disabled" };
+
+  // SEG-02 (auditoria 26/04/2026): fail-CLOSED.
+  // Antes era `if (!expected) return { ok: true, mode: "disabled" }` — fail-OPEN.
+  // Webhook que credita SibCoin (= dinheiro) NÃO pode aceitar requests sem secret
+  // configurado: qualquer atacante que conhecesse a URL forjava conversões.
+  // Em DEV (NODE_ENV=development OU SIBANKI_ALLOW_UNSAFE_WEBHOOK=1), mantemos o
+  // comportamento aberto para facilitar testes locais.
+  if (!expected) {
+    const devMode = process.env.NODE_ENV === "development" ||
+                    process.env.SIBANKI_ALLOW_UNSAFE_WEBHOOK === "1";
+    if (devMode) return { ok: true, mode: "dev-no-secret" };
+    return { ok: false, mode: "missing-secret" };
+  }
+
   return { ok: provided === expected, mode: partnerExpected ? "partner" : "generic" };
 }
 
@@ -174,9 +187,17 @@ async function handleAffiliateWebhook(req, res, forcedPartner) {
   const db    = admin.firestore();
   const event = normalizeAffiliateEvent(req, forcedPartner);
 
-  // Validação de secret
+  // Validação de secret (SEG-02 — fail-closed em prod)
   const secretCheck = validateAffiliateSecret(event.partner, req);
   if (!secretCheck.ok) {
+    if (secretCheck.mode === "missing-secret") {
+      console.error(
+        `[SEG-02] webhookParceiro REJEITADO: env secret não configurado para "${event.partner}". ` +
+        "Configure LOMADEE_WEBHOOK_SECRET / MONETIZZE_WEBHOOK_SECRET / WEBHOOK_PARCEIRO_SECRET via " +
+        "`firebase functions:secrets:set NOME` antes de aceitar webhooks em produção."
+      );
+      return res.status(503).json({ error: "Webhook secret not configured" });
+    }
     console.warn(`webhookParceiro: secret inválido (${event.partner})`);
     return res.status(401).json({ error: "Unauthorized" });
   }

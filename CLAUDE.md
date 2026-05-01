@@ -1,13 +1,23 @@
 # CLAUDE.md — Memória Permanente do Sibanki
 
-> ⚠️ **REGRAS OBRIGATÓRIAS PARA O ASSISTENTE:**
-> 1. **LEIA ESTE ARQUIVO COMPLETO** antes de qualquer outra ação em cada sessão.
-> 2. **ATUALIZE ESTE ARQUIVO** ao final de cada sessão — histórico, backlog, inventário.
-> 3. Este arquivo é a **única fonte de verdade** do projeto. Em caso de conflito, ele prevalece.
-> 4. O skill `sibanki` em `.claude/skills/sibanki/SKILL.md` reforça essas regras automaticamente.
+> ⚠️ **GOVERNANÇA IA — leia primeiro:**
+> 1. **`AGENTS.md`** (raiz) — fonte única de verdade para regras universais
+>    de qualquer agente de IA (convenções, branches, matriz de responsabilidade,
+>    limites duros). Em caso de conflito, AGENTS.md tem precedência sobre este arquivo.
+> 2. **`CLAUDE.md`** (este arquivo) — contexto pinned do produto + histórico
+>    de sessão. Leia também antes de qualquer ação.
+> 3. **`docs/INVENTARIO-COMPLETO-SISTEMA.md`** (1001 linhas) — inventário detalhado.
+>    Leia quando for mexer em módulo já existente.
+> 4. **`docs/TASK_QUEUE.md`** — fila de tarefas (pipeline Antigravity ↔ Cursor ↔ Cowork).
+> 5. **`docs/CHANGELOG.md`** — changelog incremental por sessão. Histórico novo
+>    vai PARA LÁ, não acumula mais aqui.
 >
-> **IMPORTANTE:** Para o inventário completo e detalhado (1001 linhas), leia também:
-> `docs/INVENTARIO-COMPLETO-SISTEMA.md`
+> **REGRAS OBRIGATÓRIAS PARA O ASSISTENTE (Claude Cowork especificamente):**
+> 1. Leia AGENTS.md + este arquivo + INVENTARIO antes de mexer em módulo já existente.
+> 2. Histórico de sessão: usar `docs/CHANGELOG.md`, não acumular mais neste arquivo.
+> 3. Decisões arquiteturais permanentes podem ser documentadas aqui (seção
+>    "Status atual"); detalhe operacional vai para CHANGELOG.
+> 4. O skill `sibanki` em `.claude/skills/sibanki/SKILL.md` reforça essas regras.
 >
 > **Status atual (13/04/2026):** React SPA é a PRODUÇÃO. Cutover legado→React concluído.
 > 35/35 testes Playwright (`npm run test:react-smoke`: PWA + setup auth `storageState` + login isolado + 24 rotas). 22/22 health checks verdes. 52 Cloud Functions ativas (inclui `valoresAReceberApi`).
@@ -20,6 +30,8 @@
 > **Hub de Crédito (14/04/2026):** CRUD manual de `CreditObligation` em `/credito/visao-geral` (modal adicionar, lista de obrigações abertas, ação “marcar como paga” e destaque de atraso por vencimento).
 > **Sentinela Geo (14/04/2026):** recomendação tática de cartão no backend (`cardSuggestionService`) integrada ao `runSentinelaGeo` e `sentinelaGeoCheck` via leitura de `users/{uid}.cards`; alerta agora inclui cartão sugerido + prazo até fechamento + razão do benefício.
 > **Onboarding:** `RegistrationWizard` expandido para 6 etapas — inclui Open Finance (Pluggy) e consulta BCB Valores a Receber no cadastro.
+> **Persistência (16/04/2026):** `updateUserDoc` em `persistUserData.ts` com debounce/idempotência em memória (1,5s, payload idêntico) + `payloadSignature` à prova de referência circular — task pipeline `20260416-012`.
+> **Identidade Visual / Loading (16/04/2026):** `AppLoadingScreen` com vídeo (`public/assets/loading-video.mp4`), logos dark/light (`/assets/logo-dark.png`, `/assets/logo-light.png`) no `Sidebar`/`Header` e favicon `./favicon.png` via `public/index.html` e `public/manifest.json` — task pipeline `20260416-013`.
 
 ---
 

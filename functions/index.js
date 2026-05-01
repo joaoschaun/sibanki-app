@@ -45,6 +45,7 @@ const {
   runAssistantAnalysis,
   runAssistantAnalysisStream,
 } = require("./services/assistant/assistantOrchestrator");
+const { enforceChatQuota } = require("./services/assistant/chatRateLimiter");
 const {
   processEntryCapture,
   runVoiceToEntry,
@@ -648,6 +649,14 @@ const chatApiOptions = {
   ...(enforceAppCheck ? { enforceAppCheck: true } : {}),
 };
 
+// SEG-11 (auditoria 26/04/2026): caps de input para impedir cost overrun de LLM.
+// Mensagem do usuário típica = ~200 chars; consultor tem ocasionalmente 1-2KB.
+// Contexto financeiro completo (snapshot) já circula em ~8-16KB hoje.
+// Margem de segurança: mensagem 4KB (~1k tokens), contexto 32KB (~8k tokens).
+// Atacante autenticado mandando 100KB era trivial; agora paga 400 erros 400.
+const CHAT_MESSAGE_MAX = 4_096;          // 4 KB
+const CHAT_CONTEXT_MAX = 32_768;         // 32 KB
+
 exports.chatApi = functions.runWith(chatApiOptions).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Faça login para usar a IA.");
@@ -656,7 +665,21 @@ exports.chatApi = functions.runWith(chatApiOptions).https.onCall(async (data, co
   if (!message) {
     throw new functions.https.HttpsError("invalid-argument", "Mensagem vazia.");
   }
+  if (message.length > CHAT_MESSAGE_MAX) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      `Mensagem muito longa (${message.length} chars > ${CHAT_MESSAGE_MAX}).`
+    );
+  }
   const contextStr = (data && data.context) ? String(data.context).trim() : "";
+  if (contextStr.length > CHAT_CONTEXT_MAX) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      `Contexto muito longo (${contextStr.length} chars > ${CHAT_CONTEXT_MAX}).`
+    );
+  }
+  // SEG-12: rate limit + quota diária por uid (decisão sênior 26/04/2026)
+  await enforceChatQuota({ functions, uid: context.auth.uid, kind: "chat" });
   const t = timer("chatApi", "generate");
   try {
     const result = await runAssistantAnalysis({ message, contextStr });
@@ -694,6 +717,23 @@ exports.chatStreamApi = functions.runWith(chatApiOptions).https.onRequest((req, 
     const { context: contextStr, message } = req.body;
     if (!message || typeof message !== "string") {
       return res.status(400).json({ error: 'Mensagem ausente ou estruturada incorretamente' });
+    }
+    // SEG-11: caps de input (mesmos limites de chatApi)
+    if (message.length > CHAT_MESSAGE_MAX) {
+      return res.status(400).json({ error: `Mensagem muito longa (${message.length} > ${CHAT_MESSAGE_MAX}).` });
+    }
+    if (typeof contextStr === "string" && contextStr.length > CHAT_CONTEXT_MAX) {
+      return res.status(400).json({ error: `Contexto muito longo (${contextStr.length} > ${CHAT_CONTEXT_MAX}).` });
+    }
+
+    // SEG-12: rate limit. onRequest não usa HttpsError; capturamos e devolvemos 429.
+    try {
+      await enforceChatQuota({ functions, uid: decodedToken.uid, kind: "stream" });
+    } catch (e) {
+      if (e instanceof functions.https.HttpsError) {
+        return res.status(429).json({ error: e.message, code: e.code });
+      }
+      throw e;
     }
 
     // Prepara Cabeçalhos SSE
@@ -788,6 +828,15 @@ exports.proactiveInsightApi = functions.runWith(chatApiOptions).https.onCall(asy
   if (!snapshot) {
     throw new functions.https.HttpsError("invalid-argument", "Snapshot vazio.");
   }
+  // SEG-11: cap de input no snapshot (mesma família dos limites do chatApi)
+  if (snapshot.length > CHAT_CONTEXT_MAX) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      `Snapshot muito longo (${snapshot.length} chars > ${CHAT_CONTEXT_MAX}).`
+    );
+  }
+  // SEG-12: rate limit também aqui — proactive é menos exposto mas conta na quota.
+  await enforceChatQuota({ functions, uid: context.auth.uid, kind: "insight" });
   try {
     const proactivePrompt = buildProactiveInsightPrompt(snapshot);
     const result = await generateProactiveInsight(proactivePrompt);
@@ -809,6 +858,13 @@ exports.proactiveInsightApi = functions.runWith(chatApiOptions).https.onCall(asy
 const whatsappSvc = require("./services/whatsapp/whatsappService");
 
 exports.whatsappWebhook = functions.https.onRequest(async (req, res) => {
+  // SEG-04 (auditoria 26/04/2026): se WHATSAPP_VERIFY_TOKEN não estiver configurado,
+  // retornar 503 em vez de aceitar o default "sibanki_wa_verify" público.
+  if (!WHATSAPP_VERIFY_TOKEN) {
+    logError("whatsappWebhook", new Error("WHATSAPP_VERIFY_TOKEN ausente — configure via firebase functions:secrets:set"));
+    return res.status(503).send("WhatsApp webhook not configured");
+  }
+
   // Verificação do webhook (GET)
   if (req.method === "GET") {
     const mode = req.query["hub.mode"];
@@ -983,8 +1039,17 @@ exports.registrarOpenBanking = functions.https.onCall(async (data, context) => {
 
 /**
  * Callable interno: creditar cashback SibCoin após confirmação de contratação.
- * Chamado pela Cloud Function de webhook ou manualmente pelo admin.
- * Parâmetros: { uid, produtoId, valorContratado, contratoId }
+ * Chamado por admin para creditar manualmente o cashback de um usuário (`data.uid`).
+ *
+ * Parâmetros: { uid: string, produtoId: string, valorContratado: number, contratoId?: string }
+ *
+ * Autorização: somente admin/superadmin (custom claim `role`).
+ *
+ * SEG-03 (auditoria 26/04/2026): Antes a função usava `context.auth.uid` (UID do
+ * próprio admin) como destinatário do crédito — bug que permitia ao admin auto-creditar
+ * SibCoin indefinidamente, e tornava o callable inútil para o intent documentado.
+ * Agora lemos `data.uid`, validamos que é string não-vazia, e creditamos no usuário
+ * alvo. Mantida idempotência por `contratoId`.
  */
 exports.creditarCashbackSibCoin = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
@@ -996,15 +1061,26 @@ exports.creditarCashbackSibCoin = functions.https.onCall(async (data, context) =
     throw new functions.https.HttpsError('permission-denied', 'Apenas administradores podem creditar cashback.');
   }
 
-  const { produtoId, valorContratado, contratoId } = data;
-  const uid = context.auth.uid;
+  const { uid: targetUid, produtoId, valorContratado, contratoId } = data || {};
   const db = admin.firestore();
+
+  // SEG-03: validar uid alvo. Sem isso, voltaríamos ao bug histórico.
+  if (typeof targetUid !== 'string' || !targetUid.trim()) {
+    throw new functions.https.HttpsError('invalid-argument', 'uid alvo é obrigatório.');
+  }
+  const uid = targetUid.trim();
 
   if (!produtoId || !SOL_CASHBACK[produtoId]) {
     throw new functions.https.HttpsError('invalid-argument', 'Produto inválido');
   }
   if (!valorContratado || isNaN(valorContratado) || valorContratado <= 0) {
     throw new functions.https.HttpsError('invalid-argument', 'Valor inválido');
+  }
+
+  // Confirmar que o usuário alvo existe antes de gravar
+  const targetSnap = await db.collection('users').doc(uid).get();
+  if (!targetSnap.exists) {
+    throw new functions.https.HttpsError('not-found', 'Usuário alvo não encontrado.');
   }
 
   // Verificar se este contratoId já foi processado (idempotência)
@@ -1049,17 +1125,20 @@ exports.creditarCashbackSibCoin = functions.https.onCall(async (data, context) =
     totalCashbackSC: admin.firestore.FieldValue.increment(sibCoins),
   }, { merge: true });
 
-  // 3. Log global de cashbacks (para analytics admin)
+  // 3. Log global de cashbacks (para analytics admin) — inclui actorUid para auditoria
   const logRef = db.collection('cashback_log').doc();
   batch.set(logRef, {
     uid, produtoId, valorContratado, sibCoins, cashbackReais,
     contratoId: contratoId || null,
+    source: 'manual_admin',
+    actorUid: context.auth.uid,        // SEG-03: rastreia QUAL admin creditou
+    actorEmail: context.auth.token?.email || null,
     ts: admin.firestore.FieldValue.serverTimestamp(),
   });
 
   await batch.commit();
 
-  console.log(`Cashback: uid=${uid} produto=${produtoId} valor=R$${valorContratado} → +${sibCoins} SC`);
+  console.log(`Cashback (admin=${context.auth.uid}): uid=${uid} produto=${produtoId} valor=R$${valorContratado} → +${sibCoins} SC`);
   return { success: true, sibCoins, cashbackReais };
 });
 

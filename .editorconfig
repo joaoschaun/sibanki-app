@@ -1,0 +1,36 @@
+# EditorConfig — https://editorconfig.org/
+# Padroniza EOL/charset/indent entre Cursor (Windows, default CRLF) e Claude
+# (Cowork, default LF). Sem isto, diffs ficam poluídos com mudança de line ending.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Markdown — preservar trailing whitespace (significam quebra de linha)
+[*.md]
+trim_trailing_whitespace = false
+
+# Make / Bat — convenções diferentes
+[Makefile]
+indent_style = tab
+
+[*.bat]
+end_of_line = crlf
+
+# JSON / YAML / TOML — 2 espaços (já default acima, mas explícito)
+[*.{json,yml,yaml,toml}]
+indent_size = 2
+
+# Cloud Functions / Node — 2 espaços (idem)
+[functions/**/*.{js,ts}]
+indent_size = 2
+
+# Scripts mjs/cjs
+[scripts/**/*.{mjs,cjs,js}]
+indent_size = 2

@@ -6,7 +6,32 @@ import path from "node:path";
 const args = process.argv.slice(2);
 const execute = args.includes("--execute");
 const BATCH_LIMIT = 400;
-const SUBCOLLECTIONS = ["transactions", "accounts", "categories", "goals", "investments"];
+
+// SEG-06 (auditoria 26/04/2026): a lista anterior só cobria 5 subcoleções.
+// As regras Firestore (firestore.rules) permitem várias outras subcoleções por
+// usuário — todas precisam migrar, senão a migração causa loss silencioso.
+//
+// Subcoleções derivadas de:
+//  - firestore.rules (entriesOverflow, errorLogs, openFinanceConsents, auditLogs)
+//  - functions/index.js + services (sibcoin, filiado, lomadee_clicks são GLOBAIS,
+//    mas a coleção users/{uid}/sibcoin e users/{uid}/filiado são por usuário)
+//
+// Regra prática: rodar primeiro com --execute=false (dry-run) e validar contra
+// Firestore Console antes de executar de verdade. Se aparecer subcoleção nova
+// no app, ADICIONAR aqui.
+const SUBCOLLECTIONS = [
+  "transactions",         // legacy
+  "accounts",             // legacy
+  "categories",           // legacy
+  "goals",                // legacy
+  "investments",          // legacy
+  "entriesOverflow",      // lançamentos arquivados (Pluggy excede 1MB do doc principal)
+  "errorLogs",            // logs de erro do cliente (append-only)
+  "openFinanceConsents",  // consentimentos Open Finance (revogáveis, nunca apagados)
+  "auditLogs",            // auditoria imutável por usuário
+  "sibcoin",              // histórico de SibCoin do usuário
+  "filiado",              // dados do programa de afiliados
+];
 const TENANT_ID = "sibanki_master";
 
 if (!admin.apps.length) {

@@ -31,14 +31,33 @@ out center tags 10;
 }
 
 /**
+ * SEN-2 (auditoria 26/04/2026): valida coordenadas antes de qualquer chamada externa.
+ * Coordenadas inválidas (NaN, fora de range) seriam silenciadas pela Overpass com
+ * erro 400 — mas custam round-trip e poluem logs.
+ */
+function isValidCoord(lat, lng) {
+  return Number.isFinite(lat) && Number.isFinite(lng)
+    && lat >= -90 && lat <= 90
+    && lng >= -180 && lng <= 180;
+}
+
+/**
  * Chama Overpass e retorna lista de tags dos elementos encontrados.
+ *
+ * SEN-1 (auditoria 26/04/2026): adiciona timeout de 12s. Antes, fetch sem signal
+ * podia pendurar a Cloud Function indefinidamente quando Overpass (gratuita) está
+ * lenta — comum em horário de pico.
  */
 async function queryOverpass(lat, lng) {
+  if (!isValidCoord(lat, lng)) {
+    throw new Error(`Coordenadas inválidas: lat=${lat}, lng=${lng}`);
+  }
   const query = buildOverpassQuery(lat, lng);
   const resp = await fetch(OVERPASS_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: `data=${encodeURIComponent(query)}`,
+    signal: AbortSignal.timeout(12_000),
   });
   if (!resp.ok) throw new Error(`Overpass HTTP ${resp.status}`);
   const data = await resp.json();
@@ -328,5 +347,6 @@ module.exports = {
   buildGeoAlert,
   runSentinelaGeo,
   detectScenario,
+  isValidCoord,
   RADIUS_METERS,
 };

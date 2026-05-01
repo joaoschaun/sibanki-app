@@ -1,0 +1,43 @@
+# .cursorrules — entrada principal para o Cursor IDE
+
+> Este projeto usa um **AGENTS.md** unificado como fonte única de verdade
+> para qualquer agente de IA. Antes de qualquer ação, leia:
+>
+> 1. `AGENTS.md` (raiz) — regras universais (convenções, branches, matriz de
+>    responsabilidade, limites duros).
+> 2. `CLAUDE.md` (raiz) — estado pinned do produto e contexto atual.
+> 3. `docs/INVENTARIO-COMPLETO-SISTEMA.md` — quando for mexer em módulo já
+>    existente.
+> 4. `docs/TASK_QUEUE.md` — verificar se há tarefa atribuída a você.
+
+Regras específicas do Cursor (escopo IDE) continuam em `.cursor/rules/*.mdc`
+com `globs:` direcionando cada regra para o domínio certo.
+
+## Resumo das regras universais (não substitui AGENTS.md, só lembra)
+
+- **Nada que toque dinheiro, regra Firestore ou config de deploy entra em main
+  sem PR humano aprovado pelo João.**
+- Cursor (IDE) é executor de UI/componentes < 300 linhas e fixes pequenos.
+  Para Cloud Functions, regras Firestore, refatorações grandes ou
+  edição de `CLAUDE.md`/`AGENTS.md`, AGUARDE tarefa explícita no
+  `docs/TASK_QUEUE.md` ou peça permissão.
+- Use `npm ci`, NUNCA `npm install` solto.
+- NUNCA rode `firebase deploy ...`.
+- NUNCA edite `functions/.env`.
+- Quando o tipo apertar: `unknown` + narrowing > `any`. Não cresça os ~115
+  `any` que já existem em src/.
+- Convenções de commit: Conventional Commits (`feat`, `fix`, `refactor`,
+  `chore`, `docs`, `test`, `security`).
+
+## Conflito entre regras
+
+Se uma regra em `.cursor/rules/*.mdc` contradizer este arquivo ou o `AGENTS.md`,
+**AGENTS.md vence**. Algumas regras do `.cursor/rules/` foram escritas antes do
+cutover legado→React e estão sendo atualizadas progressivamente — sinalize ao
+João se encontrar contradição.
+
+## Pipeline de tarefas
+
+Esta repo usa o padrão Antigravity ↔ Cursor ↔ Claude Cowork descrito em
+`.cursor/rules/pipeline.mdc` e `.cursor/rules/antigravity-pipeline.mdc`.
+Respeite o fluxo: WAITING_CURSOR → CURSOR_DONE → revisão → COMPLETED.

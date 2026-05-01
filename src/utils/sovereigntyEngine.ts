@@ -124,18 +124,34 @@ export function calculateDaysOfFreedom(params: {
   } = params;
 
   // 1. Liquidez em contas (apenas as incluídas na soma)
+  // SOV-1 (auditoria 26/04/2026, decisão produto): saldo negativo (cheque
+  // especial) NÃO é tratado como zero. Subtrair do total — produto vende
+  // soberania financeira; esconder dívida do cheque especial é o oposto disso.
   const accountLiquidity = Object.entries(accountBalances).reduce((sum, [name, bal]) => {
     if (accountMeta[name]?.incluirNaSoma === false) return sum;
-    return sum + Math.max(0, Number(bal) || 0);
+    return sum + (Number(bal) || 0);
   }, 0);
 
   // 2. Investimentos líquidos (D+0 a D+30)
+  // SOV-3-liquidez (auditoria 26/04/2026, decisão produto): lista restrita aos
+  // tipos comprovadamente líquidos D+30. "renda fixa", "lci", "lca" e "cdb"
+  // genérico saíram — Tesouro IPCA+ longo, CDB de prazo fixo, LCI/LCA
+  // emparelhadas com vencimento podem dar prejuízo na venda antecipada.
+  // Quando Investment ganhar campo `vencimento`, retornar essa lógica para
+  // classificação dinâmica baseada na data.
+  const liquidTypeKeys = [
+    'tesouro selic',
+    'cdb liquidez diária',
+    'cdb liquidez diaria',
+    'fundo di',
+    'fundos di',
+    'poupança',
+    'poupanca',
+  ];
   const liquidInvestments = investments
     .filter((inv) => {
       const tipo = (inv.tipo || '').toLowerCase();
-      // Considera líquido: CDB liquidez diária, Tesouro Selic, fundos DI, poupança
-      const liquidTypes = ['cdb', 'tesouro selic', 'lci', 'lca', 'fundo di', 'poupança', 'fundos di', 'renda fixa'];
-      return liquidTypes.some((t) => tipo.includes(t));
+      return liquidTypeKeys.some((t) => tipo.includes(t));
     })
     .reduce((sum, inv) => sum + (Number(inv.atual ?? inv.valor) || 0), 0);
 
@@ -162,17 +178,42 @@ export function calculateDaysOfFreedom(params: {
     relevantExpenses.length > 0
       ? Math.round((verifiedCount / relevantExpenses.length) * 100)
       : 0;
-  const dataConfidence: 'alta' | 'media' | 'baixa' =
-    verifiedExpensesPct >= 70 ? 'alta' : verifiedExpensesPct >= 30 ? 'media' : 'baixa';
 
   const totalExpenses3m = relevantExpenses.reduce((sum, e) => sum + (Number(e.value) || 0), 0);
 
   // Calcula quantos meses distintos existem nos dados (mínimo 1)
   const distinctMonths = new Set(relevantExpenses.map((e) => (e.date || '').slice(0, 7))).size || 1;
-  const avgMonthlyExpense = totalExpenses3m / distinctMonths;
+  const effectiveMonths = Math.min(distinctMonths, 3);
+  const avgMonthlyExpense = totalExpenses3m / effectiveMonths;
 
-  // 4. Renda passiva mensal: rendimentos dos investimentos líquidos
-  const monthlyPassiveIncome = liquidInvestments * investmentYieldMonthly;
+  // SOV-3 (auditoria 26/04/2026): se há menos de 2 meses distintos OU menos
+  // de 30 lançamentos, o burn rate é estatisticamente frágil — Ld pode ficar
+  // muito otimista. Forçamos confiança 'baixa' nesses casos, mesmo que o
+  // Open Finance esteja conectado, sinalizando ao usuário que o número é
+  // provisório.
+  const hasEnoughHistory = distinctMonths >= 2 && relevantExpenses.length >= 30;
+  let dataConfidence: 'alta' | 'media' | 'baixa';
+  if (!hasEnoughHistory) {
+    dataConfidence = 'baixa';
+  } else if (verifiedExpensesPct >= 70) {
+    dataConfidence = 'alta';
+  } else if (verifiedExpensesPct >= 30) {
+    dataConfidence = 'media';
+  } else {
+    dataConfidence = 'baixa';
+  }
+
+  // 4. Renda passiva mensal:
+  //    - Rendimento estimado dos investimentos líquidos (juros mensais)
+  //    - + Soma dos proventos declarados (dividendos de FIIs, JCP de ações, etc.)
+  //    SOV-7 (auditoria 26/04/2026): dividendos antes não contavam — sub-estimava
+  //    renda passiva especialmente para usuários com FIIs (target Sibanki).
+  const yieldFromLiquid = liquidInvestments * investmentYieldMonthly;
+  const declaredProventos = investments.reduce((s, inv) => {
+    const p = Number(inv.proventosMensais) || 0;
+    return p > 0 ? s + p : s;
+  }, 0);
+  const monthlyPassiveIncome = yieldFromLiquid + declaredProventos;
 
   // 5. Burn rate líquido
   const netMonthlyCost = Math.max(0, avgMonthlyExpense - monthlyPassiveIncome);
@@ -247,25 +288,51 @@ export function calculateSpreadGap(params: {
   const allDebts: Array<{ amount: number; monthlyRate: number }> = [];
 
   // Dívidas estruturadas (creditObligations)
+  // SOV-2 (auditoria 26/04/2026, decisão sênior): canônico é `interestRatePct`
+  // em % a.m. (padrão BR, alinhado com o legado). Fallbacks `interestPct` e
+  // `interestRate` aceitos para retrocompat — também tratados como % a.m.
+  // Heurístico anterior tentava adivinhar a unidade (`raw > 1 ? /100 : raw > 0.3 ? /12 : raw`)
+  // e errava em vários ranges válidos; foi removido.
   for (const ob of creditObligations || []) {
     const amount = Number(ob.amount) || 0;
     if (amount <= 0) continue;
-    // interestRate pode vir em % a.m. ou a.a. — normaliza para mensal
-    const raw = Number(ob.interestRate) || 0;
-    const monthlyRate = raw > 1 ? raw / 100 : raw > 0.3 ? raw / 12 : raw;
+    // Aceita os 3 nomes de campo, todos em % a.m.
+    const rawPct = Number(
+      ob.interestRatePct ?? ob.interestPct ?? ob.interestRate ?? 0,
+    );
+    if (!Number.isFinite(rawPct) || rawPct < 0) continue;
+    const monthlyRate = rawPct / 100; // 2.5 → 0.025
     allDebts.push({ amount, monthlyRate });
   }
 
-  // Faturas de cartão abertas (usa 14% a.m. como proxy do rotativo brasileiro)
+  // Faturas de cartão abertas
+  // SOV-6 (auditoria 26/04/2026): taxa rotativa hardcoded extraída para constante
+  // documentada. Faixa real do mercado BR: 9-18% a.m.; usamos 14% como proxy
+  // conservador. Quando o usuário cadastrar a taxa real do cartão (campo a ser
+  // adicionado em Card), substituir aqui.
+  // Fonte: BCB - Taxa média rotativo PF (atualizar trimestralmente).
+  const ROTATIVO_CARTAO_PROXY_MENSAL = 0.14;
+  // SOV-5 (auditoria 26/04/2026): match de cartão era por String.includes —
+  // `card.name="Mastercard"` casava com qualquer obligation que mencionasse
+  // "mastercard" no label. Falso positivo trivial fazia fatura desaparecer
+  // do cálculo. Agora normalizamos e exigimos correspondência exata após
+  // remoção de espaços extras.
+  const normalizeForCardMatch = (s: string) => String(s ?? '').trim().toLowerCase();
+
   for (const card of cards || []) {
     const fatura = Number(card.currentBill ?? 0);
     if (fatura > 50) {
-      // Pressupõe rotativo apenas se não há obligation cadastrada para o cartão
-      const alreadyCovered = creditObligations?.some((ob) =>
-        String(ob.label ?? '').toLowerCase().includes((card.name || '').toLowerCase()),
-      );
+      const cardKey = normalizeForCardMatch(card.name || '');
+      const alreadyCovered = !!cardKey && (creditObligations || []).some((ob) => {
+        const obKey = normalizeForCardMatch(ob.label ?? '');
+        // Exato OU prefixo "Cartão <nome>" / sufixo " <nome>" — comum em obligation autoadicionada
+        return obKey === cardKey
+          || obKey === `cartão ${cardKey}`
+          || obKey === `cartao ${cardKey}`
+          || obKey.endsWith(` ${cardKey}`);
+      });
       if (!alreadyCovered) {
-        allDebts.push({ amount: fatura, monthlyRate: 0.14 }); // 14% a.m. rotativo médio BR
+        allDebts.push({ amount: fatura, monthlyRate: ROTATIVO_CARTAO_PROXY_MENSAL });
       }
     }
   }

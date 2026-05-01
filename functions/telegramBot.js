@@ -3,6 +3,7 @@ const admin = require("firebase-admin");
 const fetch = require("node-fetch");
 const {
   TELEGRAM_API,
+  TELEGRAM_WEBHOOK_SECRET,
   GEMINI_KEY,
   NEWS_API_KEY,
   BRAPI_TOKEN
@@ -117,12 +118,32 @@ async function handleStart(chatId, args, fromUser) {
     return sendMessage(chatId, "\u274C Codigo invalido. Verifique no app e tente novamente.");
   }
 
+  // TLG-4 (auditoria 26/04/2026): se este chatId j\u00E1 est\u00E1 vinculado a OUTRO uid,
+  // bloquear o sequestro. Cen\u00E1rio: atacante consegue um linkCode leg\u00EDtimo e tenta
+  // vincular ao seu pr\u00F3prio Telegram j\u00E1 em uso por outra conta.
+  var existingByChat = await getUserByChatId(chatId);
+  if (existingByChat && existingByChat.uid !== user.uid) {
+    logEvent("telegram", "link_attempt_chatid_taken", { chatId, existingUid: existingByChat.uid, attemptUid: user.uid });
+    return sendMessage(chatId,
+      "\u26A0\uFE0F Este Telegram ja esta vinculado a outra conta. Use /desconectar nessa conta primeiro."
+    );
+  }
+
   // Vincular
   await db.collection("users").doc(user.uid).update({
     telegramChatId: chatId,
     telegramUsername: fromUser.username || "",
     telegramLinkedAt: new Date().toISOString()
   });
+
+  // TLG-3 (auditoria 26/04/2026): deletar o linkCode ap\u00F3s uso. Antes, mesmo
+  // c\u00F3digo vinculava m\u00FAltiplas vezes (n\u00E3o havia expira\u00E7\u00E3o consumida).
+  try {
+    await db.collection("telegramCodes").doc(code).delete();
+  } catch (delErr) {
+    // n\u00E3o-bloqueante; o code expira em 10min de qualquer modo
+    logError("telegram", "link_code_delete_failed", delErr, { code });
+  }
 
   var name = user.data.name || "investidor";
   return sendMessage(chatId,
@@ -733,6 +754,31 @@ async function handlePerguntaIA(chatId, pergunta) {
 // ============================================
 exports.telegramWebhook = functions.https.onRequest(async (req, res) => {
   try {
+    // TLG-1 (auditoria 26/04/2026, decisão sênior): valida secret_token do Telegram.
+    // Antes era fail-OPEN — qualquer um que conhecesse a URL podia forjar mensagens.
+    // Em DEV (NODE_ENV=development OU SIBANKI_ALLOW_UNSAFE_WEBHOOK=1), permite.
+    if (TELEGRAM_WEBHOOK_SECRET) {
+      const provided = req.headers["x-telegram-bot-api-secret-token"] || "";
+      if (provided !== TELEGRAM_WEBHOOK_SECRET) {
+        logError("telegram", "webhook_unauthorized", new Error("Invalid secret token"), { ip: req.ip });
+        res.status(401).send("Unauthorized");
+        return;
+      }
+    } else {
+      const devMode = process.env.NODE_ENV === "development" ||
+                      process.env.SIBANKI_ALLOW_UNSAFE_WEBHOOK === "1";
+      if (!devMode) {
+        logError(
+          "telegram",
+          "webhook_no_secret",
+          new Error("TELEGRAM_WEBHOOK_SECRET not configured"),
+          {},
+        );
+        res.status(503).send("Webhook secret not configured");
+        return;
+      }
+    }
+
     var body = req.body;
     var message = body.message;
     if (!message || !message.text) { res.sendStatus(200); return; }
@@ -796,7 +842,13 @@ exports.checkPriceAlerts = functions.pubsub
     var day = now.getDay();
     if (day === 0 || day === 6 || hour < 10 || hour > 18) return null;
 
-    var snap = await db.collection("users").where("telegramChatId", "!=", "").get();
+    // TLG-6 (auditoria 26/04/2026): `where(..., "!=", "")` ignora docs sem o campo.
+    // Trocado para `where(..., ">", "")` + filtro defensivo pós-get.
+    var _snap = await db.collection("users").where("telegramChatId", ">", "").get();
+    var snap = { docs: _snap.docs.filter(function(d) {
+      var v = d.data() && d.data().telegramChatId;
+      return v && (typeof v === "number" || (typeof v === "string" && v.trim().length > 0));
+    }) };
 
     for (var i = 0; i < snap.docs.length; i++) {
       var doc = snap.docs[i];
@@ -874,7 +926,13 @@ exports.dailyNews = functions.pubsub
       });
       msg += "Tenha um otimo dia! \u{1F4C8}";
 
-      var snap = await db.collection("users").where("telegramChatId", "!=", "").get();
+      // TLG-6 (auditoria 26/04/2026): `where(..., "!=", "")` ignora docs sem o campo.
+    // Trocado para `where(..., ">", "")` + filtro defensivo pós-get.
+    var _snap = await db.collection("users").where("telegramChatId", ">", "").get();
+    var snap = { docs: _snap.docs.filter(function(d) {
+      var v = d.data() && d.data().telegramChatId;
+      return v && (typeof v === "number" || (typeof v === "string" && v.trim().length > 0));
+    }) };
 
       for (var i = 0; i < snap.docs.length; i++) {
         var chatId = snap.docs[i].data().telegramChatId;
@@ -896,7 +954,13 @@ exports.weeklyReport = functions.pubsub
   .schedule("every monday 08:00")
   .timeZone("America/Sao_Paulo")
   .onRun(async () => {
-    var snap = await db.collection("users").where("telegramChatId", "!=", "").get();
+    // TLG-6 (auditoria 26/04/2026): `where(..., "!=", "")` ignora docs sem o campo.
+    // Trocado para `where(..., ">", "")` + filtro defensivo pós-get.
+    var _snap = await db.collection("users").where("telegramChatId", ">", "").get();
+    var snap = { docs: _snap.docs.filter(function(d) {
+      var v = d.data() && d.data().telegramChatId;
+      return v && (typeof v === "number" || (typeof v === "string" && v.trim().length > 0));
+    }) };
 
     for (var i = 0; i < snap.docs.length; i++) {
       var userData = snap.docs[i].data();

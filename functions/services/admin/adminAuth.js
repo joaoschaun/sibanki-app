@@ -16,11 +16,36 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
-// Lista de e-mails autorizados — server-side only, nunca exposta ao cliente.
-const ADMIN_EMAILS = [
-  "jscharnberg@gmail.com",
-  "admin@sibanki.com.br",
-];
+// SEG-01 (auditoria 26/04/2026, decisão sênior): ADMIN_EMAILS deixou de ser
+// hardcoded. Agora vem de `process.env.ADMIN_EMAILS` (lista CSV) e cai num
+// fallback mínimo apenas para destravar o owner em ambientes sem env setada.
+//
+// Roadmap pós-fase-1+2 (próxima sessão):
+//  1. Migrar a lista para uma coleção Firestore `admins/{email}` com regra
+//     `allow read, write: if false` (apenas Cloud Functions com Admin SDK leem).
+//  2. Adicionar UI no painel admin para gerenciar a lista (com revokeAdminAccess).
+//  3. Remover totalmente o fallback hardcoded — gerenciamento 100% via UI.
+//
+// Para configurar em produção:
+//   firebase functions:secrets:set ADMIN_EMAILS
+//   (informe valor no formato: "email1@x.com,email2@x.com")
+function loadAdminEmails() {
+  const fromEnv = String(process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (fromEnv.length > 0) return fromEnv;
+
+  // Fallback de bootstrap — usado APENAS quando ADMIN_EMAILS não está setado.
+  // Mantém o owner com acesso enquanto a env não é configurada em produção.
+  console.warn(
+    "[adminAuth] ADMIN_EMAILS env não configurada. Usando fallback bootstrap. " +
+    "Configure via `firebase functions:secrets:set ADMIN_EMAILS`."
+  );
+  return ["jscharnberg@gmail.com", "admin@sibanki.com.br"];
+}
+
+const ADMIN_EMAILS = loadAdminEmails();
 
 /**
  * validateAdminAccess

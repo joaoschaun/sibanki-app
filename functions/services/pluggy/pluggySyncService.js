@@ -324,10 +324,64 @@ function mapNextRegularInstallment(loan) {
 }
 
 /**
+ * PLG-2 (auditoria 26/04/2026, decisão sênior): lock anti-concurrent.
+ * TTL conservador: 15 min (mais que o timeout da function = 540s, com margem
+ * para sync travada).
+ */
+const SYNC_LOCK_TTL_MS = 15 * 60 * 1000;
+
+async function acquireSyncLock(userRef) {
+  const lockRef = userRef.collection('_syncLocks').doc('pluggy');
+  return userRef.firestore.runTransaction(async (tx) => {
+    const snap = await tx.get(lockRef);
+    const now = Date.now();
+    if (snap.exists) {
+      const startedAt = Number(snap.data()?.startedAt) || 0;
+      const stale = now - startedAt > SYNC_LOCK_TTL_MS;
+      if (!stale) {
+        return { acquired: false, startedAt };
+      }
+    }
+    tx.set(lockRef, {
+      startedAt: now,
+      startedAtIso: new Date(now).toISOString(),
+    });
+    return { acquired: true, startedAt: now };
+  });
+}
+
+async function releaseSyncLock(userRef) {
+  const lockRef = userRef.collection('_syncLocks').doc('pluggy');
+  try {
+    await lockRef.delete();
+  } catch (e) {
+    console.warn('[pluggySync] release lock falhou (não-bloqueante):', e?.message || e);
+  }
+}
+
+/**
  * Sincroniza o que a Pluggy expõe para os itens conectados (contas, lançamentos, cartões, investimentos, empréstimos).
+ *
+ * PLG-1 (auditoria 26/04/2026): write final usa `runTransaction` para mesclar
+ * `entries` manuais frescos com newTxEntries, evitando perder lançamentos
+ * adicionados pelo usuário durante a sync.
+ * PLG-2: lock anti-concurrent impede 2 syncs paralelas para o mesmo usuário.
  */
 async function syncAccountsToUser(uid, db) {
   const userRef = db.collection('users').doc(uid);
+
+  // PLG-2: bloqueia segunda sync concorrente
+  const lock = await acquireSyncLock(userRef);
+  if (!lock.acquired) {
+    const ageSec = Math.round((Date.now() - lock.startedAt) / 1000);
+    throw new functions.https.HttpsError(
+      'aborted',
+      `Sincronização Open Finance já em andamento (iniciada há ${ageSec}s). Aguarde concluir.`,
+    );
+  }
+
+  try { // try/finally para sempre liberar lock
+
   const snap = await userRef.get();
   if (!snap.exists) {
     throw new functions.https.HttpsError('not-found', 'Usuário não encontrado');
@@ -541,7 +595,36 @@ async function syncAccountsToUser(uid, db) {
     updated: new Date().toISOString(),
   };
 
-  await userRef.set(payload, { merge: true });
+  // PLG-1: write final em transação. Re-lê entries do Firestore e mescla
+  // os manuais NOVOS (que possam ter chegado durante a sync) com os Pluggy.
+  // Outros campos (accounts, balances, cards) são derivados do estado Pluggy
+  // — para esses, mantemos `merge: true` que é seguro o suficiente (race
+  // window curta, e edição paralela de conta/cartão durante sync é evento raro).
+  await db.runTransaction(async (tx) => {
+    const freshSnap = await tx.get(userRef);
+    const fresh = freshSnap.exists ? (freshSnap.data() || {}) : {};
+    const freshEntries = Array.isArray(fresh.entries) ? fresh.entries : [];
+
+    // Identifica manuais frescos (criados durante a sync) que não estavam em `manualEntries` (snapshot inicial).
+    const knownManualIds = new Set(manualEntries.map((e) => e.id));
+    const newManualDuringSync = freshEntries.filter(
+      (e) => !e.pluggyTransactionId && !knownManualIds.has(e.id),
+    );
+    if (newManualDuringSync.length > 0) {
+      console.log(
+        `[pluggySync][PLG-1] preservando ${newManualDuringSync.length} lançamento(s) manual(is) ` +
+        `criado(s) durante a sync (uid=${uid}).`,
+      );
+    }
+
+    // Reconstroi entries final mantendo manuais frescos no topo.
+    const finalEntries = [
+      ...newManualDuringSync,
+      ...payload.entries,
+    ];
+
+    tx.set(userRef, { ...payload, entries: finalEntries }, { merge: true });
+  });
 
   // Dual-write: se o usuário já foi migrado, grava novas transações na subcoleção também
   if (data.entriesMigratedAt && newTxEntries.length > 0) {
@@ -577,6 +660,11 @@ async function syncAccountsToUser(uid, db) {
       `${ofExtras.counts.identity} identidade(s), ${ofExtras.counts.bills} fatura(s) cartão, ${ofExtras.counts.consents} consentimento(s)` +
       (trimResult.archived > 0 ? `; ${trimResult.archived} lanç. Pluggy arquivados (limite do documento).` : '.'),
   };
+
+  } finally {
+    // PLG-2: sempre liberar o lock, mesmo em erro.
+    await releaseSyncLock(userRef);
+  }
 }
 
 module.exports = {

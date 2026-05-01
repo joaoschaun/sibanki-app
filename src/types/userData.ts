@@ -247,7 +247,25 @@ export interface CreditObligation {
   status?: 'aberta' | 'paga' | 'atrasada' | 'agendada';
   amount: number;
   dueDate: string;
+  /**
+   * Taxa de juros em **% ao mês** (padrão brasileiro: "juros ao mês"). Ex: 2.5 = 2,5% a.m.
+   *
+   * SOV-2 (auditoria 26/04/2026): este é o campo CANÔNICO, alinhado com o legado
+   * (`public/app/app.js` usa `interestRatePct` em % a.m.) e com a UI de cadastro
+   * de obrigação que pede "Juros ao mês (%)".
+   *
+   * Fallbacks legados que o `sovereigntyEngine.calculateSpreadGap` ainda aceita:
+   *  - `interestPct` (mesmo significado, nome antigo no React)
+   *  - `interestRate` (campo nunca produzido — só consumido pelo engine antigo)
+   * Novo código DEVE usar `interestRatePct`.
+   */
+  interestRatePct?: number;
+  /** @deprecated use `interestRatePct` (mesma unidade: % a.m.). Mantido para retrocompat. */
   interestPct?: number;
+  /** @deprecated use `interestRatePct`. Nome legado, ambíguo. */
+  interestRate?: number;
+  /** CET anual em %, quando disponível (informativo). */
+  cetAnnualPct?: number;
   installmentNumber?: number;
   installmentTotal?: number;
   updatedAt?: string;
@@ -344,8 +362,16 @@ export interface Entry {
   pluggyTransactionId?: string;
   pluggyAccountId?: string;
   source?: 'open-finance' | 'manual';
-  /** Lançamento no doc principal vs arquivado em entriesOverflow (Pluggy). */
-  entryLocation?: 'inline' | 'overflow';
+  /**
+   * Onde o lançamento mora hoje:
+   *  - 'inline'        : array entries[] no doc principal
+   *  - 'overflow'      : subcoleção entriesOverflow (lançamentos Pluggy quando o doc principal estoura 1MB)
+   *  - 'subcollection' : subcoleção entries (escopo do dual-write da migração de entries)
+   *
+   * PUD-4 (auditoria 26/04/2026): 'subcollection' foi adicionado para remover
+   * `(target as any).entryLocation === 'subcollection'` em persistUserData.ts.
+   */
+  entryLocation?: 'inline' | 'overflow' | 'subcollection';
   [key: string]: unknown;
 }
 
@@ -424,8 +450,20 @@ export interface Investment {
   entryId?: number;
   precoCompra?: number;
   qtd?: number;
-  /** Taxa de rendimento anual declarada (ex: 0.12 = 12% a.a.) */
+  /** Taxa de rendimento anual declarada em **% a.a.** (ex: 12 = 12% a.a.). */
   taxaAnual?: number;
+  /**
+   * Renda passiva mensal estimada deste ativo em R$ (dividendos de FIIs, JCP de ações,
+   * etc.). Quando informado, entra em `monthlyPassiveIncome` no cálculo de Ld.
+   *
+   * SOV-7 (auditoria 26/04/2026): antes só investimentos LÍQUIDOS contavam para
+   * renda passiva (rendimento * yield). FIIs/ações com dividendos ficavam de fora.
+   * Agora `proventosMensais` é somado quando presente.
+   *
+   * Origem: preenchido pelo usuário OU automaticamente via BRAPI quando o ativo
+   * tem histórico de proventos (média 12 meses).
+   */
+  proventosMensais?: number;
   [key: string]: unknown;
 }
 

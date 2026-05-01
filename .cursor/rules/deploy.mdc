@@ -1,13 +1,38 @@
 ---
-description: Regras de deploy — staging = React em migração; virtus = produção legado
+description: Regras de deploy — pós-cutover (React SPA é a produção)
 alwaysApply: true
 ---
 
 # Deploy (Firebase Hosting)
 
-- **Antes de qualquer deploy:** rodar `npm run syntax-check` para validar `public/app/app.js` (obrigatório antes de `deploy:app`).
-- **Produção em uso — [virtus-financeiro-cd7bd.web.app](https://virtus-financeiro-cd7bd.web.app):** conteúdo em `public` (landing + app legado em `/app/`). Comando: **`npm run deploy:app`**. É o site que os usuários usam hoje.
-- **Staging — migração para React:** build Vite em `dist`. Comando: **`npm run deploy:staging`** (site separado, ex. staging-13a0b). Usar para evoluir o sistema em React aos poucos, **sem** substituir a produção até decisão explícita.
-- **Doc investidor:** `npm run deploy:doc-investidor`.
+> ⚠️ Cutover legado→React concluído em abril/2026. Esta regra reflete o estado atual.
+> Antes de qualquer deploy, leia `AGENTS.md` (regra de ouro: nenhum agente de IA
+> roda `firebase deploy ...` sem autorização explícita do João).
 
-Não publicar o bundle React (`dist`) no target `app` enquanto a produção oficial for o legado em `public`, salvo pedido explícito para trocar.
+## Targets ativos
+
+| Target | URL | Source | Quando deploya |
+|---|---|---|---|
+| `app` | https://virtus-financeiro-cd7bd.web.app | `dist/` (React SPA) | release oficial |
+| `staging` | https://staging-13a0b.web.app | `dist/` (React SPA) | smoke test antes do `app` |
+| `legado` | hosting:legado (sibanki-legado) | `public/` (HTML+JS) | apenas fallback de rollback |
+| `admin` | sibanki-admin | `public/admin/` | painel admin |
+| `doc-investidor` | doc-investidor | `public/doc-investidor/` | docs externos |
+
+## Comandos
+
+- **Release de produção:** `npm run deploy:app` — roda `npm run test:unit` + `vite build` + `prepare-dist.mjs` + `firebase deploy --only hosting:app`.
+- **Staging:** `npm run deploy:staging` — mesmo fluxo, target staging.
+- **Legado (rollback only):** `npm run deploy:legado` — ainda usa `npm run syntax-check`.
+- **Functions:** **NÃO existe script automatizado** — sempre seletivo:
+  `firebase deploy --only functions:fnA,functions:fnB`.
+- **Regras Firestore/Storage:** `firebase deploy --only firestore:rules,storage:rules`
+  — atualmente fora dos scripts npm; deve ser rodado manualmente quando
+  `firestore.rules` ou `storage.rules` mudarem.
+
+## Quem pode rodar deploy
+
+Apenas o **João**. Cursor/Claude/Antigravity NUNCA executam `firebase deploy ...`.
+Quando uma tarefa precisa de deploy para fechar, marque
+`status: ANTIGRAVITY_OK` ou `status: COMPLETED` no `TASK_QUEUE.md` e
+deixe explícito o comando exato a rodar — o João executa.

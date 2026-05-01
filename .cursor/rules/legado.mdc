@@ -1,15 +1,32 @@
 ---
-description: Padrões ao modificar o Legado (public/app)
+description: Modo manutenção do Legado (public/app) — fallback de rollback apenas
 globs: ["public/app/**/*.{js,html,css}","public/app/**/*.{js,html}"]
 alwaysApply: true
 ---
-# Legado (JS/HTML do App)
+# Legado (JS/HTML em `public/app/`) — modo manutenção
 
-- **Evite React/TS dentro do legado:** `public/app` não é para criar componentes React nem usar JSX/TS.
-- **Padrão de código:** siga o estilo já existente do `public/app/app.js` (funções globais, helpers locais, sem módulos ES import/export).
-- **Integração com IA:** ao chamar IA, reutilize `firebase.functions().httpsCallable(...)` (ex.: `chatApi`, `proactiveInsightApi`) e siga os ids/elementos já usados no DOM.
-- **UI:** ajuste a UI via `innerHTML`/`textContent` e classes/ids já presentes; evite introduzir Tailwind novo no legado.
-- **Snapshots e datas:** ao montar strings de data, mantenha o formato do legado (`YYYY-MM-DD`) para consistência.
+> Cutover legado→React concluído em abril/2026. O legado fica deployado em
+> `hosting:legado` apenas como fallback de rollback. **Não receba features
+> novas neste código.**
+
+## Política
+
+- **NÃO** desenvolva features novas em `public/app/`. Se uma necessidade aparecer
+  e o caminho parecer ser editar o legado, pare e converse com o João primeiro.
+- **Bug fixes urgentes** que aparecerem no legado (paridade pré-cutover) podem
+  ser feitos, mas mirando rollback — não é onde a engenharia evolui.
+- Quando o usuário pedir "consertar uma coisa do legado", confirme se o
+  problema também existe no React (`/dashboard`, `/lancamentos`, etc.). Quase
+  sempre o conserto certo é em `src/`, não em `public/app/`.
+
+## Se for inevitável editar `public/app/app.js`
+
+- Estilo: funções globais, helpers locais, sem módulos ES import/export
+  (mantenha consistência com o que já está lá).
+- IA: reutilize `firebase.functions().httpsCallable(...)`.
+- UI: `innerHTML`/`textContent` + classes/ids existentes. Não introduza Tailwind novo.
+- Datas: formato `YYYY-MM-DD`.
+- **Sempre** rode `npm run syntax-check` antes de pedir deploy do legado.
 
 Use o código com cuidado.
 

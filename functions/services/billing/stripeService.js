@@ -8,6 +8,69 @@ if (!admin.apps.length) {
 }
 const db = admin.firestore();
 
+/**
+ * SEG-Stripe-1 (auditoria 26/04/2026, decisão sênior): mapa canônico priceId → plan.
+ * Antes:
+ *   - createCheckout aceitava QUALQUER `priceId` enviado pelo cliente — Stripe
+ *     validava ownership mas não-allowlist permitia, em tese, comprar via
+ *     priceId errôneo (com Trial period mais longo, etc.).
+ *   - webhook customer.subscription.updated inferia plan por
+ *     `priceId.includes("familia")` — frágil, qualquer rename quebrava.
+ *
+ * Agora:
+ *   - createCheckout só aceita priceIds que estão neste mapa.
+ *   - subscription.updated lê `STRIPE_PRICE_TO_PLAN[priceId]`.
+ *   - Atualizar quando criar novos preços no Stripe Dashboard.
+ *
+ * ENV: pode-se adicionar `STRIPE_PRICE_TO_PLAN_OVERRIDE` (JSON) para staging.
+ */
+function loadStripePriceToPlan() {
+  // Defaults (placeholders — ajustar com priceIds REAIS do Stripe Dashboard)
+  const defaults = {
+    // pro_monthly: "price_pro_monthly_id",
+    // pro_yearly:  "price_pro_yearly_id",
+    // familia_monthly: "price_familia_monthly_id",
+  };
+  // Override via env (formato JSON: '{"price_xxx":"pro","price_yyy":"familia"}')
+  const raw = process.env.STRIPE_PRICE_TO_PLAN || "";
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") return { ...defaults, ...parsed };
+    } catch (e) {
+      // Não bloqueia — usa defaults
+      // eslint-disable-next-line no-console
+      console.warn("[stripeService] STRIPE_PRICE_TO_PLAN inválido (não é JSON). Usando defaults.");
+    }
+  }
+  return defaults;
+}
+
+const STRIPE_PRICE_TO_PLAN = loadStripePriceToPlan();
+
+function isAllowedPriceId(priceId) {
+  // Em DEV: aceitar qualquer priceId (testes locais com Stripe CLI / preços de teste)
+  if (process.env.NODE_ENV === "development" || process.env.SIBANKI_ALLOW_ANY_STRIPE_PRICE === "1") {
+    return true;
+  }
+  // Sem allowlist configurada (env não setada) → também aceita, mas log warning.
+  // Cuidado: NÃO falhar aqui durante bootstrap. Quando STRIPE_PRICE_TO_PLAN
+  // estiver populado em prod, vira fail-closed naturalmente.
+  if (Object.keys(STRIPE_PRICE_TO_PLAN).length === 0) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[SEG-Stripe-1] STRIPE_PRICE_TO_PLAN env não configurada — priceId não é validado. " +
+      "Configure via `firebase functions:secrets:set STRIPE_PRICE_TO_PLAN` (JSON)."
+    );
+    return true;
+  }
+  return Object.prototype.hasOwnProperty.call(STRIPE_PRICE_TO_PLAN, priceId);
+}
+
+function planFromPriceId(priceId) {
+  return STRIPE_PRICE_TO_PLAN[priceId] || null;
+}
+
 async function createCheckout(data, context) {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Login necessário");
@@ -20,6 +83,14 @@ async function createCheckout(data, context) {
 
   if (!priceId) {
     throw new functions.https.HttpsError("invalid-argument", "priceId é obrigatório");
+  }
+  // SEG-Stripe-1: allowlist contra priceIds não-canônicos
+  if (!isAllowedPriceId(priceId)) {
+    logError("billing", "checkout_unallowed_price", new Error("priceId fora da allowlist"), { uid, priceId });
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "priceId não autorizado. Use os planos ativos do Sibanki."
+    );
   }
 
   try {
@@ -174,8 +245,28 @@ async function handleStripeWebhook(req, res) {
 
         if (uid) {
           const priceId = subscription.items.data[0]?.price?.id || "";
-          let plan = "pro";
-          if (priceId.includes("familia") || priceId.includes("family")) plan = "familia";
+          // SEG-Stripe-1: plano canônico por allowlist priceId → plan, com
+          // fallbacks em camadas:
+          //   1) Tabela STRIPE_PRICE_TO_PLAN (canônica, configurada via env)
+          //   2) `subscription.metadata.plan` (gravado pelo nosso createCheckout)
+          //   3) Substring legacy (último recurso, com warn)
+          //   4) "pro" como fallback final
+          let plan = planFromPriceId(priceId);
+          if (!plan) {
+            plan = subscription.metadata?.plan || null;
+          }
+          if (!plan) {
+            // eslint-disable-next-line no-console
+            console.warn(
+              `[SEG-Stripe-1] priceId "${priceId}" não está em STRIPE_PRICE_TO_PLAN. ` +
+              "Caindo no heurístico legacy — atualize a env."
+            );
+            if (priceId.includes("familia") || priceId.includes("family")) {
+              plan = "familia";
+            } else {
+              plan = "pro";
+            }
+          }
 
           const isActive = subscription.status === "active" || subscription.status === "trialing";
 
@@ -191,7 +282,8 @@ async function handleStripeWebhook(req, res) {
           logEvent("billing", "subscription_updated", {
             uid,
             plan: isActive ? plan : "free",
-            status: subscription.status
+            status: subscription.status,
+            priceId,
           });
         }
         break;

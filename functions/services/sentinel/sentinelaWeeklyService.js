@@ -10,11 +10,25 @@
  */
 
 const { logEvent, logError } = require("../../logger");
+const { sendPush } = require("../push/pushService");
 
 // ─── Helpers de matemática financeira ───────────────────────────────────────
 
 const CDI_MONTHLY = 0.0107; // ~12.8% a.a. — atualizar conforme COPOM
 
+/**
+ * SEW-2 (auditoria 26/04/2026, PENDÊNCIA documentada): esta função é uma
+ * versão duplicada e simplificada de `calculateDaysOfFreedom` em
+ * `src/utils/sovereigntyEngine.ts`. Fórmulas divergem — usuário pode receber
+ * Ld diferente no dashboard vs WhatsApp semanal. Fix correto: portar a engine
+ * para um helper compartilhado functions/utils/. Pendente para próxima sessão.
+ *
+ * SEW-1 (auditoria 26/04/2026): filtro `e.type !== "transferencia"` era
+ * DEAD CODE — `e.type === "despesa"` já exclui esse caso. O bug real é que
+ * lançamentos de despesa com `e.isTransfer === true` (TransferForm grava
+ * type=despesa + isTransfer=true) inflavam o burn rate. Agora filtramos
+ * corretamente por `isTransfer !== true`.
+ */
 function calcDaysOfFreedom(entries = [], accountBalances = {}, investments = []) {
   // Liquidez total: saldo em contas + investimentos líquidos
   const saldoContas = Object.values(accountBalances).reduce((s, v) => s + (Number(v) || 0), 0);
@@ -23,11 +37,11 @@ function calcDaysOfFreedom(entries = [], accountBalances = {}, investments = [])
     .reduce((s, inv) => s + (Number(inv.currentValue ?? inv.valorAtual ?? 0)), 0);
   const totalLiquido = saldoContas + liquidezInv;
 
-  // Queima diária: média dos últimos 3 meses de despesas / 90 dias
+  // Queima diária: média dos últimos 3 meses de despesas / 90 dias (excluindo transferências)
   const now = new Date();
   const cutoff = new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString().slice(0, 7);
   const despesas = entries
-    .filter((e) => e.type === "despesa" && (e.date || "") >= cutoff && e.type !== "transferencia")
+    .filter((e) => e.type === "despesa" && e.isTransfer !== true && (e.date || "") >= cutoff)
     .reduce((s, e) => s + (Number(e.value) || 0), 0);
   const dailyBurn = despesas > 0 ? despesas / 90 : 1;
 
@@ -222,7 +236,9 @@ async function processSentinelaUser(db, uid, sendFn) {
   const message = buildWeeklyMessage(userName, freedom, spread, budgetAlerts, benefitTips);
   await sendFn(phone, message);
 
-  logEvent("sentinelaWeekly_user", { uid, days: freedom.days, spreadGap: spread.spreadGap, phone: phone.slice(-4) });
+  // SEW-5 (auditoria 26/04/2026): removido `phone.slice(-4)` do log — ainda é PII parcial
+  // (LGPD recomenda evitar). Mantemos só uid + métricas anônimas.
+  logEvent("sentinelaWeekly_user", { uid, days: freedom.days, spreadGap: spread.spreadGap, hasPhone: true });
   return { uid, sent: true, days: freedom.days, spreadGap: spread.spreadGap };
 }
 
@@ -236,18 +252,39 @@ async function processSentinelaUser(db, uid, sendFn) {
  * @returns {{ processed: number, sent: number, errors: number }}
  */
 async function runSentinelaWeekly(db, sendWhatsAppText) {
-  const usersSnap = await db.collection("users")
-    .where("whatsappPhone", "!=", "")
+  // ── Grupo 1: usuários com WhatsApp ────────────────────────────────────────
+  // SEW-3 (auditoria 26/04/2026): `where("whatsappPhone", "!=", "")` ignora
+  // docs onde o campo é null/undefined (não-existente). Trocamos por
+  // `where("whatsappPhone", ">", "")` (string comparada > "" pega não-vazia)
+  // E filtramos defensivamente após o get para descartar undefined/null.
+  const whatsappSnap = await db.collection("users")
+    .where("whatsappPhone", ">", "")
     .get();
+  const whatsappUids = whatsappSnap.docs
+    .filter((d) => {
+      const v = d.data()?.whatsappPhone;
+      return typeof v === "string" && v.trim().length >= 8; // mínimo plausível
+    })
+    .map((d) => d.id);
 
-  const uids = usersSnap.docs.map((d) => d.id);
+  // ── Grupo 2: usuários com push habilitado (sem WhatsApp — evita duplicidade)
+  const pushSnap = await db.collection("users")
+    .where("notificacoesPush", "==", true)
+    .get();
+  // Remove quem já está no grupo WhatsApp para não duplicar
+  const whatsappSet = new Set(whatsappUids);
+  const pushOnlyUids = pushSnap.docs
+    .map((d) => d.id)
+    .filter((uid) => !whatsappSet.has(uid));
 
-  logEvent("sentinelaWeekly_start", { totalUsers: uids.length });
+  const totalUsers = whatsappUids.length + pushOnlyUids.length;
+  logEvent("sentinelaWeekly_start", { whatsapp: whatsappUids.length, pushOnly: pushOnlyUids.length, total: totalUsers });
 
   let sent = 0, errors = 0;
 
-  for (let i = 0; i < uids.length; i += 10) {
-    const batch = uids.slice(i, i + 10);
+  // Processa grupo WhatsApp em batches de 10
+  for (let i = 0; i < whatsappUids.length; i += 10) {
+    const batch = whatsappUids.slice(i, i + 10);
     const results = await Promise.allSettled(
       batch.map((uid) =>
         processSentinelaUser(db, uid, (phone, msg) => sendWhatsAppText(null, phone, msg))
@@ -255,21 +292,112 @@ async function runSentinelaWeekly(db, sendWhatsAppText) {
     );
     for (const r of results) {
       if (r.status === "fulfilled" && r.value.sent) sent++;
-      if (r.status === "rejected") {
-        errors++;
-        logError("sentinelaWeekly_user", r.reason);
-      }
+      if (r.status === "rejected") { errors++; logError("sentinelaWeekly_whatsapp", r.reason); }
     }
-    if (i + 10 < uids.length) await new Promise((res) => setTimeout(res, 1000));
+    if (i + 10 < whatsappUids.length) await new Promise((res) => setTimeout(res, 1000));
   }
 
-  logEvent("sentinelaWeekly_done", { total: uids.length, sent, errors });
-  return { processed: uids.length, sent, errors };
+  // Processa grupo push-only em batches de 10
+  for (let i = 0; i < pushOnlyUids.length; i += 10) {
+    const batch = pushOnlyUids.slice(i, i + 10);
+    const results = await Promise.allSettled(
+      batch.map((uid) => processSentinelaUserPush(db, uid))
+    );
+    for (const r of results) {
+      if (r.status === "fulfilled" && r.value.sent) sent++;
+      if (r.status === "rejected") { errors++; logError("sentinelaWeekly_push", r.reason); }
+    }
+    if (i + 10 < pushOnlyUids.length) await new Promise((res) => setTimeout(res, 1000));
+  }
+
+  logEvent("sentinelaWeekly_done", { total: totalUsers, sent, errors });
+  return { processed: totalUsers, sent, errors };
+}
+
+// ─── Push notification version do digest ─────────────────────────────────────
+
+/**
+ * Gera título e corpo curtos para push notification semanal.
+ */
+function buildWeeklyPushNotification(userName, freedom, spread, budgetAlerts = []) {
+  const nome = userName ? userName.split(" ")[0] : "Investidor";
+  const ldEmoji = freedom.days >= 365 ? "🟢" : freedom.days >= 180 ? "🔵" : freedom.days >= 90 ? "🟡" : "🔴";
+  const title = `${ldEmoji} Sentinela Semanal — ${freedom.days} dias de liberdade`;
+
+  let body = "";
+  if (spread.spreadGap < -0.005 && spread.totalDebt > 0) {
+    body = `Suas dívidas custam mais que seus investimentos rendem. Veja o plano de ação.`;
+  } else if (freedom.days < 30) {
+    body = `Reserva crítica. Meta: 90 dias. Abra o app para ver sua ação prioritária.`;
+  } else if (budgetAlerts.length > 0) {
+    const top = budgetAlerts[0];
+    body = `${top.cat} está ${top.pct}% acima do orçamento esta semana.`;
+  } else if (spread.spreadGap >= 0) {
+    body = `Spread positivo! Continue investindo. Abra o app para ver seu resumo.`;
+  } else {
+    body = `Bom dia, ${nome}. Seu resumo financeiro semanal está pronto.`;
+  }
+  return { title, body };
+}
+
+/**
+ * Processa usuário com push habilitado mas SEM WhatsApp.
+ * Garante que não duplica para quem já recebe pelo WhatsApp.
+ */
+async function processSentinelaUserPush(db, uid) {
+  const userDoc = await db.collection("users").doc(uid).get();
+  if (!userDoc.exists) return { uid, skipped: true, reason: "no_doc" };
+  const data = userDoc.data() || {};
+
+  if (!data.notificacoesPush) return { uid, skipped: true, reason: "push_disabled" };
+  const fcmTokens = Array.isArray(data.fcmTokens) ? data.fcmTokens.filter(Boolean) : [];
+  if (fcmTokens.length === 0) return { uid, skipped: true, reason: "no_tokens" };
+  if (data.whatsappPhone) return { uid, skipped: true, reason: "has_whatsapp" }; // evita duplicidade
+
+  const cutoff90d = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+  const allEntries = Array.isArray(data.entries) ? data.entries : [];
+  const entries = allEntries.filter((e) => (e.date || "") >= cutoff90d);
+
+  const freedom = calcDaysOfFreedom(entries, data.accountBalances || {}, Array.isArray(data.investments) ? data.investments : []);
+  const spread  = calcSpreadGap(Array.isArray(data.investments) ? data.investments : [], Array.isArray(data.creditObligations) ? data.creditObligations : []);
+
+  // Alertas de orçamento
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const catTotals = {};
+  for (const e of entries) {
+    if (e.type === "despesa" && (e.date || "").startsWith(currentMonth)) {
+      const cat = e.category || "Outros";
+      catTotals[cat] = (catTotals[cat] || 0) + (Number(e.value) || 0);
+    }
+  }
+  const budgetAlerts = [];
+  for (const [cat, gasto] of Object.entries(catTotals)) {
+    const limite = Number((data.budgets || {})[cat] || 0);
+    if (limite > 0 && gasto > limite) {
+      budgetAlerts.push({ cat, gasto, limite, pct: Math.round(((gasto - limite) / limite) * 100) });
+    }
+  }
+  budgetAlerts.sort((a, b) => b.pct - a.pct);
+
+  const { title, body } = buildWeeklyPushNotification(data.name || data.displayName || "", freedom, spread, budgetAlerts);
+
+  // Rota de destino contextualizada
+  let clickAction = "/dashboard";
+  if (spread.spreadGap < -0.005) clickAction = "/credito/visao-geral";
+  else if (freedom.days < 90)    clickAction = "/consultor-ia";
+  else if (budgetAlerts.length)  clickAction = "/orcamento";
+
+  const result = await sendPush(uid, { title, body }, { click_action: clickAction });
+  logEvent("sentinelaWeekly_push_user", { uid, days: freedom.days, sent: result.sent });
+  return { uid, sent: result.sent > 0, days: freedom.days };
 }
 
 module.exports = {
   runSentinelaWeekly,
   buildWeeklyMessage,
+  buildWeeklyPushNotification,
+  processSentinelaUserPush,
   buildBenefitsTips,
   calcDaysOfFreedom,
   calcSpreadGap,

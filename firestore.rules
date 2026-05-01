@@ -28,6 +28,34 @@ service cloud.firestore {
       return isAuthed() && request.auth.uid == userId;
     }
 
+    // ── Schema validation ───────────────────────────────────────────────────
+
+    /** Valida um lançamento individual (entriesOverflow — um doc = um lançamento). */
+    function isValidEntry(data) {
+      return data.keys().hasAll(['desc', 'value', 'date', 'type'])
+        && data.desc is string
+        && data.desc.size() > 0
+        && data.desc.size() <= 200
+        && data.value is number
+        && data.value > 0
+        && data.value <= 1000000000
+        && data.date is string
+        && data.date.size() == 10
+        && data.type in ['receita', 'despesa', 'transferencia'];
+    }
+
+    /** Valida campos de topo do documento users/{uid}. */
+    function isValidUserData(data) {
+      // plan deve ser um dos valores permitidos se presente
+      return (!('plan' in data) || data.plan in ['gratuito', 'pro', 'familia'])
+        // openFinanceStatus deve ser um dos valores permitidos se presente
+        && (!('openFinanceStatus' in data) || data.openFinanceStatus in ['ativo', 'inativo', 'pendente', null])
+        // score deve ser número entre 0 e 100 se presente
+        && (!('finScore' in data) || (data.finScore is number && data.finScore >= 0 && data.finScore <= 100))
+        // sibcoinBalance deve ser número não-negativo se presente
+        && (!('sibcoinBalance' in data) || (data.sibcoinBalance is number && data.sibcoinBalance >= 0));
+    }
+
     function ownerInTenant(tenantId, userId) {
       return sameTenant(tenantId) && isOwner(userId);
     }
@@ -124,15 +152,73 @@ service cloud.firestore {
 
     // Lançamentos Pluggy arquivados (limite 1MB do documento users) — mesmo dono do uid
     match /users/{userId}/entriesOverflow/{docId} {
-      allow read, create, update, delete: if isAuthed() && request.auth.uid == userId;
+      allow read, delete: if isAuthed() && request.auth.uid == userId;
+      allow create, update: if isAuthed()
+        && request.auth.uid == userId
+        && isValidEntry(request.resource.data);
+    }
+
+    // Logs de erro do cliente: append-only, dono só pode criar
+    match /users/{userId}/errorLogs/{logId} {
+      allow read: if isAuthed() && request.auth.uid == userId;
+      allow create: if isAuthed() && request.auth.uid == userId;
+      allow update, delete: if false;
+    }
+
+    // SEG-12: Quotas de uso da IA — escrito pelo backend (Cloud Function via
+    // Admin SDK; o cliente nunca grava). Cliente pode LER a própria quota
+    // para mostrar progresso em UI, mas não modificar.
+    match /users/{userId}/quotas/{quotaId} {
+      allow read: if isAuthed() && request.auth.uid == userId;
+      allow create, update, delete: if false;
+    }
+
+    // PLG-2: Locks de sincronização Open Finance — escritos somente pelo
+    // backend (Admin SDK); cliente pode LER para mostrar status na UI.
+    match /users/{userId}/_syncLocks/{lockId} {
+      allow read: if isAuthed() && request.auth.uid == userId;
+      allow create, update, delete: if false;
     }
 
     // Legado (root): app React / hosting staging usam users/{uid} — só o dono lê/escreve.
     // Não confundir com tenants/{tenantId}/users/{userId} (regras acima).
     match /users/{userId} {
       allow read: if isAuthed() && request.auth.uid == userId;
-      allow create, update: if isAuthed() && request.auth.uid == userId;
+      allow create: if isAuthed()
+        && request.auth.uid == userId
+        && isValidUserData(request.resource.data);
+      allow update: if isAuthed()
+        && request.auth.uid == userId
+        && isValidUserData(request.resource.data);
       allow delete: if false;
+    }
+
+    // ── Modo Casal ────────────────────────────────────────────────────────────
+    // Convites de vinculação familiar: quem está logado pode ler por toEmail,
+    // criar (enviar convite) e cancelar o próprio convite.
+    match /invites/{inviteId} {
+      allow read: if isAuthed();
+      allow create: if isAuthed() && request.resource.data.from == request.auth.uid;
+      allow update: if isAuthed() && (
+        // Quem criou pode cancelar (status -> rejected/cancelled)
+        resource.data.from == request.auth.uid ||
+        // Quem recebeu pode aceitar/rejeitar
+        resource.data.toEmail == request.auth.token.email
+      );
+      allow delete: if isAuthed() && resource.data.from == request.auth.uid;
+    }
+
+    // Documento compartilhado do casal: qualquer membro pode ler e escrever.
+    match /couples/{coupleId} {
+      allow read: if isAuthed()
+        && request.auth.uid in resource.data.members;
+      allow create: if isAuthed()
+        && request.auth.uid in request.resource.data.members
+        && request.resource.data.members.size() == 2;
+      allow update: if isAuthed()
+        && request.auth.uid in resource.data.members;
+      allow delete: if isAuthed()
+        && request.auth.uid in resource.data.members;
     }
 
     match /{document=**} {
