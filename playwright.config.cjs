@@ -142,6 +142,14 @@ module.exports = defineConfig({
         baseURL: STAGING_URL,
       },
     },
+    {
+      name: 'react-smoke-mobile-layout',
+      testMatch: '**/react-smoke-mobile-layout.spec.cjs',
+      use: {
+        ...devices['Pixel 5'],
+        baseURL: STAGING_URL,
+      },
+    },
   ],
   timeout: 120000,
   expect: { timeout: 10000 },

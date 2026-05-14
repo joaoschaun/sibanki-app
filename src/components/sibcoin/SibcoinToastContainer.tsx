@@ -32,14 +32,14 @@ export function SibcoinToastContainer() {
     <>
       <style>{KEYFRAMES}</style>
       <div
-        className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"
+        className="fixed bottom-4 right-4 left-4 z-[9999] flex flex-col items-stretch sm:items-end sm:left-auto gap-3 pointer-events-none max-w-[min(calc(100vw-2rem),360px)] sm:max-w-none sm:mr-0 ml-auto sm:bottom-6 sm:right-6"
         aria-live="polite"
         aria-label="SibCoin notifications"
       >
         {toasts.map((t) => (
           <div
             key={t.id}
-            className="pointer-events-auto flex items-center gap-3 bg-[#0f1a2b] border border-amber-500/30 shadow-xl shadow-black/40 rounded-2xl px-4 py-3 min-w-[260px] max-w-[320px]"
+            className="pointer-events-auto flex items-center gap-3 bg-[#0f1a2b] border border-amber-500/30 shadow-xl shadow-black/40 rounded-2xl px-4 py-3 w-full max-w-[min(calc(100vw-2rem),320px)] sm:max-w-[320px]"
             style={{ animation: 'sibcoinSlideIn 0.3s ease-out' }}
           >
             <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">

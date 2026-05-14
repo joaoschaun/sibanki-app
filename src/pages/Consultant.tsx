@@ -287,19 +287,19 @@ export default function Consultant() {
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
-      <div className="flex items-center gap-3">
-        <div className="p-3 rounded-xl bg-blue-500/20 text-blue-400">
+      <div className="flex flex-wrap items-start gap-3 gap-y-2">
+        <div className="p-3 rounded-xl bg-blue-500/20 text-blue-400 shrink-0">
           <MessageCircle className="w-6 h-6" />
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <h2 className="text-2xl font-bold">Consultor IA</h2>
           <p className="text-si-5 text-sm">Assistente financeiro com base nos seus dados</p>
         </div>
-        <div className="ml-auto flex items-center gap-2 text-xs">
-          <span className="px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+        <div className="flex flex-wrap items-center gap-2 text-xs w-full sm:w-auto sm:ml-auto sm:justify-end">
+          <span className="px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 whitespace-nowrap">
             Online
           </span>
-          <span className="px-2 py-1 rounded-full bg-si-over-2 text-si-4 border border-si-border-md">
+          <span className="px-2 py-1 rounded-full bg-si-over-2 text-si-4 border border-si-border-md whitespace-nowrap">
             Consultas hoje: {dailyCount}
           </span>
         </div>
@@ -312,7 +312,7 @@ export default function Consultant() {
         </div>
       )}
 
-      <div className="bg-si-card rounded-2xl border border-si-border overflow-hidden flex flex-col min-h-[420px] max-h-[70vh]">
+      <div className="bg-si-card rounded-2xl border border-si-border overflow-hidden flex flex-col h-[calc(100dvh-14rem)] min-h-[min(500px,50dvh)] max-h-[calc(100dvh-8rem-env(safe-area-inset-bottom,0px))]">
         <div
           ref={historyRef}
           className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[240px]"
@@ -323,10 +323,10 @@ export default function Consultant() {
               className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[90%] rounded-2xl px-4 py-3 text-sm ${
+                className={`max-w-[85%] rounded-2xl px-5 py-3.5 text-[15px] leading-relaxed ${
                   m.role === 'user'
-                    ? 'bg-blue-600/80 text-si-1 rounded-br-md'
-                    : 'bg-si-over-2 border border-si-border-md text-si-2 rounded-bl-md'
+                    ? 'bg-blue-600 text-white rounded-br-sm shadow-sm'
+                    : 'bg-si-over-2 border border-si-border-md text-si-2 rounded-bl-sm shadow-sm'
                 }`}
               >
                 {m.role === 'user' ? (
@@ -342,29 +342,28 @@ export default function Consultant() {
           ))}
           {sending && (
             <div className="flex justify-start">
-              <div className="rounded-2xl rounded-bl-md px-4 py-3 bg-si-over-2 border border-si-border-md text-si-4 text-sm">
-                Analisando…
+              <div className="rounded-2xl rounded-bl-sm px-5 py-3.5 bg-si-over-2 border border-si-border-md text-si-4 text-[15px] animate-pulse">
+                Analisando sua solicitação...
               </div>
             </div>
           )}
         </div>
 
         <div className="p-3 border-t border-si-border flex flex-wrap gap-2">
-          {PILLS.map((label) => (
-            <button
-              key={label}
-              type="button"
-              onClick={() => setInput(label)}
-              className="text-xs px-3 py-1.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/25 hover:bg-blue-500/25"
-            >
+          {PILLS.map((label) => <button
+                key={label}
+                type="button"
+                onClick={() => setInput(label)}
+                className="text-[13px] px-3.5 py-1.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
+              >
               {label}
             </button>
-          ))}
+          )}
           <button
-            type="button"
-            onClick={() => setShowDecisionForm((v) => !v)}
-            className="text-xs px-3 py-1.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/25 hover:bg-violet-500/25 flex items-center gap-1.5"
-          >
+              type="button"
+              onClick={() => setShowDecisionForm((v) => !v)}
+              className="text-[13px] px-3.5 py-1.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 flex items-center gap-1.5 transition-colors"
+            >
             <Scale className="w-3 h-3" />
             À Vista ou Parcelado?
           </button>

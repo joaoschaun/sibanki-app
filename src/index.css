@@ -163,6 +163,11 @@ body {
   animation-duration: 0.5s;
 }
 
+/* Evita scroll horizontal acidental no app (overflow-x-auto em abas permanece no filho) */
+#root {
+  overflow-x: clip;
+}
+
 /* ── Mobile refinements ───────────────────────────────────── */
 @media (max-width: 639px) {
   .text-3xl { font-size: 1.5rem; }

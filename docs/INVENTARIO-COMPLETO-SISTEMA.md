@@ -831,6 +831,7 @@ Cada mensagem inclui **Ld** (Dias de Liberdade) e **Sg** (Spread Gap) do usuári
   - 24 rotas validadas individualmente (sem erros JS críticos)
   - Testes de features Fase 0-4: gráficos Dashboard, botões OCR/STT/Importar, Filiados, Cripto "Em breve", Backup JSON
   - Projeto `react-smoke` adicionado ao `playwright.config.cjs` (baseURL: staging)
+- **Layout / responsivo (mobile ~320px):** projeto `react-smoke-mobile-layout` (preset Pixel 5) + `tests/react-smoke-mobile-layout.spec.cjs` — valida ausência de overflow horizontal no `documentElement` em rotas críticas; `#root { overflow-x: clip }` em `src/index.css` como barreira global (scroll horizontal intencional permanece em filhos, ex.: abas do Hub de Crédito).
 - **Cronograma de cutover** documentado (`docs/CRONOGRAMA-CUTOVER.md`)
   - Fase A: Staging validado (Semana 1)
   - Fase B: Beta controlado 5-10 usuários (Semana 2)

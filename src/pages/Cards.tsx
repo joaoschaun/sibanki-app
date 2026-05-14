@@ -14,8 +14,7 @@ import {
   ValidationError,
 } from '../services/persistUserData';
 import { Modal } from '../components/ui/Modal';
-import { CreditModuleTabs } from '../components/credit/CreditModuleTabs';
-import { CreditKpiGrid, pressurePillClasses } from '../components/credit/CreditVisuals';
+
 import { CreditCard, Plus, FileText, Trash2, Pencil, ShieldCheck } from 'lucide-react';import type { Card, CardBenefits, CardPurchase } from '../types/userData';
 import {
   getCatalogEntry,
@@ -705,7 +704,7 @@ export default function Cards() {
           </div>
           {faturaCard && (
             <div className="rounded-xl bg-si-bg border border-si-border overflow-hidden">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 border-b border-si-border">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 border-b border-si-border">
                 <div className="text-center">
                   <div className="text-xs text-si-5">Total da fatura</div>
                   <div className="text-lg font-bold text-blue-400">R$ {faturaTotal.toFixed(2)}</div>
@@ -798,7 +797,7 @@ export default function Cards() {
                   ))}
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-si-5 mb-1">Valor (R$)</label>
                   <input
@@ -1054,7 +1053,7 @@ export default function Cards() {
               className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="card-close" className="block text-xs font-medium text-si-5 mb-1">Dia fechamento</label>
               <select
@@ -1127,7 +1126,7 @@ export default function Cards() {
               ))}
             </select>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="card-annual-fee" className="block text-xs font-medium text-si-5 mb-1">Anuidade (R$)</label>
               <input
@@ -1219,7 +1218,7 @@ export default function Cards() {
                 className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="edit-card-close" className="block text-xs font-medium text-si-5 mb-1">Dia fechamento</label>
                 <select
@@ -1292,7 +1291,7 @@ export default function Cards() {
                 ))}
               </select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="edit-card-annual-fee" className="block text-xs font-medium text-si-5 mb-1">Anuidade (R$)</label>
                 <input
@@ -1435,7 +1434,7 @@ export default function Cards() {
             >
               Sugestão rápida (perfil intermediário)
             </button>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 ['Sala VIP', benefitsVipLounge, setBenefitsVipLounge],
                 ['Seguro viagem', benefitsTravelInsurance, setBenefitsTravelInsurance],
@@ -1457,7 +1456,7 @@ export default function Cards() {
                 </label>
               ))}
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-si-5 mb-1">Rede Sala VIP</label>
                 <input
