@@ -394,7 +394,7 @@ export default function Dashboard() {
         />
       )}
 
-      {widgets.passos && (
+      {widgets.passos && primeirosPassos.doneCount < primeirosPassos.steps.length && (
       <div className="bg-si-card rounded-2xl border border-si-border p-6">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div>
