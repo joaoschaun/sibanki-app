@@ -15,6 +15,13 @@ export interface UserData {
   updated?: string;
   finScore?: number;
   avatarURL?: string | null;
+  cadastroCompleto?: {
+    rendaEstimada?: string | number;
+    reservaEstimada?: string | number;
+    criptoEstimada?: string | number;
+    gastosEstimados?: string | number;
+    [key: string]: any;
+  } | null;
   entries?: Entry[];
   accounts?: string[];
   accountBalances?: Record<string, number>;

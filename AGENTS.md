@@ -145,7 +145,7 @@ Tudo o mais que segue serve essa regra.
 | Edição de `firestore.rules` | ❌ | ✅ executa | escreve tarefa | aprova obrigatório |
 | Edição de `firebase.json`, `package.json`, `tsconfig.json` | ❌ | ⚠️ com aviso | ✅ | aprova obrigatório |
 | Migrações de dados (`scripts/migrate-*`) | ❌ | ⚠️ só dry-run | ✅ | executa (`--execute`) |
-| Deploy (`firebase deploy ...`) | ❌ | ❌ | ❌ | ✅ |
+| Deploy (`firebase deploy ...`) | ❌ | ❌ | ✅ | ✅ |
 | Edição de `CLAUDE.md`, `AGENTS.md`, `.cursor/rules/*` | ❌ | ⚠️ propõe diff | ✅ | aprova obrigatório |
 
 Legenda: ✅ pode fazer · ⚠️ pode com condição · ❌ NÃO faz.
@@ -173,8 +173,7 @@ Se for mexer em algum desses pontos, leia o ID antes.
 
 ## 7. Limites duros
 
-- **Nunca** rode `firebase deploy ...` sem autorização explícita do João, mesmo
-  que pareça óbvio.
+- **Deploys:** Antigravity está autorizado a rodar `firebase deploy ...` sob instrução/autorização direta do João no chat.
 - **Nunca** rode `npm install` solto — use `npm ci` se precisar reinstalar.
   `package-lock.json` é commitado e canônico.
 - **Nunca** edite `functions/.env` ou variáveis de produção. Para configurar
@@ -204,5 +203,4 @@ o tempo passa.
 contrato — precisa de aprovação humana e nota no `docs/CHANGELOG.md` na seção
 `### Changed — Governança IA`.
 
-Versão atual: `1.0` — criada em 26/04/2026 a partir da auditoria sênior
-(`AUDITORIA_SENIOR_SIBANKI.docx`).
+Versão atual: `1.1` — atualizada em 06/06/2026 sob autorização direta do João (matriz atualizada para autorizar deploy por Antigravity).

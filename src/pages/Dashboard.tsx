@@ -186,7 +186,7 @@ export default function Dashboard() {
     ),
   }), [freedom, spread, catTotals, budgetMap]);
 
-  const userPhone = (financialProfile as Record<string, unknown>)?.whatsappPhone as string | undefined;
+  const userPhone = (financialProfile as unknown as Record<string, unknown>)?.whatsappPhone as string | undefined;
   const sentinela = useSentinelaGeo(sentinelaSnapshot, userPhone);
 
   const alertas = useMemo(() => {
@@ -335,7 +335,19 @@ export default function Dashboard() {
         goals={goals}
         creditObligations={creditObligations}
         investments={investments}
-        financialProfile={financialProfile as Record<string, unknown> | null}
+        financialProfile={financialProfile as unknown as Record<string, unknown> | null}
+      />
+
+      <SovereigntyHero
+        userName={user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
+        score={score}
+        freedom={freedom}
+        spread={spread}
+        receitaMes={receitaMes}
+        despesaMes={despesaMes}
+        saldoMes={saldoMes}
+        varReceita={varReceita}
+        varDespesa={varDespesa}
       />
 
       <SibcoinMissionBanner eventType="login_streak" />
@@ -534,18 +546,6 @@ export default function Dashboard() {
           </div>
         </section>
       )}
-
-      <SovereigntyHero
-        userName={user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
-        score={score}
-        freedom={freedom}
-        spread={spread}
-        receitaMes={receitaMes}
-        despesaMes={despesaMes}
-        saldoMes={saldoMes}
-        varReceita={varReceita}
-        varDespesa={varDespesa}
-      />
 
       {/* ── Spread Gap — card dedicado ───────────────────────────────── */}
       <SpreadGapCard spread={spread} />

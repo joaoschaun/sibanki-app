@@ -1,4 +1,4 @@
-﻿/**
+/**
  * InsightDoDia — Insight proativo gerado pelo Gemini
  *
  * Acao 18 (29/03/2026): respeita o Modo Sugestivo configurado pelo usuario.
@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSuggestiveMode } from '../../hooks/useSuggestiveMode';
 import { Link } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
-import { Loader2, Lightbulb } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { functions } from '../../firebase';
 import type { Card, Entry, Goal, Recurrent } from '../../types/userData';
 import type { OpenFinanceIdentitySnapshot } from '../../types/openFinance';

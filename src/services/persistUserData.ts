@@ -4,9 +4,9 @@ import {
   writeBatch, runTransaction,
 } from 'firebase/firestore';
 import { mergeInlineAndOverflowEntries } from '../utils/entryUtils';
-import { calculateFinScore } from '../utils/calculateScore';
-import { getCycleKeyForPurchaseDate, expandInstallments } from '../utils/cardCycleUtils';
 import type { CardPurchaseNew } from '../utils/cardCycleUtils';
+import { calculateFinScore } from '../utils/calculateScore';
+
 import {
   validateEntry,
   validateCard,

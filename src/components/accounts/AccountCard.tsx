@@ -1,5 +1,7 @@
 import { Smartphone, List, Pencil, Trash2, AlertTriangle, TrendingUp, TrendingDown, Minus, Wifi, WifiOff, Zap } from 'lucide-react';
-import { cn } from '../../lib/utils';
+export function cn(...classes: (string | undefined | null | false)[]) {
+  return classes.filter(Boolean).join(' ');
+}
 import { BankLogo } from '../banks/BankLogo';
 import type { BankData } from '../banks/bankData';
 
@@ -17,7 +19,7 @@ interface AccountCardProps {
   name: string;
   balance: number;
   corHex: string | null;
-  bank: BankTheme | null;
+  bank: BankTheme | BankData | null;
   isEmpty: boolean;
   /** Variação líquida do mês corrente (receitas - despesas) */
   monthlyDelta?: number;
@@ -65,9 +67,9 @@ export function AccountCard({
   const colorClass = corHex ? '' : 'bg-blue-500/20 text-blue-400';
   const isOverdraft = !isEmpty && balance < 0;
 
-  const bankPrimary = bank ? ((bank as unknown as BankData).primary ?? bank.bg) : null;
-  const bankSecondary = bank ? ((bank as unknown as BankData).secondary ?? bank.bg) : null;
-  const bankText = bank ? ((bank as unknown as BankData).text ?? bank.text) : null;
+  const bankPrimary = bank ? ((bank as any).primary ?? (bank as any).bg) : null;
+  const bankSecondary = bank ? ((bank as any).secondary ?? (bank as any).bg) : null;
+  const bankText = bank ? ((bank as any).text) : null;
 
   const bankStyle = bank
     ? {

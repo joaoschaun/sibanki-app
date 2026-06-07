@@ -162,6 +162,56 @@ describe('calculateDaysOfFreedom', () => {
     expect(result.dailyBurnRate).toBe(0);
     expect(result.days).toBe(99999);
   });
+
+  it('usa reservas estimadas do onboarding como fallback se a liquidez real for zero', () => {
+    const result = calculateDaysOfFreedom({
+      accountBalances: {},
+      investments: [],
+      entries: [expense(100, 5), expense(100, 35), expense(100, 65)],
+      cadastroCompleto: {
+        reservaEstimada: 10_000,
+        criptoEstimada: 5_000,
+        gastosEstimados: 3_000,
+      },
+    });
+    expect(result.totalLiquidity).toBe(15_000);
+    expect(result.isEstimated).toBe(true);
+    expect(result.dataConfidence).toBe('baixa');
+  });
+
+  it('usa gastos estimados do onboarding como fallback se as despesas reais forem zero', () => {
+    const result = calculateDaysOfFreedom({
+      accountBalances: { 'Conta': 10_000 },
+      investments: [],
+      entries: [],
+      cadastroCompleto: {
+        reservaEstimada: 5_000,
+        criptoEstimada: 2_000,
+        gastosEstimados: 1_000,
+      },
+    });
+    expect(result.totalLiquidity).toBe(10_000);
+    expect(result.dailyBurnRate).toBeCloseTo(33.33, 1);
+    expect(result.isEstimated).toBe(true);
+    expect(result.dataConfidence).toBe('baixa');
+  });
+
+  it('dados reais assumem precedência sobre as estimativas do onboarding', () => {
+    const entries = Array.from({ length: 90 }, (_, i) => expense(166.66, i % 90));
+    const result = calculateDaysOfFreedom({
+      accountBalances: { 'Itaú': 30_000 },
+      investments: [],
+      entries,
+      cadastroCompleto: {
+        reservaEstimada: 100_000,
+        criptoEstimada: 50_000,
+        gastosEstimados: 10_000,
+      },
+    });
+    expect(result.totalLiquidity).toBe(30_000);
+    expect(result.dailyBurnRate).toBeCloseTo(166.66, 1);
+    expect(result.isEstimated).toBe(false);
+  });
 });
 
 // ─── 2. calculateSpreadGap ────────────────────────────────────────────────────
@@ -255,7 +305,7 @@ describe('calculateSpreadGap', () => {
 
   it('SOV-5: cartão coberto por obligation NÃO é contado como rotativo extra', () => {
     const cards: Card[] = [
-      { id: 1, name: 'Nubank', currentBill: 2_000, limite: 5_000 } as Card,
+      { id: 1, name: 'Nubank', currentBill: 2_000, limite: 5_000 } as unknown as Card,
     ];
     const obligations: CreditObligation[] = [
       { ...baseObligation, label: 'Nubank', amount: 2_000, interestRatePct: 12 },
@@ -271,7 +321,7 @@ describe('calculateSpreadGap', () => {
 
   it('SOV-5: match exato — "Nubank" não casa com obligation "Cartão Itaú"', () => {
     const cards: Card[] = [
-      { id: 1, name: 'Nubank', currentBill: 2_000, limite: 5_000 } as Card,
+      { id: 1, name: 'Nubank', currentBill: 2_000, limite: 5_000 } as unknown as Card,
     ];
     const obligations: CreditObligation[] = [
       { ...baseObligation, label: 'Cartão Itaú', amount: 1_000, interestRatePct: 10 },

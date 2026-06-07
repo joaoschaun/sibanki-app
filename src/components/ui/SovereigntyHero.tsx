@@ -32,6 +32,7 @@ export type FreedomResult = {
   status: FreedomStatus;
   dataConfidence?: 'alta' | 'media' | 'baixa';
   verifiedExpensesPct?: number;
+  isEstimated?: boolean;
 };
 
 export type SpreadResult = {
@@ -170,7 +171,13 @@ export function SovereigntyHero({
               {freedom.verifiedExpensesPct}% das despesas verificadas pelo banco
             </span>
           )}
-          {freedom.dataConfidence === 'baixa' && (
+          {freedom.isEstimated && (
+            <span className="mt-2 flex items-center gap-1 text-[11px] text-amber-400/80">
+              <AlertCircle className="w-3 h-3 text-amber-500" />
+              baseado em estimativas do cadastro — adicione contas/lançamentos para precisão
+            </span>
+          )}
+          {!freedom.isEstimated && freedom.dataConfidence === 'baixa' && (
             <span className="mt-2 flex items-center gap-1 text-[11px] text-si-5">
               <AlertCircle className="w-3 h-3 text-amber-400/60" />
               baseado em dados manuais — conecte seu banco para maior precisão

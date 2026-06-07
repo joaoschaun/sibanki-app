@@ -10,7 +10,6 @@
  *
  * Proporção padrão de cartão: 85.6mm × 54mm = 1.586:1
  */
-import { useState } from 'react';
 import { BankLogo } from './BankLogo';
 import { identifyBank } from './bankData';
 
@@ -26,7 +25,6 @@ function VisaLogo({ size = 44 }: { size?: number }) {
 }
 
 function MastercardLogo({ size = 44 }: { size?: number }) {
-  const r = size * 0.4;
   return (
     <svg width={size} height={size * 0.65} viewBox="0 0 44 28">
       <circle cx="15" cy="14" r="13" fill="#EB001B" />

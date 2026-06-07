@@ -44,6 +44,8 @@ export interface DaysOfFreedomResult {
   dataConfidence: 'alta' | 'media' | 'baixa';
   /** Percentual das despesas recentes confirmadas via Open Finance (0–100) */
   verifiedExpensesPct: number;
+  /** Indica se os dados foram estimados a partir do onboarding */
+  isEstimated?: boolean;
 }
 
 export type SpreadVerdict =
@@ -114,6 +116,13 @@ export function calculateDaysOfFreedom(params: {
   entries: Entry[];
   /** Taxa de rendimento mensal estimada dos investimentos líquidos (decimal, ex: 0.01 = 1%) */
   investmentYieldMonthly?: number;
+  /** Dados de estimativas do onboarding */
+  cadastroCompleto?: {
+    rendaEstimada?: string | number;
+    reservaEstimada?: string | number;
+    criptoEstimada?: string | number;
+    gastosEstimados?: string | number;
+  } | null;
 }): DaysOfFreedomResult {
   const {
     accountBalances,
@@ -121,6 +130,7 @@ export function calculateDaysOfFreedom(params: {
     investments,
     entries,
     investmentYieldMonthly = 0.01,
+    cadastroCompleto = null,
   } = params;
 
   // 1. Liquidez em contas (apenas as incluídas na soma)
@@ -155,7 +165,19 @@ export function calculateDaysOfFreedom(params: {
     })
     .reduce((sum, inv) => sum + (Number(inv.atual ?? inv.valor) || 0), 0);
 
-  const totalLiquidity = accountLiquidity + liquidInvestments;
+  const realLiquidity = accountLiquidity + liquidInvestments;
+
+  // Aplicação da lógica de fallback de liquidez
+  let totalLiquidity = realLiquidity;
+  let isLiquidityEstimated = false;
+
+  const reservaEstimadaVal = Number(cadastroCompleto?.reservaEstimada) || 0;
+  const criptoEstimadaVal = Number(cadastroCompleto?.criptoEstimada) || 0;
+
+  if (realLiquidity <= 0 && (reservaEstimadaVal > 0 || criptoEstimadaVal > 0)) {
+    totalLiquidity = reservaEstimadaVal + criptoEstimadaVal;
+    isLiquidityEstimated = true;
+  }
 
   // 3. Burn rate: média dos últimos 3 meses de despesas (excluindo transfers e pendentes)
   const now = new Date();
@@ -184,7 +206,17 @@ export function calculateDaysOfFreedom(params: {
   // Calcula quantos meses distintos existem nos dados (mínimo 1)
   const distinctMonths = new Set(relevantExpenses.map((e) => (e.date || '').slice(0, 7))).size || 1;
   const effectiveMonths = Math.min(distinctMonths, 3);
-  const avgMonthlyExpense = totalExpenses3m / effectiveMonths;
+  const avgMonthlyExpenseReal = totalExpenses3m / effectiveMonths;
+
+  // Aplicação da lógica de fallback de gastos fixos
+  let avgMonthlyExpense = avgMonthlyExpenseReal;
+  let isExpensesEstimated = false;
+
+  const gastosEstimadosVal = Number(cadastroCompleto?.gastosEstimados) || 0;
+  if (avgMonthlyExpenseReal <= 0 && gastosEstimadosVal > 0) {
+    avgMonthlyExpense = gastosEstimadosVal;
+    isExpensesEstimated = true;
+  }
 
   // SOV-3 (auditoria 26/04/2026): se há menos de 2 meses distintos OU menos
   // de 30 lançamentos, o burn rate é estatisticamente frágil — Ld pode ficar
@@ -193,7 +225,10 @@ export function calculateDaysOfFreedom(params: {
   // provisório.
   const hasEnoughHistory = distinctMonths >= 2 && relevantExpenses.length >= 30;
   let dataConfidence: 'alta' | 'media' | 'baixa';
-  if (!hasEnoughHistory) {
+
+  if (isLiquidityEstimated || isExpensesEstimated) {
+    dataConfidence = 'baixa';
+  } else if (!hasEnoughHistory) {
     dataConfidence = 'baixa';
   } else if (verifiedExpensesPct >= 70) {
     dataConfidence = 'alta';
@@ -208,7 +243,7 @@ export function calculateDaysOfFreedom(params: {
   //    - + Soma dos proventos declarados (dividendos de FIIs, JCP de ações, etc.)
   //    SOV-7 (auditoria 26/04/2026): dividendos antes não contavam — sub-estimava
   //    renda passiva especialmente para usuários com FIIs (target Sibanki).
-  const yieldFromLiquid = liquidInvestments * investmentYieldMonthly;
+  const yieldFromLiquid = (isLiquidityEstimated ? 0 : liquidInvestments) * investmentYieldMonthly;
   const declaredProventos = investments.reduce((s, inv) => {
     const p = Number(inv.proventosMensais) || 0;
     return p > 0 ? s + p : s;
@@ -240,6 +275,7 @@ export function calculateDaysOfFreedom(params: {
     coverageMonths,
     dataConfidence,
     verifiedExpensesPct,
+    isEstimated: isLiquidityEstimated || isExpensesEstimated,
   };
 }
 

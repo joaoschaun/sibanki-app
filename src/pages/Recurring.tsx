@@ -5,7 +5,7 @@ import { DEFAULT_CATEGORIES, DEFAULT_ACCOUNTS } from '../constants/defaults';
 import { Modal } from '../components/ui/Modal';
 import { Plus, Trash2, PlayCircle, RefreshCw } from 'lucide-react';
 import { EmptyState } from '../components/ui/EmptyState';
-import { PageTransition } from '../components/ui/PageTransition';
+
 
 const FREQ_OPTIONS = [
   { value: 'mensal', label: 'Mensal' },
@@ -195,7 +195,7 @@ export default function Recurring() {
             title="Nenhum recorrente cadastrado"
             description="Cadastre lançamentos fixos como aluguel, assinaturas e salário. Eles são gerados automaticamente todo mês."
             actionLabel="+ Novo recorrente"
-            onAction={() => setAddOpen(true)}
+            onAction={() => setModalOpen(true)}
           />
         ) : (
           <div className="divide-y divide-white/5">

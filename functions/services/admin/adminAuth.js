@@ -30,19 +30,10 @@ const admin = require("firebase-admin");
 //   firebase functions:secrets:set ADMIN_EMAILS
 //   (informe valor no formato: "email1@x.com,email2@x.com")
 function loadAdminEmails() {
-  const fromEnv = String(process.env.ADMIN_EMAILS || "")
+  return String(process.env.ADMIN_EMAILS || "")
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
-  if (fromEnv.length > 0) return fromEnv;
-
-  // Fallback de bootstrap — usado APENAS quando ADMIN_EMAILS não está setado.
-  // Mantém o owner com acesso enquanto a env não é configurada em produção.
-  console.warn(
-    "[adminAuth] ADMIN_EMAILS env não configurada. Usando fallback bootstrap. " +
-    "Configure via `firebase functions:secrets:set ADMIN_EMAILS`."
-  );
-  return ["jscharnberg@gmail.com", "admin@sibanki.com.br"];
 }
 
 const ADMIN_EMAILS = loadAdminEmails();

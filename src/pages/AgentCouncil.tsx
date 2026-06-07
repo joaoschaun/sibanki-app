@@ -58,7 +58,7 @@ const AGENT_CONFIG: Record<string, { icon: typeof Shield; label: string; color: 
   familiar: { icon: Users, label: 'Familiar', color: 'text-pink-400', bgColor: 'bg-pink-500/10 border-pink-500/20' },
 };
 
-function StatusBadge({ value, type }: { value: string; type: 'alert' | 'opportunity' | 'habits' | 'family' }) {
+function StatusBadge({ value, type: _type }: { value: string; type: 'alert' | 'opportunity' | 'habits' | 'family' }) {
   const colors: Record<string, string> = {
     verde: 'bg-emerald-500/20 text-emerald-400',
     amarelo: 'bg-amber-500/20 text-amber-400',
@@ -149,7 +149,7 @@ export default function AgentCouncil() {
 - Top categorias despesa: ${topCats || 'nenhuma'}
 - Orçamentos: ${Object.keys(budgets || {}).length} categorias
 - Dias de liberdade (Ld): ${freedom?.days ?? '?'} dias (${freedom?.status ?? '?'})
-- Spread Gap (Sg): ${spread?.spreadPct != null ? (spread.spreadPct * 100).toFixed(2) + '%' : '?'} (${spread?.verdict ?? '?'})
+- Spread Gap (Sg): ${spread?.spreadGap != null ? (spread.spreadGap * 100).toFixed(2) + '%' : '?'} (${spread?.verdict ?? '?'})
 - Total de lançamentos no mês: ${monthEntries.length}
 - Lançamentos totais: ${(entries || []).length}`;
   }, [entries, accounts, accountBalances, goals, investments, budgets, cards, creditObligations, intelligence]);

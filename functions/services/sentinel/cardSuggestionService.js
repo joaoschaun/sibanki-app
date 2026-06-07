@@ -9,6 +9,8 @@ function determineIntents(scenario) {
   if (["electronics_store", "jewelry_store"].includes(scenario)) out.push("electronics");
   if (["shopping_mall", "clothing_store", "furniture_store"].includes(scenario)) out.push("retail");
   if (["supermarket", "food_venue"].includes(scenario)) out.push("dining");
+  if (["airport"].includes(scenario)) out.push("travel");
+  if (["gas_station"].includes(scenario)) out.push("automotive");
   if (out.length === 0) out.push("general");
   return out;
 }
@@ -67,6 +69,19 @@ function scoreCard(card, intents) {
     } else if (b.pointsProgram && !reason) {
       criteria = "Pontos";
       reason = `Programa de pontos (${b.pointsProgram}) pode acumular em gastos recorrentes.`;
+    }
+  }
+
+  if (intents.includes("travel")) {
+    if (b.vipLounge) pick(30, "Sala VIP", "Acesso à Sala VIP disponível — excelente para aguardar o voo com conforto.");
+    else if (b.travelInsurance) pick(20, "Seguro Viagem", "Seguro viagem ativo neste cartão.");
+  }
+
+  if (intents.includes("automotive")) {
+    score += cb * 4;
+    if (cb > 0 && !reason) {
+      criteria = "Cashback";
+      reason = `Cashback de ${cb}% compensa gastos elevados com combustível.`;
     }
   }
 

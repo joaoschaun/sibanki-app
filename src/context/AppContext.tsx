@@ -45,7 +45,7 @@ export type DataFreshness = 'fresh' | 'stale' | 'none';
 /** < 6 h → fresh; > 6 h mas conectado → stale; não conectado → none */
 const OF_STALE_HOURS = 6;
 
-interface AppContextValue {
+export interface AppContextValue {
   // ── Auth ──────────────────────────────────────────────────────────────────
   user: User | null;
   authLoading: boolean;
@@ -65,6 +65,11 @@ interface AppContextValue {
     temChequeEspecial?: boolean;
     chequeEspecialLimite?: number;
     chequeEspecialJurosPct?: number;
+    agency?: string;
+    accountNumber?: string;
+    bankCode?: string;
+    currency?: string;
+    ofStatus?: 'nao-conectado' | 'ativo' | 'erro' | 'expirado';
     source?: string;
     pluggyAccountId?: string;
     pluggyItemId?: string;

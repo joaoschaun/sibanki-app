@@ -81,10 +81,11 @@ export function IntelligenceProvider({ children }: { children: ReactNode }) {
     dataFreshness,
     loading,
     authLoading,
+    data,
   } = useAppContext();
 
   // Ld — Dias de Liberdade
-  // Memoizado nas dependências reais: entries, investments, saldos
+  // Memoizado nas dependências reais: entries, investments, saldos e cadastroCompleto estimado
   const freedom = useMemo(
     () =>
       calculateDaysOfFreedom({
@@ -92,9 +93,10 @@ export function IntelligenceProvider({ children }: { children: ReactNode }) {
         accountMeta,
         investments,
         entries,
+        cadastroCompleto: data?.cadastroCompleto,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [entries, investments, accountBalances, accountMeta],
+    [entries, investments, accountBalances, accountMeta, data?.cadastroCompleto],
   );
 
   // Sg — Spread Gap

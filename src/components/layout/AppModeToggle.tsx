@@ -20,8 +20,16 @@ export function AppModeToggle() {
   const goVision = () => {
     closeConsultantDrawer();
     if (onConsultorPage) {
-      const target = lastVisionPath && lastVisionPath !== '/consultor-ia' ? lastVisionPath : '/dashboard';
+      const target =
+        lastVisionPath &&
+        lastVisionPath !== '/consultor-ia' &&
+        lastVisionPath !== '/' &&
+        lastVisionPath !== '/login'
+          ? lastVisionPath
+          : '/dashboard';
       navigate(target);
+    } else if (location.pathname !== '/dashboard') {
+      navigate('/dashboard');
     }
   };
 

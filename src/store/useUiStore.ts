@@ -1,4 +1,4 @@
-﻿/**
+/**
  * useUiStore — estado global de UI via Zustand.
  *
  * Antes havia conflito: App.tsx usava useState local para o sidebar enquanto
@@ -30,7 +30,7 @@ export const useUiStore = create<UiState>((set) => ({
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
   setActiveSection: (section) => set({ activeSection: section }),
   syncRoute: (pathname) => {
-    if (pathname === '/consultor-ia') return;
+    if (pathname === '/consultor-ia' || pathname === '/' || pathname === '/login') return;
     set({ lastVisionPath: pathname });
   },
   openConsultantDrawer: () => set({ consultantDrawerOpen: true }),

@@ -4,7 +4,7 @@ import { auth } from '../../firebase';
 import { signOut } from 'firebase/auth';
 // ✅ FIX: Removido useAuth + useFinancialData duplicados → usa AppContext (único listener Firestore)
 import { useAppContext } from '../../context/AppContext';
-import { Menu, Sun, Moon, Bell, User, LogOut, FileBarChart, Trophy, Calendar, MessageSquarePlus } from 'lucide-react';
+import { Menu, Sun, Moon, Bell, User, LogOut, FileBarChart, Calendar, MessageSquarePlus } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import { FeedbackModal } from '../ui/FeedbackModal';
 import { AppModeToggle } from './AppModeToggle';
@@ -118,13 +118,13 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
               >
                 <FileBarChart className="w-4 h-4" /> Relatórios
               </Link>
-              <Link
+              {/* <Link
                 to="/conquistas"
                 onClick={() => setDropdownOpen(false)}
                 className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-si-3 hover:bg-si-over-2"
               >
                 <Trophy className="w-4 h-4" /> Conquistas
-              </Link>
+              </Link> */}
               <Link
                 to="/calendario"
                 onClick={() => setDropdownOpen(false)}

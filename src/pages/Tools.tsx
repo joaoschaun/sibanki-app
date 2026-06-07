@@ -193,7 +193,6 @@ function SimFgts() {
   const [result,   setResult]   = useState<ReturnType<typeof analyzeFgtsAmortization> | null>(null);
 
   const fmt = (v: number) => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '%';
 
   function simulate() {
     const r = analyzeFgtsAmortization({

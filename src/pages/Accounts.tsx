@@ -15,7 +15,6 @@ import { AccountCard } from '../components/accounts/AccountCard';
 import { BankSimulator } from '../components/accounts/BankSimulator';
 import { AccountsHeader } from '../components/accounts/AccountsHeader';
 import { identifyBank } from '../components/banks/bankData';
-import type { BankTheme } from '../components/accounts/AccountCard';
 
 // ==========================================
 // Constantes locais da página
@@ -554,8 +553,8 @@ export default function Accounts() {
          balance={extratoAccount ? (accountBalances[extratoAccount] ?? 0) : 0}
          entries={entries}
          userName={user?.displayName || data?.name || null}
-         bank={extratoAccount ? identifyBank(extratoAccount) : null}
-      />
+         bank={extratoAccount ? (identifyBank(extratoAccount) as any) : null}
+       />
 
       <Modal open={!!editAccount} onClose={() => setEditAccount(null)} title="Configurações Locais">
         {editAccount && (

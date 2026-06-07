@@ -142,7 +142,7 @@ export function getCurrentCycle(
 export function getCycleKeyForPurchaseDate(
   purchaseDate: string,
   closeDay: number,
-  dueDay: number,
+  _dueDay: number,
 ): string {
   const d = parseYmd(purchaseDate);
   const year  = d.getFullYear();

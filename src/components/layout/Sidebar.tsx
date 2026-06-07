@@ -1,16 +1,13 @@
 import { useEffect, useState } from 'react';
 import {
-  LayoutDashboard,
   Receipt,
   TrendingUp,
-  MessageCircle,
   Wallet,
   CreditCard,
   Target,
   PieChart,
   FileBarChart,
   Calendar,
-  ShoppingBag,
   User,
   Settings,
   MoreHorizontal,
@@ -69,7 +66,7 @@ const secondaryNav: NavItem[] = [
   { icon: CreditCard,   label: 'Crédito',      path: '/credito' },
   { icon: PieChart,     label: 'Orçamento',    path: '/orcamento' },
   { icon: Target,       label: 'Metas',        path: '/planejamento' },
-  { icon: ShoppingBag,  label: 'Loja',         path: '/loja' },
+  // { icon: ShoppingBag,  label: 'Loja',         path: '/loja' },
   { icon: Flame,        label: 'FIRE',          path: '/fire' },
   { icon: FileText,     label: 'Relatório IR',  path: '/relatorio-ir' },
   { icon: FileBarChart, label: 'Relatórios',   path: '/relatorios' },
@@ -85,9 +82,9 @@ const bottomNav: NavItem[] = [
 const secondaryPaths = secondaryNav.map((i) => i.path);
 
 export function Sidebar({
-  userName,
+  userName: _userName,
   userEmail: _userEmail,
-  avatarURL,
+  avatarURL: _avatarURL,
   score: _score,
   collapsed,
   openGroup: _openGroup,
@@ -141,7 +138,6 @@ export function Sidebar({
   const iconCls = (active: boolean) =>
     cn('w-3.5 h-3.5 shrink-0', active ? 'text-si-1' : '');
 
-  const initials = (userName || 'U').slice(0, 2).toUpperCase();
 
   return (
     <aside
@@ -159,13 +155,16 @@ export function Sidebar({
         )}
       >
         {/* Brand logo (varia exclusivamente via Tailwind dark mode) */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent: collapsed ? 'center' : 'flex-start', flexShrink:0, width: collapsed ? '40px' : 'auto', height: '40px' }}>
+        <Link
+          to="/dashboard"
+          style={{ display:'flex', alignItems:'center', justifyContent: collapsed ? 'center' : 'flex-start', flexShrink:0, width: collapsed ? '40px' : 'auto', height: '40px' }}
+        >
           <img
             src="/logo-dark.png"
             alt="Sibanki"
             style={{ maxHeight:'100%', maxWidth:'100%', objectFit:'contain', display:'block', transition:'transform 0.2s', opacity: collapsed ? 0 : 1 }}
           />
-        </div>
+        </Link>
 
 
       </div>
@@ -197,7 +196,7 @@ export function Sidebar({
         </div>
 
         {/* ── Amigos (social finance) ───────────────────────────────────── */}
-        <div className="mt-3 pt-3 border-t border-white/[0.06]">
+        <div className="mt-3 pt-3 border-t border-white/[0.06] hidden">
           {!collapsed && (
             <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-blue-500/60 px-3 mb-1.5">Amigos</p>
           )}

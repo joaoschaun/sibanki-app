@@ -1,12 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { useUiStore } from '../../store/useUiStore';
 import { functions } from '../../firebase';
 import { httpsCallable } from 'firebase/functions';
 import { buildFinancialContextString } from '../../utils/consultantContext';
-import { analyzeInstallmentDecision } from '../../utils/decisionEngine';
-import { MessageCircle, Send, AlertTriangle, Scale, Lock, X } from 'lucide-react';
+import { MessageCircle, Send, AlertTriangle, Lock, X } from 'lucide-react';
 import { trackPlatformEvent } from '../../services/platformEvents';
 import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 
@@ -16,7 +14,7 @@ interface ChatMessage {
   time: number;
 }
 
-const CONSULTOR_DAILY_COUNT_KEY = 'sibanki_consultor_daily_count';
+
 
 function formatReply(raw: string): string {
   let s = raw.replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -54,7 +52,6 @@ export function ConsultantDrawer() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dailyCount, setDailyCount] = useState(0);
   const historyRef = useRef<HTMLDivElement>(null);
   const openedTrackedRef = useRef(false);
 
@@ -70,19 +67,6 @@ export function ConsultantDrawer() {
     }
   }, [messages, consultantDrawerOpen]);
 
-  useEffect(() => {
-    try {
-      const today = new Date().toISOString().slice(0, 10);
-      const raw = localStorage.getItem(CONSULTOR_DAILY_COUNT_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as { date?: string; count?: number };
-      if (parsed?.date === today && typeof parsed.count === 'number') {
-        setDailyCount(parsed.count);
-      }
-    } catch {
-      // ignora erro
-    }
-  }, []);
 
   useEffect(() => {
     if (!user || dataLoading || !consultantDrawerOpen || openedTrackedRef.current) return;
@@ -106,7 +90,6 @@ export function ConsultantDrawer() {
     setError(null);
     setMessages((prev) => [...prev, { role: 'user', content: txt, time: Date.now() }]);
     setSending(true);
-    const startedAt = Date.now();
 
     try {
       const contextStr = buildFinancialContextString({
@@ -124,15 +107,6 @@ export function ConsultantDrawer() {
       const rawReply = (res?.data?.reply ?? '').trim() || 'Sem resposta.';
       const reply = formatReply(rawReply);
       setMessages((prev) => [...prev, { role: 'ai', content: reply, time: Date.now() }]);
-      
-      setDailyCount((c) => {
-        const next = c + 1;
-        try {
-          const today = new Date().toISOString().slice(0, 10);
-          localStorage.setItem(CONSULTOR_DAILY_COUNT_KEY, JSON.stringify({ date: today, count: next }));
-        } catch {}
-        return next;
-      });
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message ?? 'Erro ao conectar. Tente novamente.';
       setMessages((prev) => [

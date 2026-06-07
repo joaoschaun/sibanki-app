@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
+
 import { useAppContext } from '../context/AppContext';
 import { EmptyState } from '../components/ui/EmptyState';
 import { CreditCardVisual } from '../components/banks/CreditCardVisual';
@@ -61,7 +61,7 @@ function getDiasParaFecha(card: Card): number {
 }
 
 export default function Cards() {
-  const { user, cards, entries, categories, financialProfile, creditObligations, loading } = useAppContext();
+  const { user, cards, entries, categories, loading } = useAppContext();
   const [modalOpen, setModalOpen] = useState(false);
   const [name, setName] = useState('');
   const [limit, setLimit] = useState('');
@@ -479,7 +479,6 @@ export default function Cards() {
 
   return (
     <div className="space-y-8">
-      <CreditModuleTabs />
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
@@ -511,54 +510,7 @@ export default function Cards() {
         </div>
       </div>
 
-      <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h3 className="font-semibold text-si-1">Resumo de crédito</h3>
-            <p className="text-si-5 text-sm mt-1">
-              Esta página fica focada na operação dos cartões. A visão consolidada de crédito está no Hub.
-            </p>
-          </div>
-          <span className={`px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${pressurePillClasses(financialProfile.credit.pressureLevel)}`}>
-            pressão {financialProfile.credit.pressureLevel}
-          </span>
-        </div>
 
-        <CreditKpiGrid
-          items={[
-            {
-              label: 'Limite total',
-              value: `R$ ${financialProfile.credit.totalCardLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-              toneClassName: 'text-blue-400',
-            },
-            {
-              label: 'Uso estimado',
-              value: `${financialProfile.credit.cardUtilizationPct.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}%`,
-            },
-            {
-              label: 'Faturas em 7 dias',
-              value: `R$ ${financialProfile.credit.dueSoonAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-              toneClassName: 'text-amber-400',
-            },
-            {
-              label: 'Obrigações abertas',
-              value: String(creditObligations.filter((obligation) => obligation.status !== 'paga').length),
-            },
-          ]}
-        />
-
-        <div className="flex items-center gap-3 flex-wrap text-sm">
-          <Link to="/credito/visao-geral" className="text-blue-400 hover:text-blue-300 underline">
-            Abrir visão consolidada
-          </Link>
-          <Link to="/credito/emprestimos" className="text-si-4 hover:text-si-2 underline">
-            Ver empréstimos e financiamentos
-          </Link>
-          <Link to="/consultor-ia" className="text-si-4 hover:text-si-2 underline">
-            Pedir plano com IA
-          </Link>
-        </div>
-      </section>
 
       {error && !modalOpen && editCardId == null && deleteCardId == null && benefitsCardId == null && lancarCardId == null && !importOpen && (
         <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3 text-rose-400 text-sm flex items-center justify-between">

@@ -135,11 +135,6 @@ export default function Casal() {
     setReceivedInvite(null);
   }
 
-  async function handleCancelInvite() {
-    if (!sentInvite) return;
-    await deleteDoc(doc(db, 'invites', sentInvite.id));
-    setSentInvite(null);
-  }
 
   async function handleDesvincular() {
     if (!couple || !uid) return;

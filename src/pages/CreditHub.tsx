@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { ComingSoonBadge } from '../components/ui/ComingSoonBadge';
-import type { CreditAccount, CreditObligation, CreditSnapshot } from '../types/userData';
+import type { CreditAccount, CreditSnapshot } from '../types/userData';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmtBRL = (v: number) =>

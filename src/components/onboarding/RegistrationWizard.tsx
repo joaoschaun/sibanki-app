@@ -13,11 +13,11 @@ import { OpenFinanceConnect } from '../openFinance/OpenFinanceConnect';
 
 // ─── Steps ────────────────────────────────────────────────────────────────────
 const STEPS = [
-  { id: 'identidade', label: 'Identidade',         icon: User      },
+  { id: 'bancos',     label: 'Conectar Bancos',     icon: Building2 },
+  { id: 'identidade', label: 'Identidade',          icon: User      },
   { id: 'contato',    label: 'Contato',             icon: Phone     },
   { id: 'financeiro', label: 'Perfil Financeiro',   icon: Briefcase },
   { id: 'objetivo',   label: 'Objetivos',           icon: Target    },
-  { id: 'bancos',     label: 'Conectar Bancos',     icon: Building2 },
   { id: 'valores',    label: 'Dinheiro Esquecido',  icon: Banknote  },
 ] as const;
 
@@ -28,14 +28,6 @@ const PERFIS = [
   { id: 'empresario', label: 'Empresário' },
   { id: 'estudante',  label: 'Estudante'  },
   { id: 'outro',      label: 'Outro'      },
-];
-
-const RENDAS = [
-  { id: 'ate2k',    label: 'Até R$ 2.000'       },
-  { id: '2k5k',     label: 'R$ 2.000 – R$ 5.000' },
-  { id: '5k10k',    label: 'R$ 5.000 – R$ 10.000' },
-  { id: '10k20k',   label: 'R$ 10.000 – R$ 20.000' },
-  { id: 'acima20k', label: 'Acima de R$ 20.000'  },
 ];
 
 const OBJETIVOS = [
@@ -65,12 +57,20 @@ interface WizardForm {
   nome: string; apelido: string; nasc: string; cpf: string; sexo: string;
   tel: string; cep: string; estado: string; cidade: string;
   perfil: string; renda: string; obj: string[]; pesq: boolean;
+  rendaEstimada: string;
+  reservaEstimada: string;
+  criptoEstimada: string;
+  gastosEstimados: string;
 }
 
 const INITIAL_FORM: WizardForm = {
   nome: '', apelido: '', nasc: '', cpf: '', sexo: '',
   tel: '', cep: '', estado: '', cidade: '',
   perfil: '', renda: '', obj: [], pesq: false,
+  rendaEstimada: '',
+  reservaEstimada: '',
+  criptoEstimada: '',
+  gastosEstimados: '',
 };
 
 type ValoresResult = {
@@ -95,6 +95,63 @@ export function RegistrationWizard({ open, onClose, onComplete }: Props) {
   // Valores a Receber
   const [valoresLoading, setValoresLoading] = useState(false);
   const [valoresResult, setValoresResult]   = useState<ValoresResult>(null);
+
+  // Ld calculations
+  const tradicionalVal = Number(form.reservaEstimada || 0);
+  const criptoVal = Number(form.criptoEstimada || 0);
+  const gastosVal = Number(form.gastosEstimados || 0);
+
+  const totalReserva = tradicionalVal + criptoVal;
+  const estimatedLd = gastosVal > 0 ? Math.round((totalReserva / gastosVal) * 30) : 0;
+
+  let freedomTier = {
+    label: 'Sem reserva',
+    color: 'text-si-4',
+    bg: 'bg-si-over-1 border-si-border-md',
+    desc: 'Informe a reserva tradicional/cripto e gastos fixos para calcular.'
+  };
+
+  if (gastosVal > 0 && totalReserva > 0) {
+    const formatBrl = (v: number) => v.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+    const criptoPart = criptoVal > 0 ? ` (incluindo R$ ${formatBrl(criptoVal)} em Cripto)` : '';
+    
+    if (estimatedLd > 365) {
+      freedomTier = {
+        label: 'Inabalável',
+        color: 'text-violet-300 font-bold',
+        bg: 'bg-violet-500/10 border-violet-500/30',
+        desc: `Sua reserva estimada de R$ ${formatBrl(totalReserva)}${criptoPart} cobre mais de 1 ano de custo de vida!`
+      };
+    } else if (estimatedLd > 180) {
+      freedomTier = {
+        label: 'Soberano',
+        color: 'text-emerald-300 font-bold',
+        bg: 'bg-emerald-500/10 border-emerald-500/30',
+        desc: `Excelente! Sua reserva estimada de R$ ${formatBrl(totalReserva)}${criptoPart} cobre mais de 6 meses de segurança financeira.`
+      };
+    } else if (estimatedLd > 90) {
+      freedomTier = {
+        label: 'Resiliente',
+        color: 'text-blue-300 font-bold',
+        bg: 'bg-blue-500/10 border-blue-500/30',
+        desc: `Muito bom! Sua reserva estimada de R$ ${formatBrl(totalReserva)}${criptoPart} te protege por mais de 3 meses.`
+      };
+    } else if (estimatedLd > 30) {
+      freedomTier = {
+        label: 'Em Construção',
+        color: 'text-amber-300 font-bold',
+        bg: 'bg-amber-500/10 border-amber-500/30',
+        desc: `Sua reserva estimada de R$ ${formatBrl(totalReserva)}${criptoPart} oferece alguma segurança, mas você ainda está exposto no curto prazo.`
+      };
+    } else {
+      freedomTier = {
+        label: 'Frágil',
+        color: 'text-rose-300 font-bold',
+        bg: 'bg-rose-500/10 border-rose-500/30',
+        desc: `Sua reserva estimada de R$ ${formatBrl(totalReserva)}${criptoPart} cobre menos de um mês de gastos. Foco em construir a reserva!`
+      };
+    }
+  }
 
   const set = useCallback(<K extends keyof WizardForm>(key: K, value: WizardForm[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -142,11 +199,18 @@ export function RegistrationWizard({ open, onClose, onComplete }: Props) {
     } catch { /* silent */ } finally { setCepLoading(false); }
   }, []);
 
+  // Auto-preencher nome a partir do Auth no primeiro carregamento
+  useEffect(() => {
+    if (open && user && !form.nome) {
+      setForm((prev) => ({ ...prev, nome: user.displayName || '' }));
+    }
+  }, [open, user, form.nome]);
+
   const isStepValid = useCallback((): boolean => {
     switch (STEPS[step]?.id) {
       case 'identidade': return form.nome.trim().length > 2 && isValidCPF(form.cpf);
       case 'contato':    return form.tel.replace(/\D/g, '').length >= 10;
-      case 'financeiro': return !!form.perfil && !!form.renda;
+      case 'financeiro': return !!form.perfil && Number(form.rendaEstimada || 0) > 0 && Number(form.gastosEstimados || 0) > 0;
       case 'objetivo':   return form.obj.length > 0;
       case 'bancos':     return true; // sempre pode avançar (é opcional)
       case 'valores':    return true; // sempre pode concluir
@@ -162,7 +226,7 @@ export function RegistrationWizard({ open, onClose, onComplete }: Props) {
         cadastroCompleto: form,
         cadastroCompletoEm: serverTimestamp(),
         openBankingConectadoNoOnboarding: bankConnected,
-      } as any);
+      } as any); // FIXME(any): payload dinâmico para updateUserDoc
       if (user.displayName !== form.nome && form.nome.trim()) {
         await updateProfile(user, { displayName: form.nome.trim() });
       }
@@ -250,24 +314,99 @@ export function RegistrationWizard({ open, onClose, onComplete }: Props) {
 
           {/* STEP 2 — Perfil Financeiro */}
           {currentStep.id === 'financeiro' && (
-            <>
-              <p className="text-sm text-si-4">Qual seu perfil profissional?</p>
-              <div className="flex flex-wrap gap-2">
-                {PERFIS.map((p) => (
-                  <button key={p.id} type="button" onClick={() => set('perfil', p.id)} className={chipClass(form.perfil === p.id)}>
-                    {p.label}
-                  </button>
-                ))}
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-semibold text-si-1 mb-2">Qual seu perfil profissional?</p>
+                <div className="flex flex-wrap gap-2">
+                  {PERFIS.map((p) => (
+                    <button key={p.id} type="button" onClick={() => set('perfil', p.id)} className={chipClass(form.perfil === p.id)}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <p className="text-sm text-si-4 mt-2">Faixa de renda mensal</p>
-              <div className="flex flex-wrap gap-2">
-                {RENDAS.map((r) => (
-                  <button key={r.id} type="button" onClick={() => set('renda', r.id)} className={chipClass(form.renda === r.id)}>
-                    {r.label}
-                  </button>
-                ))}
+
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Renda mensal"
+                  value={form.rendaEstimada}
+                  onChange={(v) => set('rendaEstimada', v.replace(/\D/g, ''))}
+                  placeholder="0"
+                  prefix="R$"
+                  type="text"
+                />
+                <Input
+                  label="Gastos fixos/mês"
+                  value={form.gastosEstimados}
+                  onChange={(v) => set('gastosEstimados', v.replace(/\D/g, ''))}
+                  placeholder="0"
+                  prefix="R$"
+                  type="text"
+                />
               </div>
-            </>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Reserva Tradicional"
+                  value={form.reservaEstimada}
+                  onChange={(v) => set('reservaEstimada', v.replace(/\D/g, ''))}
+                  placeholder="0"
+                  prefix="R$"
+                  type="text"
+                />
+                <Input
+                  label="Criptoativos"
+                  value={form.criptoEstimada}
+                  onChange={(v) => set('criptoEstimada', v.replace(/\D/g, ''))}
+                  placeholder="0"
+                  prefix="R$"
+                  type="text"
+                />
+              </div>
+
+              {/* Ld Estimado Card */}
+              <div className={`rounded-xl border p-4 transition-all duration-300 ${freedomTier.bg}`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-si-5 uppercase font-bold tracking-wider">Ld Estimado (Dias de Liberdade)</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded border uppercase font-extrabold tracking-wider ${
+                    gastosVal > 0 && totalReserva > 0 
+                      ? (estimatedLd > 365 ? 'bg-violet-500/15 text-violet-300 border-violet-500/30' :
+                         estimatedLd > 180 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' :
+                         estimatedLd > 90  ? 'bg-blue-500/15 text-blue-300 border-blue-500/30' :
+                         estimatedLd > 30  ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' :
+                                             'bg-rose-500/15 text-rose-300 border-rose-500/30')
+                      : 'bg-si-over-2 text-si-4 border-si-border-md'
+                  }`}>
+                    {freedomTier.label}
+                  </span>
+                </div>
+                
+                <div className="mt-3 flex items-baseline gap-1.5">
+                  <span className={`text-3xl font-black ${
+                    gastosVal > 0 && totalReserva > 0 
+                      ? (estimatedLd > 365 ? 'text-violet-300' :
+                         estimatedLd > 180 ? 'text-emerald-300' :
+                         estimatedLd > 90  ? 'text-blue-300' :
+                         estimatedLd > 30  ? 'text-amber-300' :
+                                             'text-rose-300')
+                      : 'text-si-4'
+                  }`}>
+                    {gastosVal > 0 && totalReserva > 0 ? estimatedLd : '—'}
+                  </span>
+                  <span className="text-si-4 text-xs font-semibold">dias</span>
+                </div>
+
+                <p className="text-xs text-si-4 mt-2 leading-relaxed">
+                  {freedomTier.desc}
+                </p>
+
+                {gastosVal > 0 && totalReserva > 0 && (
+                  <p className="text-[10px] text-si-5 mt-2 border-t border-si-border/30 pt-2">
+                    Cálculo preliminar: {totalReserva.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })} em reservas totais / {gastosVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })} de custos por mês.
+                  </p>
+                )}
+              </div>
+            </div>
           )}
 
           {/* STEP 3 — Objetivos */}
@@ -449,20 +588,25 @@ export function RegistrationWizard({ open, onClose, onComplete }: Props) {
 
 // ─── Input helper ─────────────────────────────────────────────────────────────
 function Input({
-  label, value, onChange, placeholder, type = 'text', error, onBlur, loading,
+  label, value, onChange, placeholder, type = 'text', error, onBlur, loading, prefix,
 }: {
   label: string; value: string; onChange: (v: string) => void; placeholder?: string;
-  type?: string; error?: string; onBlur?: () => void; loading?: boolean;
+  type?: string; error?: string; onBlur?: () => void; loading?: boolean; prefix?: string;
 }) {
   return (
     <div>
       <label className="block text-xs font-medium text-si-5 mb-1">{label}</label>
-      <div className="relative">
+      <div className="relative flex items-center">
+        {prefix && (
+          <span className="absolute left-3 text-sm text-si-5 font-semibold select-none">
+            {prefix}
+          </span>
+        )}
         <input
           type={type} value={value}
           onChange={(e) => onChange(e.target.value)} onBlur={onBlur}
           placeholder={placeholder}
-          className={`w-full px-4 py-2.5 rounded-xl bg-si-bg border text-si-1 text-sm focus:outline-none focus:border-blue-500 ${error ? 'border-rose-500' : 'border-si-border-md'}`}
+          className={`w-full px-4 py-2.5 rounded-xl bg-si-bg border text-si-1 text-sm focus:outline-none focus:border-blue-500 ${prefix ? 'pl-8' : ''} ${error ? 'border-rose-500' : 'border-si-border-md'}`}
         />
         {loading && <div className="absolute right-3 top-3 w-4 h-4 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />}
       </div>

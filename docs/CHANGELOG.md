@@ -17,6 +17,15 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Adicionado
+- **Fallback de Onboarding para Ld (Dias de Liberdade)**: Lógica no `sovereigntyEngine.ts` que utiliza dados de estimativas coletados no onboarding (`cadastroCompleto` contendo rendaEstimada, gastosEstimados, reservaEstimada, criptoEstimada) como fallback para cálculo de Dias de Liberdade caso o usuário não tenha cadastrado contas ou lançamentos reais.
+- **Identificação Visual de Estimativa**: `SovereigntyHero` agora exibe uma badge de aviso específica (`baseado em estimativas do cadastro...`) caso o cálculo do Ld dependa desses dados provisórios, incentivando a conexão do Open Finance ou digitação manual.
+
+### Alterado
+- **Correção da Navegação do Modo Visual (Painel)**: Ajustado `AppModeToggle` para garantir que, ao clicar em "Painel" a partir de qualquer subpágina da visão visual (como `/configuracoes` ou `/lancamentos`), o usuário seja redirecionado de volta para `/dashboard`. Corrigida também a sincronização em `useUiStore.ts` (`syncRoute`), ignorando as rotas `/` e `/login` para evitar que sobreponham o último caminho visual visitado com rotas de redirecionamento genéricas.
+- **Navegação do Logotipo de Marca**: O logotipo em `Sidebar.tsx` foi envolvido em um `<Link to="/dashboard">` para permitir acesso rápido à home/dashboard de qualquer página.
+- **Hierarquia Visual e Identidade**: Movido `<SovereigntyHero>` para o topo do `Dashboard.tsx` (logo abaixo do `<CoachSetup>`), priorizando os indicadores de Dias de Liberdade (Ld) e o brilho radial da marca.
+
 ### Adicionado — Governança IA
 - `AGENTS.md` (raiz) — regras universais para qualquer agente de IA
   (Claude Cowork, Cursor, Antigravity). Inclui matriz de responsabilidade,
@@ -27,6 +36,7 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 - `docs/CHANGELOG.md` — este arquivo.
 
 ### Alterado — Governança IA
+- `AGENTS.md` (raiz) — Atualizado para a versão 1.1 sob autorização do João, permitindo à IA (Antigravity) executar comandos de deploy sob demanda direta no chat.
 - `.cursor/rules/global.mdc` — refletir estado atual: dados financeiros vêm de
   Context API (`AppContext`/`IntelligenceContext`), Zustand é só para UI state.
   A regra antiga dizia "evite Context API para dados financeiros" — contradizia

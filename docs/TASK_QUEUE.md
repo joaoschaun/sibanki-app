@@ -46,10 +46,12 @@ _Nenhum resultado pendente._
   - [x] Deploy não realizado (aguardando João)
 
 **Próximos passos sugeridos:**
-1. Deploy: `firebase deploy --only "functions:sentinelaGeoCheck"` (única função modificada no backend)
-2. Testar manualmente com coordenadas de um shopping ou supermercado + cartão com `cardBenefits` cadastrado
-3. Tarefa de backlog: wire `validators.ts` ao `persistUserData.ts` (prioridade crítica per CLAUDE.md)
-4. Considerar adicionar `airport`, `gas_station` ao `determineIntents` para mais cobertura de cenários
+1. **[PENDENTE HUMANO]** Deploy: `firebase deploy --only "functions:sentinelaGeoCheck,functions:aplicarRecorrentesDoMes"`
+2. Testar manualmente o Sentinela Geo com coordenadas de um shopping ou supermercado (e agora aeroportos e postos de gasolina) + cartão com `cardBenefits` cadastrado.
+3. Tarefa de backlog: wire `validators.ts` ao `persistUserData.ts` — **CONCLUÍDA** (já verificado que o `modifyUserDoc` usa as validações).
+4. Considerar adicionar `airport`, `gas_station` ao `determineIntents` — **CONCLUÍDA** (adicionado na sessão do Antigravity).
+
+O pipeline técnico encontra-se limpo. Nenhuma pendência técnica crítica em aberto no momento.
 
 ---
 

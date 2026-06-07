@@ -43,7 +43,8 @@ export type SibcoinEventType =
   | 'investment_added'
   | 'budget_created'
   | 'login_streak'
-  | 'referral_signup';
+  | 'referral_signup'
+  | 'dda_boleto_detected';
 
 const TIER_LABELS: Record<SibcoinTier, string> = {
   bronze: 'Bronze',

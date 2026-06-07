@@ -74,12 +74,40 @@ export function buildCreditSnapshot(input: {
     derivedTotalUsed += currentMonthUsage;
     if (limit > 0 && currentMonthUsage / limit >= 0.6) derivedHighUtilizationAccounts += 1;
 
+    const explicitDueDates = new Set<string>();
     const bills = Array.isArray(card.faturas) ? (card.faturas as Array<{ vencimento?: string; total?: number }>) : [];
     for (const bill of bills) {
       const dueDate = typeof bill.vencimento === 'string' ? bill.vencimento : '';
-      if (!dueDate || dueDate < todayStr || dueDate > in7DaysStr) continue;
-      dueSoonCount += 1;
-      dueSoonAmount += Number(bill.total || 0);
+      if (!dueDate) continue;
+      explicitDueDates.add(dueDate);
+      if (dueDate >= todayStr && dueDate <= in7DaysStr) {
+        dueSoonCount += 1;
+        dueSoonAmount += Number(bill.total || 0);
+      }
+    }
+
+    if (card.dueDay) {
+      const billingMonthTotals: Record<string, number> = {};
+      for (const purchase of purchases) {
+        const bm = purchase.billingMonth;
+        if (typeof bm === 'string' && /^\d{4}-\d{2}$/.test(bm)) {
+          billingMonthTotals[bm] = (billingMonthTotals[bm] || 0) + Number(purchase.value || 0);
+        }
+      }
+
+      for (const [bm, total] of Object.entries(billingMonthTotals)) {
+        const [y, m] = bm.split('-').map(Number);
+        const maxDay = new Date(y, m, 0).getDate();
+        const clampedDay = Math.min(card.dueDay, maxDay);
+        const virtualDueDate = `${y}-${String(m).padStart(2, '0')}-${String(clampedDay).padStart(2, '0')}`;
+
+        if (explicitDueDates.has(virtualDueDate)) continue;
+
+        if (virtualDueDate >= todayStr && virtualDueDate <= in7DaysStr) {
+          dueSoonCount += 1;
+          dueSoonAmount += total;
+        }
+      }
     }
   }
 

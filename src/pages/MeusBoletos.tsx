@@ -11,7 +11,7 @@ import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner
 import { ComingSoonOverlay } from '../components/ui/ComingSoonBadge';
 import {
   FileText, Bell, Zap, Brain, CheckCircle, AlertTriangle,
-  Clock, XCircle, Calendar, Filter, Wifi, Building2,
+  Clock, Calendar, Filter, Wifi, Building2,
   ChevronRight, ArrowRight, Info,
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';

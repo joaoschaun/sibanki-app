@@ -138,7 +138,7 @@ export function InvestmentInsights({
 
   if (investments.length === 0) return null;
 
-  const { totalAtual, rentab, rendaPassiva, diasLiberdade, mesesLiberdade, firePct, fireTarget, monthlyExpenses, alignment } = metrics;
+  const { rentab, rendaPassiva, diasLiberdade, mesesLiberdade, firePct, fireTarget, monthlyExpenses, alignment } = metrics;
 
   // Barra FIRE
   const fireBarWidth = Math.max(2, Math.min(100, firePct));
