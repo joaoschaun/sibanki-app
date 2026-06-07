@@ -222,6 +222,12 @@ export function validateInvestment(inv: Partial<Investment>): ValidationResult {
     }
   }
 
+  if (inv.proventosMensais !== undefined && inv.proventosMensais !== null) {
+    if (typeof inv.proventosMensais !== 'number' || !isFinite(inv.proventosMensais) || inv.proventosMensais < 0 || inv.proventosMensais > 1_000_000_000) {
+      errors.push('Proventos mensais estimados devem ser um número entre R$ 0 e R$ 1 bilhão.');
+    }
+  }
+
   return { ok: errors.length === 0, errors };
 }
 

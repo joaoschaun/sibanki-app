@@ -30,7 +30,9 @@ export default function Growth() {
   const [formValor, setFormValor] = useState('');
   const [formAtual, setFormAtual] = useState('');
   const [formConta, setFormConta] = useState('');
+  const [formProventos, setFormProventos] = useState('');
   const [editAtualValue, setEditAtualValue] = useState('');
+  const [editProventosValue, setEditProventosValue] = useState('');
 
   const [addProventoOpen, setAddProventoOpen] = useState(false);
   const [provDate, setProvDate] = useState(new Date().toISOString().slice(0, 10));
@@ -73,6 +75,7 @@ export default function Growth() {
     setFormValor('');
     setFormAtual('');
     setFormConta('');
+    setFormProventos('');
     setError(null);
     setAddOpen(true);
   };
@@ -106,6 +109,7 @@ export default function Growth() {
     const valor = parseFloat(formValor.replace(',', '.')) || 0;
     if (valor <= 0) return;
     const atual = parseFloat(formAtual.replace(',', '.')) || valor;
+    const proventosVal = formProventos ? parseFloat(formProventos.replace(',', '.')) : 0;
     setError(null);
     setBusy(true);
     try {
@@ -114,6 +118,7 @@ export default function Growth() {
         valor: Math.round(valor * 100) / 100,
         atual: Math.round(atual * 100) / 100,
         conta: formConta || undefined,
+        proventosMensais: Math.round(proventosVal * 100) / 100,
       });
       triggerWithToast('investment_added'); // fire-and-forget SibCoin (shows toast on mission complete)
       setAddOpen(false);
@@ -125,6 +130,7 @@ export default function Growth() {
   const openEditAtual = (inv: Investment) => {
     setEditingAtual(inv);
     setEditAtualValue(String(inv.atual ?? inv.valor ?? 0));
+    setEditProventosValue(inv.proventosMensais !== undefined && inv.proventosMensais !== null ? String(inv.proventosMensais) : '');
     setError(null);
   };
 
@@ -132,9 +138,14 @@ export default function Growth() {
     e.preventDefault();
     if (!user?.uid || !editingAtual) return;
     const atual = parseFloat(editAtualValue.replace(',', '.')) || 0;
+    const proventosVal = editProventosValue ? parseFloat(editProventosValue.replace(',', '.')) : 0;
     setError(null); setBusy(true);
     try {
-      await updateInvestment(user.uid, investments, editingAtual.id, { ...editingAtual, atual: Math.round(atual * 100) / 100 });
+      await updateInvestment(user.uid, investments, editingAtual.id, {
+        ...editingAtual,
+        atual: Math.round(atual * 100) / 100,
+        proventosMensais: Math.round(proventosVal * 100) / 100,
+      });
       setEditingAtual(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao atualizar.');
@@ -337,6 +348,7 @@ export default function Growth() {
                       <p className="text-xs text-si-5">
                         {inv.tipo || '—'} · {inv.date ? new Date(inv.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}
                         {inv.conta ? ` · ${inv.conta}` : ''}
+                        {inv.proventosMensais ? ` · Proventos: R$ ${Number(inv.proventosMensais).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês` : ''}
                       </p>
                     </div>
                   </div>
@@ -633,6 +645,13 @@ export default function Growth() {
               className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
           </div>
           <div>
+            <label htmlFor="inv-proventos" className={labelCls}>Proventos mensais estimados (R$) – opcional</label>
+            <input id="inv-proventos" type="text" inputMode="decimal" value={formProventos}
+              onChange={(e) => setFormProventos(e.target.value.replace(/[^0-9,.-]/, ''))}
+              placeholder="Ex: 50,00"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
+          </div>
+          <div>
             <label htmlFor="inv-conta" className={labelCls}>Conta (opcional)</label>
             <select id="inv-conta" value={formConta} onChange={(e) => setFormConta(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500">
@@ -700,16 +719,25 @@ export default function Growth() {
         </form>
       </Modal>
 
-      {/* ── Modal: Atualizar Valor Atual ── */}
-      <Modal open={!!editingAtual} onClose={() => setEditingAtual(null)} title="Atualizar valor atual">
+      {/* ── Modal: Editar Investimento ── */}
+      <Modal open={!!editingAtual} onClose={() => setEditingAtual(null)} title="Editar investimento">
         {editingAtual && (
           <form onSubmit={handleUpdateAtual} className="space-y-4">
             {error && <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2 text-rose-400 text-sm">{error}</div>}
-            <p className="text-si-4 text-sm">{editingAtual.nome} – novo valor atual (R$)</p>
-            <input type="text" inputMode="decimal" value={editAtualValue}
-              onChange={(e) => setEditAtualValue(e.target.value.replace(/[^0-9,.-]/, ''))}
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
-              placeholder="0,00" />
+            <div>
+              <label htmlFor="edit-atual" className={labelCls}>{editingAtual.nome} – valor atual (R$)</label>
+              <input id="edit-atual" type="text" inputMode="decimal" value={editAtualValue}
+                onChange={(e) => setEditAtualValue(e.target.value.replace(/[^0-9,.-]/, ''))}
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                placeholder="0,00" />
+            </div>
+            <div>
+              <label htmlFor="edit-proventos" className={labelCls}>Proventos mensais estimados (R$) – opcional</label>
+              <input id="edit-proventos" type="text" inputMode="decimal" value={editProventosValue}
+                onChange={(e) => setEditProventosValue(e.target.value.replace(/[^0-9,.-]/, ''))}
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                placeholder="0,00" />
+            </div>
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={busy}
                 className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm">

@@ -17,7 +17,16 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Adicionado
+- **Renda Passiva com Proventos Mensais (SOV-7)**:
+  - Adicionado suporte ao campo opcional `proventosMensais` no modal de adição de investimentos ("Registrar investimento") na página [Growth.tsx](file:///c:/Users/jscha/virtus-financeiro/src/pages/Growth.tsx).
+  - Atualizado o modal de edição de investimento (anteriormente "Atualizar valor atual", renomeado para "Editar investimento") para incluir edição do campo de proventos mensais declarados.
+  - Exibição visual do valor de proventos mensais configurado para cada ativo na lista de investimentos (ex: `· Proventos: R$ X,XX/mês`).
+  - Adicionados testes unitários no validador de frontend [validators.test.ts](file:///c:/Users/jscha/virtus-financeiro/src/services/validators.test.ts) e testes unitários no backend [sentinelaWeeklyService.test.js](file:///c:/Users/jscha/virtus-financeiro/functions/tests/sentinelaWeeklyService.test.js).
+
 ### Alterado
+- **Validação de Investimentos**: Modificado o validador [validators.ts](file:///c:/Users/jscha/virtus-financeiro/src/services/validators.ts) para garantir que `proventosMensais` seja um número finito e positivo de até R$ 1 bilhão.
+- **Cálculo de Dias de Liberdade do Sentinela Semanal**: Refatorada a função `calcDaysOfFreedom` no [sentinelaWeeklyService.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/sentinel/sentinelaWeeklyService.js) (backend) para deduzir proventos mensais declarados dos investimentos do custo mensal médio e ajustar a queima diária líquida de forma idêntica ao painel web.
 - **Modularização das Cloud Functions**: Concluída a divisão do arquivo principal `functions/index.js` (reduzido de 1500+ linhas para ~350 linhas de exportações diretas) em controladores de domínio separados e organizados na pasta `functions/services/`:
   - [whatsappController.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/whatsapp/whatsappController.js): Webhook, códigos de vinculação e convites via WhatsApp (modo Família, Consórcio, Credi Amigo e resumo semanal).
   - [sentinelController.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/sentinel/sentinelController.js): Validação geográfica do Sentinela GPS e relatórios agendados semanais.

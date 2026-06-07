@@ -34,18 +34,28 @@ function calcDaysOfFreedom(entries = [], accountBalances = {}, investments = [])
   const saldoContas = Object.values(accountBalances).reduce((s, v) => s + (Number(v) || 0), 0);
   const liquidezInv = investments
     .filter((inv) => inv.liquido !== false)
-    .reduce((s, inv) => s + (Number(inv.currentValue ?? inv.valorAtual ?? 0)), 0);
+    .reduce((s, inv) => s + (Number(inv.currentValue ?? inv.valorAtual ?? inv.atual ?? inv.valor ?? 0)), 0);
   const totalLiquido = saldoContas + liquidezInv;
 
-  // Queima diária: média dos últimos 3 meses de despesas / 90 dias (excluindo transferências)
+  // Queima diária: média dos últimos 3 meses de despesas (excluindo transferências)
   const now = new Date();
   const cutoff = new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString().slice(0, 7);
   const despesas = entries
     .filter((e) => e.type === "despesa" && e.isTransfer !== true && (e.date || "") >= cutoff)
     .reduce((s, e) => s + (Number(e.value) || 0), 0);
-  const dailyBurn = despesas > 0 ? despesas / 90 : 1;
 
-  const days = Math.round(totalLiquido / dailyBurn);
+  const avgMonthlyExpense = despesas > 0 ? despesas / 3 : 0;
+  const declaredProventos = investments.reduce((s, inv) => s + (Number(inv.proventosMensais) || 0), 0);
+
+  let dailyBurn;
+  if (despesas === 0 && declaredProventos === 0) {
+    dailyBurn = 1;
+  } else {
+    const netMonthlyCost = Math.max(0, avgMonthlyExpense - declaredProventos);
+    dailyBurn = netMonthlyCost / 30;
+  }
+
+  const days = dailyBurn > 0 ? Math.round(totalLiquido / dailyBurn) : 99999;
   return { days, totalLiquido, dailyBurn, coverageMonths: days / 30 };
 }
 

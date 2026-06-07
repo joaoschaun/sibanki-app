@@ -124,6 +124,50 @@ describe("sentinelaWeeklyService - calcDaysOfFreedom", () => {
     assert.ok(Math.abs(dailyBurn - 33.333) < 0.01);
     assert.equal(days, 300);
   });
+
+  it("calcula dias de liberdade com proventosMensais reduzindo a queima diária", () => {
+    const balances = { Nubank: 5000 }; // R$5000
+    const investments = [
+      { currentValue: 5000, proventosMensais: 100 } // R$5000, proventos R$100/mês
+    ];
+    // Total liquidez = 5000 + 5000 = 10000
+
+    const today = new Date();
+    const cutoff = new Date(today.getFullYear(), today.getMonth() - 2, 1).toISOString().slice(0, 10);
+    const entries = [
+      { date: cutoff, type: "despesa", value: 9000, isTransfer: false } // R$9000 despesas nos 3 meses
+    ];
+    // Despesas totais = 9000 -> média mensal = 3000.
+    // Proventos mensais = 100.
+    // Queima líquida mensal = 3000 - 100 = 2900.
+    // Burn rate diário = 2900 / 30 = 96.6666...
+    // Dias de liberdade = 10000 / 96.6666... = 103 dias.
+
+    const { days, totalLiquido, dailyBurn } = calcDaysOfFreedom(entries, balances, investments);
+    assert.equal(totalLiquido, 10000);
+    assert.ok(Math.abs(dailyBurn - 96.6666) < 0.01);
+    assert.equal(days, 103);
+  });
+
+  it("calcula dias de liberdade com proventos cobrindo totalmente a queima diária (dailyBurn = 0, days = 99999)", () => {
+    const balances = { Nubank: 5000 };
+    const investments = [
+      { currentValue: 5000, proventosMensais: 1500 } // R$1500 proventos/mês
+    ];
+
+    const today = new Date();
+    const cutoff = new Date(today.getFullYear(), today.getMonth() - 2, 1).toISOString().slice(0, 10);
+    const entries = [
+      { date: cutoff, type: "despesa", value: 3000 } // R$3000 despesas nos 3 meses -> média mensal = 1000
+    ];
+    // Média despesas = 1000 < proventos = 1500 -> Queima líquida mensal = 0.
+    // Burn rate diário = 0.
+    // Dias de liberdade = 99999.
+
+    const { days, dailyBurn } = calcDaysOfFreedom(entries, balances, investments);
+    assert.equal(dailyBurn, 0);
+    assert.equal(days, 99999);
+  });
 });
 
 describe("sentinelaWeeklyService - buildBenefitsTips", () => {

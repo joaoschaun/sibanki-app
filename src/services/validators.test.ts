@@ -50,6 +50,50 @@ describe('validateInvestment / validateRecurrent / validateAccount', () => {
       }).ok,
     ).toBe(true);
   });
+  it('validateInvestment aceita proventosMensais válidos', () => {
+    expect(
+      validateInvestment({
+        nome: 'FII MXRF11',
+        tipo: 'renda-variavel',
+        valor: 10000,
+        atual: 10200,
+        date: '2026-06-01',
+        proventosMensais: 80,
+      }).ok,
+    ).toBe(true);
+    expect(
+      validateInvestment({
+        nome: 'Ações BBAS3',
+        tipo: 'renda-variavel',
+        valor: 5000,
+        atual: 5000,
+        proventosMensais: 0,
+      }).ok,
+    ).toBe(true);
+  });
+  it('validateInvestment rejeita proventosMensais inválidos', () => {
+    expect(
+      validateInvestment({
+        nome: 'FII MXRF11',
+        atual: 1000,
+        proventosMensais: -10,
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateInvestment({
+        nome: 'FII MXRF11',
+        atual: 1000,
+        proventosMensais: 2_000_000_000,
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateInvestment({
+        nome: 'FII MXRF11',
+        atual: 1000,
+        proventosMensais: NaN,
+      }).ok,
+    ).toBe(false);
+  });
   it('validateRecurrent rejeita valor zero', () => {
     expect(validateRecurrent({ desc: 'x', value: 0, type: 'despesa', day: 1, freq: 'mensal' }).ok).toBe(false);
   });
