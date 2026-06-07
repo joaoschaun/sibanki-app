@@ -50,19 +50,21 @@ function calcDaysOfFreedom(entries = [], accountBalances = {}, investments = [])
 }
 
 function calcSpreadGap(investments = [], creditObligations = []) {
-  const totalInvested = investments.reduce((s, i) => s + (Number(i.currentValue ?? i.valorAtual ?? 0)), 0);
+  const totalInvested = investments.reduce((s, i) => s + (Number(i.currentValue ?? i.valorAtual ?? i.atual ?? i.valor ?? 0)), 0);
   const weightedYield = totalInvested > 0
     ? investments.reduce((s, i) => {
-        const rate = Number(i.taxaMensal ?? i.taxaAnual ? (i.taxaAnual / 12 / 100) : CDI_MONTHLY);
-        return s + rate * (Number(i.currentValue ?? i.valorAtual ?? 0));
+        const rate = Number(i.taxaMensal ?? (i.taxaAnual ? (i.taxaAnual / 12 / 100) : CDI_MONTHLY));
+        return s + rate * (Number(i.currentValue ?? i.valorAtual ?? i.atual ?? i.valor ?? 0));
       }, 0) / totalInvested
     : CDI_MONTHLY;
 
-  const totalDebt = creditObligations.reduce((s, ob) => s + (Number(ob.saldoDevedor ?? ob.valor ?? 0)), 0);
+  const totalDebt = creditObligations.reduce((s, ob) => s + (Number(ob.amount ?? ob.saldoDevedor ?? ob.valor ?? 0)), 0);
   const weightedDebtRate = totalDebt > 0
     ? creditObligations.reduce((s, ob) => {
-        const rate = Number(ob.taxaMensal ?? 0.02);
-        return s + rate * (Number(ob.saldoDevedor ?? ob.valor ?? 0));
+        const amt = Number(ob.amount ?? ob.saldoDevedor ?? ob.valor ?? 0);
+        const rawPct = ob.interestRatePct ?? ob.interestPct ?? ob.interestRate ?? (ob.taxaMensal != null ? ob.taxaMensal * 100 : null);
+        const rate = rawPct !== null ? Number(rawPct) / 100 : 0.02;
+        return s + rate * amt;
       }, 0) / totalDebt
     : 0;
 

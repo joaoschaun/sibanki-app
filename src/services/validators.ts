@@ -5,7 +5,7 @@
  * como Ld, Sg e Sv. Todas as funções retornam { ok, errors[] } para que o caller
  * possa exibir erros específicos ao usuário sem try/catch genérico.
  */
-import type { Entry, Card, Goal, Investment, Recurrent } from '../types/userData';
+import type { Entry, Card, Goal, Investment, Recurrent, CreditObligation } from '../types/userData';
 
 export interface ValidationResult {
   ok: boolean;
@@ -272,6 +272,44 @@ export function validateAccount(name: string, initialBalance?: number): Validati
     } else if (Math.abs(initialBalance) > 1_000_000_000) {
       errors.push('Saldo inicial não pode exceder R$ 1 bilhão (positivo ou negativo).');
     }
+  }
+
+  return { ok: errors.length === 0, errors };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CREDIT OBLIGATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function validateCreditObligation(ob: Partial<CreditObligation>): ValidationResult {
+  const errors: string[] = [];
+
+  if (!notEmptyString(ob.label)) {
+    errors.push('Descrição/Label da obrigação é obrigatório.');
+  } else if (ob.label.trim().length > 200) {
+    errors.push('Descrição/Label deve ter no máximo 200 caracteres.');
+  }
+
+  if (!isPositiveFinite(ob.amount)) {
+    errors.push('Valor da obrigação deve ser um número positivo.');
+  } else if (ob.amount > 1_000_000_000) {
+    errors.push('Valor não pode exceder R$ 1 bilhão.');
+  }
+
+  if (!ob.dueDate || !isValidDate(ob.dueDate)) {
+    errors.push('Data de vencimento inválida. Use o formato YYYY-MM-DD.');
+  }
+
+  if (ob.interestRatePct !== undefined && ob.interestRatePct !== null) {
+    if (typeof ob.interestRatePct !== 'number' || !isFinite(ob.interestRatePct) || ob.interestRatePct < 0 || ob.interestRatePct > 500) {
+      errors.push('Taxa de juros deve ser um número entre 0% e 500% a.m.');
+    }
+  }
+
+  const kind = ob.kind;
+  const validKinds = ['fatura', 'parcela', 'emprestimo', 'financiamento', 'rotativo', 'negociacao', 'outro'];
+  if (!kind || !validKinds.includes(kind)) {
+    errors.push(`Tipo de obrigação inválido. Use um de: ${validKinds.join(', ')}.`);
   }
 
   return { ok: errors.length === 0, errors };
