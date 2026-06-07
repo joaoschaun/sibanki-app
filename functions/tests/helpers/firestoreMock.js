@@ -63,7 +63,14 @@ function createFirestoreMock(initialDocs = {}) {
           const depth = docPath.slice(path.length + 1).split("/").length;
           if (depth === 1) out.push(getDocSnapshot(docPath));
         }
-        return { empty: out.length === 0, docs: out, size: out.length };
+        return {
+          empty: out.length === 0,
+          docs: out,
+          size: out.length,
+          forEach(cb) {
+            out.forEach(cb);
+          },
+        };
       },
     };
   }
@@ -79,6 +86,9 @@ function createFirestoreMock(initialDocs = {}) {
         const next = options.merge ? { ...current, ...data } : data;
         docs.set(path, next);
         operations.sets.push({ path, data: next, options });
+      },
+      async delete() {
+        docs.delete(path);
       },
       collection(name) {
         return makeCollectionRef(getPath([path, name]));

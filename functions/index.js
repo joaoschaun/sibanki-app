@@ -144,6 +144,8 @@ exports.onUserCreated = functions.auth.user().onCreate(onUserCreated);
 // =============================================
 exports.validateAdminAccess = adminAuth.validateAdminAccess;
 exports.revokeAdminAccess = adminAuth.revokeAdminAccess;
+exports.grantAdminAccess = adminAuth.grantAdminAccess;
+exports.listAdmins = adminAuth.listAdmins;
 
 // =============================================
 // STRIPE: delega para serviço de billing

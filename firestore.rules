@@ -150,6 +150,11 @@ service cloud.firestore {
       allow create, update, delete: if isSuperAdmin();
     }
 
+    // SEG-01: Coleção de administradores autorizados. Acesso de leitura/escrita bloqueado no cliente (apenas backend)
+    match /admins/{email} {
+      allow read, write: if false;
+    }
+
     // Lançamentos Pluggy arquivados (limite 1MB do documento users) — mesmo dono do uid
     match /users/{userId}/entriesOverflow/{docId} {
       allow read, delete: if isAuthed() && request.auth.uid == userId;
