@@ -90,6 +90,20 @@ function createFirestoreMock(initialDocs = {}) {
     collection(name) {
       return makeCollectionRef(name);
     },
+    doc(path) {
+      return makeDocRef(path);
+    },
+    async runTransaction(cb) {
+      const tx = {
+        async get(ref) {
+          return ref.get();
+        },
+        set(ref, data, options) {
+          return ref.set(data, options);
+        },
+      };
+      return cb(tx);
+    },
     batch() {
       const staged = [];
       return {

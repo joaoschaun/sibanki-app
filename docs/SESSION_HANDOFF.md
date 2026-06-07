@@ -35,9 +35,12 @@
    - Reduzido o arquivo principal [index.js](file:///c:/Users/jscha/virtus-financeiro/functions/index.js) de 1500+ linhas para ~350 linhas de exportações diretas.
 2. **Correção de Sintaxe**:
    - Removido um bloco `catch`/`}` órfão no `index.js` decorrente de uma extração anterior do `proactiveInsightApi`.
-3. **Verificações e Testes**:
+3. **Testes de Rate Limit e Quotas de IA (SEG-12)**:
+   - Criada a suíte de testes unitários [chatRateLimiter.test.js](file:///c:/Users/jscha/virtus-financeiro/functions/tests/chatRateLimiter.test.js) com 8 testes cobrindo todos os cenários de quota por plano, bypass, burst limit e resiliência (fail-open).
+   - Estendidos os utilitários de [firestoreMock.js](file:///c:/Users/jscha/virtus-financeiro/functions/tests/helpers/firestoreMock.js) para suportar `db.doc()` e `db.runTransaction()`.
+4. **Verificações e Testes**:
    - `node -c functions/index.js` passou sem erros de sintaxe.
-   - `npm test` na pasta `functions/` validou os 145 testes de backend com sucesso.
+   - `npm test` na pasta `functions/` validou os 153 testes de backend com sucesso.
    - `npm run test:unit` validou os 110 testes de frontend com vitest.
    - `npm run typecheck` e `npm run build` do front-end SPA concluídos com 100% de sucesso.
 
@@ -45,7 +48,7 @@
 
 ## 🔄 O que está em andamento agora
 
-**Nenhum.** O backlog imediato de refatoração do backend está concluído e validado.
+**Nenhum.** O backlog imediato de refatoração do backend e testes de quotas de IA (SEG-12) está concluído e validado.
 
 ---
 
@@ -60,13 +63,15 @@
 | [affiliateController.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/affiliate/affiliateController.js) | [NEW] Controlador de cashback, catálogo Lomadee e webhooks de afiliado |
 | [emailController.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/email/emailController.js) | Adicionados os callables de envio de convites de consórcio e Credi Amigo |
 | [assistantController.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/assistant/assistantController.js) | Adicionados os callables de processamento OCR/STT de lançamentos |
+| [firestoreMock.js](file:///c:/Users/jscha/virtus-financeiro/functions/tests/helpers/firestoreMock.js) | Adicionado suporte a `db.doc()` e `db.runTransaction()` |
+| [chatRateLimiter.test.js](file:///c:/Users/jscha/virtus-financeiro/functions/tests/chatRateLimiter.test.js) | [NEW] Suíte de testes unitários para a funcionalidade de rate limit e quotas |
 | [CHANGELOG.md](file:///c:/Users/jscha/virtus-financeiro/docs/CHANGELOG.md) | Documentação detalhada dos releases e refatorações |
 
 ---
 
 ## 🚀 Próximo passo imediato
 
-Aguardar nova definição de prioridades pelo João ou novos itens de auditoria.
+Seguir para os próximos itens da fila de auditoria (por exemplo: **SOV-1** sobre saldo negativo no cálculo de Dias de Liberdade, ou **SOV-3-liquidez** sobre horizonte de liquidez).
 
 ---
 
