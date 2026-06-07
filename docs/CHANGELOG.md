@@ -17,6 +17,15 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Alterado
+- **Modularização das Cloud Functions**: Concluída a divisão do arquivo principal `functions/index.js` (reduzido de 1500+ linhas para ~350 linhas de exportações diretas) em controladores de domínio separados e organizados na pasta `functions/services/`:
+  - [whatsappController.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/whatsapp/whatsappController.js): Webhook, códigos de vinculação e convites via WhatsApp (modo Família, Consórcio, Credi Amigo e resumo semanal).
+  - [sentinelController.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/sentinel/sentinelController.js): Validação geográfica do Sentinela GPS e relatórios agendados semanais.
+  - [pushController.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/push/pushController.js): Disparos diários de orçamento/faturas e envio de notificações manuais.
+  - [affiliateController.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/affiliate/affiliateController.js): Integração de catálogo Lomadee, webhooks de afiliados, registro de cliques e emissão manual/automática de cashback em SibCoin.
+  - Mapeadas as funções de convite adicionais para o [emailController.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/email/emailController.js) (consórcio e empréstimo entre amigos) e funções de captura para o [assistantController.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/assistant/assistantController.js) (OCR e STT de voz para lançamentos).
+- **Correção de Sintaxe no Servidor**: Removida uma instrução `catch` orfã deixada na extração parcial do `proactiveInsightApi` que quebrava o carregamento do `index.js`.
+
 ### Adicionado
 - **Fallback de Onboarding para Ld (Dias de Liberdade)**: Lógica no `sovereigntyEngine.ts` que utiliza dados de estimativas coletados no onboarding (`cadastroCompleto` contendo rendaEstimada, gastosEstimados, reservaEstimada, criptoEstimada) como fallback para cálculo de Dias de Liberdade caso o usuário não tenha cadastrado contas ou lançamentos reais.
 - **Identificação Visual de Estimativa**: `SovereigntyHero` agora exibe uma badge de aviso específica (`baseado em estimativas do cadastro...`) caso o cálculo do Ld dependa desses dados provisórios, incentivando a conexão do Open Finance ou digitação manual.
