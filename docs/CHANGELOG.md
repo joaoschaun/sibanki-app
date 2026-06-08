@@ -17,6 +17,27 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Busca e Seleção Visual de Instituições na Aba de Contas (08/06/2026)
+- **`src/types/userData.ts`**: Adicionado campo opcional `bankSlug` no objeto `accountMeta` para persistência do banco vinculado à conta.
+- **`src/services/persistUserData.ts`**: Atualizado o tipo `AccountMetaEntry` para conter o campo `bankSlug`.
+- **`src/pages/Accounts.tsx`**:
+  - Novo fluxo de criação manual de contas contendo campo de busca reativo (`searchQuery`) e grade rolável das instituições do `BANKS` com seus logotipos oficiais.
+  - Adicionado componente `<AccountCard>` de visualização prévia em tempo real dentro do modal de criação e no modal de edição, atualizando as cores, logos e textos dinamicamente.
+  - Nova lógica utilitária local `getAccountBank(accountName)` que prioriza `meta.bankSlug` para buscar a identidade visual e o logotipo nas listagens e no simulador (`BankSimulator`), garantindo retrocompatibilidade (fallback com `identifyBank`).
+  - Adicionado o dropdown de instituição no modal de edição ("Configurações Locais") para re-vincular instituições e atualizar a cor automática.
+
+### Beta UX — entrada, sidebar, explicações, estado vazio (08/06/2026)
+- **`App.tsx`**: entrada pós-login alterada de `/consultor-ia` → `/dashboard`. Rotas `/`, `/login`, `/landing` agora direcionam ao painel principal.
+- **`Sidebar.tsx`**: removidas rotas mortas `/fire` (FIRE) e `/relatorio-ir` (Relatório IR) que não tinham páginas — ambas estavam visivelmente acessíveis no menu "Mais". Removidos imports não-usados `Flame` e `FileText`.
+- **`SovereigntyHero.tsx`**: adicionado botão "O que significam esses números?" que expande painel inline explicando Ld (Dias de Liberdade), Sg (Spread Gap) e Sv (Sovereignty Score) em linguagem acessível para o usuário final.
+- **`Dashboard.tsx`**: banner "empty state" visível quando `accounts.length === 0 && entriesNoTransfer.length === 0` — guia o usuário em 3 passos (adicionar conta → registrar receita → ver Ld) com link para Open Finance.
+- **`ConsultantSessionContext.tsx`**: mensagem de boas-vindas agora é proativa — quando o usuário tem dados e Ld > 0, a mensagem inicial do assistente exibe "Seu Ld é X — nível Y" em vez da mensagem genérica.
+- **`Growth.tsx`**: bugs corrigidos — `tickerDebounceRef` convertido de `useState` para `useRef` (evitava re-renders desnecessários em cada debounce); `RV_TYPES` movido para nível de módulo (era redeclarado em cada render).
+
+### LojaContextualBanner + LandingPage cleanup (08/06/2026)
+- **`src/pages/Loja.tsx`**: banner contextual baseado no perfil financeiro — calcula gastos por categoria nos últimos 30 dias, lê `spread` e `freedom` do `IntelligenceContext`; mostra até 3 sugestões ("Você gastou R$X em Y — cashback disponível", spread negativo → soluções de crédito, freedom alto → crescimento). Visível só na aba Ofertas.
+- **`src/pages/LandingPage.tsx`**: removidos 5 imports não-usados (Smartphone, Sparkles, MessageSquare, DollarSign, ArrowUpRight) que causavam erros tsc.
+
 ### Adicionado (07/06/2026 — sessão análise sênior + estabilização completa)
 - **Rota `/home`**: `Home.tsx` (639 linhas) estava sem rota no router. Adicionada como `/home`.
 - **Rota `/casal`**: `Casal.tsx` (322 linhas) estava sem rota. Adicionada como `/casal`.
@@ -32,6 +53,36 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 - **tsc --noEmit**: zero erros em todos os commits.
 - **118/118 testes passando** sem regressões.
 - **3 deploys em produção**: https://virtus-financeiro-cd7bd.web.app atualizado.
+
+### Task 20260607-009 — Regiões, Conta IA, Investimentos Inteligentes (08/06/2026)
+
+**Stream 1 — Regiões Cloud Functions (frontend)**
+- `OpenFinanceConnect.tsx`: chamadas Pluggy migradas de `fnsUS` para `fnsBR` (southamerica-east1). Alinha com AppContext que já usava `fnsBR`.
+
+**Stream 2 — Conta no modal de confirmação IA (Lançamentos)**
+- `Transactions.tsx`: estado `aiAccount`; pré-preenchido com `entry.account` extraído pela IA; dropdown de conta no modal OCR/Voz; confirmação aplica conta selecionada.
+
+**Stream 3 — Investimentos Inteligentes (Growth)**
+- `brapi.ts`: nova função `searchB3Tickers(query)` — usa callable `brapiSearch`.
+- `Growth.tsx`: autocomplete de ticker com debounce 350ms para tipos RV (Ações/FIIs/ETFs); selecionar ticker busca preço atual via `fetchB3Quote` e preenche preço de compra; campos quantidade e preço de compra com sync automático (qtd × preço → valor aplicado); qtd e precoCompra salvos no Firestore; listagem exibe "X cotas · R$ Y/un".
+
+**Qualidade**: tsc --noEmit zero erros · 118/118 Vitest passando.
+
+### Idempotência updateUserDoc (08/06/2026)
+- **`src/services/persistUserData.ts`** — deduplicação em duas camadas:
+  1. **Debounce per-uid** via `Map<uid, DebounceEntry>`: cada uid tem seu próprio estado de debounce (antes era variável de módulo única compartilhada). Janela aumentada de 1,5 s → 5 s para cobrir reconexões típicas do Firebase SDK.
+  2. **`_writeId` (UUID v4) no Firestore**: cada `updateUserDoc` gera um UUID, grava junto com o payload (`_writeId` field). A transação lê o doc antes de escrever — se `doc._writeId === writeId`, o write já foi confirmado anteriormente → pula silenciosamente. Garante idempotência mesmo após reconexões longas onde o SDK retenta.
+  - API pública: `updateUserDoc(uid, payload, writeId?)` — o `writeId` pode ser fornecido pelo chamador para operações multi-step, ou gerado automaticamente.
+  - Todos os writes (com e sem recálculo de `finScore`) passam por `runTransaction` para garantir leitura do `_writeId` atual antes de escrever.
+- **`src/types/userData.ts`** — adicionado campo `_writeId?: string` ao `UserData`.
+- **tsc --noEmit**: zero erros. **118/118 testes Vitest** sem regressões.
+
+### Testes Open Finance (08/06/2026)
+- **`functions/tests/pluggySyncService.test.js`** (novo, 83 testes, 100% pass):
+  - Suíte unitária para todas as funções puras do serviço de sincronização Pluggy (Open Finance).
+  - Cobre: `stableNumericId`, `formatYmd`, `daysAgoYmd`, `dayFromPluggyDate`, `pickBalance`, `baseLabel`, `round2`, `mapPluggyCategoryToApp` (16 casos), `mapTransactionToEntry` (6 casos), `mapCreditToCard` (4 casos), `mapInvestmentToUser` (4 casos), `loanIsSettled` (5 casos), `estimateMonthlyInstallment` (4 casos), `mapLoanKind` (10 casos), `mapLoanToCreditAccount` (4 casos), `mapBalloonObligations` (5 casos), `mapNextRegularInstallment` (4 casos).
+  - Estratégia: mock de `firebase-functions` + dependências externas via `Module._load`; sem chamadas reais à Pluggy API nem ao Firestore.
+- **`pluggySyncService.js`**: adicionado `_internals` ao `module.exports` para exposição de funções puras aos testes (padrão do projeto).
 
 ---
 

@@ -13,6 +13,8 @@ export interface UserData {
   name?: string;
   email?: string;
   updated?: string;
+  /** UUID do último write bem-sucedido — usado para deduplicação server-side de retries. */
+  _writeId?: string;
   finScore?: number;
   avatarURL?: string | null;
   cadastroCompleto?: {
@@ -38,6 +40,8 @@ export interface UserData {
     accountNumber?: string;
     /** Código ISPB / número do banco (ex: "260" para Nubank) */
     bankCode?: string;
+    /** Slug identificador do banco oficial */
+    bankSlug?: string;
     /** Moeda da conta (ex: "BRL", "USD", "EUR") */
     currency?: string;
     /** Status de conexão Open Finance para esta conta */

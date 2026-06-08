@@ -106,12 +106,36 @@ async function deleteEntriesOverflowCollection(uid: string): Promise<void> {
   }
 }
 
-/** Janela mínima entre writes idênticos consecutivos (retries/offline/duplo clique). */
-const UPDATE_USER_DOC_DEBOUNCE_MS = 1500;
+// ─── Idempotência updateUserDoc ──────────────────────────────────────────────
+//
+// Problema: Firebase SDK retenta writes em reconexões. Sem deduplicação,
+// o mesmo payload pode ser gravado múltiplas vezes, corrompendo arrays (entries, cards…).
+//
+// Solução em duas camadas:
+//   1. Debounce per-uid em memória (evita duplo clique e retries rápidos na UI)
+//   2. _writeId (UUID) gravado no Firestore: transação verifica se o ID já está
+//      gravado → pula silenciosamente (safe para retries do SDK mesmo após reconexão longa)
+//
+// Janela de debounce mais longa (5s) para cobrir ciclos de reconexão típicos.
 
-let updateUserDocDebouncing = false;
-let lastUpdateUserDocPayloadSig: string | null = null;
-let lastUpdateUserDocAt = 0;
+/** Janela de debounce por uid (ms). Cobre reconexões típicas do Firebase SDK. */
+const UPDATE_USER_DOC_DEBOUNCE_MS = 5_000;
+
+interface DebounceEntry {
+  debouncing: boolean;
+  sig: string | null;
+  at: number;
+  timer: ReturnType<typeof setTimeout> | null;
+}
+/** Estado de debounce por uid — evita compartilhamento entre usuários diferentes. */
+const _debounceMap = new Map<string, DebounceEntry>();
+
+function getDebounce(uid: string): DebounceEntry {
+  if (!_debounceMap.has(uid)) {
+    _debounceMap.set(uid, { debouncing: false, sig: null, at: 0, timer: null });
+  }
+  return _debounceMap.get(uid)!;
+}
 
 function payloadSignature(payload: Partial<UserData>): string {
   try {
@@ -124,37 +148,66 @@ function payloadSignature(payload: Partial<UserData>): string {
   }
 }
 
+/** Gera um UUID v4 simples sem dependências externas. */
+function generateWriteId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // Fallback para ambientes sem crypto.randomUUID (ex: testes Node antigos)
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 /**
  * Atualiza apenas alguns campos do documento users/{uid} (merge).
  * Usa runTransaction quando precisa recalcular finScore para evitar race conditions.
  *
- * Debounce em memória: bloqueia segunda chamada com o mesmo payload dentro de
- * {@link UPDATE_USER_DOC_DEBOUNCE_MS} enquanto um write anterior está em curso ou
- * acabou de completar (mitiga retries do SDK e duplo submit).
+ * ### Deduplicação em duas camadas
+ * 1. **Debounce per-uid** (5 s): bloqueia segunda chamada com payload idêntico na
+ *    janela — mitiga duplo submit e retries rápidos do SDK.
+ * 2. **`_writeId` no Firestore**: UUID gerado antes de iniciar o write. A transação
+ *    verifica se o doc já tem este `_writeId` → se sim, o write já foi confirmado
+ *    (idempotent retry seguro mesmo após reconexão longa).
+ *
+ * @param uid      UID do usuário
+ * @param payload  Campos a atualizar (merge)
+ * @param writeId  UUID estável para idempotência (gerado automaticamente se omitido)
  */
 export async function updateUserDoc(
   uid: string,
-  payload: Partial<UserData>
+  payload: Partial<UserData>,
+  writeId: string = generateWriteId(),
 ): Promise<void> {
   const now = Date.now();
   const currentSig = payloadSignature(payload);
+  const state = getDebounce(uid);
 
+  // Camada 1: debounce in-memory por uid
   if (
-    updateUserDocDebouncing &&
-    lastUpdateUserDocPayloadSig === currentSig &&
-    now - lastUpdateUserDocAt < UPDATE_USER_DOC_DEBOUNCE_MS
+    state.debouncing &&
+    state.sig === currentSig &&
+    now - state.at < UPDATE_USER_DOC_DEBOUNCE_MS
   ) {
     if (import.meta.env.DEV) {
-      console.warn('[Idempotência] updateUserDoc ignorado (payload idêntico em janela de debounce)', {
+      console.warn('[Idempotência] updateUserDoc ignorado — payload idêntico em janela de debounce', {
+        uid: uid.slice(0, 8),
         keys: Object.keys(payload),
+        writeId,
       });
     }
     return;
   }
 
-  updateUserDocDebouncing = true;
-  lastUpdateUserDocPayloadSig = currentSig;
-  lastUpdateUserDocAt = now;
+  // Marca debounce para este uid
+  if (state.timer) clearTimeout(state.timer);
+  state.debouncing = true;
+  state.sig = currentSig;
+  state.at = now;
+  state.timer = setTimeout(() => {
+    state.debouncing = false;
+  }, UPDATE_USER_DOC_DEBOUNCE_MS);
 
   const ref = doc(db, 'users', uid);
 
@@ -166,29 +219,56 @@ export async function updateUserDoc(
     'accountMeta' in payload ||
     'creditSnapshot' in payload;
 
-  try {
-    if (shouldRecalculateScore) {
-      await runTransaction(db, async (transaction) => {
-        const snap = await transaction.get(ref);
-        const current = (snap.exists() ? snap.data() : {}) as Partial<UserData>;
-        const merged = { ...current, ...payload } as Partial<UserData>;
-        const finScore = calculateFinScore(
-          merged.entries ?? [],
-          merged.goals ?? [],
-          (merged.budgets ?? {}) as Record<string, unknown>,
-          merged.accountBalances ?? {},
-          merged.accountMeta ?? {},
-          merged.creditSnapshot ?? null,
-        );
-        transaction.set(ref, { ...payload, finScore, updated: new Date().toISOString() }, { merge: true });
-      });
-    } else {
-      await setDoc(ref, { ...payload, updated: new Date().toISOString() }, { merge: true });
-    }
-  } finally {
-    setTimeout(() => {
-      updateUserDocDebouncing = false;
-    }, UPDATE_USER_DOC_DEBOUNCE_MS);
+  // O writeId sempre vai junto com o payload
+  const payloadWithId = { ...payload, _writeId: writeId, updated: new Date().toISOString() };
+
+  if (shouldRecalculateScore) {
+    await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(ref);
+      const current = (snap.exists() ? snap.data() : {}) as Partial<UserData>;
+
+      // Camada 2: deduplicação server-side via _writeId
+      if (current._writeId === writeId) {
+        if (import.meta.env.DEV) {
+          console.warn('[Idempotência] updateUserDoc ignorado — _writeId já gravado no Firestore', {
+            uid: uid.slice(0, 8),
+            writeId,
+          });
+        }
+        return; // write já foi confirmado anteriormente — skip seguro
+      }
+
+      const merged = { ...current, ...payload } as Partial<UserData>;
+      const finScore = calculateFinScore(
+        merged.entries ?? [],
+        merged.goals ?? [],
+        (merged.budgets ?? {}) as Record<string, unknown>,
+        merged.accountBalances ?? {},
+        merged.accountMeta ?? {},
+        merged.creditSnapshot ?? null,
+      );
+      transaction.set(ref, { ...payloadWithId, finScore }, { merge: true });
+    });
+  } else {
+    // Para writes simples (sem recálculo de score), usa a transação igualmente
+    // para garantir a leitura do _writeId atual antes de escrever.
+    await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(ref);
+      const current = (snap.exists() ? snap.data() : {}) as Partial<UserData>;
+
+      // Camada 2: deduplicação server-side
+      if (current._writeId === writeId) {
+        if (import.meta.env.DEV) {
+          console.warn('[Idempotência] updateUserDoc (simple) ignorado — _writeId já gravado', {
+            uid: uid.slice(0, 8),
+            writeId,
+          });
+        }
+        return;
+      }
+
+      transaction.set(ref, payloadWithId, { merge: true });
+    });
   }
 }
 
@@ -878,6 +958,8 @@ export type AccountMetaEntry = {
   accountNumber?: string;
   /** Código ISPB / número do banco (ex: "260" para Nubank) */
   bankCode?: string;
+  /** Slug identificador do banco oficial */
+  bankSlug?: string;
   /** Moeda da conta (ex: "BRL", "USD", "EUR") */
   currency?: string;
   /** Status de conexão Open Finance para esta conta */

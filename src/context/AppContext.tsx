@@ -69,6 +69,7 @@ export interface AppContextValue {
     agency?: string;
     accountNumber?: string;
     bankCode?: string;
+    bankSlug?: string;
     currency?: string;
     ofStatus?: 'nao-conectado' | 'ativo' | 'erro' | 'expirado';
     source?: string;

@@ -9,13 +9,14 @@ import {
   renameAccount,
 } from '../services/persistUserData';
 import { Modal } from '../components/ui/Modal';
-import { Building2 } from 'lucide-react';
+import { Building2, Search } from 'lucide-react';
 import { EmptyState } from '../components/ui/EmptyState';
 
 import { AccountCard } from '../components/accounts/AccountCard';
 import { BankSimulator } from '../components/accounts/BankSimulator';
 import { AccountsHeader } from '../components/accounts/AccountsHeader';
-import { identifyBank } from '../components/banks/bankData';
+import { identifyBank, BANKS } from '../components/banks/bankData';
+import { BankLogo } from '../components/banks/BankLogo';
 
 // ==========================================
 // Constantes locais da página
@@ -53,6 +54,8 @@ export default function Accounts() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   // States - Forms
+  const [selectedBankSlug, setSelectedBankSlug] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [name, setName] = useState('');
   const [initialBalance, setInitialBalance] = useState('');
   const [createTipo, setCreateTipo] = useState('Conta corrente');
@@ -77,10 +80,41 @@ export default function Accounts() {
   const [editCheque, setEditCheque] = useState(false);
   const [editChequeLimite, setEditChequeLimite] = useState('');
   const [editChequeJuros, setEditChequeJuros] = useState('');
+  const [editBankSlug, setEditBankSlug] = useState('');
 
   // Status
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleSelectBank = (slug: string) => {
+    setSelectedBankSlug(slug);
+    if (slug === 'custom' || !slug) {
+      setName('');
+      setCreateCor('#4F8CFF');
+    } else {
+      const selected = BANKS.find(b => (b.slug || b.name) === slug);
+      if (selected) {
+        setName(selected.name);
+        setCreateCor(selected.primary);
+      }
+    }
+  };
+
+  const getAccountBank = (accountName: string) => {
+    const meta = accountMeta[accountName];
+    if (meta?.bankSlug) {
+      const found = BANKS.find(b => b.slug === meta.bankSlug);
+      if (found) return found;
+    }
+    return identifyBank(accountName);
+  };
+
+  const filteredBanks = searchQuery.trim()
+    ? BANKS.filter(b => b.name !== 'Carteira' && (
+        b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.keywords.some(k => k.toLowerCase().includes(searchQuery.toLowerCase()))
+      ))
+    : BANKS.filter(b => b.name !== 'Carteira');
 
   // ==========================================
   // Derived Data
@@ -137,9 +171,12 @@ export default function Accounts() {
         temChequeEspecial: createCheque || undefined,
         chequeEspecialLimite: createCheque && createChequeLimite ? parseFloat(createChequeLimite.replace(',', '.')) : undefined,
         chequeEspecialJurosPct: createCheque && createChequeJuros ? parseFloat(createChequeJuros.replace(',', '.')) : undefined,
+        bankSlug: (selectedBankSlug && selectedBankSlug !== 'custom') ? selectedBankSlug : undefined,
       });
       setModalOpen(false);
       setName('');
+      setSelectedBankSlug('');
+      setSearchQuery('');
       setInitialBalance('');
       setCreateTipo('Conta corrente');
       setCreateCor('#4F8CFF');
@@ -187,6 +224,7 @@ export default function Accounts() {
     setEditCheque(meta?.temChequeEspecial ?? false);
     setEditChequeLimite(meta?.chequeEspecialLimite ? String(meta.chequeEspecialLimite) : '');
     setEditChequeJuros(meta?.chequeEspecialJurosPct ? String(meta.chequeEspecialJurosPct) : '');
+    setEditBankSlug(meta?.bankSlug ?? '');
     setError(null);
   };
 
@@ -215,6 +253,7 @@ export default function Accounts() {
         temChequeEspecial: editCheque || undefined,
         chequeEspecialLimite: editCheque && editChequeLimite ? parseFloat(editChequeLimite.replace(',', '.')) : undefined,
         chequeEspecialJurosPct: editCheque && editChequeJuros ? parseFloat(editChequeJuros.replace(',', '.')) : undefined,
+        bankSlug: editBankSlug || undefined,
       });
       setEditAccount(null);
     } catch (err) {
@@ -271,7 +310,7 @@ export default function Accounts() {
         {validAccounts.map((accountName, i) => {
           const balance = accountBalances[accountName] ?? 0;
           const meta = accountMeta[accountName];
-          const bankTheme = identifyBank(accountName);
+          const bankTheme = getAccountBank(accountName);
           const corHex = meta?.cor?.startsWith('#') ? meta.cor : null;
 
           return (
@@ -378,17 +417,86 @@ export default function Accounts() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nova conta associada">
         <form onSubmit={handleAdd} className="space-y-5">
           {error && <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2 text-rose-400 text-sm">{error}</div>}
-          <div>
-            <label htmlFor="account-name" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Nome da Instiutição</label>
-            <input
-              id="account-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Nubank, Itaú Personalité, Carteira"
-              className="w-full px-4 py-3.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium"
-              required
-            />
+          {/* Visualização Prévia do Card em Tempo Real */}
+          {name && (
+            <div className="mb-2 animate-in fade-in zoom-in-95 duration-300">
+              <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Visualização do Card</span>
+              <AccountCard
+                name={name}
+                balance={parseFloat(initialBalance.replace(',', '.')) || 0}
+                corHex={createCor}
+                bank={selectedBankSlug && selectedBankSlug !== 'custom' ? BANKS.find(b => b.slug === selectedBankSlug) || null : null}
+                isEmpty={false}
+              />
+            </div>
+          )}
+
+          {/* Seleção de Instituição Bancária */}
+          <div className="space-y-3">
+            <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Instituição Bancária</span>
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar banco ou instituição..."
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-xs"
+              />
+            </div>
+
+            <div className="max-h-40 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 gap-2 border border-si-border/60 rounded-xl p-2.5 bg-black/10">
+              {filteredBanks.map((b) => {
+                const isClicked = selectedBankSlug === b.slug;
+                return (
+                  <button
+                    key={b.slug || b.name}
+                    type="button"
+                    onClick={() => handleSelectBank(b.slug || b.name)}
+                    className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 hover:scale-[1.03] text-center ${
+                      isClicked
+                        ? 'bg-white/[0.04] border-white/20 text-white shadow-lg font-bold'
+                        : 'bg-si-over-1 border-si-border text-zinc-400 hover:text-white hover:border-white/10'
+                    }`}
+                  >
+                    <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
+                      <BankLogo bank={b} size={20} />
+                    </div>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider truncate w-full">{b.name}</span>
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={() => handleSelectBank('custom')}
+                className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 hover:scale-[1.03] text-center ${
+                  selectedBankSlug === 'custom'
+                    ? 'bg-white/[0.04] border-white/20 text-white shadow-lg font-bold'
+                    : 'bg-si-over-1 border-si-border text-zinc-400 hover:text-white hover:border-white/10'
+                }`}
+              >
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <Building2 className="w-4.5 h-4.5 text-zinc-400" />
+                </div>
+                <span className="text-[9px] font-semibold uppercase tracking-wider truncate w-full">Personalizado</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label htmlFor="account-name" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Identificador da Conta</label>
+              <input
+                id="account-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ex: Itaú Personalité, Carteira, Nubank PJ"
+                className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-sm"
+                required
+              />
+            </div>
           </div>
           <div>
             <label htmlFor="account-balance" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Sincronização Inicial (R$)</label>
@@ -548,13 +656,27 @@ export default function Accounts() {
          balance={extratoAccount ? (accountBalances[extratoAccount] ?? 0) : 0}
          entries={entries}
          userName={user?.displayName || data?.name || null}
-         bank={extratoAccount ? (identifyBank(extratoAccount) as any) : null}
+         bank={extratoAccount ? (getAccountBank(extratoAccount) as any) : null}
        />
 
       <Modal open={!!editAccount} onClose={() => setEditAccount(null)} title="Configurações Locais">
         {editAccount && (
           <form onSubmit={handleSaveEdit} className="space-y-4">
             {error && <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2 text-rose-400 text-sm">{error}</div>}
+            
+            {editName && (
+              <div className="mb-2 animate-in fade-in zoom-in-95 duration-300">
+                <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Visualização do Card</span>
+                <AccountCard
+                  name={editName}
+                  balance={parseFloat(String(accountBalances[editAccount] ?? 0)) || 0}
+                  corHex={editCor}
+                  bank={editBankSlug && editBankSlug !== 'custom' ? BANKS.find(b => b.slug === editBankSlug) || null : null}
+                  isEmpty={false}
+                />
+              </div>
+            )}
+
             <div>
               <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Apelido (Label)</label>
               <input
@@ -564,6 +686,33 @@ export default function Accounts() {
                 className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium"
                 required
               />
+            </div>
+
+            <div>
+              <label htmlFor="edit-bank-select" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Vincular Instituição (Logo/Cores)</label>
+              <select
+                id="edit-bank-select"
+                value={editBankSlug}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setEditBankSlug(val);
+                  if (val && val !== 'custom') {
+                    const bk = BANKS.find(b => b.slug === val);
+                    if (bk) {
+                      setEditCor(bk.primary);
+                    }
+                  }
+                }}
+                className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
+              >
+                <option value="">Nenhum / Sem Vínculo</option>
+                {BANKS.filter(b => b.name !== 'Carteira').map((b) => (
+                  <option key={b.slug || b.name} value={b.slug || b.name}>
+                    {b.name}
+                  </option>
+                ))}
+                <option value="custom">Outro / Personalizado</option>
+              </select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
