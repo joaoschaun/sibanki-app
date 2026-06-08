@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { GenericPageSkeleton } from '../components/ui/PageSkeleton';
 import { useAppContext } from '../context/AppContext';
 import { updateUserDoc } from '../services/persistUserData';
 import { doc, getDoc, setDoc, collection, getDocs, serverTimestamp } from 'firebase/firestore';
@@ -141,13 +142,7 @@ export default function Filiados() {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <GenericPageSkeleton rows={3} />;
 
   return (
     <div className="space-y-6">

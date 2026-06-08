@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { GenericPageSkeleton } from '../components/ui/PageSkeleton';
 import { useAppContext } from '../context/AppContext';
 import { resetUserData, updateUserDoc } from '../services/persistUserData';
 import type { Entry, Investment, Goal, Recurrent } from '../types/userData';
@@ -332,13 +333,7 @@ export default function Settings() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <GenericPageSkeleton rows={4} />;
 
   const ofRaw = data?.openFinanceStatus;
   const ofLegacyAtivo = Boolean(data?.openBankingAtivo);
