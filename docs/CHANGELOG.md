@@ -17,16 +17,21 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
-### Adicionado (07/06/2026 — sessão análise sênior + estabilização)
-- **Rota `/home`**: `Home.tsx` (639 linhas) estava sem rota no router. Adicionada como `/home` — painel de entrada limpo com foco em Open Finance, Ld, score e quick actions. Candidata futura a substituir `/dashboard` para usuários novos.
-- **`firebase.ts`: exports `fnsBR` e `fnsUS`** — centraliza as duas regiões de Cloud Functions como fonte única de verdade. Todos os callsites migrados (AppContext, useSibcoin, useSentinelaGeo, useMarketRates, Settings, affiliateStore). `getFunctions()` inline eliminado do código de aplicação.
+### Adicionado (07/06/2026 — sessão análise sênior + estabilização completa)
+- **Rota `/home`**: `Home.tsx` (639 linhas) estava sem rota no router. Adicionada como `/home`.
+- **Rota `/casal`**: `Casal.tsx` (322 linhas) estava sem rota. Adicionada como `/casal`.
+- **`firebase.ts`: exports `fnsBR` e `fnsUS`** — centraliza regiões de Cloud Functions. `getFunctions()` inline eliminado de 8 callsites.
+- **`PageSkeleton.tsx`**: componente novo com CardsSkeleton, GrowthSkeleton, SocialSkeleton, DashboardSkeleton, TransactionsSkeleton, GenericPageSkeleton. Shimmer animate-pulse no design system Pierre.
+- **`useAuthContext.ts`**: hook memoizado que expõe apenas `{user, authLoading, avatarURL}`. Componentes auth-only não re-renderizam com updates financeiros.
 
 ### Alterado (07/06/2026)
-- **Splash reduzido de 3000ms → 1200ms** (`App.tsx`): usuário não espera mais 3s fixos após auth resolver. 1,2s mantém identidade visual sem bloquear o acesso.
+- **Splash 3000ms → 1200ms** (`App.tsx`): usuário não espera mais 3s fixos após auth resolver.
+- **15 páginas**: spinner azul genérico substituído por skeleton contextualizado (Cards, Growth, Social, Dashboard, Accounts, Planning, Budget, Recurring, Calendar, Achievements, Consultant, Filhos, Quarentena, Reports, Settings, Filiados). Spinners inline de paginação/feed mantidos.
 
-### Segurança / Qualidade (07/06/2026)
-- **tsc --noEmit**: zero erros após todas as mudanças.
-- **118/118 testes passando** (vitest) sem regressões.
+### Qualidade (07/06/2026)
+- **tsc --noEmit**: zero erros em todos os commits.
+- **118/118 testes passando** sem regressões.
+- **3 deploys em produção**: https://virtus-financeiro-cd7bd.web.app atualizado.
 
 ---
 
