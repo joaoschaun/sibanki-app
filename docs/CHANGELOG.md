@@ -17,6 +17,21 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Adicionado (07/06/2026 — sessão análise sênior + estabilização)
+- **Rota `/home`**: `Home.tsx` (639 linhas) estava sem rota no router. Adicionada como `/home` — painel de entrada limpo com foco em Open Finance, Ld, score e quick actions. Candidata futura a substituir `/dashboard` para usuários novos.
+- **`firebase.ts`: exports `fnsBR` e `fnsUS`** — centraliza as duas regiões de Cloud Functions como fonte única de verdade. Todos os callsites migrados (AppContext, useSibcoin, useSentinelaGeo, useMarketRates, Settings, affiliateStore). `getFunctions()` inline eliminado do código de aplicação.
+
+### Alterado (07/06/2026)
+- **Splash reduzido de 3000ms → 1200ms** (`App.tsx`): usuário não espera mais 3s fixos após auth resolver. 1,2s mantém identidade visual sem bloquear o acesso.
+
+### Segurança / Qualidade (07/06/2026)
+- **tsc --noEmit**: zero erros após todas as mudanças.
+- **118/118 testes passando** (vitest) sem regressões.
+
+---
+
+## [Unreleased — anterior]
+
 ### Adicionado
 - **Renda Passiva com Proventos Mensais (SOV-7)**:
   - Adicionado suporte ao campo opcional `proventosMensais` no modal de adição de investimentos ("Registrar investimento") na página [Growth.tsx](file:///c:/Users/jscha/virtus-financeiro/src/pages/Growth.tsx).
@@ -25,6 +40,8 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
   - Adicionados testes unitários no validador de frontend [validators.test.ts](file:///c:/Users/jscha/virtus-financeiro/src/services/validators.test.ts) e testes unitários no backend [sentinelaWeeklyService.test.js](file:///c:/Users/jscha/virtus-financeiro/functions/tests/sentinelaWeeklyService.test.js).
 
 ### Alterado
+- **Alinhamento do Cálculo de Dias de Liberdade (SEW-2)**: Refatorado o `calcDaysOfFreedom` no [sentinelaWeeklyService.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/sentinel/sentinelaWeeklyService.js) (backend) para parear completamente com a engine do frontend. Agora considera a exclusão de contas via `accountMeta.incluirNaSoma`, valida os investimentos pelos tipos líquidos canônicos (em vez do antigo boolean `liquido`), calcula o burn rate com data de corte exata de 90 dias, e utiliza estimativas de onboarding do `cadastroCompleto` como fallback para novos usuários.
+- **Testes Unitários do Sentinel**: Atualizados os testes existentes e adicionados novos casos em [sentinelaWeeklyService.test.js](file:///c:/Users/jscha/virtus-financeiro/functions/tests/sentinelaWeeklyService.test.js) para cobrir a exclusão de contas e o fallback de onboarding.
 - **Validação de Investimentos**: Modificado o validador [validators.ts](file:///c:/Users/jscha/virtus-financeiro/src/services/validators.ts) para garantir que `proventosMensais` seja um número finito e positivo de até R$ 1 bilhão.
 - **Cálculo de Dias de Liberdade do Sentinela Semanal**: Refatorada a função `calcDaysOfFreedom` no [sentinelaWeeklyService.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/sentinel/sentinelaWeeklyService.js) (backend) para deduzir proventos mensais declarados dos investimentos do custo mensal médio e ajustar a queima diária líquida de forma idêntica ao painel web.
 - **Modularização das Cloud Functions**: Concluída a divisão do arquivo principal `functions/index.js` (reduzido de 1500+ linhas para ~350 linhas de exportações diretas) em controladores de domínio separados e organizados na pasta `functions/services/`:
