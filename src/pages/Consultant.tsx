@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { GenericPageSkeleton } from '../components/ui/PageSkeleton';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { functions } from '../firebase';
@@ -277,13 +278,7 @@ export default function Consultant() {
     );
   }
 
-  if (dataLoading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (dataLoading) return <GenericPageSkeleton rows={3} />;
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">

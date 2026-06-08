@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { GrowthSkeleton } from '../components/ui/PageSkeleton';
 import { InvestmentInsights } from '../components/ui/InvestmentInsights';
 import { useAppContext } from '../context/AppContext';
 import { useSibcoinToast } from '../hooks/useSibcoinToast';
@@ -238,11 +239,7 @@ export default function Growth() {
 
   const handleSearchB3 = async (e: React.FormEvent) => { e.preventDefault(); await searchB3Quote(); };
 
-  if (loading) return (
-    <div className="flex items-center justify-center py-24">
-      <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-    </div>
-  );
+  if (loading) return <GrowthSkeleton />;
 
   const inputCls = 'w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm';
   const labelCls = 'block text-xs font-medium text-si-5 mb-1';

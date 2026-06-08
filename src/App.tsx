@@ -49,6 +49,7 @@ const SolucaoSeguro = lazy(() => import('./pages/solutions/SolucaoSeguro'));
 const SolucaoInvestimentosParceiros = lazy(() => import('./pages/solutions/SolucaoInvestimentosParceiros'));
 // ── Novos módulos de expansão ────────────────────────────────────────────────
 const Home         = lazy(() => import('./pages/Home'));
+const Casal        = lazy(() => import('./pages/Casal'));
 const Cripto       = lazy(() => import('./pages/Cripto'));
 const Loja         = lazy(() => import('./pages/Loja'));
 const MeuCpf       = lazy(() => import('./pages/MeuCpf'));
@@ -230,6 +231,7 @@ function AuthenticatedShell() {
               <Route path="/meus-boletos" element={<ErrorBoundary><MeusBoletos /></ErrorBoundary>} />
               <Route path="/sibcoin" element={<ErrorBoundary><Sibcoin /></ErrorBoundary>} />
               <Route path="/filiados" element={<ErrorBoundary><Filiados /></ErrorBoundary>} />
+              <Route path="/casal" element={<ErrorBoundary><Casal /></ErrorBoundary>} />
               <Route path="/quarentena" element={<ErrorBoundary><Quarentena /></ErrorBoundary>} />
               <Route path="/filhos" element={<ErrorBoundary><FilhosPage /></ErrorBoundary>} />
 

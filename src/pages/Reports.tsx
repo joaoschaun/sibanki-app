@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { GenericPageSkeleton } from '../components/ui/PageSkeleton';
 import { useAppContext } from '../context/AppContext';
 // generateReportPdf carregado via dynamic import (evita vendor-pdf no load inicial)
 import { getMD, fmt } from '../utils/reportUtils';
@@ -80,11 +81,7 @@ export default function Reports() {
     { id: 'metas',       label: 'Metas',       icon: Target },
   ];
 
-  if (loading) return (
-    <div className="flex justify-center py-24">
-      <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-    </div>
-  );
+  if (loading) return <GenericPageSkeleton rows={3} />;
 
   return (
     <div className="space-y-8">

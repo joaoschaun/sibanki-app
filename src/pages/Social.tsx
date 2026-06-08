@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { SocialSkeleton } from '../components/ui/PageSkeleton';
 import { useAppContext } from '../context/AppContext';
 import { useCommunityFeed } from '../hooks/useCommunityFeed';
 import { updateCommProfile, setCommBookmarks } from '../services/persistUserData';
@@ -241,13 +242,7 @@ export default function Social() {
     }
   };
 
-  if (userLoading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (userLoading) return <SocialSkeleton />;
 
   return (
     <div className="space-y-8">

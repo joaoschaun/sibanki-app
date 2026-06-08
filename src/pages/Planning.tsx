@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GenericPageSkeleton } from '../components/ui/PageSkeleton';
 import { useAppContext } from '../context/AppContext';
 import { useSibcoinToast } from '../hooks/useSibcoinToast';
 import { addGoal, updateGoal, deleteGoal, ValidationError } from '../services/persistUserData';
@@ -120,13 +121,7 @@ export default function Planning() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <GenericPageSkeleton />;
 
   return (
     <div className="space-y-8">

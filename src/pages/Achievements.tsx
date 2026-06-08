@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useRef } from 'react';
+import { GenericPageSkeleton } from '../components/ui/PageSkeleton';
 import { useAppContext } from '../context/AppContext';
 import { updateUserDoc } from '../services/persistUserData';
 import { getMD, getStreak } from '../utils/reportUtils';
@@ -97,13 +98,7 @@ export default function Achievements() {
   const level = getLevel(count);
   const scoreDisplay = count * 100;
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-24">
-        <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <GenericPageSkeleton rows={4} />;
 
   return (
     <div className="space-y-8">

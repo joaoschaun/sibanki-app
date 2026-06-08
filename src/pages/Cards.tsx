@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef } from 'react';
 
 import { useAppContext } from '../context/AppContext';
+import { CardsSkeleton } from '../components/ui/PageSkeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { CreditCardVisual } from '../components/banks/CreditCardVisual';
 import {
@@ -469,13 +470,7 @@ export default function Cards() {
     return items;
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <CardsSkeleton />;
 
   return (
     <div className="space-y-8">

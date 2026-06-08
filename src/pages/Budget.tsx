@@ -8,6 +8,7 @@
  * O modo escolhido é salvo em `userData.budgetMode`.
  */
 import { useMemo, useState } from 'react';
+import { GenericPageSkeleton } from '../components/ui/PageSkeleton';
 import { useAppContext } from '../context/AppContext';
 import { useSibcoinToast } from '../hooks/useSibcoinToast';
 import { updateBudgets, updateUserDoc } from '../services/persistUserData';
@@ -244,13 +245,7 @@ export default function Budget() {
     finally { setBusy(false); }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <GenericPageSkeleton rows={6} />;
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
