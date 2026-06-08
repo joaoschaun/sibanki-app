@@ -15,7 +15,8 @@ import {
   createContext, useContext, useMemo, useEffect, useRef, useState, useCallback,
   type ReactNode,
 } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
+import { fnsBR } from '../firebase';
 import { useAuth } from '../hooks/useAuth';
 import { useFinancialData } from '../hooks/useFinancialData';
 import type { User } from 'firebase/auth';
@@ -139,7 +140,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (isSyncing) return { ok: false, message: 'Sync já em andamento' };
     setIsSyncing(true);
     try {
-      const fns = getFunctions(undefined, 'southamerica-east1');
+      const fns = fnsBR;
       const fn = httpsCallable<unknown, { ok: boolean; message?: string }>(fns, 'pluggySyncAccounts');
       const result = await fn({});
       return result.data ?? { ok: true };
@@ -160,7 +161,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (localStorage.getItem(key)) { ofFiredRef.current = user.uid; return; }
     ofFiredRef.current = user.uid;
     localStorage.setItem(key, '1');
-    const fns = getFunctions(undefined, 'southamerica-east1');
+    const fns = fnsBR;
     httpsCallable(fns, 'triggerSibcoinEvent')({ eventType: 'open_finance_connected' }).catch(() => {});
   }, [user?.uid, financial.data?.openFinanceStatus]);
 
@@ -180,7 +181,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     autoSyncFiredRef.current = today;
     localStorage.setItem(key, today);
     // fire-and-forget: o onSnapshot vai atualizar o contexto quando o sync terminar
-    const fns = getFunctions(undefined, 'southamerica-east1');
+    const fns = fnsBR;
     httpsCallable(fns, 'pluggySyncAccounts')({}).catch(() => {});
   }, [user?.uid, financial.data?.openFinanceStatus, financial.data?.openFinanceSyncedAt]);
 
@@ -194,7 +195,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (localStorage.getItem(key) === today) { loginFiredRef.current = today; return; }
     loginFiredRef.current = today;
     localStorage.setItem(key, today);
-    const fns = getFunctions(undefined, 'southamerica-east1');
+    const fns = fnsBR;
     httpsCallable(fns, 'triggerSibcoinEvent')({ eventType: 'login_streak' }).catch(() => {});
   }, [user?.uid]);
 

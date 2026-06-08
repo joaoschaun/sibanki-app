@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
+import { fnsUS } from '../firebase';
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -98,11 +99,10 @@ export function useSentinelaGeo(
         lastCheckRef.current = Date.now();
 
         try {
-          const functions = getFunctions(undefined, 'us-central1');
           const sentinelaFn = httpsCallable<
             { lat: number; lng: number; snapshot: SentinelaGeoSnapshot; phone?: string },
             SentinelaGeoResult
-          >(functions, 'sentinelaGeoCheck');
+          >(fnsUS, 'sentinelaGeoCheck');
 
           const response = await sentinelaFn({ lat, lng, snapshot, phone });
           setState({

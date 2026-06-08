@@ -1,8 +1,5 @@
-import { httpsCallable, getFunctions } from 'firebase/functions';
-import app, { functions } from '../firebase';
-
-/** Callable do catálogo Lomadee — deploy em `southamerica-east1` (alinhado ao backend). */
-const functionsAffiliateCatalog = getFunctions(app, 'southamerica-east1');
+import { httpsCallable } from 'firebase/functions';
+import { fnsBR, fnsUS } from '../firebase';
 
 export interface AffiliateCatalogOffer {
   id: string;
@@ -67,7 +64,7 @@ export async function fetchAffiliateStoreCatalog(params: {
       includeFacets?: boolean;
     },
     AffiliateCatalogResult
-  >(functionsAffiliateCatalog, 'affiliateStoreCatalogApi');
+  >(fnsBR, 'affiliateStoreCatalogApi');
   const res = await fn(params);
   return res.data;
 }
@@ -88,7 +85,7 @@ export function trackAffiliateClick(offer: AffiliateCatalogOffer): void {
     } catch { /* URL inválida — ignora */ }
   }
 
-  const fn = httpsCallable(functions, 'registrarCliqueSolucao');
+  const fn = httpsCallable(fnsUS, 'registrarCliqueSolucao');
   fn({
     produtoId: offer.id,
     produto:   offer.merchant,

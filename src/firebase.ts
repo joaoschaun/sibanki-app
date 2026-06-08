@@ -18,6 +18,27 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const functions = getFunctions(app);
 export const storage = getStorage(app);
+
+/**
+ * Regiões das Cloud Functions — fonte única de verdade.
+ *
+ * Por que duas regiões?
+ * - `fnsBR` (southamerica-east1): SibCoin, Afiliados, Open Finance (Pluggy), Afiliados.
+ *   Deployados aqui por menor latência no Brasil.
+ * - `fnsUS` (us-central1): funções legadas e todas as que usam cold-start menor
+ *   (BRAPI, chat IA, billing, WhatsApp, Sentinel).
+ *   Cloudflare já faz CDN → latência aceitável.
+ *
+ * Use estes exports em vez de chamar getFunctions() inline com string de região.
+ */
+export const fnsBR = getFunctions(app, 'southamerica-east1');
+export const fnsUS = getFunctions(app, 'us-central1');
+
+/**
+ * @deprecated Use `fnsUS` ou `fnsBR` explicitamente.
+ * Mantido para compatibilidade com AgentCouncil.tsx e imports antigos.
+ */
+export const functions = fnsUS;
+
 export default app;

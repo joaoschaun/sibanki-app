@@ -7,7 +7,8 @@
  * Usado pelo IntelligenceContext para calcular Spread Gap (Sg) com precisão.
  */
 import { useState, useEffect } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
+import { fnsUS } from '../firebase';
 
 const CACHE_KEY = 'sib_market_rates';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
@@ -77,11 +78,10 @@ export function useMarketRates(): MarketRates {
 
     async function fetchRates() {
       try {
-        const fns = getFunctions(undefined, 'southamerica-east1');
         const fn = httpsCallable<unknown, {
           ok: boolean;
           indicators?: { selic?: number; ipca?: number; cdi?: number };
-        }>(fns, 'fixedIncomeCatalogApi');
+        }>(fnsUS, 'fixedIncomeCatalogApi');
 
         const result = await fn({});
         if (cancelled) return;

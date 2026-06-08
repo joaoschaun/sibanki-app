@@ -7,8 +7,8 @@ import { Modal } from '../components/ui/Modal';
 import { Database, Trash2, Upload, FileDown, FileText, MapPin, ArrowRight, Sparkles, Building2, RefreshCw, Bell } from 'lucide-react';
 import { RoundUpToggle } from '../components/ui/RoundUpWidget';
 import { usePushNotifications } from '../hooks/usePushNotifications';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { functions as firebaseFunctions } from '../firebase';
+import { httpsCallable } from 'firebase/functions';
+import { fnsBR } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
 import { useLanguage } from '../hooks/useLanguage';
@@ -253,11 +253,10 @@ export default function Settings() {
             const BATCH_SIZE = 50;
             for (let b = 0; b < toAiCategorize.length; b += BATCH_SIZE) {
               const batch = toAiCategorize.slice(b, b + BATCH_SIZE);
-              const fns = getFunctions(undefined, 'southamerica-east1');
               const categorize = httpsCallable<
                 { items: { index: number; desc: string; type: string }[] },
                 { results: { index: number; category: string }[] }
-              >(fns, 'aiCategorizeCsv');
+              >(fnsBR, 'aiCategorizeCsv');
               const result = await categorize({ items: batch });
               for (const { index, category } of result.data.results) {
                 newEntries[index].category = category;
@@ -359,7 +358,7 @@ export default function Settings() {
     setOfSyncBusy(true);
     try {
       const sync = httpsCallable<unknown, { ok?: boolean; synced?: number; message?: string }>(
-        firebaseFunctions,
+        fnsBR,
         'pluggySyncAccounts',
       );
       const res = await sync({});

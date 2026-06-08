@@ -9,7 +9,8 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
+import { fnsBR } from '../firebase';
 import { useAppContext } from '../context/AppContext';
 import type { SibcoinTransaction } from '../types/userData';
 
@@ -91,7 +92,7 @@ export function useSibcoin() {
     async (eventType: SibcoinEventType, eventMeta?: Record<string, unknown>): Promise<SibcoinEventResult | null> => {
       setLoading(true);
       try {
-        const functions = getFunctions(undefined, 'southamerica-east1');
+        const functions = fnsBR;
         const fn = httpsCallable<
           { eventType: string; eventMeta?: Record<string, unknown> },
           SibcoinEventResult
@@ -116,7 +117,7 @@ export function useSibcoin() {
   const fetchMissions = useCallback(async () => {
     setMissionsLoading(true);
     try {
-      const functions = getFunctions(undefined, 'southamerica-east1');
+      const functions = fnsBR;
       const fn = httpsCallable<void, { missions: SibcoinMissionStatus[]; balance: number; tier: string; earned: number }>(
         functions,
         'getSibcoinMissions'

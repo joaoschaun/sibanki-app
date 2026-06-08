@@ -110,8 +110,9 @@ function AuthenticatedShell() {
   const [wizardDismissed, setWizardDismissed] = useState(false);
   const [minSplashTimeDone, setMinSplashTimeDone] = useState(false);
 
+  // Splash mínimo de 1,2s (suficiente para mostrar o vídeo/logo sem bloquear usuários)
   useEffect(() => {
-    const t = setTimeout(() => setMinSplashTimeDone(true), 3000);
+    const t = setTimeout(() => setMinSplashTimeDone(true), 1200);
     return () => clearTimeout(t);
   }, []);
 
