@@ -16,6 +16,26 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
+/**
+ * App Check (Ação #5 — Análise 360): protege as callables contra abuso.
+ * Só ativa quando VITE_APPCHECK_SITE_KEY estiver definida no build — assim o
+ * deploy é seguro em 2 fases: (1) front com a chave em modo Monitoring,
+ * (2) `ENFORCE_APP_CHECK=true` nas Functions após validar métricas.
+ * Checklist completo: docs/APP_CHECK.md.
+ */
+const appCheckSiteKey = import.meta.env.VITE_APPCHECK_SITE_KEY as string | undefined;
+if (appCheckSiteKey) {
+  import('firebase/app-check')
+    .then(({ initializeAppCheck, ReCaptchaV3Provider }) => {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(appCheckSiteKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+    })
+    .catch(() => { /* App Check é proteção adicional — nunca bloqueia o boot */ });
+}
+
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);

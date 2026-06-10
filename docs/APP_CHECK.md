@@ -1,5 +1,14 @@
 # Firebase App Check — Checklist de ativação
 
+> **Atualização 10/06/2026 (Ação #5 — Análise 360):** o React SPA agora
+> inicializa App Check automaticamente quando `VITE_APPCHECK_SITE_KEY` está
+> definida no build (`src/firebase.ts`, dynamic import de `firebase/app-check`).
+> Plano de ativação em 2 fases:
+> 1. Criar chave reCAPTCHA v3 → `VITE_APPCHECK_SITE_KEY` em `.env.production`
+>    → `npm run deploy:app` → validar em App Check → Metrics (modo Monitoring).
+> 2. `ENFORCE_APP_CHECK=true` nas Functions (secret/env) → deploy das callables
+>    → tráfego sem token passa a ser rejeitado.
+
 O App Check protege as Cloud Functions (em especial a `chatApi`) contra abuso: só requisições do seu app (com token válido) são aceitas.
 
 ## 1. Firebase Console
