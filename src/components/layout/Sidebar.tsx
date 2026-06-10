@@ -78,6 +78,23 @@ const bottomNav: NavItem[] = [
 
 const maisPaths = maisNav.map((i) => i.path);
 
+// ── MODO SIMPLES (Ação #6 — Análise 360) ─────────────────────────────────────
+// Por padrão o menu mostra só o essencial (7 itens + rodapé). O restante fica
+// atrás de "Menu completo" — persiste em localStorage. Reduz a sobrecarga
+// cognitiva do usuário novo sem esconder nada de quem já domina o app.
+const SIDEBAR_FULL_KEY = 'sib_sidebar_full';
+
+/** Itens de Gestão visíveis também no modo simples. */
+const gestaoSimpleNav: NavItem[] = gestaoNav.filter(
+  (i) => i.path === '/contas' || i.path === '/credito',
+);
+/** Itens ocultos no modo simples (para auto-expandir quando a rota for um deles). */
+const hiddenInSimplePaths: string[] = [
+  ...gestaoNav.filter((i) => !gestaoSimpleNav.includes(i)).map((i) => i.path),
+  ...socialNav.map((i) => i.path),
+  ...maisPaths,
+];
+
 export function Sidebar({
   collapsed,
   openGroup: _openGroup,
@@ -86,6 +103,19 @@ export function Sidebar({
   const { branding } = useTenant();
   const location = useLocation();
   const [maisOpen, setMaisOpen] = useState(false);
+  const [fullMenu, setFullMenu] = useState<boolean>(() => {
+    try { return localStorage.getItem(SIDEBAR_FULL_KEY) === '1'; } catch { return false; }
+  });
+  // Rota ativa escondida no modo simples → exibe o menu completo nessa visita.
+  const routeNeedsFull = hiddenInSimplePaths.some((p) => location.pathname.startsWith(p));
+  const showFull = fullMenu || routeNeedsFull;
+  const toggleFullMenu = () => {
+    setFullMenu((v) => {
+      const next = !v;
+      try { localStorage.setItem(SIDEBAR_FULL_KEY, next ? '1' : '0'); } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (collapsed) { setMaisOpen(false); setOpenGroup(null); }
@@ -190,14 +220,26 @@ export function Sidebar({
           {principalNav.map((item) => <NavLink key={item.path} item={item} />)}
         </div>
 
-        {/* GESTÃO */}
-        <Section label="Gestão" items={gestaoNav} />
+        {/* GESTÃO — no modo simples só Contas + Crédito */}
+        <Section label="Gestão" items={showFull ? gestaoNav : gestaoSimpleNav} />
 
-        {/* SOCIAL */}
-        <Section label="Social" items={socialNav} />
+        {/* SOCIAL — oculto no modo simples */}
+        {showFull && <Section label="Social" items={socialNav} />}
 
-        {/* MAIS — accordion */}
-        <div className="mt-4">
+        {/* Toggle Menu simples/completo */}
+        {!collapsed && !routeNeedsFull && (
+          <button
+            type="button"
+            onClick={toggleFullMenu}
+            className={cn(row(false), 'mt-4 text-si-5')}
+          >
+            <MoreHorizontal className="w-[14px] h-[14px] shrink-0 text-si-5" />
+            {fullMenu ? 'Menu simples' : 'Menu completo'}
+          </button>
+        )}
+
+        {/* MAIS — accordion (só no menu completo) */}
+        {showFull && <div className="mt-4">
           {collapsed ? (
             <>
               <div className="h-px bg-si-border my-2 mx-1" />
@@ -251,7 +293,7 @@ export function Sidebar({
               </div>
             </>
           )}
-        </div>
+        </div>}
       </nav>
 
       {/* ── Rodapé ─────────────────────────────────────────────────────────── */}
