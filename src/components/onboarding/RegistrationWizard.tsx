@@ -10,6 +10,7 @@ import {
   X, Check, Building2, Banknote, Loader2, AlertCircle, Gift, ExternalLink,
 } from 'lucide-react';
 import { OpenFinanceConnect } from '../openFinance/OpenFinanceConnect';
+import { trackPlatformEvent } from '../../services/platformEvents';
 
 // ─── Steps ────────────────────────────────────────────────────────────────────
 const STEPS = [
@@ -230,6 +231,11 @@ export function RegistrationWizard({ open, onClose, onComplete }: Props) {
       if (user.displayName !== form.nome && form.nome.trim()) {
         await updateProfile(user, { displayName: form.nome.trim() });
       }
+      // Funil de ativação (Ação #3 — Análise 360): marco D0 "cadastro completo".
+      void trackPlatformEvent('activation_signup_completed', {
+        openFinanceConnected: bankConnected,
+        objetivo: form.obj.join(',').slice(0, 100),
+      });
       onComplete?.();
       onClose();
     } catch { /* silent */ } finally { setBusy(false); }

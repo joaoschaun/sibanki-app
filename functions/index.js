@@ -623,6 +623,13 @@ const PLATFORM_EVENT_ALLOWLIST = new Set([
   "advisor_reply_failed",
   "insight_shown",
   "insight_cta_clicked",
+  "ticker_quote_failed",
+  "ticker_quote_success",
+  // Funil de ativação (Ação #3 — Análise 360)
+  "activation_signup_completed",
+  "activation_of_connected",
+  "activation_first_entry",
+  "activation_ld_computed",
 ]);
 
 function sanitizePlatformPayload(value, depth = 0) {

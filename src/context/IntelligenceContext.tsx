@@ -11,8 +11,9 @@
  *   - Nenhuma página conhece os engines diretamente — consomem via useIntelligence()
  *   - Testável isoladamente com dados mockados
  */
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, useEffect, type ReactNode } from 'react';
 import { useAppContext, type DataFreshness } from './AppContext';
+import { trackPlatformEvent } from '../services/platformEvents';
 import { useMarketRates } from '../hooks/useMarketRates';
 import {
   calculateDaysOfFreedom,
@@ -69,6 +70,7 @@ const IntelligenceContext = createContext<IntelligenceState | null>(null);
 
 export function IntelligenceProvider({ children }: { children: ReactNode }) {
   const {
+    user,
     financialProfile,
     entries,
     investments,
@@ -97,6 +99,23 @@ export function IntelligenceProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [entries, investments, accountBalances, accountMeta],
   );
+
+  // Funil de ativação (Ação #3 — Análise 360): marco "primeiro Ld real".
+  // Dispara uma única vez por uid quando o Ld é calculado com dados de verdade
+  // (0 < days < 99999). Dedup em localStorage; fire-and-forget.
+  useEffect(() => {
+    if (!user?.uid || loading) return;
+    if (!(freedom.days > 0 && freedom.days < 99999)) return;
+    const key = `sib_funnel_ld_${user.uid}`;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, '1');
+    void trackPlatformEvent('activation_ld_computed', {
+      days: freedom.days,
+      status: freedom.status,
+      dataConfidence: freedom.dataConfidence,
+      isEstimated: Boolean(freedom.isEstimated),
+    });
+  }, [user?.uid, loading, freedom]);
 
   // Sg — Spread Gap
   // Memoizado nas dependências reais: investimentos, dívidas, cartões

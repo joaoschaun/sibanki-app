@@ -40,6 +40,7 @@ import type {
 } from '../types/openFinance';
 import type { ConsolidatedFinancialProfile } from '../types/platform';
 import { buildFinancialProfile } from '../utils/financialProfile';
+import { trackPlatformEvent } from '../services/platformEvents';
 
 /** Quão recente é o dado Open Finance do usuário. */
 export type DataFreshness = 'fresh' | 'stale' | 'none';
@@ -199,6 +200,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const fns = fnsBR;
     httpsCallable(fns, 'triggerSibcoinEvent')({ eventType: 'login_streak' }).catch(() => {});
   }, [user?.uid]);
+
+  // ── Funil de ativação (Ação #3 — Análise 360) ────────────────────────────
+  // Marcos D0: Open Finance conectado e primeiro lançamento. Dedup por uid em
+  // localStorage — telemetria fire-and-forget, nunca quebra a UX.
+  useEffect(() => {
+    if (!user?.uid) return;
+    if (financial.data?.openFinanceStatus !== 'ativo') return;
+    const key = `sib_funnel_of_${user.uid}`;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, '1');
+    void trackPlatformEvent('activation_of_connected', { source: 'app_context' });
+  }, [user?.uid, financial.data?.openFinanceStatus]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const count = financial.entries?.length ?? 0;
+    if (count < 1) return;
+    const key = `sib_funnel_entry_${user.uid}`;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, '1');
+    void trackPlatformEvent('activation_first_entry', { entriesCount: count });
+  }, [user?.uid, financial.entries]);
 
   // ── Valor do contexto ─────────────────────────────────────────────────────
   const value = useMemo<AppContextValue>(
