@@ -25,11 +25,14 @@ const db = admin.firestore();
  * ENV: pode-se adicionar `STRIPE_PRICE_TO_PLAN_OVERRIDE` (JSON) para staging.
  */
 function loadStripePriceToPlan() {
-  // Defaults (placeholders — ajustar com priceIds REAIS do Stripe Dashboard)
+  // Defaults — priceIds reais do Stripe (modo TEST, criados em 27/02/2026,
+  // mapeados em 10/06/2026 — Ação #1 Análise 360). Ao migrar para LIVE,
+  // sobrescrever via env STRIPE_PRICE_TO_PLAN sem mexer no código.
   const defaults = {
-    // pro_monthly: "price_pro_monthly_id",
-    // pro_yearly:  "price_pro_yearly_id",
-    // familia_monthly: "price_familia_monthly_id",
+    price_1T5Fp1Hy6wEjpvXYYPVNuBXT: "pro",     // Pro mensal  R$ 19,90
+    price_1T5FqIHy6wEjpvXYjp0CNt9p: "pro",     // Pro anual   R$ 178,80
+    price_1T5FreHy6wEjpvXYxDii3kQ9: "familia", // Família mensal R$ 29,90
+    price_1T5FsWHy6wEjpvXY6y3uvbDA: "familia", // Família anual  R$ 274,80
   };
   // Override via env (formato JSON: '{"price_xxx":"pro","price_yyy":"familia"}')
   const raw = process.env.STRIPE_PRICE_TO_PLAN || "";

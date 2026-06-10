@@ -18,28 +18,30 @@
    "Gerenciar assinatura" (createPortal). O botão de assinar fica desabilitado até
    o priceId ser configurado.
 
-## Passos operacionais (João) — ~30 min
+## Passos operacionais — atualização 10/06/2026
 
-### 1. Criar produtos/preços no Stripe Dashboard
-- Produtos → + Adicionar produto → **Sibanki Pro**
-  - Preço mensal recorrente (ex.: R$ 19,90/mês) → copiar `price_...`
-  - (Opcional) Preço anual (ex.: R$ 199/ano) → copiar `price_...`
-- (Opcional) **Sibanki Família** — mesmo processo.
+### 1. ✅ Produtos/preços criados (27/02/2026) e mapeados (10/06/2026)
 
-### 2. Configurar o mapa priceId → plano (server)
-```bash
-firebase functions:secrets:set STRIPE_PRICE_TO_PLAN
-# valor (JSON, uma linha):
-# {"price_XXXX_pro_mensal":"pro","price_YYYY_pro_anual":"pro","price_ZZZZ_familia":"familia"}
-```
-Sem isso a allowlist SEG-Stripe-1 fica aberta (aceita qualquer priceId com warning).
+| priceId | Plano | Valor |
+|---|---|---|
+| `price_1T5Fp1Hy6wEjpvXYYPVNuBXT` | Pro mensal | R$ 19,90/mês |
+| `price_1T5FqIHy6wEjpvXYjp0CNt9p` | Pro anual | R$ 178,80/ano |
+| `price_1T5FreHy6wEjpvXYxDii3kQ9` | Família mensal | R$ 29,90/mês |
+| `price_1T5FsWHy6wEjpvXY6y3uvbDA` | Família anual | R$ 274,80/ano |
 
-### 3. Configurar o priceId no front
-Criar/editar `.env.production` na raiz do projeto Vite:
-```
-VITE_STRIPE_PRICE_PRO_MONTHLY=price_XXXX_pro_mensal
-```
-(variáveis `VITE_*` são públicas por design — priceId não é segredo).
+> ⚠️ **Modo TEST.** A `STRIPE_SECRET` em `functions/.env` é `sk_test` e estes
+> priceIds são do ambiente de teste — perfeito para validar o fluxo ponta a
+> ponta com cartão `4242…`. Para cobrar de verdade: ativar o modo live no
+> Stripe, recriar os 4 preços no live, e sobrescrever via
+> `STRIPE_PRICE_TO_PLAN` (secret) + `.env.production` — sem mexer em código.
+
+### 2. ✅ Mapa priceId → plano
+Defaults hardcoded em `stripeService.js` (allowlist SEG-Stripe-1 agora é
+fail-closed); env `STRIPE_PRICE_TO_PLAN` sobrescreve para o modo live.
+
+### 3. ✅ priceIds no front
+`.env.production` na raiz com os 4 `VITE_STRIPE_PRICE_*`. Configurações exibe
+os 4 planos (Pro/Família × mensal/anual) com checkout direto.
 
 ### 4. Webhook Stripe
 - Dashboard → Developers → Webhooks → endpoint:

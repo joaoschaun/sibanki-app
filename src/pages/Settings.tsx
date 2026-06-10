@@ -578,39 +578,45 @@ export default function Settings() {
             {checkoutBusy ? 'Abrindo…' : 'Gerenciar assinatura'}
           </button>
         ) : (
-          <div className="space-y-2">
-            <button
-              type="button"
-              disabled={checkoutBusy || !import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY}
-              onClick={async () => {
-                const priceId = import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY as string | undefined;
-                if (!priceId) return;
-                setCheckoutBusy(true);
-                setError(null);
-                try {
-                  const checkoutFn = httpsCallable<
-                    { priceId: string; plan: string; billing: string },
-                    { url?: string }
-                  >(fnsUS, 'createCheckout');
-                  const res = await checkoutFn({ priceId, plan: 'pro', billing: 'monthly' });
-                  if (res.data?.url) window.location.assign(res.data.url);
-                } catch (err) {
-                  setError(err instanceof Error ? err.message : 'Erro ao iniciar assinatura.');
-                } finally {
-                  setCheckoutBusy(false);
-                }
-              }}
-              className="px-4 py-2 rounded-xl border text-sm bg-si-over-2 border-si-border-md text-si-2 hover:bg-si-over-3 disabled:opacity-50"
-            >
-              {checkoutBusy ? 'Abrindo…' : 'Assinar Sibanki Pro (30 dias grátis)'}
-            </button>
-            {!import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY && (
-              <p className="text-[11px] text-si-5">
-                Assinatura em breve — aguardando configuração de preços (VITE_STRIPE_PRICE_PRO_MONTHLY).
-              </p>
-            )}
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {([
+                { label: 'Pro mensal', price: 'R$ 19,90/mês', priceId: import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY, plan: 'pro', billing: 'monthly' },
+                { label: 'Pro anual', price: 'R$ 178,80/ano · 2 meses grátis', priceId: import.meta.env.VITE_STRIPE_PRICE_PRO_YEARLY, plan: 'pro', billing: 'yearly' },
+                { label: 'Família mensal', price: 'R$ 29,90/mês', priceId: import.meta.env.VITE_STRIPE_PRICE_FAMILIA_MONTHLY, plan: 'familia', billing: 'monthly' },
+                { label: 'Família anual', price: 'R$ 274,80/ano · 2 meses grátis', priceId: import.meta.env.VITE_STRIPE_PRICE_FAMILIA_YEARLY, plan: 'familia', billing: 'yearly' },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.label}
+                  type="button"
+                  disabled={checkoutBusy || !opt.priceId}
+                  onClick={async () => {
+                    if (!opt.priceId) return;
+                    setCheckoutBusy(true);
+                    setError(null);
+                    try {
+                      const checkoutFn = httpsCallable<
+                        { priceId: string; plan: string; billing: string },
+                        { url?: string }
+                      >(fnsUS, 'createCheckout');
+                      const res = await checkoutFn({ priceId: opt.priceId as string, plan: opt.plan, billing: opt.billing });
+                      if (res.data?.url) window.location.assign(res.data.url);
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Erro ao iniciar assinatura.');
+                    } finally {
+                      setCheckoutBusy(false);
+                    }
+                  }}
+                  className="px-4 py-3 rounded-xl border text-left bg-si-over-2 border-si-border-md hover:bg-si-over-3 disabled:opacity-50 transition-colors"
+                >
+                  <span className="block text-sm font-semibold text-si-1">{opt.label}</span>
+                  <span className="block text-[11px] text-si-4 mt-0.5">{opt.price} · 30 dias grátis</span>
+                </button>
+              ))}
+            </div>
             <p className="text-[11px] text-si-5">
               Pro inclui: consultor IA ilimitado, Open Finance, relatórios PDF, lançamento por voz/foto e bot WhatsApp.
+              Família adiciona visão compartilhada do casal/família.
             </p>
           </div>
         )}
