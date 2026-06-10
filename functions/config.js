@@ -58,13 +58,19 @@ const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || "";
 const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || "";
 const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "";
 
-// Afiliados / Cashback (Lomadee + Monetizze)
+// Afiliados / Cashback (Lomadee + Monetizze + Awin)
 const LOMADEE_APP_TOKEN = process.env.LOMADEE_APP_TOKEN || "";
 const LOMADEE_SOURCE_ID = process.env.LOMADEE_SOURCE_ID || "";
 const LOMADEE_WEBHOOK_SECRET = process.env.LOMADEE_WEBHOOK_SECRET || "";
 const MONETIZZE_API_KEY = process.env.MONETIZZE_API_KEY || "";
 const MONETIZZE_TOKEN = process.env.MONETIZZE_TOKEN || "";
 const MONETIZZE_WEBHOOK_SECRET = process.env.MONETIZZE_WEBHOOK_SECRET || "";
+const AWIN_API_KEY = process.env.AWIN_API_KEY || "";
+const AWIN_PUBLISHER_ID = process.env.AWIN_PUBLISHER_ID || "";
+
+// Market Data Hub — providers externos
+const ALPHA_VANTAGE_KEY = process.env.ALPHA_VANTAGE_KEY || "";
+const TWELVE_DATA_KEY   = process.env.TWELVE_DATA_KEY   || "";
 
 // Pluggy (Open Finance)
 const PLUGGY_CLIENT_ID = process.env.PLUGGY_CLIENT_ID || "";
@@ -126,6 +132,10 @@ module.exports = {
   MONETIZZE_API_KEY,
   MONETIZZE_TOKEN,
   MONETIZZE_WEBHOOK_SECRET,
+  AWIN_API_KEY,
+  AWIN_PUBLISHER_ID,
+  ALPHA_VANTAGE_KEY,
+  TWELVE_DATA_KEY,
   CASHBACK_CONVERSION_RATE,
   CASHBACK_RELEASE_DAYS,
 };

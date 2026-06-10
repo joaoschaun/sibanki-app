@@ -10,6 +10,9 @@ import {
   calculateDaysOfFreedom,
   calculateSpreadGap,
   calculateSovereigntyScore,
+  calculateGrahamIntrinsicValue,
+  calculateBazinPriceCeiling,
+  calculateSolidezScore,
 } from './sovereigntyEngine';
 import type { Entry, Investment, CreditObligation, Card } from '../types/userData';
 
@@ -387,5 +390,92 @@ describe('calculateSovereigntyScore', () => {
     const noStreak = calculateSovereigntyScore({ ...baseInput, impulseStreakCount: 0 });
     const fullStreak = calculateSovereigntyScore({ ...baseInput, impulseStreakCount: 4 });
     expect(noStreak.score - fullStreak.score).toBe(20);
+  });
+});
+
+// ─── 4. Análise Fundamentalista de Investimentos ─────────────────────────────
+
+describe('calculateGrahamIntrinsicValue', () => {
+  it('calcula valor intrínseco Graham e margem de segurança corretos', () => {
+    // VI = sqrt(22.5 * LPA * VPA)
+    // LPA = 4, VPA = 40. VI = sqrt(22.5 * 4 * 40) = sqrt(3600) = 60
+    // Price = 45. Margem = (60 - 45) / 60 = 25%
+    const res = calculateGrahamIntrinsicValue(45, 4, 40);
+    expect(res.value).toBe(60);
+    expect(res.marginOfSafety).toBe(25);
+    expect(res.status).toBe('desconto');
+  });
+
+  it('detecta sobrepreço quando preço de mercado é maior que o valor justo', () => {
+    const res = calculateGrahamIntrinsicValue(75, 4, 40); // VI = 60, Preço = 75
+    expect(res.status).toBe('sobrepreco');
+    expect(res.marginOfSafety).toBeLessThan(0);
+  });
+
+  it('retorna inválido se LPA ou VPA for menor ou igual a zero', () => {
+    const res1 = calculateGrahamIntrinsicValue(45, -2, 40);
+    expect(res1.status).toBe('invalido');
+    expect(res1.value).toBe(0);
+
+    const res2 = calculateGrahamIntrinsicValue(45, 4, 0);
+    expect(res2.status).toBe('invalido');
+  });
+});
+
+describe('calculateBazinPriceCeiling', () => {
+  it('calcula preço teto Bazin e upside corretos', () => {
+    // Dividendo anual = Preço (50) * DY (9%) = 4.5
+    // Preço Teto = 4.5 / 6% = 75
+    // Upside = (75 - 50) / 50 = 50%
+    const res = calculateBazinPriceCeiling(50, 9, 6);
+    expect(res.precoTeto).toBe(75);
+    expect(res.upside).toBe(50);
+    expect(res.status).toBe('compra');
+  });
+
+  it('detecta ativo caro em relação ao rendimento de Bazin', () => {
+    const res = calculateBazinPriceCeiling(90, 5, 6); // caro (teto de 75 para preço 90)
+    expect(res.status).toBe('caro');
+  });
+
+  it('retorna inválido com inputs incorretos', () => {
+    const res = calculateBazinPriceCeiling(50, undefined);
+    expect(res.status).toBe('invalido');
+  });
+});
+
+describe('calculateSolidezScore', () => {
+  it('calcula score de solidez alto com múltiplos robustos', () => {
+    const res = calculateSolidezScore({
+      roe: 0.22,             // 22% ROE (decimal)
+      margemLiquida: 0.25,   // 25% Margem (decimal)
+      dividaEbitda: 1.2,     // Divida/EBITDA baixa
+      pe: 12,                // P/L atrativo
+      pvp: 1.5,              // P/VP atrativo
+      dy: 8.5,               // DY alto (percentual)
+    });
+    expect(res.score).toBeGreaterThanOrEqual(7);
+    expect(res.verdict).toBe('alta');
+  });
+
+  it('calcula score de solidez baixo para empresa deteriorada', () => {
+    const res = calculateSolidezScore({
+      roe: -0.05,
+      margemLiquida: -0.02,
+      dividaEbitda: 5.8,
+      pe: -10,
+      pvp: 3.5,
+      dy: 0,
+    });
+    expect(res.score).toBeLessThanOrEqual(3);
+    expect(res.verdict).toBe('baixa');
+  });
+
+  it('normaliza corretamente taxas inseridas como percentual e decimal', () => {
+    // roe: 18 (percentual) deve ser interpretado como 0.18 (e pontuar > 0.15)
+    // margem: 12 (percentual) deve ser interpretado como 0.12 (e pontuar > 0.10)
+    const resPercentual = calculateSolidezScore({ roe: 18, margemLiquida: 12 });
+    const resDecimal = calculateSolidezScore({ roe: 0.18, margemLiquida: 0.12 });
+    expect(resPercentual.score).toBe(resDecimal.score);
   });
 });

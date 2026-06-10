@@ -37,6 +37,7 @@ export default function Settings() {
   const [whatsEnabled, setWhatsEnabled] = useState(false);
   const [emailWeekly, setEmailWeekly] = useState(false);
   const [budgetAlerts, setBudgetAlerts] = useState(false);
+  const [briefingDiario, setBriefingDiario] = useState(false);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
@@ -60,6 +61,7 @@ export default function Settings() {
     setWhatsEnabled(Boolean(s.whatsEnabled));
     setEmailWeekly(Boolean(s.emailWeekly));
     setBudgetAlerts(Boolean(s.budgetAlerts));
+    setBriefingDiario(Boolean((data as any)?.briefingDiarioEmail));
   }, [data]);
 
   useEffect(() => {
@@ -314,7 +316,10 @@ export default function Settings() {
     setBusy(true);
     setError(null);
     try {
+      // Salva campos raiz lidos pelas Cloud Functions + campos de settings
       await updateUserDoc(user.uid, {
+        resumoSemanalEmail: emailWeekly,   // lido por weeklySummaryEmailService
+        briefingDiarioEmail: briefingDiario, // lido por dailyBriefingEmailService
         settings: {
           ...((data as any)?.settings ?? {}),
           planType,
@@ -563,13 +568,16 @@ export default function Settings() {
           <h3 className="font-semibold text-si-1">Notificações e integrações</h3>
           <p className="text-si-5 text-sm mt-1">Ative canais de notificações, lembretes e alertas.</p>
         </div>
-        <label className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md">
-          <span className="text-sm text-si-3">Resumo semanal por e-mail</span>
+        <label id="notificacoes" className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md cursor-pointer">
+          <div>
+            <p className="text-sm text-si-3">Resumo semanal por e-mail</p>
+            <p className="text-[11px] text-si-5 mt-0.5">Toda segunda-feira: receitas, despesas e top categorias da semana.</p>
+          </div>
           <input
             type="checkbox"
             checked={emailWeekly}
             onChange={(e) => setEmailWeekly(e.target.checked)}
-            className="rounded border-si-border-xl bg-si-bg"
+            className="rounded border-si-border-xl bg-si-bg shrink-0"
           />
         </label>
         <label className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md">
@@ -579,6 +587,18 @@ export default function Settings() {
             checked={budgetAlerts}
             onChange={(e) => setBudgetAlerts(e.target.checked)}
             className="rounded border-si-border-xl bg-si-bg"
+          />
+        </label>
+        <label className="flex items-start justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm text-si-3">Briefing diário</span>
+            <span className="text-[11px] text-si-5">Enviado por e-mail seg–sex às 7h30, somente quando há alertas ou metas relevantes.</span>
+          </div>
+          <input
+            type="checkbox"
+            checked={briefingDiario}
+            onChange={(e) => setBriefingDiario(e.target.checked)}
+            className="rounded border-si-border-xl bg-si-bg mt-0.5 shrink-0"
           />
         </label>
         <label className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md">

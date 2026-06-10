@@ -50,7 +50,6 @@ const SolucaoInvestimentosParceiros = lazy(() => import('./pages/solutions/Soluc
 // ── Novos módulos de expansão ────────────────────────────────────────────────
 const Home         = lazy(() => import('./pages/Home'));
 const Casal        = lazy(() => import('./pages/Casal'));
-const Cripto       = lazy(() => import('./pages/Cripto'));
 const Loja         = lazy(() => import('./pages/Loja'));
 const MeuCpf       = lazy(() => import('./pages/MeuCpf'));
 const MeusBoletos  = lazy(() => import('./pages/MeusBoletos'));
@@ -60,6 +59,13 @@ const CreditHub    = lazy(() => import('./pages/CreditHub'));
 const Filiados     = lazy(() => import('./pages/Filiados'));
 const Quarentena   = lazy(() => import('./pages/Quarentena'));
 const FilhosPage   = lazy(() => import('./pages/Filhos'));
+const CrediAmigo        = lazy(() => import('./pages/CrediAmigo'));
+const ConsorcioAmigo    = lazy(() => import('./pages/ConsorcioAmigo'));
+const AceitarEmprestimo = lazy(() => import('./pages/AceitarEmprestimo'));
+const AceitarGrupo      = lazy(() => import('./pages/AceitarGrupo'));
+const Assinaturas       = lazy(() => import('./pages/Assinaturas'));
+const Fire              = lazy(() => import('./pages/Fire'));
+const RelatorioIR       = lazy(() => import('./pages/RelatorioIR'));
 
 // ── Spinner reutilizável para Suspense ───────────────────────────────────────
 function PageLoader() {
@@ -138,6 +144,19 @@ function AuthenticatedShell() {
 
   if (authLoading || !minSplashTimeDone) {
     return <AppLoadingScreen />;
+  }
+
+  // Rotas públicas — acessíveis sem autenticação (links de convite CrediAmigo/Consórcio)
+  const publicPaths = ['/aceitar/emprestimo/', '/aceitar/grupo/'];
+  if (publicPaths.some((p) => window.location.pathname.startsWith(p))) {
+    return (
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-si-bg"><div className="w-8 h-8 border-2 border-si-border border-t-si-3 rounded-full animate-spin" /></div>}>
+        <Routes>
+          <Route path="/aceitar/emprestimo/:token" element={<ErrorBoundary><AceitarEmprestimo /></ErrorBoundary>} />
+          <Route path="/aceitar/grupo/:token"      element={<ErrorBoundary><AceitarGrupo /></ErrorBoundary>} />
+        </Routes>
+      </Suspense>
+    );
   }
 
   if (!user) return <Login />;
@@ -225,7 +244,6 @@ function AuthenticatedShell() {
               <Route path="/credito/plano" element={<ErrorBoundary><CreditHub /></ErrorBoundary>} />
               <Route path="/credito/oportunidades" element={<ErrorBoundary><CreditHub /></ErrorBoundary>} />
               <Route path="/credito/educacao" element={<ErrorBoundary><CreditHub /></ErrorBoundary>} />
-              <Route path="/cripto" element={<ErrorBoundary><Cripto /></ErrorBoundary>} />
               <Route path="/loja" element={<ErrorBoundary><Loja /></ErrorBoundary>} />
               <Route path="/meu-cpf" element={<ErrorBoundary><MeuCpf /></ErrorBoundary>} />
               <Route path="/meus-boletos" element={<ErrorBoundary><MeusBoletos /></ErrorBoundary>} />
@@ -234,6 +252,11 @@ function AuthenticatedShell() {
               <Route path="/casal" element={<ErrorBoundary><Casal /></ErrorBoundary>} />
               <Route path="/quarentena" element={<ErrorBoundary><Quarentena /></ErrorBoundary>} />
               <Route path="/filhos" element={<ErrorBoundary><FilhosPage /></ErrorBoundary>} />
+              <Route path="/credi-amigo" element={<ErrorBoundary><CrediAmigo /></ErrorBoundary>} />
+              <Route path="/consorcio-amigo" element={<ErrorBoundary><ConsorcioAmigo /></ErrorBoundary>} />
+              <Route path="/assinaturas" element={<ErrorBoundary><Assinaturas /></ErrorBoundary>} />
+              <Route path="/fire" element={<ErrorBoundary><Fire /></ErrorBoundary>} />
+              <Route path="/relatorio-ir" element={<ErrorBoundary><RelatorioIR /></ErrorBoundary>} />
 
               <Route path="/perfil" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
               <Route path="/configuracoes" element={<ErrorBoundary><Settings /></ErrorBoundary>} />

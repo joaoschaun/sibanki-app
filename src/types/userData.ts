@@ -9,6 +9,160 @@ import type {
 } from './openFinance';
 import type { CardPurchaseNew } from '../utils/cardCycleUtils';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PILAR 1 — Alertas de Preço
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Alerta de preço para um ativo B3/cripto.
+ *
+ * Usado pelo job `checkPriceAlerts` (telegramBot.js) a cada 15 min em dias úteis.
+ * TODO: estender o job para também enviar push via pushService.sendPush().
+ *
+ * Firestore path: users/{uid}.priceAlerts[]
+ * Callable CF:   setPriceAlert({ action: 'add'|'remove', alert: PriceAlert })
+ */
+export interface PriceAlert {
+  /** ID único do alerta (gerado com crypto.randomUUID() no cliente). */
+  id: string;
+  /** Ticker do ativo. Ex: "PETR4", "BTCUSDT". */
+  ticker: string;
+  /** Nome display opcional. Ex: "Petrobras PN". */
+  nome?: string;
+  /** Condição do disparo: ">" sobe acima, "<" cai abaixo. */
+  condition: '>' | '<';
+  /** Preço-alvo em BRL. */
+  price: number;
+  /** Se o alerta deve se repetir ou ser disparado apenas uma vez. */
+  repeat?: boolean;
+  /** Canais de notificação desejados. */
+  channels?: Array<'telegram' | 'push' | 'email'>;
+  /** Timestamp ISO de criação. */
+  createdAt: string;
+  /** Timestamp ISO do último disparo (preenchido pelo job). */
+  lastTriggeredAt?: string;
+  /** Quantas vezes o alerta foi disparado. */
+  triggerCount?: number;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PILAR 2 — Watchlist
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Item da watchlist — ativo monitorado mas ainda não na carteira.
+ *
+ * Graham / Bazin pré-calculados no momento da adição (via marketAssetAnalysis CF).
+ * A UI pode re-calcular ao abrir, atualizando com cotação atual.
+ *
+ * Firestore path: users/{uid}.watchlist[]
+ * Hook:          useWatchlist.ts (CRUD via persistUserData)
+ */
+export interface WatchlistItem {
+  /** ID único (gerado no cliente). */
+  id: string;
+  /** Ticker. Ex: "ITUB4". */
+  ticker: string;
+  /** Nome completo do ativo. */
+  nome: string;
+  /** Tipo do ativo. */
+  tipo: 'Ações' | 'FIIs' | 'ETFs' | 'Criptoativos' | 'Renda Fixa' | 'Outros';
+  /** Preço atual no momento da adição (em BRL). */
+  precoNaAdicao?: number;
+  /** Preço-alvo de compra definido pelo usuário (em BRL). */
+  precoAlvo?: number;
+  /** Notas do usuário. */
+  notas?: string;
+
+  // Análise fundamentalista (snapshot no momento da adição)
+  /** Preço justo Graham (√(22.5 × LPA × VPA)). */
+  grahamIntrinsicValue?: number;
+  /** Desconto/prêmio vs preço justo Graham em %. */
+  grahamDiscount?: number;
+  /** Teto Bazin (DY anual / 6%). */
+  bazinCeiling?: number;
+  /** Verdict Graham: "DESCONTO_ATRATIVO" | "PROXIMO_JUSTO" | "ACIMA_DO_JUSTO" | "SEM_DADOS". */
+  grahamVerdict?: string;
+  /** Verdict Bazin: "ABAIXO_TETO" | "PROXIMO_TETO" | "ACIMA_TETO" | "SEM_DADOS". */
+  bazinVerdict?: string;
+
+  // Análise técnica (snapshot)
+  /** RSI (14 dias). */
+  rsi?: number;
+  /** Sinal RSI: "SOBREVENDIDO" | "NEUTRO" | "SOBRECOMPRADO". */
+  rsiSignal?: string;
+
+  /** Timestamp ISO de quando foi adicionado à watchlist. */
+  addedAt: string;
+  /** Timestamp ISO da última atualização dos dados. */
+  updatedAt?: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PILAR 3 — Investimentos via Open Finance (Pluggy)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Posição de investimento importada automaticamente via Pluggy.
+ * Pluggy suporta contas do tipo INVESTMENT em corretoras (XP, Rico, BTG, etc).
+ *
+ * Mapeamento automático para Investment (src/types/userData.ts):
+ *   - nome  → Investment.nome
+ *   - valor → Investment.atual (valor de mercado atualizado)
+ *   - tipo  → Investment.tipo (normalizado)
+ *
+ * Firestore path: users/{uid}.openFinanceInvestments[]
+ *                 users/{uid}.openFinanceInvestmentsSyncedAt
+ * Callable CF:   pluggySyncInvestments — STUB criado, aguarda ativação pelo suporte Pluggy
+ *
+ * Endpoint Pluggy (quando ativado):
+ *   GET /accounts?type=INVESTMENT&itemId={itemId}
+ *   GET /investments?accountId={accountId}
+ */
+export interface OpenFinanceInvestment {
+  /** ID Pluggy da posição. */
+  pluggyId: string;
+  /** ID do item Pluggy (corretora/banco). */
+  pluggyItemId: string;
+  /** Nome da corretora/custodiante. Ex: "XP Investimentos". */
+  institutionName: string;
+  /** Nome do ativo na corretora. */
+  nome: string;
+  /** ISIN ou código do ativo (quando disponível). */
+  isin?: string;
+  /** Ticker B3 (quando disponível ou inferido). */
+  ticker?: string;
+  /** Tipo normalizado para compatibilidade com Investment.tipo. */
+  tipo: 'Ações' | 'FIIs' | 'ETFs' | 'Criptoativos' | 'Renda Fixa' | 'Tesouro Direto' | 'CDB' | 'LCI' | 'LCA' | 'Fundo' | 'Outros';
+  /** Quantidade de cotas. */
+  qtd?: number;
+  /** Preço médio de aquisição (quando Pluggy fornecer). */
+  precoMedio?: number;
+  /** Valor investido (custo histórico). */
+  valorAplicado?: number;
+  /** Valor atual de mercado. */
+  valorAtual: number;
+  /** P&L absoluto (quando Pluggy fornecer). */
+  pnl?: number;
+  /** P&L percentual. */
+  pnlPct?: number;
+  /** Rendimento bruto acumulado (Renda Fixa). */
+  rendimentoBruto?: number;
+  /** Data de vencimento (Renda Fixa). */
+  vencimento?: string;
+  /** Timestamp ISO da última atualização desta posição. */
+  syncedAt: string;
+  /**
+   * Se true, esta posição já foi mesclada com um Investment manual existente.
+   * Previne duplicatas na lista de investimentos.
+   */
+  mergedIntoManual?: boolean;
+  /** ID do Investment manual ao qual foi mesclado. */
+  mergedIntoId?: number;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface UserData {
   name?: string;
   email?: string;
@@ -57,6 +211,10 @@ export interface UserData {
   investments?: Investment[];
   budgets?: Record<string, unknown>;
   orcamentosByMonth?: Record<string, unknown>;
+  budgetMode?: 'simples' | 'envelope';
+  envelopeMensal?: number;
+  budgetHistory?: Record<string, Record<string, number>>;
+
   categories?: string[];
   recurrents?: Recurrent[];
   commProfile?: CommProfile | null;
@@ -64,6 +222,9 @@ export interface UserData {
   commBookmarks?: string[];
   tourModulos?: Record<string, unknown>;
   investorProfile?: InvestorProfile | null;
+  phone?: string | null;
+  financialObjective?: string | null;
+  family?: UserFamilyConfig | null;
   creditAccounts?: CreditAccount[];
   creditObligations?: CreditObligation[];
   creditSnapshot?: CreditSnapshot | null;
@@ -147,6 +308,48 @@ export interface UserData {
   ddaSyncedAt?: string;
   /** Boletos sincronizados via DDA ou Open Finance (quando o backend popular). */
   ddaBoletos?: DdaBoleto[];
+
+  // ─── PILAR 1: Alertas de Preço ─────────────────────────────────────────────
+  /**
+   * Alertas de preço configurados pelo usuário.
+   * Verificados a cada 15min pelo job `checkPriceAlerts` (seg–sex, 10h–18h).
+   * Dispara via: Telegram (existente) + Push Notification (implementar).
+   *
+   * Firestore: users/{uid}.priceAlerts[]
+   * CF: setPriceAlert (callable) para CRUD
+   * CF: checkPriceAlerts (pubsub) para verificação — já existe no telegramBot.js
+   *     TODO: adicionar sendPushNotification ao loop de triggers
+   */
+  priceAlerts?: PriceAlert[];
+
+  // ─── PILAR 2: Watchlist ────────────────────────────────────────────────────
+  /**
+   * Lista de ativos monitorados que o usuário ainda não possui.
+   * Cada item inclui: ticker, alvo de compra (preço), análise Graham/Bazin
+   * pré-calculada no momento da adição.
+   *
+   * Firestore: users/{uid}.watchlist[]
+   * CF: nenhuma nova necessária — usa marketAssetAnalysis existente
+   * Hook: useWatchlist (CRUD local via persistUserData)
+   */
+  watchlist?: WatchlistItem[];
+
+  // ─── PILAR 3: Investimentos via Open Finance ────────────────────────────────
+  /**
+   * Posições de investimento importadas automaticamente via Pluggy.
+   * Pluggy suporta contas do tipo INVESTMENT (XP, Rico, BTG, etc).
+   * Cada item é mapeado para um Investment regular na carteira.
+   *
+   * Firestore: users/{uid}.openFinanceInvestments[]
+   * Firestore: users/{uid}.openFinanceInvestmentsSyncedAt (ISO string)
+   * CF: pluggySyncInvestments (callable) — stub criado, aguarda ativação Pluggy
+   *
+   * TODO: ativar quando Pluggy habilitar investment accounts para o app_id
+   * Endpoint Pluggy: GET /accounts?type=INVESTMENT&itemId={itemId}
+   * Endpoint Pluggy: GET /investments?accountId={accountId}
+   */
+  openFinanceInvestments?: OpenFinanceInvestment[];
+  openFinanceInvestmentsSyncedAt?: string;
 }
 
 // ─── SibCoin Types ──────────────────────────────────────────────────────────
@@ -181,6 +384,22 @@ export interface SibcoinTransaction {
   createdAt: string;
 }
 
+export interface CpfNegativacao {
+  id: string;
+  credor: string;
+  valor: number;
+  vencimento: string;
+  status: 'ativa' | 'quitada' | 'prescrita';
+  origem: string;
+}
+
+export interface CpfConsulta {
+  id: string;
+  empresa: string;
+  data: string;
+  motivo: string;
+}
+
 // ─── CPF Monitoring Types ───────────────────────────────────────────────────
 export interface CpfMonitoringSnapshot {
   version: number;
@@ -193,6 +412,8 @@ export interface CpfMonitoringSnapshot {
   consultasRecentes?: number;
   protecaoAtiva?: boolean;
   alertas?: CpfAlerta[];
+  negativacoes?: CpfNegativacao[];
+  consultas?: CpfConsulta[];
 }
 
 export interface CpfAlerta {
@@ -316,6 +537,12 @@ export interface InvestorProfile {
   version: number;
   updatedAt: string;
   answers: InvestorProfileAnswers;
+}
+
+export interface UserFamilyConfig {
+  inviteEmail?: string | null;
+  role: 'viewer' | 'editor';
+  updatedAt: string;
 }
 
 export interface CommProfile {

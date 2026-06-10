@@ -669,4 +669,24 @@ async function syncAccountsToUser(uid, db) {
 
 module.exports = {
   syncAccountsToUser,
+  // Exposed for unit tests only — do not use in production code.
+  _internals: {
+    stableNumericId,
+    formatYmd,
+    daysAgoYmd,
+    mapPluggyCategoryToApp,
+    mapTransactionToEntry,
+    mapCreditToCard,
+    mapInvestmentToUser,
+    loanIsSettled,
+    estimateMonthlyInstallment,
+    mapLoanKind,
+    mapLoanToCreditAccount,
+    mapBalloonObligations,
+    mapNextRegularInstallment,
+    round2,
+    pickBalance,
+    baseLabel,
+    dayFromPluggyDate,
+  },
 };

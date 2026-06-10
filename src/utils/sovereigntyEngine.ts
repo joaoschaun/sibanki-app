@@ -9,7 +9,7 @@
  * Todos os cálculos são puros (sem side-effects) e testáveis unitariamente.
  */
 
-import type { Entry, Investment, CreditObligation, Card } from '../types/userData';
+import type { Entry, Investment, CreditObligation, Card, InvestorProfileAnswers, InvestorProfile } from '../types/userData';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TIPOS PÚBLICOS
@@ -544,4 +544,174 @@ ${spread.monthlyLeakage > 0 ? `- ALERTA: Vazamento de R$ ${spread.monthlyLeakage
 `.trim();
 
   return { freedom, spread, promptContext };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. ANÁLISE FUNDAMENTALISTA DE INVESTIMENTOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface GrahamResult {
+  value: number;
+  marginOfSafety: number;
+  status: 'desconto' | 'sobrepreco' | 'invalido';
+}
+
+export interface BazinResult {
+  precoTeto: number;
+  upside: number;
+  status: 'compra' | 'caro' | 'invalido';
+}
+
+export interface SolidezResult {
+  score: number;
+  verdict: 'alta' | 'media' | 'baixa';
+}
+
+/**
+ * Calcula o Valor Intrínseco de Benjamin Graham.
+ * Fórmula: VI = sqrt(22.5 * LPA * VPA)
+ */
+export function calculateGrahamIntrinsicValue(price: number, lpa?: number, vpa?: number): GrahamResult {
+  if (price <= 0 || lpa === undefined || vpa === undefined || lpa <= 0 || vpa <= 0) {
+    return { value: 0, marginOfSafety: 0, status: 'invalido' };
+  }
+  const value = Math.sqrt(22.5 * lpa * vpa);
+  const marginOfSafety = ((value - price) / value) * 100;
+  const status = value > price ? 'desconto' : 'sobrepreco';
+  return { 
+    value: Math.round(value * 100) / 100, 
+    marginOfSafety: Math.round(marginOfSafety * 100) / 100, 
+    status 
+  };
+}
+
+/**
+ * Calcula o Preço Teto de Décio Bazin com base no Dividend Yield.
+ * Mínimo exigido padrão: 6%
+ */
+export function calculateBazinPriceCeiling(price: number, dyPct?: number, minYield = 6): BazinResult {
+  if (price <= 0 || dyPct === undefined || dyPct <= 0 || minYield <= 0) {
+    return { precoTeto: 0, upside: 0, status: 'invalido' };
+  }
+  // Dividendo anual estimado = Preço atual * (DY / 100)
+  const dividendosAnuais = price * (dyPct / 100);
+  const precoTeto = dividendosAnuais / (minYield / 100);
+  const upside = ((precoTeto - price) / price) * 100;
+  const status = precoTeto > price ? 'compra' : 'caro';
+  return { 
+    precoTeto: Math.round(precoTeto * 100) / 100, 
+    upside: Math.round(upside * 100) / 100, 
+    status 
+  };
+}
+
+/**
+ * Calcula o Score de Solidez Contábil (0-9) baseado em múltiplos fundamentalistas,
+ * inspirado no F-Score de Piotroski.
+ */
+export function calculateSolidezScore(params: {
+  roe?: number;
+  margemLiquida?: number;
+  dividaEbitda?: number;
+  pe?: number;
+  pvp?: number;
+  dy?: number;
+}): SolidezResult {
+  const { roe, margemLiquida, dividaEbitda, pe, pvp, dy } = params;
+  let score = 0;
+
+  // Normalizar decimais vs percentuais (ex: 0.15 ou 15.0)
+  const roeVal = roe !== undefined ? (Math.abs(roe) > 1 ? roe / 100 : roe) : undefined;
+  const margemVal = margemLiquida !== undefined ? (Math.abs(margemLiquida) > 1 ? margemLiquida / 100 : margemLiquida) : undefined;
+
+  // 1. Rentabilidade (até 3 pontos)
+  if (roeVal !== undefined && roeVal > 0) score += 1;
+  if (roeVal !== undefined && roeVal > 0.15) score += 1; // ROE > 15%
+  if (margemVal !== undefined && margemVal > 0.10) score += 1; // Margem > 10%
+
+  // 2. Alavancagem & Valuation (até 3 pontos)
+  if (dividaEbitda === undefined || dividaEbitda < 2.5) score += 1; // Alavancagem saudável ou ausente
+  if (pvp !== undefined && pvp > 0 && pvp < 2.0) score += 1; // P/VP atrativo ou moderado
+  if (pe !== undefined && pe > 0 && pe < 20) score += 1; // P/L atrativo ou moderado
+
+  // 3. Eficiência de Capital (até 3 pontos)
+  if (dy !== undefined && dy > 4.0) score += 1; // Distribui dividendos razoáveis (> 4%)
+  if (margemVal !== undefined && margemVal > 0.20) score += 1; // Super eficiente (> 20%)
+  if (roeVal !== undefined && roeVal > 0.25) score += 1; // ROE excelente (> 25%)
+
+  let verdict: SolidezResult['verdict'];
+  if (score >= 7) verdict = 'alta';
+  else if (score >= 4) verdict = 'media';
+  else verdict = 'baixa';
+
+  return { score, verdict };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PERFIL DE INVESTIDOR
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Calcula o perfil de investidor a partir das respostas do questionário.
+ *
+ * Pontuação por dimensão (máx 100):
+ *   objetivos       → 5 / 15 / 25  (preservar / crescimento / especulação)
+ *   horizonte       → 5 / 10 / 20  (< 2 / 2-5 / > 5 anos)
+ *   toleranciaQueda → 5 / 10 / 20  (baixa / média / alta)
+ *   experiencia     → 5 / 10 / 15  (iniciante / intermediário / avançado)
+ *   liquidez        → 5 / 10 / 15  (alta / média / baixa)
+ *   renda           → 5 / 10 / 15  (baixa / média / alta)
+ *
+ * Categorias:
+ *   0–30  → conservador
+ *   31–65 → moderado
+ *   66+   → arrojado
+ */
+export function calculateInvestorProfile(answers: InvestorProfileAnswers): InvestorProfile {
+  let score = 0;
+
+  // Objetivos
+  if (answers.objetivos === 'preservar-capital') score += 5;
+  else if (answers.objetivos === 'crescimento')   score += 15;
+  else if (answers.objetivos === 'especulacao')   score += 25;
+
+  // Horizonte
+  if (answers.horizonte === '<2')  score += 5;
+  else if (answers.horizonte === '2-5') score += 10;
+  else if (answers.horizonte === '>5')  score += 20;
+
+  // Tolerância a queda
+  if (answers.toleranciaQueda === 'baixa') score += 5;
+  else if (answers.toleranciaQueda === 'media') score += 10;
+  else if (answers.toleranciaQueda === 'alta')  score += 20;
+
+  // Experiência
+  if (answers.experiencia === 'iniciante')      score += 5;
+  else if (answers.experiencia === 'intermediario') score += 10;
+  else if (answers.experiencia === 'avancado')  score += 15;
+
+  // Liquidez (necessidade de liquidez alta = perfil mais conservador)
+  if (answers.liquidez === 'alta')   score += 5;
+  else if (answers.liquidez === 'media') score += 10;
+  else if (answers.liquidez === 'baixa') score += 15;
+
+  // Renda (capacidade de investir mais = perfil mais arrojado)
+  if (answers.renda === 'baixa')   score += 5;
+  else if (answers.renda === 'media') score += 10;
+  else if (answers.renda === 'alta')  score += 15;
+
+  const normalized = Math.max(0, Math.min(100, score));
+
+  let profile: InvestorProfile['profile'];
+  if (normalized <= 30) profile = 'conservador';
+  else if (normalized <= 65) profile = 'moderado';
+  else profile = 'arrojado';
+
+  return {
+    profile,
+    score: normalized,
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    answers,
+  };
 }

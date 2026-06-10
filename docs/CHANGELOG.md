@@ -17,14 +17,80 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Correções de Consistência e Contraste no Modo Claro e Escuro (09/06/2026)
+- **`src/index.css`**: Criadas variáveis CSS dinâmicas para as cores das categorias financeiras nos modos claro e escuro, registrando-as como classes utilitárias no Tailwind CSS v4.
+- **`src/components/layout/Header.tsx`**: Substituído o fundo preto estático (`bg-[#0a0a0a]`) pelo fundo semântico `bg-si-card` que muda com o tema.
+- **`src/components/layout/Sidebar.tsx`**: Alterado o fundo do menu lateral para `bg-si-card` e a borda inferior do cabeçalho da sidebar para a variável semântica `border-si-border`.
+- **`src/components/transactions/MerchantLogo.tsx`**: Adaptado o mapeamento fallback de cores de categoria para consumir as novas classes utilitárias baseadas em variáveis CSS.
+- **`src/pages/Transactions.tsx`**: Refatorados divisores de lista diária para utilizarem `divide-si-border` e ajustadas as cores estáticas de categoria para a lógica de variáveis do tema.
+- **`src/pages/Dashboard.tsx` & `src/pages/Recurring.tsx`**: Substituídos os divisores de lista estáticos por `divide-si-border` nos feeds de transações, assinaturas e recorrentes.
+
+### Identificação e Exibição de Logos de Empresas nas Transações (09/06/2026)
+- **`src/components/transactions/MerchantLogo.tsx`**:
+  - Criado componente utilitário e visual de detecção e renderização de logomarcas mapeadas. Carrega os logotipos oficiais das marcas em SVG branco da API do Simple Icons sobre fundos circulares nas cores originais de cada empresa (Netflix, Spotify, iFood, Uber, Airbnb, Amazon, Google, Apple, etc.), com fallback offline baseado em iniciais e fallback por categoria (ícones Lucide) quando nenhuma marca coincide.
+- **`src/pages/Dashboard.tsx`**:
+  - Integrado o componente `MerchantLogo` nas abas de *Transações* e *Assinaturas* do Dashboard principal, substituindo os ícones padrão.
+- **`src/pages/Transactions.tsx`**:
+  - Integrado o componente `MerchantLogo` na listagem de lançamentos do feed diário.
+- **`src/pages/Recurring.tsx`**:
+  - Integrado o componente `MerchantLogo` na lista de lançamentos fixos recorrentes ao lado das descrições.
+
+### Cockpit de Sub-Navegação no Dashboard principal (09/06/2026)
+- **`src/pages/Dashboard.tsx`**:
+  - Implementada barra horizontal de sub-navegação reativa (*pills*) no topo do painel principal para chaveamento entre 6 sub-abas: *Visão geral*, *Transações*, *Parcelamentos*, *Assinaturas*, *Categorias*, *Cartões*.
+  - **Aba Visão Geral**: Concentra todos os widgets estratégicos e de onboarding originais do dashboard.
+  - **Aba Transações**: Lista compacta e rápida dos 15 lançamentos mais recentes com campo de busca em tempo real (`txSearch`) e exibição inline do `SovereigntyBadge` (com cálculo de score de soberania por transação e dias de liberdade perdidos).
+  - **Aba Parcelamentos**: Consolidação de compras parceladas nos cartões de crédito e empréstimos ativos, exibindo valor mensal, saldo devedor restante e progresso de parcelamento. Adicionado alerta conceitual sobre amortização antecipada cruzado com o *Spread Gap*.
+  - **Aba Assinaturas**: Agrupação de serviços recorrentes ativos baseada em categorias e palavras-chave, com cálculo de gasto mensal consolidado e filtro de **Vazamento Invisível** (alerta despesas sem movimentação nos últimos 60 dias).
+  - **Aba Categorias**: Progresso horizontal de consumo de orçamentos por categoria em tempo real (com rollover/sobras) integrado ao gráfico donut de distribuição de despesas.
+  - **Aba Cartões**: Faturas estimadas, limites totais e usados com barra de preenchimento colorida por nível de pressão e integração com o widget do **Sentinela GPS**.
+
+### Melhorias Inteligentes e Rollover no Módulo de Orçamento (09/06/2026)
+- **`src/types/userData.ts`**: Adicionados campos `budgetMode`, `envelopeMensal` e `budgetHistory` à interface `UserData` para suporte à persistência histórica de orçamentos e ZBB.
+- **`src/services/persistUserData.ts`**: Atualizado o método `updateBudgets` para aceitar um parâmetro opcional `monthKey` e persistir as alocações dinamicamente sob a chave `budgetHistory.${monthKey}` do Firestore.
+- **`src/pages/Budget.tsx`**:
+  - Implementado o **Rollover Cronológico de Envelopes** na aba Envelope (ZBB), realizando o carryover acumulativo de saldos restantes de meses passados para o mês atual, exibindo o saldo de rollover herdado e calculando a liquidez real de cada envelope.
+  - Adicionado o painel de **Inteligência Financeira** com três novos blocos dinâmicos reativos:
+    - **Sync de Soberania (Days of Freedom)**: Card de cor esmeralda que converte a economia líquida do mês corrente em ganho real de dias de liberdade financeira com base no custo diário do usuário.
+    - **IA Balanceadora (Remanejamento Automático)**: Card de cor violeta que identifica furos e superávits de envelopes e oferece um botão de ação com clique único ("Cobrir Furo") para transferir o excedente e cobrir o estouro.
+    - **Alertas Proativos de Velocidade de Queima (Burn Rate)**: Card de cor âmbar que monitora o ritmo de gastos em envelopes e dispara badges de alerta caso o consumo percentual exceda a cota linear de dias passados no mês acrescida de 20% de tolerância.
+  - Removido o limite artificial de largura `max-w-3xl` do container principal, permitindo que o painel de orçamentos se redimensione e preencha a tela de forma responsiva e consistente com os outros módulos do painel.
+  - Corrigido o erro de runtime `Cannot access 'R' before initialization` (TDZ) reordenando a declaração dos hooks `useMemo` (`gastosByCat` e `categorias`) para virem antes dos blocos que os consomem.
+
+### Simuladores Financeiros Interativos no Hub de Crédito (08/06/2026)
+- **`src/pages/CreditHub.tsx`**:
+  - Implementado o **Simulador de Quitação Estratégica** na aba "Plano", listando as faturas e empréstimos ativos com estimativas automáticas de juros e ordenando as prioridades em tempo real de acordo com as estratégias Avalanche e Bola de Neve.
+  - Implementado o **Simulador de Compra Inteligente** na aba "Oportunidades", fornecendo formulário dinâmico com slider de parcelas, rendimento a.m. do CDI e desconto à vista.
+  - Adicionado painel de veredito reativo com gradientes de cores (verde, violeta, âmbar, rosa) mudando dinamicamente de acordo com o nível de risco e spread do veredito da engine.
+  - Incorporada tabela comparativa no simulador exibindo o fluxo inicial, rendimento acumulado, preço nominal total e custo líquido real de cada opção.
+  - Atualizada a aba "Oportunidades" para um layout de 2 colunas, unindo a simulação à esquerda e a vitrine de produtos contextuais e seguros à direita.
+  - Adicionado o bloco **"Portal do Tempo"** no veredito do Simulador de Compra, exibindo o custo de oportunidade acumulado composto caso o valor da compra à vista seja investido por 10 anos.
+  - Implementado o **Simulador de Amortização de Empréstimos** (por meio de um Modal interativo), permitindo simular amortizações extras, escolher uso de FGTS, ajustar meses restantes do contrato e visualizar a redução da parcela e economia de juros.
+  - Adicionado o painel **"Muralha de Liquidez vs. Exposição"** na aba "Visão Geral", comparando as reservas disponíveis contra o passivo consolidado a vencer em 30 dias com alertas visuais.
+  - Adicionada a barra de progresso horizontal **"Concentração de Risco por Emissor"** na aba "Visão Geral", exibindo graficamente a distribuição de passivos em cartões por banco com as cores oficiais de suas respectivas identidades.
+
+### Integração de Cartões Manuais e Acesso no Hub de Crédito (09/06/2026)
+- **`src/components/layout/Sidebar.tsx`**: Adicionado o atalho para a rota `/credito/cartoes` ("Cartões") no array `secondaryNav` sob o accordion "Mais", permitindo acesso operacional rápido a qualquer momento.
+- **`src/pages/CreditHub.tsx`**:
+  - Adicionado banner de atalho estilizado no topo da aba **Cartões** para direcionar o usuário à rota operacional manual `/credito/cartoes`.
+  - Atualizado o empty state da aba **Cartões** para exibir um botão "Criar Cartão Manualmente".
+  - Refatorada a variável `accounts` para mesclar dinamicamente os cartões manuais (`data.cards`) na tipagem de `CreditAccount`, permitindo exibição integrada.
+  - Atualizado o `snapshot` para consumir as métricas calculadas pelo client-side centralizado em `financialProfile.credit`, unificando a consolidação de limites e uso de cartões manuais e Open Finance.
+- **`src/pages/Cards.tsx`**:
+  - Implementado layout responsivo de 2 colunas com prévia de cartão em tempo real (`CreditCardVisual` de tamanho médio) nos modais de criação ("Novo Cartão") e edição ("Editar Cartão").
+  - Integrada busca dinâmica e grade visual contendo todos os emissores e seus respectivos logotipos com tratamento individualizado de marcas para a criação de cartões manuais, aplicando automaticamente a cor oficial e o logotipo selecionado.
+  - Adicionado campo de vínculo visual de emissores no modal de edição, permitindo trocar e salvar a identidade visual do banco.
+  - Ocultado o seletor de cores manuais quando um banco oficial é selecionado para manter o realismo estético premium do app, ficando disponível apenas no caso "Personalizado".
+
 ### Busca e Seleção Visual de Instituições na Aba de Contas (08/06/2026)
 - **`src/types/userData.ts`**: Adicionado campo opcional `bankSlug` no objeto `accountMeta` para persistência do banco vinculado à conta.
 - **`src/services/persistUserData.ts`**: Atualizado o tipo `AccountMetaEntry` para conter o campo `bankSlug`.
 - **`src/pages/Accounts.tsx`**:
-  - Novo fluxo de criação manual de contas contendo campo de busca reativo (`searchQuery`) e grade rolável das instituições do `BANKS` com seus logotipos oficiais.
+  - Novo fluxo de criação manual de contas contendo campo de busca reativo (`searchQuery`) e grade rolável das instituições do `BANKS` com seus logotipos oficiais. Adicionado tratamento de design individualizado de marca para cada banco (via nova propriedade `logoBg` no `BankData` em `bankData.ts`): bancos com logos originalmente brancas (C6, XP, BTG, Neon, Next, PicPay, Agi, Safra, BS2) renderizam sobre seus respectivos fundos temáticos de marca, enquanto as demais instituições coloridas (Itaú, Bradesco, Nubank, BB, Caixa, etc.) usam fundo branco, garantindo contraste e fidelidade visual perfeita de cada identidade.
   - Adicionado componente `<AccountCard>` de visualização prévia em tempo real dentro do modal de criação e no modal de edição, atualizando as cores, logos e textos dinamicamente.
   - Nova lógica utilitária local `getAccountBank(accountName)` que prioriza `meta.bankSlug` para buscar a identidade visual e o logotipo nas listagens e no simulador (`BankSimulator`), garantindo retrocompatibilidade (fallback com `identifyBank`).
   - Adicionado o dropdown de instituição no modal de edição ("Configurações Locais") para re-vincular instituições e atualizar a cor automática.
+  - Removida a constante não utilizada `CORES_CONTA` (resolvendo o erro TS6133 do compilador).
 
 ### Beta UX — entrada, sidebar, explicações, estado vazio (08/06/2026)
 - **`App.tsx`**: entrada pós-login alterada de `/consultor-ia` → `/dashboard`. Rotas `/`, `/login`, `/landing` agora direcionam ao painel principal.

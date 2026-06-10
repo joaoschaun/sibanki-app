@@ -169,7 +169,7 @@ export default function MeusBoletos() {
       <SibcoinMissionBanner eventType="dda_boleto_detected" />
 
       {/* Quick stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-si-card rounded-2xl border border-si-border p-4 text-center">
           <p className="text-xs text-si-5 mb-1">Total boletos</p>
           <p className="text-2xl font-bold text-si-1">{DEMO_BOLETOS.length}</p>

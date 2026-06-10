@@ -8,7 +8,8 @@
  *  - Greeting + "Novo lançamento" CTA in the same card — no clutter outside
  */
 
-import { ArrowUpRight, Shield, TrendingUp, TrendingDown, Zap, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowUpRight, Shield, TrendingUp, TrendingDown, Zap, CheckCircle2, AlertCircle, HelpCircle, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // ─── Types (must stay in sync with sovereigntyEngine) ──────────────────────────
@@ -97,6 +98,7 @@ export function SovereigntyHero({
   varReceita: number;
   varDespesa: number;
 }) {
+  const [showExplanation, setShowExplanation] = useState(false);
   const now = new Date();
   const hour = now.getHours();
   const greeting = hour >= 18 ? 'Boa noite' : hour >= 12 ? 'Boa tarde' : 'Bom dia';
@@ -184,6 +186,43 @@ export function SovereigntyHero({
             </span>
           )}
         </div>
+
+        {/* ── O que significa? ── */}
+        {!showExplanation ? (
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={() => setShowExplanation(true)}
+              className="flex items-center gap-1.5 text-[11px] text-si-5 hover:text-si-3 transition-colors"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              O que significam esses números?
+            </button>
+          </div>
+        ) : (
+          <div className="bg-si-over-1 rounded-xl border border-si-border p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-si-4">Glossário rápido</p>
+              <button type="button" onClick={() => setShowExplanation(false)} className="text-si-5 hover:text-si-3">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="space-y-2.5 text-[12px]">
+              <div>
+                <p className="font-bold text-si-2">Ld — Dias de Liberdade</p>
+                <p className="text-si-4 mt-0.5">Quantos dias você consegue viver com seu patrimônio atual sem precisar de nenhuma renda. Quanto maior, mais soberano você é.</p>
+              </div>
+              <div>
+                <p className="font-bold text-si-2">Sg — Spread Gap</p>
+                <p className="text-si-4 mt-0.5">Diferença entre o rendimento médio dos seus investimentos e o custo médio das suas dívidas. Positivo = seu dinheiro rende mais do que custa. Negativo = suas dívidas drenam mais do que você investe.</p>
+              </div>
+              <div>
+                <p className="font-bold text-si-2">Sv — Sovereignty Score</p>
+                <p className="text-si-4 mt-0.5">Pontuação de 0–100 por gasto, indicando se ele aumenta ou diminui sua soberania financeira. Ver nos lançamentos.</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Divider ── */}
         <div className="border-t border-si-border" />

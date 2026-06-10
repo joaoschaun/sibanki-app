@@ -168,27 +168,26 @@ export default function Cripto() {
   return (
     <div className="space-y-6">
 
-      {/* Header */}
-      <div className="flex items-start justify-between">
+      {/* Header Simplificado para Integração */}
+      <div className="flex items-center justify-between gap-4 pb-2 border-b border-si-border">
         <div>
-          <h2 className="text-3xl font-bold flex items-center gap-3">
-            <Bitcoin className="w-8 h-8 text-orange-400" />
-            Cripto
-          </h2>
-          <p className="text-si-5 text-sm mt-1">
-            Exchange e ativos digitais · preços ao vivo CoinGecko
-          </p>
+          <h3 className="font-semibold text-si-1 text-base flex items-center gap-2">
+            <Bitcoin className="w-5 h-5 text-orange-400" /> Exchange de Criptoativos
+          </h3>
+          <p className="text-si-5 text-xs">Cotações ao vivo via CoinGecko API</p>
         </div>
         <button onClick={handleRefresh}
-          className="flex items-center gap-1.5 text-si-4 hover:text-si-2 text-xs transition-colors"
+          className="flex items-center gap-1.5 text-si-4 hover:text-si-2 text-xs transition-colors bg-si-over-2 hover:bg-si-over-3 border border-si-border px-3 py-1.5 rounded-xl font-semibold uppercase tracking-wider text-[10px]"
         >
           {loading
-            ? <Loader2 className="w-4 h-4 animate-spin" />
-            : <RefreshCw className={`w-4 h-4 ${spinning ? 'animate-spin' : ''}`} />
+            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            : <RefreshCw className={`w-3.5 h-3.5 ${spinning ? 'animate-spin' : ''}`} />
           }
-          {lastUpdate
-            ? lastUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-            : '—'}
+          <span className="font-mono text-zinc-400">
+            {lastUpdate
+              ? lastUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+              : '—'}
+          </span>
         </button>
       </div>
 
@@ -275,7 +274,7 @@ export default function Cripto() {
       {activeTab === 'Carteira' && (
         <div className="space-y-4 relative">
           <ComingSoonOverlay />
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               { label: 'Valor total', value: fmtBRL(portfolioValue),   cls: 'text-si-1' },
               { label: 'P&L total',   value: (portfolioPnL >= 0 ? '+' : '') + fmtBRL(portfolioPnL), cls: portfolioPnL >= 0 ? 'text-emerald-400' : 'text-rose-400' },
@@ -334,7 +333,7 @@ export default function Cripto() {
             <ArrowRightLeft className="w-5 h-5 text-blue-400" />
             Order Book Simplificado
           </h3>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <p className="text-xs text-si-5 mb-2 uppercase tracking-wide">Compra (BID)</p>
               {(assets[0] && Number.isFinite(Number(assets[0].price))

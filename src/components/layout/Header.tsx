@@ -43,7 +43,7 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
   return (
     // ✅ FIX: Removido onMouseLeave do header — causava fechamento prematuro do dropdown
     //        ao mover o mouse para o sidebar ou conteúdo principal
-    <header className="h-14 bg-[#0a0a0a] border-b border-si-border grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-6 shrink-0 relative z-50">
+    <header className="h-14 bg-si-card border-b border-si-border grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-6 shrink-0 relative z-50">
       <div className="flex items-center gap-3 min-w-0 justify-self-start">
         <button
           type="button"

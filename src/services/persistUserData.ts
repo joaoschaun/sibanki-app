@@ -903,9 +903,14 @@ export async function setCommBookmarks(uid: string, bookmarks: string[]): Promis
  */
 export async function updateBudgets(
   uid: string,
-  budgets: Record<string, number>
+  budgets: Record<string, number>,
+  monthKey?: string
 ): Promise<void> {
-  await updateUserDoc(uid, { budgets });
+  const payload: Record<string, any> = { budgets };
+  if (monthKey) {
+    payload[`budgetHistory.${monthKey}`] = budgets;
+  }
+  await updateUserDoc(uid, payload as any);
 }
 
 /**

@@ -13,6 +13,7 @@
  */
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useAppContext, type DataFreshness } from './AppContext';
+import { useMarketRates } from '../hooks/useMarketRates';
 import {
   calculateDaysOfFreedom,
   calculateSpreadGap,
@@ -21,10 +22,8 @@ import {
 } from '../utils/sovereigntyEngine';
 import type { FinancialHealthLevel, JourneyStage } from '../types/platform';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CDI de referência (atualizar conforme mercado)
-// ─────────────────────────────────────────────────────────────────────────────
-const CDI_MONTHLY = 0.0107; // ~12.8% a.a.
+// Fallback para quando a API de mercado estiver indisponível
+const CDI_FALLBACK_MONTHLY = 0.0107; // ~12.8% a.a.
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,11 +80,12 @@ export function IntelligenceProvider({ children }: { children: ReactNode }) {
     dataFreshness,
     loading,
     authLoading,
-    data,
   } = useAppContext();
 
+  const { cdiMonthly } = useMarketRates();
+
   // Ld — Dias de Liberdade
-  // Memoizado nas dependências reais: entries, investments, saldos e cadastroCompleto estimado
+  // Memoizado nas dependências reais: entries, investments, saldos
   const freedom = useMemo(
     () =>
       calculateDaysOfFreedom({
@@ -93,10 +93,9 @@ export function IntelligenceProvider({ children }: { children: ReactNode }) {
         accountMeta,
         investments,
         entries,
-        cadastroCompleto: data?.cadastroCompleto,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [entries, investments, accountBalances, accountMeta, data?.cadastroCompleto],
+    [entries, investments, accountBalances, accountMeta],
   );
 
   // Sg — Spread Gap
@@ -107,7 +106,7 @@ export function IntelligenceProvider({ children }: { children: ReactNode }) {
         investments,
         creditObligations,
         cards,
-        currentCdiMonthly: CDI_MONTHLY,
+        currentCdiMonthly: cdiMonthly ?? CDI_FALLBACK_MONTHLY,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [investments, creditObligations, cards],

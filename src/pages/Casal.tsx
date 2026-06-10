@@ -178,7 +178,7 @@ export default function Casal() {
           <div className="text-center space-y-2">
             <Heart className="mx-auto text-rose-500" size={40} />
             <h1 className="text-2xl font-bold">Modo Casal</h1>
-            <p className="text-sm text-zinc-400">Gerencie as finanças juntos com seu parceiro(a).</p>
+            <p className="text-sm text-si-4">Gerencie as finanças juntos com seu parceiro(a).</p>
           </div>
 
           {sentInvite && (
@@ -189,11 +189,11 @@ export default function Casal() {
 
           {receivedInvite && (
             <div className="space-y-3">
-              <p className="text-sm font-medium text-zinc-300">Convite recebido:</p>
-              <div className="flex items-center justify-between rounded-xl bg-zinc-800/60 border border-zinc-700/50 p-4">
+              <p className="text-sm font-medium text-si-2">Convite recebido:</p>
+              <div className="flex items-center justify-between rounded-xl bg-si-card border border-si-border p-4">
                 <div>
                   <p className="font-medium">{receivedInvite.fromName}</p>
-                  <p className="text-xs text-zinc-400">{receivedInvite.fromEmail}</p>
+                  <p className="text-xs text-si-4">{receivedInvite.fromEmail}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -204,7 +204,7 @@ export default function Casal() {
                   </button>
                   <button
                     onClick={() => handleReject()}
-                    className="px-3 py-1.5 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-xs font-medium transition-colors"
+                    className="px-3 py-1.5 rounded-lg bg-si-over-2 hover:bg-si-over-3 text-si-4 text-xs font-medium transition-colors"
                   >
                     <X size={14} />
                   </button>
@@ -218,7 +218,7 @@ export default function Casal() {
           )}
 
           <form onSubmit={handleSendInvite} className="space-y-3">
-            <label className="block text-sm font-medium text-zinc-300">Convidar parceiro(a) por e-mail</label>
+            <label className="block text-sm font-medium text-si-2">Convidar parceiro(a) por e-mail</label>
             <div className="flex gap-2">
               <input
                 type="email"
@@ -226,7 +226,7 @@ export default function Casal() {
                 onChange={e => setToEmailInput(e.target.value)}
                 placeholder="email@exemplo.com"
                 disabled={status === 'loading'}
-                className="flex-1 rounded-xl bg-zinc-800/60 border border-zinc-700/50 px-4 py-2.5 text-sm focus:outline-none focus:border-rose-500/50"
+                className="flex-1 rounded-xl bg-si-card border border-si-border px-4 py-2.5 text-sm focus:outline-none focus:border-rose-500/50"
               />
               <button
                 type="submit"
@@ -257,18 +257,18 @@ export default function Casal() {
           </div>
           <button
             onClick={handleDesvincular}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-400 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-si-over-2 hover:bg-si-over-3 text-xs text-si-4 transition-colors"
           >
             <Unlink size={13} /> Desvincular
           </button>
         </div>
 
         {/* Parceiro */}
-        <div className="rounded-xl bg-zinc-800/60 border border-zinc-700/50 p-4 flex items-center gap-3">
+        <div className="rounded-xl bg-si-card border border-si-border p-4 flex items-center gap-3">
           <Users size={20} className="text-rose-400 shrink-0" />
           <div>
             <p className="text-sm font-medium">{partnerName}</p>
-            <p className="text-xs text-zinc-400">{couple.data.emails[partnerUid]}</p>
+            <p className="text-xs text-si-4">{couple.data.emails[partnerUid]}</p>
           </div>
         </div>
 
@@ -276,17 +276,17 @@ export default function Casal() {
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-center">
             <TrendingUp size={16} className="mx-auto text-emerald-400 mb-1" />
-            <p className="text-xs text-zinc-400">Receitas</p>
+            <p className="text-xs text-si-4">Receitas</p>
             <p className="text-sm font-semibold text-emerald-400">{fmtBRL(combined.receita)}</p>
           </div>
           <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-center">
             <TrendingDown size={16} className="mx-auto text-rose-400 mb-1" />
-            <p className="text-xs text-zinc-400">Despesas</p>
+            <p className="text-xs text-si-4">Despesas</p>
             <p className="text-sm font-semibold text-rose-400">{fmtBRL(combined.despesa)}</p>
           </div>
-          <div className="rounded-xl bg-zinc-800/60 border border-zinc-700/50 p-3 text-center">
-            <Clock size={16} className="mx-auto text-zinc-400 mb-1" />
-            <p className="text-xs text-zinc-400">Saldo</p>
+          <div className="rounded-xl bg-si-card border border-si-border p-3 text-center">
+            <Clock size={16} className="mx-auto text-si-4 mb-1" />
+            <p className="text-xs text-si-4">Saldo</p>
             <p className={`text-sm font-semibold ${combined.saldo >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {fmtBRL(combined.saldo)}
             </p>
@@ -295,16 +295,16 @@ export default function Casal() {
 
         {/* Lançamentos do mês (últimos 10) */}
         <div className="space-y-2">
-          <p className="text-sm font-medium text-zinc-300">Lançamentos do mês</p>
+          <p className="text-sm font-medium text-si-2">Lançamentos do mês</p>
           {(couple.data.entries ?? [])
             .filter(e => (e.date ?? '').startsWith(mk))
             .slice(-10)
             .reverse()
             .map((e, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg bg-zinc-800/40 px-3 py-2.5 text-sm">
+              <div key={i} className="flex items-center justify-between rounded-lg bg-si-over-1 px-3 py-2.5 text-sm">
                 <div>
-                  <span className="text-xs text-zinc-500 mr-2">{couple.data.names[e.uid] || e.uid}</span>
-                  <span className="text-zinc-300">{e.desc || e.category}</span>
+                  <span className="text-xs text-si-5 mr-2">{couple.data.names[e.uid] || e.uid}</span>
+                  <span className="text-si-2">{e.desc || e.category}</span>
                 </div>
                 <span className={e.type === 'receita' ? 'text-emerald-400' : 'text-rose-400'}>
                   {e.type === 'receita' ? '+' : '-'}{fmtBRL(Number(e.value) || 0)}
@@ -312,7 +312,7 @@ export default function Casal() {
               </div>
             ))}
           {(couple.data.entries ?? []).filter(e => (e.date ?? '').startsWith(mk)).length === 0 && (
-            <p className="text-sm text-zinc-500 text-center py-4">Nenhum lançamento neste mês.</p>
+            <p className="text-sm text-si-5 text-center py-4">Nenhum lançamento neste mês.</p>
           )}
         </div>
       </div>

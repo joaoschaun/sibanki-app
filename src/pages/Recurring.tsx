@@ -6,6 +6,7 @@ import { DEFAULT_CATEGORIES, DEFAULT_ACCOUNTS } from '../constants/defaults';
 import { Modal } from '../components/ui/Modal';
 import { Plus, Trash2, PlayCircle, RefreshCw } from 'lucide-react';
 import { EmptyState } from '../components/ui/EmptyState';
+import { MerchantLogo } from '../components/transactions/MerchantLogo';
 
 
 const FREQ_OPTIONS = [
@@ -193,18 +194,26 @@ export default function Recurring() {
             onAction={() => setModalOpen(true)}
           />
         ) : (
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-si-border">
             {recurrents.map((r) => (
               <div
                 key={r.id}
                 className="flex items-center justify-between gap-4 p-6 hover:bg-si-over-1 transition-colors"
               >
-                <div className="min-w-0">
-                  <p className="font-bold text-si-1 truncate">{r.desc}</p>
-                  <p className="text-xs text-si-5">
-                    {r.category ?? '—'} · dia {r.day} · {FREQ_OPTIONS.find((f) => f.value === (r.freq || 'mensal'))?.label ?? r.freq ?? 'Mensal'}
-                    {r.account ? ` · ${r.account}` : ''}
-                  </p>
+                <div className="flex items-center gap-4 min-w-0">
+                  <MerchantLogo
+                    description={r.desc}
+                    category={r.category}
+                    type={r.type}
+                    size={36}
+                  />
+                  <div className="min-w-0">
+                    <p className="font-bold text-si-1 truncate">{r.desc}</p>
+                    <p className="text-xs text-si-5">
+                      {r.category ?? '—'} · dia {r.day} · {FREQ_OPTIONS.find((f) => f.value === (r.freq || 'mensal'))?.label ?? r.freq ?? 'Mensal'}
+                      {r.account ? ` · ${r.account}` : ''}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <span className={`font-bold ${r.type === 'receita' ? 'text-emerald-400' : 'text-rose-400'}`}>

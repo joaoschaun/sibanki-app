@@ -18,6 +18,8 @@ export interface BankData {
   logoColor: string;
   abbr: string;
   ispb?: string;
+  /** Cor de fundo específica do círculo da logo na busca/listas (opcional) */
+  logoBg?: string;
 }
 
 export const BANKS: BankData[] = [
@@ -38,23 +40,23 @@ export const BANKS: BankData[] = [
   { name: 'Inter',         keywords: ['inter', 'banco inter', 'bancointer'],
     domain: 'bancointer.com.br',     slug: 'inter',       primary: '#FF7A00', secondary: '#E06000', text: '#fff', logoColor: '#FF7A00', abbr: 'inter',    ispb: '00416968' },
   { name: 'C6 Bank',       keywords: ['c6', 'c6bank', 'c6 bank'],
-    domain: 'c6bank.com.br',         slug: 'c6',          primary: '#2D2D2D', secondary: '#1A1A1A', text: '#fff', logoColor: '#D4A843', abbr: 'C6',       ispb: '31872495' },
+    domain: 'c6bank.com.br',         slug: 'c6',          primary: '#2D2D2D', secondary: '#1A1A1A', text: '#fff', logoColor: '#D4A843', abbr: 'C6',       ispb: '31872495', logoBg: '#1A1A1A' },
   { name: 'PicPay',        keywords: ['picpay'],
-    domain: 'picpay.com',            slug: 'picpay',      primary: '#11C76F', secondary: '#009A55', text: '#fff', logoColor: '#11C76F', abbr: 'PP',       ispb: '22896431' },
+    domain: 'picpay.com',            slug: 'picpay',      primary: '#11C76F', secondary: '#009A55', text: '#fff', logoColor: '#11C76F', abbr: 'PP',       ispb: '22896431', logoBg: '#11C76F' },
   { name: 'PagBank',       keywords: ['pagbank', 'pagseguro'],
     domain: 'pagbank.com.br',        slug: 'pagbank',     primary: '#05AA4D', secondary: '#038A3D', text: '#fff', logoColor: '#05AA4D', abbr: 'Pag',      ispb: '08561701' },
   { name: 'Neon',          keywords: ['neon', 'banco neon'],
-    domain: 'neon.com.br',           slug: 'neon',        primary: '#3250F8', secondary: '#1A38E0', text: '#fff', logoColor: '#3250F8', abbr: 'neon',     ispb: '20855875' },
+    domain: 'neon.com.br',           slug: 'neon',        primary: '#3250F8', secondary: '#1A38E0', text: '#fff', logoColor: '#3250F8', abbr: 'neon',     ispb: '20855875', logoBg: '#3250F8' },
   { name: 'Mercado Pago',  keywords: ['mercado pago', 'mercadopago'],
     domain: 'mercadopago.com.br',    slug: 'mercadopago', primary: '#009EE3', secondary: '#007EB3', text: '#fff', logoColor: '#009EE3', abbr: 'MP',       ispb: '10264663' },
   { name: 'Next',          keywords: ['next'],
-    domain: 'next.me',               slug: 'next',        primary: '#00DC87', secondary: '#00B86F', text: '#002E35', logoColor: '#00DC87', abbr: 'next',  ispb: '' },
+    domain: 'next.me',               slug: 'next',        primary: '#00DC87', secondary: '#00B86F', text: '#002E35', logoColor: '#00DC87', abbr: 'next',  ispb: '', logoBg: '#002E35' },
   { name: 'Agi',           keywords: ['agi', 'agibank'],
-    domain: 'agibank.com.br',        slug: 'agi',         primary: '#6F00EF', secondary: '#5500CC', text: '#fff', logoColor: '#6F00EF', abbr: 'agi',      ispb: '' },
+    domain: 'agibank.com.br',        slug: 'agi',         primary: '#6F00EF', secondary: '#5500CC', text: '#fff', logoColor: '#6F00EF', abbr: 'agi',      ispb: '', logoBg: '#6F00EF' },
   { name: 'BTG',           keywords: ['btg', 'btg pactual'],
-    domain: 'btgpactual.com',        slug: 'btg',         primary: '#1A1A2E', secondary: '#0D0D1F', text: '#fff', logoColor: '#1A1A2E', abbr: 'BTG',      ispb: '30306294' },
+    domain: 'btgpactual.com',        slug: 'btg',         primary: '#1A1A2E', secondary: '#0D0D1F', text: '#fff', logoColor: '#1A1A2E', abbr: 'BTG',      ispb: '30306294', logoBg: '#1A1A2E' },
   { name: 'XP',            keywords: ['xp', 'xp investimentos'],
-    domain: 'xpi.com.br',            slug: 'xp',          primary: '#111111', secondary: '#000000', text: '#fff', logoColor: '#111111', abbr: 'XP',       ispb: '02332886' },
+    domain: 'xpi.com.br',            slug: 'xp',          primary: '#111111', secondary: '#000000', text: '#fff', logoColor: '#111111', abbr: 'XP',       ispb: '02332886', logoBg: '#111111' },
   { name: 'Stone',         keywords: ['stone'],
     domain: 'stone.com.br',          slug: 'stone',       primary: '#00A868', secondary: '#007A4C', text: '#fff', logoColor: '#00A868', abbr: 'Stone',    ispb: '16501555' },
   // ── Cooperativas ─────────────────────────────────────────────────────────────
@@ -76,7 +78,7 @@ export const BANKS: BankData[] = [
   { name: 'Banco Original', keywords: ['original', 'banco original'],
     domain: 'original.com.br',       slug: 'original',    primary: '#004B2E', secondary: '#003020', text: '#fff', logoColor: '#004B2E', abbr: 'Original', ispb: '92894922' },
   { name: 'Safra',         keywords: ['safra', 'banco safra'],
-    domain: 'safra.com.br',          slug: 'safra',       primary: '#1A3A5C', secondary: '#0D2440', text: '#fff', logoColor: '#1A3A5C', abbr: 'Safra',    ispb: '58160789' },
+    domain: 'safra.com.br',          slug: 'safra',       primary: '#1A3A5C', secondary: '#0D2440', text: '#fff', logoColor: '#1A3A5C', abbr: 'Safra',    ispb: '58160789', logoBg: '#1A3A5C' },
   { name: 'Sofisa',        keywords: ['sofisa'],
     domain: 'sofisa.com.br',         slug: 'sofisa',      primary: '#FF6600', secondary: '#CC5200', text: '#fff', logoColor: '#FF6600', abbr: 'Sofisa',   ispb: '62099457' },
   { name: 'BMG',           keywords: ['bmg', 'banco bmg'],
@@ -84,7 +86,7 @@ export const BANKS: BankData[] = [
   { name: 'BRB',           keywords: ['brb', 'banco de brasilia'],
     domain: 'brb.com.br',            slug: 'brb',         primary: '#005AA0', secondary: '#003D73', text: '#fff', logoColor: '#005AA0', abbr: 'BRB',      ispb: '00204963' },
   { name: 'BS2',           keywords: ['bs2', 'banco bs2'],
-    domain: 'bs2.com',               slug: 'bs2',         primary: '#0033A0', secondary: '#002278', text: '#fff', logoColor: '#0033A0', abbr: 'BS2',      ispb: '71027866' },
+    domain: 'bs2.com',               slug: 'bs2',         primary: '#0033A0', secondary: '#002278', text: '#fff', logoColor: '#0033A0', abbr: 'BS2',      ispb: '71027866', logoBg: '#0033A0' },
   { name: 'BNB',           keywords: ['bnb', 'banco do nordeste'],
     domain: 'bnb.gov.br',            slug: 'bnb',         primary: '#006B3F', secondary: '#004D2D', text: '#fff', logoColor: '#006B3F', abbr: 'BNB',      ispb: '07237373' },
   { name: 'Banestes',      keywords: ['banestes'],

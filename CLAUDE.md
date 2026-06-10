@@ -390,7 +390,7 @@ Score base: 50 pontos
 ### IA & Consultor
 | Função | Tipo | O que faz |
 |--------|------|-----------|
-| `chatApi` | onCall | Chat com IA usando contexto financeiro completo (fallback: Gemini→Groq→OpenAI→Claude) |
+| `chatApi` | onCall | Chat com IA usando contexto financeiro completo (fallback: Gemini→Groq→OpenAI→Claude→DeepSeek) |
 | `proactiveInsightApi` | onCall | Gera insights proativos financeiros |
 | `briefingIa` | onCall | Insight curto pós-login |
 | `aiCategorizeCsv` | onCall | Categoriza transações de CSV via Gemini Flash |

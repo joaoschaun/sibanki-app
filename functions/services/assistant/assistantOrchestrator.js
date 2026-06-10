@@ -8,6 +8,8 @@
 const { logEvent, logError } = require("../../logger");
 const brapiService = require("../market/brapiService");
 const fixedIncomeService = require("../market/fixedIncomeService");
+const marketDataHub = require("../market/marketDataHub");
+const { calculateGrahamIntrinsicValue, calculateBazinPriceCeiling, buildSolidezChecklist } = require("../market/valuationEngine");
 const { detectMarketIntent } = require("../llm/marketIntentService");
 const { retrieveRelevantChunks } = require("../llm/brazilianFinanceKnowledge");
 const { buildConsultantPrompt } = require("../llm/sovereignSystemPrompt");
@@ -70,6 +72,36 @@ async function buildAssistantPrompt(message, contextStr, loggerTag) {
           requestedTicker: intentData.ticker, resolvedTicker,
         };
         assetClass = classifyQuoteAsset(resolvedTicker, fetchedJson);
+
+        // Raio-X de ação: busca fundamentais do Market Data Hub em paralelo
+        if (intentData.analysisMode === "raio_x" && assetClass === "equity") {
+          try {
+            const analysis = await marketDataHub.getAssetAnalysis(resolvedTicker);
+            if (analysis.fundamentals) {
+              const f = analysis.fundamentals;
+              const graham = calculateGrahamIntrinsicValue(
+                analysis.quote?.price || 0, f.lpa, f.vpa
+              );
+              const bazin  = calculateBazinPriceCeiling(
+                analysis.quote?.price || 0, f.dy
+              );
+              const solidez = buildSolidezChecklist({
+                roe: f.roe, margin: f.operatingMargin,
+                debtToEquity: f.debtToEquity, currentRatio: f.currentRatio,
+                pvp: f.pbRatio, pe: f.peRatio, dy: f.dy,
+              });
+              payloadResponse.fundamentals    = f;
+              payloadResponse.grahamResult    = graham;
+              payloadResponse.bazinResult     = bazin;
+              payloadResponse.solidezChecklist = solidez;
+              payloadResponse.rsi             = analysis.technicals?.rsi || null;
+              payloadResponse.rsiSignal       = analysis.technicals?.rsiSignal || null;
+              logEvent(loggerTag, "fundamentals_enriched", { ticker: resolvedTicker, source: f.source });
+            }
+          } catch (hubErr) {
+            logError(loggerTag, "fundamentals_hub_failed", { ticker: resolvedTicker, error: hubErr.message });
+          }
+        }
       } else if (intentData.intent === "crypto" && intentData.coin) {
         fetchedJson = await brapiService.crypto({
           coin: intentData.coin, currency: intentData.currency || "BRL",

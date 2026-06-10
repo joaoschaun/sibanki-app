@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { GenericPageSkeleton } from '../components/ui/PageSkeleton';
 import { useAppContext } from '../context/AppContext';
 import { useSibcoinToast } from '../hooks/useSibcoinToast';
-import { addGoal, updateGoal, deleteGoal, ValidationError } from '../services/persistUserData';
+import { addGoal, updateGoal, deleteGoal, addEntry, ValidationError } from '../services/persistUserData';
 import type { Goal } from '../types/userData';
 import { Modal } from '../components/ui/Modal';
-import { Plus, Pencil, Trash2, Target } from 'lucide-react';
+import { Plus, Pencil, Trash2, Target, Shield, TrendingUp, Zap, Sparkles, Coins } from 'lucide-react';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
 
@@ -19,14 +19,43 @@ const GOAL_COLORS = [
   { value: '#ec4899', label: 'Rosa' },
 ];
 
+const fmtBRL = (v: number) =>
+  v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
 export default function Planning() {
-  const { user, goals, loading } = useAppContext();
+  const { user, goals, loading, entries, data, financialProfile } = useAppContext();
   const { triggerWithToast } = useSibcoinToast();
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Goal | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
+
+  // ── Dados compartilhados ────────────────────────────────────────────────────
+  const currentMonthKey = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }, []);
+
+  const totalGasto = useMemo(() => {
+    return entries.reduce((s, e) =>
+      e.type === 'despesa' && e.date?.startsWith(currentMonthKey) ? s + (Number(e.value) || 0) : s, 0);
+  }, [entries, currentMonthKey]);
+
+  const receitaMes = useMemo(() =>
+    entries.reduce((s, e) =>
+      e.type === 'receita' && e.date?.startsWith(currentMonthKey) ? s + (Number(e.value) || 0) : s, 0),
+    [entries, currentMonthKey]);
+
+  const economia = useMemo(() =>
+    Math.max(0, receitaMes - totalGasto),
+    [receitaMes, totalGasto]);
+
+  const burnRateDiario = useMemo(() => {
+    const expensesMonthly = financialProfile?.cashflow?.expenses || parseFloat((data as any)?.cadastroCompleto?.gastosEstimados) || 3000;
+    return expensesMonthly / 30;
+  }, [financialProfile, data]);
 
   const [formTitle, setFormTitle] = useState('');
   const [formTarget, setFormTarget] = useState('');
@@ -121,6 +150,36 @@ export default function Planning() {
     }
   };
 
+  const handleAporteRapido = async (goalId: string, valor: number) => {
+    if (!user?.uid || valor <= 0) return;
+    const targetGoal = goals.find((g) => String(g.id) === goalId);
+    if (!targetGoal) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const nextCurrent = (targetGoal.current ?? 0) + valor;
+      await updateGoal(user.uid, goals, goalId, {
+        current: Math.round(nextCurrent * 100) / 100,
+      });
+
+      const today = new Date().toISOString().slice(0, 10);
+      await addEntry(user.uid, entries, {
+        type: 'despesa',
+        desc: `Aporte: ${targetGoal.title}`,
+        category: 'Investimentos',
+        value: valor,
+        date: today,
+        account: 'Aporte Manual',
+      });
+
+      triggerWithToast('goal_created');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao realizar aporte.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) return <GenericPageSkeleton />;
 
   return (
@@ -161,10 +220,75 @@ export default function Planning() {
         ) : (
           goals.map((g) => {
             const gid = String(g.id);
-            const pct = (g.target ?? 0) > 0 ? Math.min(100, (100 * (g.current ?? 0)) / (g.target ?? 0)) : 0;
+            const target = g.target ?? 0;
+            const current = g.current ?? 0;
+            const pct = target > 0 ? Math.min(100, (100 * current) / target) : 0;
             const icon = String((g as Goal & { icon?: string }).icon ?? '🎯');
             const color = String((g as Goal & { color?: string }).color ?? '#4F8CFF');
             const deadline = String((g as Goal & { deadline?: string }).deadline ?? '');
+            
+            const isExpanded = expandedGoalId === gid;
+
+            // 1. Cálculos de Tempo e Projeção
+            let tempoMensagem = '';
+            let statusCor = 'text-si-5 bg-si-over-2';
+            let statusText = 'Sem Ritmo';
+            let prazoMeses = 0;
+            let mesesParaBater = 0;
+
+            if (target > current) {
+              const restante = target - current;
+              if (economia > 0) {
+                mesesParaBater = restante / economia;
+                if (deadline) {
+                  prazoMeses = Math.max(1, (new Date(deadline + 'T12:00:00').getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 30.4));
+                  if (mesesParaBater <= prazoMeses) {
+                    statusCor = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+                    statusText = 'No Ritmo';
+                    const dataPrevista = new Date();
+                    dataPrevista.setMonth(dataPrevista.getMonth() + Math.round(mesesParaBater));
+                    const mesesAntes = Math.max(0, prazoMeses - mesesParaBater);
+                    tempoMensagem = `No ritmo atual, você completará em ${dataPrevista.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })} (${mesesAntes.toFixed(1)} meses antes do prazo ✓).`;
+                  } else {
+                    statusCor = 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+                    statusText = 'Gargalo';
+                    const difMensal = (restante / prazoMeses) - economia;
+                    tempoMensagem = `Economia mensal insuficiente. Você precisa poupar +${fmtBRL(difMensal)}/mês para cumprir o prazo original.`;
+                  }
+                } else {
+                  statusCor = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+                  statusText = 'Ativo';
+                  tempoMensagem = `Com economia de ${fmtBRL(economia)}/mês, você baterá a meta em ${mesesParaBater.toFixed(1)} meses.`;
+                }
+              } else {
+                statusCor = 'text-orange-400 bg-orange-500/10 border-orange-500/20';
+                statusText = 'Estagnado';
+                tempoMensagem = 'Ritmo zerado. Aporte economias mensais para reativar esta meta.';
+              }
+            } else {
+              statusCor = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+              statusText = 'Concluído';
+              tempoMensagem = 'Parabéns! Meta completamente alcançada! 🎉';
+            }
+
+            // 2. Equivalente Ld
+            const rateDiario = burnRateDiario > 0 ? burnRateDiario : 100;
+            const ldAlvo = target / rateDiario;
+            const ldAtual = current / rateDiario;
+
+            // 3. Projeção CDI (0.8% a.m.)
+            let jurosGanhos = 0;
+            let esforcoEconomizadoPct = 0;
+            const nMeses = deadline ? Math.max(1, Math.round(prazoMeses)) : 12;
+            const pmt = target > current ? (target - current) / nMeses : 0;
+            let fv = current;
+            const rate = 0.008; // 0.8% a.m.
+            for (let i = 0; i < nMeses; i++) {
+              fv = (fv + pmt) * (1 + rate);
+            }
+            jurosGanhos = Math.max(0, fv - (current + pmt * nMeses));
+            esforcoEconomizadoPct = target > 0 ? Math.round((jurosGanhos / target) * 100) : 0;
+
             return (
               <div
                 key={gid}
@@ -200,8 +324,8 @@ export default function Planning() {
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-si-5">Progresso</span>
                     <span className="font-bold text-si-1">
-                      R$ {(g.current ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / R${' '}
-                      {(g.target ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {current.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / R${' '}
+                      {target.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   {deadline && (
@@ -209,12 +333,88 @@ export default function Planning() {
                       Prazo: {new Date(deadline + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </p>
                   )}
-                  <div className="h-2 rounded-full bg-si-over-2 overflow-hidden">
+                  <div className="h-2 rounded-full bg-si-over-2 overflow-hidden mb-4">
                     <div
                       className="h-full rounded-full bg-emerald-500 transition-all"
                       style={{ width: `${Math.min(100, pct)}%` }}
                     />
                   </div>
+
+                  {/* Botão de Expansão de Inteligência */}
+                  <button
+                    type="button"
+                    onClick={() => setExpandedGoalId(isExpanded ? null : gid)}
+                    className={`w-full py-2 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition-all ${
+                      isExpanded
+                        ? 'bg-blue-600/10 border-blue-500/30 text-blue-400'
+                        : 'bg-si-over-2 border-si-border-md text-si-4 hover:bg-si-over-3 hover:text-si-2'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {isExpanded ? 'Ocultar Projeções IA' : 'Ver Projeções e Aceleração'}
+                  </button>
+
+                  {/* Sub-painel IA Expandido */}
+                  {isExpanded && (
+                    <div className="pt-4 mt-4 border-t border-white/[0.04] space-y-4">
+                      
+                      {/* Projeção Temporal */}
+                      <div className="flex items-start gap-2.5">
+                        <Zap className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-semibold text-si-2">Previsão de Tempo</span>
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${statusCor}`}>
+                              {statusText}
+                            </span>
+                          </div>
+                          <p className="text-si-5 text-xs mt-1 leading-relaxed">{tempoMensagem}</p>
+                        </div>
+                      </div>
+
+                      {/* Conexão Soberania */}
+                      <div className="flex items-start gap-2.5">
+                        <Shield className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="text-xs font-semibold text-si-2">Equivalência de Soberania (Ld)</span>
+                          <p className="text-si-5 text-xs mt-1 leading-relaxed">
+                            Alvo: <strong className="text-emerald-400">{ldAlvo.toFixed(0)} dias</strong> · Garantido: <strong className="text-emerald-400">{ldAtual.toFixed(0)} dias</strong> de blindagem patrimonial.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Aceleração CDI */}
+                      {target > current && (
+                        <div className="flex items-start gap-2.5">
+                          <TrendingUp className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="text-xs font-semibold text-si-2">Aceleração CDI (100%)</span>
+                            <p className="text-si-5 text-xs mt-1 leading-relaxed">
+                              Rendimento projetado: <strong className="text-blue-400">{fmtBRL(jurosGanhos)}</strong> em {nMeses} meses (paga <strong className="text-blue-400">{esforcoEconomizadoPct}%</strong> do esforço próprio).
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Aporte Rápido */}
+                      {economia > 5 && target > current && (
+                        <div className="p-3 rounded-xl bg-violet-950/10 border border-violet-500/20 text-xs space-y-2">
+                          <p className="text-violet-300 leading-relaxed">
+                            Você economizou <strong className="text-violet-400">{fmtBRL(economia)}</strong> este mês. Destinar sobra para acelerar esta meta?
+                          </p>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => handleAporteRapido(gid, economia)}
+                            className="w-full py-2 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
+                          >
+                            <Coins className="w-3.5 h-3.5" /> Aportar Sobra de {fmtBRL(economia)}
+                          </button>
+                        </div>
+                      )}
+
+                    </div>
+                  )}
                 </div>
               </div>
             );

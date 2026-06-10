@@ -1,82 +1,112 @@
 /**
- * Template HTML do e-mail de resumo semanal - Sibanki (Resend)
- * Variáveis: nome, receitaTotal, despesaTotal, saldoSemana, topCategorias, periodoInicio, periodoFim, appUrl
- * Estilo alinhado aos outros e-mails (verifyEmail, familyInvite).
+ * Template — Resumo semanal financeiro
+ * Pierre Finance identity via emailBase.js
  */
-function getWeeklySummaryEmailHtml(nome, receitaTotal, despesaTotal, topCategorias, periodoInicio, periodoFim, appUrl) {
-  const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  const n = esc(nome || "Usuário");
-  const fmt = (v) => Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const rec = fmt(receitaTotal ?? 0);
-  const desp = fmt(despesaTotal ?? 0);
-  const saldo = (Number(receitaTotal ?? 0) - Number(despesaTotal ?? 0));
-  const saldoStr = fmt(saldo);
+const { esc, fmtBRL, buildEmail, btn, C } = require("./emailBase");
+
+function getWeeklySummaryEmailHtml(nome, receitaTotal, despesaTotal, topCategorias, periodoInicio, periodoFim, appUrl, unsubUrl) {
+  const n      = esc(nome || "");
+  const rec    = fmtBRL(receitaTotal  ?? 0);
+  const desp   = fmtBRL(despesaTotal  ?? 0);
+  const saldo  = Number(receitaTotal ?? 0) - Number(despesaTotal ?? 0);
+  const saldoStr = fmtBRL(saldo);
+  const saldoColor = saldo >= 0 ? C.green : C.red;
   const inicio = esc(periodoInicio ?? "");
-  const fim = esc(periodoFim ?? "");
-  const url = esc(appUrl || "https://virtus-financeiro-cd7bd.web.app/app");
+  const fim    = esc(periodoFim    ?? "");
+  const url    = esc(appUrl || "https://virtus-financeiro-cd7bd.web.app");
+  const unsub  = esc(unsubUrl || "");
 
-  const categoriasHtml = Array.isArray(topCategorias) && topCategorias.length > 0
-    ? topCategorias
-        .slice(0, 5)
-        .map(
-          (c) =>
-            `<tr><td style="padding:8px 0; border-bottom:1px solid #1A237E;"><span style="color:#CFD8DC;">${esc(c.name)}</span></td><td style="padding:8px 0; border-bottom:1px solid #1A237E; text-align:right; font-weight:600; color:#F59E0B;">R$ ${fmt(c.value)}</td></tr>`
-        )
-        .join("")
-    : "<tr><td colspan=\"2\" style=\"padding:12px 0; color:#546E7A; font-size:14px;\">Nenhuma despesa por categoria na semana.</td></tr>";
+  // Top categorias
+  const cats = Array.isArray(topCategorias) ? topCategorias.slice(0, 5) : [];
+  const maxCatVal = cats.length > 0 ? Math.max(...cats.map(c => Number(c.value) || 0)) : 1;
 
-  return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Seu resumo da semana — Sibanki</title>
-</head>
-<body style="margin:0; padding:0; background-color:#0a0f1e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0f1e; padding:40px 16px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%;">
+  const catsHtml = cats.length > 0
+    ? cats.map((c, i) => {
+        const pct = Math.round((Number(c.value) || 0) / maxCatVal * 100);
+        const last = i === cats.length - 1;
+        return `
           <tr>
-            <td style="background: linear-gradient(135deg, #4F8CFF 0%, #7C3AED 100%); border-radius:16px 16px 0 0; padding:36px 40px; text-align:center;">
-              <img src="https://storage.googleapis.com/app-tess-ai-platform-assets-prod/assets/uploads/313663a4-caf3-472e-813b-9d2995f8297f.png" width="64" height="64" alt="Sibanki" style="border-radius:12px; margin:0 auto 16px; display:block;">
-              <h1 style="color:#ffffff; margin:0; font-size:28px; font-weight:700; letter-spacing:-0.5px;">Sibanki</h1>
-              <p style="color:#BFDBFE; margin:6px 0 0; font-size:14px; letter-spacing:1px; text-transform:uppercase;">Resumo da semana</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="background:#0d1b2a; padding:40px;">
-              <h2 style="color:#ffffff; margin:0 0 8px; font-size:22px; font-weight:600;">Olá, ${n}! 👋</h2>
-              <p style="color:#90A4AE; font-size:14px; margin:0 0 24px;">Resumo financeiro de <strong style="color:#fff;">${inicio}</strong> a <strong style="color:#fff;">${fim}</strong>.</p>
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a1628; border:1px solid #1A237E; border-radius:12px; margin-bottom:24px;">
-                <tr><td style="padding:16px 20px; border-bottom:1px solid #1A237E;"><span style="color:#90A4AE;">Receitas</span></td><td style="padding:16px 20px; border-bottom:1px solid #1A237E; text-align:right; font-weight:700; color:#22C55E;">R$ ${rec}</td></tr>
-                <tr><td style="padding:16px 20px; border-bottom:1px solid #1A237E;"><span style="color:#90A4AE;">Despesas</span></td><td style="padding:16px 20px; border-bottom:1px solid #1A237E; text-align:right; font-weight:700; color:#F59E0B;">R$ ${desp}</td></tr>
-                <tr><td style="padding:16px 20px;"><span style="color:#90A4AE;">Saldo da semana</span></td><td style="padding:16px 20px; text-align:right; font-weight:700; color:${saldo >= 0 ? "#22C55E" : "#EF4444"};">R$ ${saldoStr}</td></tr>
-              </table>
-              <h3 style="color:#4FC3F7; margin:0 0 12px; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:1.5px;">Top categorias de despesa</h3>
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a1628; border:1px solid #1A237E; border-radius:10px; margin-bottom:24px;">
-                ${categoriasHtml}
-              </table>
+            <td style="padding:10px 0;${last ? "" : `border-bottom:1px solid rgba(255,255,255,0.05);`}">
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td align="center">
-                    <a href="${url}" style="display:inline-block; background: linear-gradient(135deg, #4F8CFF, #7C3AED); color:#ffffff; text-decoration:none; font-size:16px; font-weight:700; padding:14px 36px; border-radius:10px;">Abrir Sibanki</a>
+                  <td>
+                    <span style="color:${C.text2};font-size:13px;">${esc(c.name)}</span>
+                  </td>
+                  <td style="text-align:right;">
+                    <span style="color:${C.text1};font-size:13px;font-weight:600;">R$ ${fmtBRL(c.value)}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="padding-top:5px;">
+                    <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:99px;">
+                      <div style="height:3px;width:${pct}%;background:rgba(255,255,255,0.25);border-radius:99px;"></div>
+                    </div>
                   </td>
                 </tr>
               </table>
             </td>
-          </tr>
-          <tr>
-            <td style="background:#060d1a; border-radius:0 0 16px 16px; padding:24px 40px; text-align:center;">
-              <p style="margin:0; color:#546E7A; font-size:12px;">© Sibanki · Suas finanças no controle.</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+          </tr>`;
+      }).join("")
+    : `<tr><td style="padding:12px 0;color:${C.text4};font-size:13px;">Nenhuma despesa no período.</td></tr>`;
+
+  const body = `
+    <p style="margin:0 0 20px;color:${C.text2};font-size:14px;line-height:1.7;">
+      ${n ? `${n}, aqui está` : "Aqui está"} o resumo financeiro de <strong style="color:${C.text1};">${inicio}</strong> a <strong style="color:${C.text1};">${fim}</strong>.
+    </p>
+
+    <!-- KPIs -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:10px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td><span style="color:${C.text3};font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;">Receitas</span></td>
+              <td style="text-align:right;"><span style="color:${C.green};font-size:15px;font-weight:700;">R$ ${rec}</span></td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td><span style="color:${C.text3};font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;">Despesas</span></td>
+              <td style="text-align:right;"><span style="color:${C.amber};font-size:15px;font-weight:700;">R$ ${desp}</span></td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 20px;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td><span style="color:${C.text3};font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;">Saldo da semana</span></td>
+              <td style="text-align:right;"><span style="color:${saldoColor};font-size:18px;font-weight:800;letter-spacing:-0.01em;">R$ ${saldoStr}</span></td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Top categorias -->
+    <p style="margin:0 0 12px;color:${C.text3};font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.16em;">Top categorias de despesa</p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:0 16px;margin-bottom:24px;">
+      ${catsHtml}
+    </table>
+
+    ${btn("Abrir o Sibanki", url)}`;
+
+  return buildEmail({
+    preheader: `Saldo da semana: R$ ${saldoStr} — ${inicio} a ${fim}.`,
+    overline: "Resumo semanal",
+    headline: "Sua semana financeira",
+    sub: `${inicio} — ${fim}`,
+    body,
+    footerExtra: "Você recebe este e-mail porque ativou o resumo semanal nas Configurações.",
+    unsubUrl: unsub,
+  });
 }
 
 module.exports = { getWeeklySummaryEmailHtml };

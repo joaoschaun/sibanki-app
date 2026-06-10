@@ -93,7 +93,7 @@ module.exports = defineConfig({
     },
     {
       name: 'compare-legado',
-      testMatch: '**/compare-modulos-legado.spec.js',
+      testMatch: '**/compare-modulos-legado.spec.cjs',
       use: {
         ...devices['Desktop Chrome'],
         baseURL: process.env.LEGACY_BASE_URL || 'https://staging-13a0b.web.app/app',
@@ -101,7 +101,7 @@ module.exports = defineConfig({
     },
     {
       name: 'compare-react',
-      testMatch: '**/compare-modulos-react.spec.js',
+      testMatch: '**/compare-modulos-react.spec.cjs',
       use: {
         ...devices['Desktop Chrome'],
         baseURL: process.env.REACT_BASE_URL || 'https://staging-13a0b.web.app',

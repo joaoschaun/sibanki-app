@@ -29,29 +29,94 @@ const CDI_MONTHLY = 0.0107; // ~12.8% a.a. — atualizar conforme COPOM
  * type=despesa + isTransfer=true) inflavam o burn rate. Agora filtramos
  * corretamente por `isTransfer !== true`.
  */
-function calcDaysOfFreedom(entries = [], accountBalances = {}, investments = []) {
-  // Liquidez total: saldo em contas + investimentos líquidos
-  const saldoContas = Object.values(accountBalances).reduce((s, v) => s + (Number(v) || 0), 0);
-  const liquidezInv = investments
-    .filter((inv) => inv.liquido !== false)
-    .reduce((s, inv) => s + (Number(inv.currentValue ?? inv.valorAtual ?? inv.atual ?? inv.valor ?? 0)), 0);
-  const totalLiquido = saldoContas + liquidezInv;
+function calcDaysOfFreedom(
+  entries = [],
+  accountBalances = {},
+  investments = [],
+  accountMeta = {},
+  cadastroCompleto = null,
+  investmentYieldMonthly = 0.01
+) {
+  // 1. Liquidez em contas (respeita incluirNaSoma)
+  const accountLiquidity = Object.entries(accountBalances).reduce((sum, [name, bal]) => {
+    if (accountMeta[name]?.incluirNaSoma === false) return sum;
+    return sum + (Number(bal) || 0);
+  }, 0);
 
-  // Queima diária: média dos últimos 3 meses de despesas (excluindo transferências)
+  // 2. Investimentos líquidos (D+0 a D+30)
+  const liquidTypeKeys = [
+    "tesouro selic",
+    "cdb liquidez diária",
+    "cdb liquidez diaria",
+    "fundo di",
+    "fundos di",
+    "poupança",
+    "poupanca",
+  ];
+  const liquidInvestments = investments
+    .filter((inv) => {
+      const tipo = (inv.tipo || "").toLowerCase();
+      return liquidTypeKeys.some((t) => tipo.includes(t));
+    })
+    .reduce((sum, inv) => sum + (Number(inv.currentValue ?? inv.valorAtual ?? inv.atual ?? inv.valor ?? 0)), 0);
+
+  const realLiquidity = accountLiquidity + liquidInvestments;
+
+  // Lógica de fallback para liquidez estimada
+  let totalLiquido = realLiquidity;
+  let isLiquidityEstimated = false;
+
+  const reservaEstimadaVal = Number(cadastroCompleto?.reservaEstimada) || 0;
+  const criptoEstimadaVal = Number(cadastroCompleto?.criptoEstimada) || 0;
+
+  if (realLiquidity <= 0 && (reservaEstimadaVal > 0 || criptoEstimadaVal > 0)) {
+    totalLiquido = reservaEstimadaVal + criptoEstimadaVal;
+    isLiquidityEstimated = true;
+  }
+
+  // 3. Burn rate: média dos últimos 3 meses de despesas (excluindo transferências)
   const now = new Date();
-  const cutoff = new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString().slice(0, 7);
-  const despesas = entries
-    .filter((e) => e.type === "despesa" && e.isTransfer !== true && (e.date || "") >= cutoff)
-    .reduce((s, e) => s + (Number(e.value) || 0), 0);
+  const threeMonthsAgo = new Date(now);
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  const thresholdDate = threeMonthsAgo.toISOString().slice(0, 10);
 
-  const avgMonthlyExpense = despesas > 0 ? despesas / 3 : 0;
-  const declaredProventos = investments.reduce((s, inv) => s + (Number(inv.proventosMensais) || 0), 0);
+  const relevantExpenses = entries.filter(
+    (e) =>
+      e.type === "despesa" &&
+      e.isTransfer !== true &&
+      e.status !== "pendente" &&
+      e.status !== "agendado" &&
+      (e.date || "") >= thresholdDate
+  );
+
+  const totalExpenses3m = relevantExpenses.reduce((sum, e) => sum + (Number(e.value) || 0), 0);
+  const distinctMonths = new Set(relevantExpenses.map((e) => (e.date || "").slice(0, 7))).size || 1;
+  const effectiveMonths = Math.min(distinctMonths, 3);
+  const avgMonthlyExpenseReal = totalExpenses3m / effectiveMonths;
+
+  let avgMonthlyExpense = avgMonthlyExpenseReal;
+  let isExpensesEstimated = false;
+
+  const gastosEstimadosVal = Number(cadastroCompleto?.gastosEstimados) || 0;
+  if (avgMonthlyExpenseReal <= 0 && gastosEstimadosVal > 0) {
+    avgMonthlyExpense = gastosEstimadosVal;
+    isExpensesEstimated = true;
+  }
+
+  // 4. Renda passiva mensal:
+  const yieldFromLiquid = (isLiquidityEstimated ? 0 : liquidInvestments) * investmentYieldMonthly;
+  const declaredProventos = investments.reduce((s, inv) => {
+    const p = Number(inv.proventosMensais) || 0;
+    return p > 0 ? s + p : s;
+  }, 0);
+
+  const totalPassiveIncome = yieldFromLiquid + declaredProventos;
 
   let dailyBurn;
-  if (despesas === 0 && declaredProventos === 0) {
-    dailyBurn = 1;
+  if (avgMonthlyExpense === 0 && totalPassiveIncome === 0) {
+    dailyBurn = 0;
   } else {
-    const netMonthlyCost = Math.max(0, avgMonthlyExpense - declaredProventos);
+    const netMonthlyCost = Math.max(0, avgMonthlyExpense - totalPassiveIncome);
     dailyBurn = netMonthlyCost / 30;
   }
 
@@ -219,11 +284,13 @@ async function processSentinelaUser(db, uid, sendFn) {
   const allEntries = Array.isArray(data.entries) ? data.entries : [];
   const entries = allEntries.filter((e) => (e.date || "") >= cutoff90d);
   const accountBalances = data.accountBalances || {};
+  const accountMeta = data.accountMeta || {};
   const investments = Array.isArray(data.investments) ? data.investments : [];
+  const cadastroCompleto = data.cadastroCompleto || null;
   const creditObligations = Array.isArray(data.creditObligations) ? data.creditObligations : [];
   const budgets = data.budgets || {};
 
-  const freedom = calcDaysOfFreedom(entries, accountBalances, investments);
+  const freedom = calcDaysOfFreedom(entries, accountBalances, investments, accountMeta, cadastroCompleto);
   const spread = calcSpreadGap(investments, creditObligations);
 
   const now = new Date();
@@ -370,7 +437,13 @@ async function processSentinelaUserPush(db, uid) {
   const allEntries = Array.isArray(data.entries) ? data.entries : [];
   const entries = allEntries.filter((e) => (e.date || "") >= cutoff90d);
 
-  const freedom = calcDaysOfFreedom(entries, data.accountBalances || {}, Array.isArray(data.investments) ? data.investments : []);
+  const freedom = calcDaysOfFreedom(
+    entries,
+    data.accountBalances || {},
+    Array.isArray(data.investments) ? data.investments : [],
+    data.accountMeta || {},
+    data.cadastroCompleto || null
+  );
   const spread  = calcSpreadGap(Array.isArray(data.investments) ? data.investments : [], Array.isArray(data.creditObligations) ? data.creditObligations : []);
 
   // Alertas de orçamento

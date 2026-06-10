@@ -35,6 +35,26 @@
   /* Body gradient — removido: sem glow, fundo limpo */
   --si-grad-a: transparent;
   --si-grad-b: transparent;
+
+  /* Category Colors (Dark Mode) */
+  --si-cat-alimentacao-bg: rgba(249, 115, 22, 0.10);
+  --si-cat-alimentacao-text: #fb923c;
+  --si-cat-transporte-bg: rgba(59, 130, 246, 0.10);
+  --si-cat-transporte-text: #60a5fa;
+  --si-cat-moradia-bg: rgba(168, 85, 247, 0.10);
+  --si-cat-moradia-text: #c084fc;
+  --si-cat-saude-bg: rgba(239, 68, 68, 0.10);
+  --si-cat-saude-text: #f87171;
+  --si-cat-lazer-bg: rgba(234, 179, 8, 0.10);
+  --si-cat-lazer-text: #facc15;
+  --si-cat-educacao-bg: rgba(6, 182, 212, 0.10);
+  --si-cat-educacao-text: #22d3ee;
+  --si-cat-salario-bg: rgba(16, 185, 129, 0.10);
+  --si-cat-salario-text: #34d399;
+  --si-cat-investimentos-bg: rgba(20, 184, 166, 0.10);
+  --si-cat-investimentos-text: #2dd4bf;
+  --si-cat-assinaturas-bg: rgba(139, 92, 246, 0.10);
+  --si-cat-assinaturas-text: #a78bfa;
 }
 
 [data-theme="light"] {
@@ -68,6 +88,26 @@
   /* Body gradient */
   --si-grad-a: rgba(16, 185, 129, 0.06);
   --si-grad-b: rgba(59, 130, 246, 0.06);
+
+  /* Category Colors (Light Mode) */
+  --si-cat-alimentacao-bg: rgba(234, 88, 12, 0.08);
+  --si-cat-alimentacao-text: #c2410c;
+  --si-cat-transporte-bg: rgba(37, 99, 235, 0.08);
+  --si-cat-transporte-text: #1d4ed8;
+  --si-cat-moradia-bg: rgba(124, 58, 237, 0.08);
+  --si-cat-moradia-text: #6d28d9;
+  --si-cat-saude-bg: rgba(220, 38, 38, 0.08);
+  --si-cat-saude-text: #b91c1c;
+  --si-cat-lazer-bg: rgba(202, 138, 4, 0.08);
+  --si-cat-lazer-text: #a16207;
+  --si-cat-educacao-bg: rgba(8, 145, 178, 0.08);
+  --si-cat-educacao-text: #0e7490;
+  --si-cat-salario-bg: rgba(5, 150, 105, 0.08);
+  --si-cat-salario-text: #047857;
+  --si-cat-investimentos-bg: rgba(13, 148, 136, 0.08);
+  --si-cat-investimentos-text: #0f766e;
+  --si-cat-assinaturas-bg: rgba(109, 40, 217, 0.08);
+  --si-cat-assinaturas-text: #5b21b6;
 }
 
 /* ─────────────────────────────────────────────
@@ -96,6 +136,26 @@
 
   --color-si-zinc-8: var(--si-zinc-8);
   --color-si-zinc-9: var(--si-zinc-9);
+
+  /* Category colors */
+  --color-si-cat-alimentacao-bg: var(--si-cat-alimentacao-bg);
+  --color-si-cat-alimentacao-text: var(--si-cat-alimentacao-text);
+  --color-si-cat-transporte-bg: var(--si-cat-transporte-bg);
+  --color-si-cat-transporte-text: var(--si-cat-transporte-text);
+  --color-si-cat-moradia-bg: var(--si-cat-moradia-bg);
+  --color-si-cat-moradia-text: var(--si-cat-moradia-text);
+  --color-si-cat-saude-bg: var(--si-cat-saude-bg);
+  --color-si-cat-saude-text: var(--si-cat-saude-text);
+  --color-si-cat-lazer-bg: var(--si-cat-lazer-bg);
+  --color-si-cat-lazer-text: var(--si-cat-lazer-text);
+  --color-si-cat-educacao-bg: var(--si-cat-educacao-bg);
+  --color-si-cat-educacao-text: var(--si-cat-educacao-text);
+  --color-si-cat-salario-bg: var(--si-cat-salario-bg);
+  --color-si-cat-salario-text: var(--si-cat-salario-text);
+  --color-si-cat-investimentos-bg: var(--si-cat-investimentos-bg);
+  --color-si-cat-investimentos-text: var(--si-cat-investimentos-text);
+  --color-si-cat-assinaturas-bg: var(--si-cat-assinaturas-bg);
+  --color-si-cat-assinaturas-text: var(--si-cat-assinaturas-text);
 }
 
 /* ─────────────────────────────────────────────
@@ -176,4 +236,19 @@ body {
   .py-4 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
   .gap-8 { gap: 1.25rem; }
   .gap-6 { gap: 1rem; }
+}
+
+/* ── Transição de Abas do Cockpit ─────────────────────────── */
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.tab-animate {
+  animation: tabFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

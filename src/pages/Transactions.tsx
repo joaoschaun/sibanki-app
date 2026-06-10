@@ -15,7 +15,7 @@ import type { Entry } from '../types/userData';
 import { Modal } from '../components/ui/Modal';
 import { EntryForm } from '../components/transactions/EntryForm';
 import { TransferForm } from '../components/transactions/TransferForm';
-import { Search, Filter, X, FileText, Receipt, Camera, Mic, Upload } from 'lucide-react';
+import { Search, Filter, X, FileText, Camera, Mic, Upload } from 'lucide-react';
 import { functions } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
 // generateReportPdf carregado via dynamic import (evita vendor-pdf no load inicial)
@@ -27,6 +27,7 @@ import { SovereigntyBadge } from '../components/ui/SovereigntyBadge';
 import { PageTransition } from '../components/ui/PageTransition';
 import { useIntelligence } from '../context/IntelligenceContext';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
+import { MerchantLogo } from '../components/transactions/MerchantLogo';
 
 // ── Tipos do Formulário ────────────────────────────────────────────────────
 interface RecurrenceSettings {
@@ -77,22 +78,6 @@ function filterReducer(state: FilterState, action: FilterAction): FilterState {
   }
 }
 
-// ── Ícones por categoria ───────────────────────────────────────────────────
-const CATEGORY_COLORS: Record<string, string> = {
-  Alimentação: 'bg-orange-500/10 text-orange-400',
-  Transporte: 'bg-blue-500/10 text-blue-400',
-  Moradia: 'bg-purple-500/10 text-purple-400',
-  Saúde: 'bg-red-500/10 text-red-400',
-  Lazer: 'bg-yellow-500/10 text-yellow-400',
-  Educação: 'bg-cyan-500/10 text-cyan-400',
-  Salário: 'bg-emerald-500/10 text-emerald-400',
-  Investimentos: 'bg-teal-500/10 text-teal-400',
-};
-
-function categoryClass(category?: string, type?: string) {
-  if (category && CATEGORY_COLORS[category]) return CATEGORY_COLORS[category];
-  return type === 'receita' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500';
-}
 
 export default function Transactions() {
   const { user, data, entries, recurrents, loading, accounts: allAccounts, budgets } = useAppContext();
@@ -111,6 +96,7 @@ export default function Transactions() {
   const [ocrBusy, setOcrBusy]         = useState(false);
   const [sttBusy, setSttBusy]         = useState(false);
   const [aiResult, setAiResult]       = useState<{ entry: Entry | null; source: string; raw?: string } | null>(null);
+  const [aiAccount, setAiAccount]     = useState<string>('');
   const fileInputRef                  = useRef<HTMLInputElement>(null);
   const mediaRecorderRef              = useRef<MediaRecorder | null>(null);
   const audioChunksRef                = useRef<Blob[]>([]);
@@ -365,6 +351,7 @@ export default function Transactions() {
       const res = await ocrApi({ imageBase64, mimeType: file.type || 'image/jpeg' });
       if (res.data.entry) {
         setAiResult({ entry: res.data.entry, source: 'foto', raw: res.data.ocrText ?? undefined });
+        setAiAccount(res.data.entry.account ?? '');
       } else {
         setError('Não foi possível extrair um lançamento da imagem.');
       }
@@ -392,6 +379,7 @@ export default function Transactions() {
           const res = await sttApi({ audioBase64, mimeType: 'audio/webm' });
           if (res.data.entry) {
             setAiResult({ entry: res.data.entry, source: 'voz', raw: res.data.transcript ?? undefined });
+            setAiAccount(res.data.entry.account ?? '');
           } else {
             setError('Não foi possível extrair um lançamento do áudio.');
           }
@@ -418,7 +406,7 @@ export default function Transactions() {
     if (!aiResult?.entry || !user?.uid) return;
     setBusy(true);
     try {
-      const entry = { ...aiResult.entry, id: undefined };
+      const entry = { ...aiResult.entry, id: undefined, account: aiAccount || aiResult.entry.account || undefined };
       await addEntry(user.uid, entries, entry as Omit<Entry, 'id'>);
       triggerWithToast('entry_added');
       setAiResult(null);
@@ -538,7 +526,7 @@ export default function Transactions() {
               {fixedMessage.text}
             </div>
           )}
-          <div className="divide-y divide-white/5 rounded-xl border border-si-border bg-si-bg">
+          <div className="divide-y divide-si-border rounded-xl border border-si-border bg-si-bg">
             {recurrents.length === 0 ? (
               <div className="p-6 text-sm text-si-5">Nenhum recorrente cadastrado.</div>
             ) : recurrents.map((r) => (
@@ -684,13 +672,15 @@ export default function Transactions() {
                   </div>
 
                   {/* Registros do dia */}
-                  <div className="divide-y divide-white/[0.04]">
+                  <div className="divide-y divide-si-border">
                     {dayEntries.map((e) => (
                       <div key={e.id} className="group flex items-center gap-4 px-5 py-4 hover:bg-si-over-1 transition-colors">
-                        {/* ✅ FIX: Ícone estático (sem animation-pulse) — cor por categoria */}
-                        <div className={`p-2 rounded-xl shrink-0 ${categoryClass(e.category, e.type)}`}>
-                          <Receipt className="w-4 h-4" />
-                        </div>
+                        <MerchantLogo
+                          description={e.desc}
+                          category={e.category}
+                          type={e.type}
+                          size={32}
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-si-1 truncate">{e.desc || e.category || '—'}</p>
                           <p className="text-xs text-si-5 mt-0.5">
@@ -753,7 +743,7 @@ export default function Transactions() {
                 <th className="px-6 py-4 text-right">Valor</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-si-border">
               {sorted.map((e) => (
                 <tr key={e.id} className="hover:bg-si-over-1">
                   <td className="px-6 py-4 text-sm">{e.desc || '—'}</td>
@@ -786,6 +776,14 @@ export default function Transactions() {
               <div><span className="text-si-5">Descrição:</span> <span className="text-si-1">{aiResult.entry.desc || '—'}</span></div>
               <div><span className="text-si-5">Categoria:</span> <span className="text-si-1">{aiResult.entry.category || '—'}</span></div>
               {aiResult.entry.date && <div><span className="text-si-5">Data:</span> <span className="text-si-1">{aiResult.entry.date}</span></div>}
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-si-5 mb-1">Conta</label>
+              <select value={aiAccount} onChange={(e) => setAiAccount(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-blue-500">
+                <option value="">— sem conta —</option>
+                {allAccounts.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
             </div>
             <div className="flex gap-3 pt-2">
               <button type="button" onClick={() => setAiResult(null)} className="flex-1 py-2.5 rounded-xl border border-si-border text-si-4 text-sm hover:bg-si-over-2">Cancelar</button>

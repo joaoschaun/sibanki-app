@@ -16,7 +16,9 @@ export type PlatformEventName =
   | 'advisor_reply_received'
   | 'advisor_reply_failed'
   | 'insight_shown'
-  | 'insight_cta_clicked';
+  | 'insight_cta_clicked'
+  | 'ticker_quote_failed'
+  | 'ticker_quote_success';
 
 export interface FinancialProfileInput {
   entries: Entry[];

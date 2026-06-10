@@ -239,23 +239,44 @@ function buildEquityDeterministicReply(payloadResponse) {
   const r = payloadResponse?.payload?.results?.[0] || {};
   const symbol = String(r.symbol || payloadResponse?.resolvedTicker || "ACAO").toUpperCase();
   const longName = String(r.longName || r.shortName || symbol);
-  const price = formatBrl(r.regularMarketPrice);
+  const rawPrice = r.regularMarketPrice;
+  const price = formatBrl(rawPrice);
   const dayRange = r.regularMarketDayRange || "n/d";
   const range52 = r.fiftyTwoWeekRange || "n/d";
-  const pe = Number.isFinite(Number(r.priceEarnings)) ? Number(r.priceEarnings).toFixed(2) : "n/d";
-  const pb = Number.isFinite(Number(r.priceToBookRatio)) ? Number(r.priceToBookRatio).toFixed(2) : "n/d";
-  const dy = Number.isFinite(Number(r.dividendYield)) ? `${(Number(r.dividendYield) * 100).toFixed(2)}%` : "n/d";
-  const roe = Number.isFinite(Number(r?.financialData?.returnOnEquity))
-    ? `${(Number(r.financialData.returnOnEquity) * 100).toFixed(2)}%`
-    : "n/d";
-  const debtToEquity = Number.isFinite(Number(r?.financialData?.debtToEquity))
-    ? Number(r.financialData.debtToEquity).toFixed(2)
-    : "n/d";
   const vol = Number.isFinite(Number(r.regularMarketVolume))
     ? Number(r.regularMarketVolume).toLocaleString("pt-BR")
     : "n/d";
 
-  return [
+  // Fundamentais enriquecidos pelo Market Data Hub (se disponíveis)
+  const f        = payloadResponse?.fundamentals;
+  const graham   = payloadResponse?.grahamResult;
+  const bazin    = payloadResponse?.bazinResult;
+  const solidez  = payloadResponse?.solidezChecklist || [];
+  const rsi      = payloadResponse?.rsi;
+  const rsiSig   = payloadResponse?.rsiSignal;
+
+  // Fallback para dados BRAPI (já existiam)
+  const pe = f?.peRatio != null
+    ? Number(f.peRatio).toFixed(2)
+    : (Number.isFinite(Number(r.priceEarnings)) ? Number(r.priceEarnings).toFixed(2) : "n/d");
+  const pb = f?.pbRatio != null
+    ? Number(f.pbRatio).toFixed(2)
+    : (Number.isFinite(Number(r.priceToBookRatio)) ? Number(r.priceToBookRatio).toFixed(2) : "n/d");
+  const dyVal = f?.dy != null
+    ? `${Number(f.dy).toFixed(2)}%`
+    : (Number.isFinite(Number(r.dividendYield)) ? `${(Number(r.dividendYield) * 100).toFixed(2)}%` : "n/d");
+  const roeVal = f?.roe != null
+    ? `${Number(f.roe).toFixed(2)}%`
+    : (Number.isFinite(Number(r?.financialData?.returnOnEquity))
+        ? `${(Number(r.financialData.returnOnEquity) * 100).toFixed(2)}%`
+        : "n/d");
+  const debtEq = f?.debtToEquity != null
+    ? Number(f.debtToEquity).toFixed(2)
+    : (Number.isFinite(Number(r?.financialData?.debtToEquity))
+        ? Number(r.financialData.debtToEquity).toFixed(2)
+        : "n/d");
+
+  const lines = [
     `Veredito: ${symbol} é ação individual. A tese depende de valuation + qualidade + risco de execução.`,
     "",
     "Estrutura (Raio-X ações):",
@@ -264,19 +285,53 @@ function buildEquityDeterministicReply(payloadResponse) {
     `- Faixa do dia: ${dayRange}`,
     `- Faixa 52 semanas: ${range52}`,
     `- Liquidez (volume): ${vol}`,
-    "",
-    "Métricas-chave:",
-    `- P/L: ${pe}`,
-    `- P/VP: ${pb}`,
-    `- Dividend Yield: ${dy}`,
-    `- ROE: ${roe}`,
-    `- Dívida/Patrimônio: ${debtToEquity}`,
+  ];
+
+  if (rsi != null) {
+    const rsiStr = Number(rsi).toFixed(1);
+    const rsiLabel = rsiSig === "oversold" ? "sobrevendido 🟢" : rsiSig === "overbought" ? "sobrecomprado 🔴" : "neutro";
+    lines.push(`- RSI (14): ${rsiStr} — ${rsiLabel}`);
+  }
+
+  lines.push("", "Métricas-chave:");
+  lines.push(`- P/L: ${pe}`, `- P/VP: ${pb}`, `- Dividend Yield: ${dyVal}`, `- ROE: ${roeVal}`, `- Dívida/PL: ${debtEq}`);
+
+  if (f?.lpa != null) lines.push(`- LPA: R$ ${Number(f.lpa).toFixed(2)}`);
+  if (f?.vpa != null) lines.push(`- VPA: R$ ${Number(f.vpa).toFixed(2)}`);
+
+  // Valuation fundamentalista
+  if (graham?.intrinsicValue != null || bazin?.ceiling != null) {
+    lines.push("", "Valuation:");
+    if (graham?.intrinsicValue != null) {
+      const fmtGraham = formatBrl(graham.intrinsicValue);
+      const margin = Number.isFinite(graham.discount) ? `${graham.discount > 0 ? "+" : ""}${graham.discount.toFixed(1)}%` : "—";
+      lines.push(`- Graham (VI = √22,5 × LPA × VPA): ${fmtGraham} | margem: ${margin} | ${graham.verdict}`);
+    }
+    if (bazin?.ceiling != null) {
+      const fmtBazin = formatBrl(bazin.ceiling);
+      lines.push(`- Bazin (teto DY ≥6%): ${fmtBazin} | ${bazin.verdict}`);
+    }
+  }
+
+  // Checklist de solidez
+  if (solidez.length > 0) {
+    lines.push("", "Solidez (checklist rápido):");
+    solidez.forEach((l) => lines.push(`- ${l}`));
+  }
+
+  lines.push(
     "",
     "Checklist de decisão:",
     "- Valuation: só aumenta posição com margem de segurança.",
     "- Qualidade: priorize geração de caixa e consistência de lucro.",
     "- Risco: limite de exposição por ativo e rebalanceamento.",
-  ].join("\n");
+  );
+
+  if (f?.source) {
+    lines.push(`\n_Fundamentais via: ${f.source}_`);
+  }
+
+  return lines.join("\n");
 }
 
 function buildFixedIncomeDeterministicReply(payloadResponse, intentName) {

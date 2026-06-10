@@ -123,13 +123,13 @@ export default function Login() {
                     placeholder="E-mail da sua conta"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-zinc-400"
                     required
                   />
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold disabled:opacity-50"
+                    className="w-full py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold disabled:opacity-50"
                   >
                     {loading ? 'Enviando...' : 'Enviar link de redefinição'}
                   </button>
@@ -157,7 +157,7 @@ export default function Login() {
                   placeholder="E-mail"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-zinc-400"
                   required
                 />
                 <input
@@ -165,13 +165,13 @@ export default function Login() {
                   placeholder="Senha (mín. 6 caracteres)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-zinc-400"
                   required
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold disabled:opacity-50"
+                  className="w-full py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold disabled:opacity-50"
                 >
                   {loading ? 'Criando...' : 'Criar conta'}
                 </button>
@@ -192,7 +192,7 @@ export default function Login() {
               placeholder="E-mail"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-zinc-400"
               required
             />
             <div className="flex justify-between items-center">
@@ -216,13 +216,13 @@ export default function Login() {
               placeholder="Senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-zinc-400"
               required
             />
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold disabled:opacity-50"
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </button>

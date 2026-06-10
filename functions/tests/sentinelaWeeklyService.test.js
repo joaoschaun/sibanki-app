@@ -98,25 +98,26 @@ describe("sentinelaWeeklyService - calcSpreadGap", () => {
 
 describe("sentinelaWeeklyService - calcDaysOfFreedom", () => {
   it("calcula dias de liberdade com base em saldo de contas e investimentos líquidos", () => {
-    const balances = { Nubank: 2000, Itaú: 3000 }; // R$5000
-    const investments = [
-      { currentValue: 5000, liquido: true },   // Líquido: entra na liquidez
-      { currentValue: 10000, liquido: false }  // Não-líquido: ignorado
-    ];
-    // Total liquidez = 5000 + 5000 = 10000
+    const balances = { Nubank: 5000, Itaú: 5000 }; // R$10000 em conta
+    const investments = []; // Sem investimentos para ter 0 passive yield
 
-    // entries dos últimos 90 dias
     const today = new Date();
-    const cutoff = new Date(today.getFullYear(), today.getMonth() - 2, 1).toISOString().slice(0, 10);
+    const cutoff1 = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+    const cutoff2 = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().slice(0, 10);
+    const cutoff3 = new Date(today.getFullYear(), today.getMonth() - 2, 1).toISOString().slice(0, 10);
+
     const entries = [
-      { date: cutoff, type: "despesa", value: 1000, isTransfer: false },
-      { date: cutoff, type: "despesa", value: 2000, isTransfer: false },
+      { date: cutoff1, type: "despesa", value: 1000, isTransfer: false },
+      { date: cutoff2, type: "despesa", value: 1000, isTransfer: false },
+      { date: cutoff3, type: "despesa", value: 1000, isTransfer: false },
       // Transferências — devem ser ignoradas
-      { date: cutoff, type: "despesa", value: 5000, isTransfer: true },
+      { date: cutoff1, type: "despesa", value: 5000, isTransfer: true },
       // Receitas — não afetam a queima de despesas
-      { date: cutoff, type: "receita", value: 8000 }
+      { date: cutoff1, type: "receita", value: 8000 }
     ];
-    // Despesas totais = 3000. Burn rate diário = 3000 / 90 = 33.333
+    // Despesas totais = 3000. distinctMonths = 3. effectiveMonths = 3.
+    // avgMonthlyExpense = 1000.
+    // Burn rate diário = 1000 / 30 = 33.333
     // Dias de Liberdade = 10000 / 33.333 = 300 dias
 
     const { days, totalLiquido, dailyBurn } = calcDaysOfFreedom(entries, balances, investments);
@@ -126,16 +127,23 @@ describe("sentinelaWeeklyService - calcDaysOfFreedom", () => {
   });
 
   it("calcula dias de liberdade com proventosMensais reduzindo a queima diária", () => {
-    const balances = { Nubank: 5000 }; // R$5000
+    const balances = { Nubank: 10000 }; // R$10000 em conta
     const investments = [
-      { currentValue: 5000, proventosMensais: 100 } // R$5000, proventos R$100/mês
+      // FII (não-líquido, mas gera proventos)
+      { currentValue: 5000, tipo: "FII HGLG11", proventosMensais: 100 }
     ];
-    // Total liquidez = 5000 + 5000 = 10000
+    // totalLiquido = 10000 (só a conta, pois FII não entra na liquidez).
+    // proventosMensais = 100.
 
     const today = new Date();
-    const cutoff = new Date(today.getFullYear(), today.getMonth() - 2, 1).toISOString().slice(0, 10);
+    const cutoff1 = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+    const cutoff2 = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().slice(0, 10);
+    const cutoff3 = new Date(today.getFullYear(), today.getMonth() - 2, 1).toISOString().slice(0, 10);
+
     const entries = [
-      { date: cutoff, type: "despesa", value: 9000, isTransfer: false } // R$9000 despesas nos 3 meses
+      { date: cutoff1, type: "despesa", value: 3000, isTransfer: false },
+      { date: cutoff2, type: "despesa", value: 3000, isTransfer: false },
+      { date: cutoff3, type: "despesa", value: 3000, isTransfer: false }
     ];
     // Despesas totais = 9000 -> média mensal = 3000.
     // Proventos mensais = 100.
@@ -152,13 +160,19 @@ describe("sentinelaWeeklyService - calcDaysOfFreedom", () => {
   it("calcula dias de liberdade com proventos cobrindo totalmente a queima diária (dailyBurn = 0, days = 99999)", () => {
     const balances = { Nubank: 5000 };
     const investments = [
-      { currentValue: 5000, proventosMensais: 1500 } // R$1500 proventos/mês
+      { currentValue: 5000, tipo: "FII HGLG11", proventosMensais: 1500 }
     ];
+    // totalLiquido = 5000 (conta).
 
     const today = new Date();
-    const cutoff = new Date(today.getFullYear(), today.getMonth() - 2, 1).toISOString().slice(0, 10);
+    const cutoff1 = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+    const cutoff2 = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().slice(0, 10);
+    const cutoff3 = new Date(today.getFullYear(), today.getMonth() - 2, 1).toISOString().slice(0, 10);
+
     const entries = [
-      { date: cutoff, type: "despesa", value: 3000 } // R$3000 despesas nos 3 meses -> média mensal = 1000
+      { date: cutoff1, type: "despesa", value: 1000 },
+      { date: cutoff2, type: "despesa", value: 1000 },
+      { date: cutoff3, type: "despesa", value: 1000 }
     ];
     // Média despesas = 1000 < proventos = 1500 -> Queima líquida mensal = 0.
     // Burn rate diário = 0.
@@ -167,6 +181,50 @@ describe("sentinelaWeeklyService - calcDaysOfFreedom", () => {
     const { days, dailyBurn } = calcDaysOfFreedom(entries, balances, investments);
     assert.equal(dailyBurn, 0);
     assert.equal(days, 99999);
+  });
+
+  it("calcula dias de liberdade respeitando accountMeta.incluirNaSoma === false", () => {
+    const balances = { Nubank: 2000, Itaú: 3000 };
+    const accountMeta = { Itaú: { incluirNaSoma: false } };
+    const investments = [];
+    // Liquidez em conta: Nubank = 2000 (Itaú desconsiderado).
+    // Total liquidez = 2000.
+
+    const today = new Date();
+    const cutoff1 = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+    const cutoff2 = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().slice(0, 10);
+    const cutoff3 = new Date(today.getFullYear(), today.getMonth() - 2, 1).toISOString().slice(0, 10);
+
+    const entries = [
+      { date: cutoff1, type: "despesa", value: 1000 },
+      { date: cutoff2, type: "despesa", value: 1000 },
+      { date: cutoff3, type: "despesa", value: 1000 }
+    ];
+    // Burn rate: 3000 / 3 = 1000/mês = 33.333/dia
+    // Days = 2000 / 33.333 = 60 dias
+
+    const { days, totalLiquido } = calcDaysOfFreedom(entries, balances, investments, accountMeta);
+    assert.equal(totalLiquido, 2000);
+    assert.equal(days, 60);
+  });
+
+  it("calcula dias de liberdade usando cadastroCompleto (estimativas) quando não há dados reais", () => {
+    const balances = {};
+    const investments = [];
+    const entries = [];
+    const cadastroCompleto = {
+      reservaEstimada: 10000,
+      criptoEstimada: 5000,
+      gastosEstimados: 3000
+    };
+    // Liquidez total = 15000 (estimada)
+    // Despesa mensal = 3000 (estimada) -> Burn rate diário = 3000 / 30 = 100/dia
+    // Days = 15000 / 100 = 150 dias
+
+    const { days, totalLiquido, dailyBurn } = calcDaysOfFreedom(entries, balances, investments, {}, cadastroCompleto);
+    assert.equal(totalLiquido, 15000);
+    assert.equal(dailyBurn, 100);
+    assert.equal(days, 150);
   });
 });
 

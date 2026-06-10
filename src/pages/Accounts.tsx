@@ -30,15 +30,6 @@ const MOEDAS = [
   { value: 'GBP', label: '🇬🇧 Libra (GBP)' },
   { value: 'ARS', label: '🇦🇷 Peso (ARS)' },
 ];
-const CORES_CONTA = [
-  { value: '#4F8CFF', label: 'Azul' },
-  { value: '#10b981', label: 'Verde' },
-  { value: '#f59e0b', label: 'Âmbar' },
-  { value: '#ef4444', label: 'Vermelho' },
-  { value: '#8b5cf6', label: 'Roxo' },
-  { value: '#ec4899', label: 'Rosa' },
-];
-
 // ==========================================
 // Orquestrador Principal
 // ==========================================
@@ -414,204 +405,213 @@ export default function Accounts() {
       {/* ==========================================
           Modals Area
           ========================================== */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nova conta associada">
+        <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nova conta associada" size="3xl">
         <form onSubmit={handleAdd} className="space-y-5">
           {error && <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2 text-rose-400 text-sm">{error}</div>}
-          {/* Visualização Prévia do Card em Tempo Real */}
-          {name && (
-            <div className="mb-2 animate-in fade-in zoom-in-95 duration-300">
-              <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Visualização do Card</span>
-              <AccountCard
-                name={name}
-                balance={parseFloat(initialBalance.replace(',', '.')) || 0}
-                corHex={createCor}
-                bank={selectedBankSlug && selectedBankSlug !== 'custom' ? BANKS.find(b => b.slug === selectedBankSlug) || null : null}
-                isEmpty={false}
-              />
-            </div>
-          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            {/* Coluna Esquerda: Preview do Card + Seleção de Banco */}
+            <div className="space-y-4">
+              {/* Preview Card */}
+              {name && (
+                <div className="animate-in fade-in zoom-in-95 duration-300">
+                  <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Visualização do Card</span>
+                  <AccountCard
+                    name={name}
+                    balance={parseFloat(initialBalance.replace(',', '.')) || 0}
+                    corHex={createCor}
+                    bank={selectedBankSlug && selectedBankSlug !== 'custom' ? BANKS.find(b => b.slug === selectedBankSlug) || null : null}
+                    isEmpty={false}
+                  />
+                </div>
+              )}
 
-          {/* Seleção de Instituição Bancária */}
-          <div className="space-y-3">
-            <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Instituição Bancária</span>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar banco ou instituição..."
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-xs"
-              />
-            </div>
+              {/* Busca e Grade de Bancos */}
+              <div className="space-y-3">
+                <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Instituição Bancária</span>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3.5 h-3.5 w-3.5 text-zinc-500" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar banco ou instituição..."
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-xs"
+                  />
+                </div>
 
-            <div className="max-h-40 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 gap-2 border border-si-border/60 rounded-xl p-2.5 bg-black/10">
-              {filteredBanks.map((b) => {
-                const isClicked = selectedBankSlug === b.slug;
-                return (
+                <div className="max-h-44 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 gap-2 border border-si-border/60 rounded-xl p-2 bg-black/10">
+                  {filteredBanks.map((b) => {
+                    const isClicked = selectedBankSlug === b.slug;
+                    return (
+                      <button
+                        key={b.slug || b.name}
+                        type="button"
+                        onClick={() => handleSelectBank(b.slug || b.name)}
+                        className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 hover:scale-[1.03] text-center ${
+                          isClicked
+                            ? 'bg-white/[0.04] border-white/20 text-white shadow-lg font-bold'
+                            : 'bg-si-over-1 border-si-border text-zinc-400 hover:text-white hover:border-white/10'
+                        }`}
+                      >
+                        {/* Wrapper circular com design individual para cada marca de acordo com b.logoBg */}
+                        <div 
+                          className={`w-8 h-8 rounded-full flex items-center justify-center p-1 shadow-inner select-none shrink-0 overflow-hidden ${
+                            !b.logoBg ? 'bg-white' : ''
+                          }`}
+                          style={b.logoBg ? { backgroundColor: b.logoBg } : undefined}
+                        >
+                          <BankLogo 
+                            bank={b} 
+                            size={20} 
+                            backgroundHex={b.logoBg || '#ffffff'} 
+                          />
+                        </div>
+                        <span className="text-[9px] font-semibold uppercase tracking-wider truncate w-full">{b.name}</span>
+                      </button>
+                    );
+                  })}
+
                   <button
-                    key={b.slug || b.name}
                     type="button"
-                    onClick={() => handleSelectBank(b.slug || b.name)}
+                    onClick={() => handleSelectBank('custom')}
                     className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 hover:scale-[1.03] text-center ${
-                      isClicked
+                      selectedBankSlug === 'custom'
                         ? 'bg-white/[0.04] border-white/20 text-white shadow-lg font-bold'
                         : 'bg-si-over-1 border-si-border text-zinc-400 hover:text-white hover:border-white/10'
                     }`}
                   >
-                    <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
-                      <BankLogo bank={b} size={20} />
+                    <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700/50 flex items-center justify-center p-1 shadow-inner select-none shrink-0 overflow-hidden">
+                      <Building2 className="w-4.5 h-4.5 text-zinc-400" />
                     </div>
-                    <span className="text-[9px] font-semibold uppercase tracking-wider truncate w-full">{b.name}</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider truncate w-full">Personalizado</span>
                   </button>
-                );
-              })}
-
-              <button
-                type="button"
-                onClick={() => handleSelectBank('custom')}
-                className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 hover:scale-[1.03] text-center ${
-                  selectedBankSlug === 'custom'
-                    ? 'bg-white/[0.04] border-white/20 text-white shadow-lg font-bold'
-                    : 'bg-si-over-1 border-si-border text-zinc-400 hover:text-white hover:border-white/10'
-                }`}
-              >
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <Building2 className="w-4.5 h-4.5 text-zinc-400" />
                 </div>
-                <span className="text-[9px] font-semibold uppercase tracking-wider truncate w-full">Personalizado</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label htmlFor="account-name" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Identificador da Conta</label>
-              <input
-                id="account-name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Itaú Personalité, Carteira, Nubank PJ"
-                className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-sm"
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor="account-balance" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Sincronização Inicial (R$)</label>
-            <input
-              id="account-balance"
-              type="text"
-              inputMode="decimal"
-              value={initialBalance}
-              onChange={(e) => setInitialBalance(e.target.value.replace(/[^0-9,.-]/, ''))}
-              placeholder="0,00"
-              className="w-full px-4 py-3.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-xl"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="account-type" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Modelo</label>
-              <select
-                id="account-type"
-                value={createTipo}
-                onChange={(e) => setCreateTipo(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
-              >
-                {TIPOS_CONTA.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Visual</label>
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {CORES_CONTA.map((c) => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    onClick={() => setCreateCor(c.value)}
-                    className="w-7 h-7 rounded-full border-2 border-transparent focus:outline-none transition-transform hover:scale-110"
-                    style={{ backgroundColor: c.value, borderColor: createCor === c.value ? '#fff' : 'transparent' }}
-                  />
-                ))}
               </div>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="create-agency" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Agência</label>
-              <input
-                id="create-agency"
-                type="text"
-                value={createAgency}
-                onChange={(e) => setCreateAgency(e.target.value)}
-                placeholder="0001-7"
-                className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
-              />
-            </div>
-            <div>
-              <label htmlFor="create-acctnum" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Nº da Conta</label>
-              <input
-                id="create-acctnum"
-                type="text"
-                value={createAccountNumber}
-                onChange={(e) => setCreateAccountNumber(e.target.value)}
-                placeholder="12345-8"
-                className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor="create-currency" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Moeda</label>
-            <select
-              id="create-currency"
-              value={createCurrency}
-              onChange={(e) => setCreateCurrency(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
-            >
-              {MOEDAS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-            </select>
-          </div>
-          <div className="pt-1">
-             <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-si-border-md bg-si-over-1 hover:bg-si-over-2 transition-colors">
-               <input
-                 type="checkbox"
-                 checked={createIncluir}
-                 onChange={(e) => setCreateIncluir(e.target.checked)}
-                 className="w-4 h-4 rounded-md border-si-5 text-blue-600 focus:ring-blue-500 focus:ring-offset-si-card bg-transparent"
-               />
-               <span className="text-sm font-medium text-si-3 group-hover:text-si-2 transition-colors">Consolidar no Patrimônio Total</span>
-             </label>
-          </div>
-          {createTipo === 'Conta corrente' && (
-            <div className="space-y-3 pt-1">
-              <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition-colors">
+
+            {/* Coluna Direita: Campos do Formulário */}
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="account-name" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Identificador da Conta</label>
                 <input
-                  type="checkbox"
-                  checked={createCheque}
-                  onChange={(e) => setCreateCheque(e.target.checked)}
-                  className="w-4 h-4 rounded-md text-amber-500 focus:ring-amber-500 bg-transparent"
+                  id="account-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ex: Itaú Personalité, Carteira, Nubank PJ"
+                  className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-sm"
+                  required
                 />
-                <span className="text-sm font-medium text-amber-300 group-hover:text-amber-200 transition-colors">Tem Cheque Especial</span>
-              </label>
-              {createCheque && (
-                <div className="grid grid-cols-2 gap-3 pl-2">
-                  <div>
-                    <label className="block text-[11px] font-bold text-amber-400/70 uppercase tracking-wider mb-1">Limite (R$)</label>
-                    <input type="text" inputMode="decimal" value={createChequeLimite} onChange={(e) => setCreateChequeLimite(e.target.value.replace(/[^0-9,.]/, ''))}
-                      placeholder="1.000,00"
-                      className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-amber-500/30 text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-sm font-medium" />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-amber-400/70 uppercase tracking-wider mb-1">Juros % a.m.</label>
-                    <input type="text" inputMode="decimal" value={createChequeJuros} onChange={(e) => setCreateChequeJuros(e.target.value.replace(/[^0-9,.]/, ''))}
-                      placeholder="12,5"
-                      className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-amber-500/30 text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-sm font-medium" />
-                  </div>
+              </div>
+
+              <div>
+                <label htmlFor="account-balance" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Sincronização Inicial (R$)</label>
+                <input
+                  id="account-balance"
+                  type="text"
+                  inputMode="decimal"
+                  value={initialBalance}
+                  onChange={(e) => setInitialBalance(e.target.value.replace(/[^0-9,.-]/, ''))}
+                  placeholder="0,00"
+                  className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="account-type" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Modelo</label>
+                  <select
+                    id="account-type"
+                    value={createTipo}
+                    onChange={(e) => setCreateTipo(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
+                  >
+                    {TIPOS_CONTA.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="create-currency" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Moeda</label>
+                  <select
+                    id="create-currency"
+                    value={createCurrency}
+                    onChange={(e) => setCreateCurrency(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
+                  >
+                    {MOEDAS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="create-agency" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Agência</label>
+                  <input
+                    id="create-agency"
+                    type="text"
+                    value={createAgency}
+                    onChange={(e) => setCreateAgency(e.target.value)}
+                    placeholder="0001-7"
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="create-acctnum" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Nº da Conta</label>
+                  <input
+                    id="create-acctnum"
+                    type="text"
+                    value={createAccountNumber}
+                    onChange={(e) => setCreateAccountNumber(e.target.value)}
+                    placeholder="12345-8"
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-1">
+                 <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-si-border-md bg-si-over-1 hover:bg-si-over-2 transition-colors">
+                   <input
+                     type="checkbox"
+                     checked={createIncluir}
+                     onChange={(e) => setCreateIncluir(e.target.checked)}
+                     className="w-4 h-4 rounded-md border-si-5 text-blue-600 focus:ring-blue-500 bg-transparent"
+                   />
+                   <span className="text-xs font-bold uppercase tracking-wider text-si-3 group-hover:text-si-2 transition-colors">Consolidar no Patrimônio</span>
+                 </label>
+              </div>
+
+              {createTipo === 'Conta corrente' && (
+                <div className="space-y-3 pt-1">
+                  <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={createCheque}
+                      onChange={(e) => setCreateCheque(e.target.checked)}
+                      className="w-4 h-4 rounded-md text-amber-500 focus:ring-amber-500 bg-transparent"
+                    />
+                    <span className="text-sm font-medium text-amber-300 group-hover:text-amber-200 transition-colors">Tem Cheque Especial</span>
+                  </label>
+                  {createCheque && (
+                    <div className="grid grid-cols-2 gap-3 pl-2">
+                      <div>
+                        <label className="block text-[11px] font-bold text-amber-400/70 uppercase tracking-wider mb-1">Limite (R$)</label>
+                        <input type="text" inputMode="decimal" value={createChequeLimite} onChange={(e) => setCreateChequeLimite(e.target.value.replace(/[^0-9,.]/, ''))}
+                          placeholder="1.000,00"
+                          className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-amber-500/30 text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-sm font-medium" />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-amber-400/70 uppercase tracking-wider mb-1">Juros % a.m.</label>
+                        <input type="text" inputMode="decimal" value={createChequeJuros} onChange={(e) => setCreateChequeJuros(e.target.value.replace(/[^0-9,.]/, ''))}
+                          placeholder="12,5"
+                          className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-amber-500/30 text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-sm font-medium" />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
+          </div>
+
           <div className="flex gap-3 pt-3">
             <button type="button" onClick={() => setModalOpen(false)} className="flex-1 py-3.5 rounded-xl bg-si-over-2 text-si-3 hover:text-si-1 font-bold text-sm transition-colors uppercase tracking-wider">Cancelar</button>
             <button type="submit" disabled={busy} className="flex-[2] py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 uppercase tracking-wider">
@@ -659,144 +659,142 @@ export default function Accounts() {
          bank={extratoAccount ? (getAccountBank(extratoAccount) as any) : null}
        />
 
-      <Modal open={!!editAccount} onClose={() => setEditAccount(null)} title="Configurações Locais">
+      <Modal open={!!editAccount} onClose={() => setEditAccount(null)} title="Configurações Locais" size="3xl">
         {editAccount && (
           <form onSubmit={handleSaveEdit} className="space-y-4">
             {error && <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2 text-rose-400 text-sm">{error}</div>}
             
-            {editName && (
-              <div className="mb-2 animate-in fade-in zoom-in-95 duration-300">
-                <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Visualização do Card</span>
-                <AccountCard
-                  name={editName}
-                  balance={parseFloat(String(accountBalances[editAccount] ?? 0)) || 0}
-                  corHex={editCor}
-                  bank={editBankSlug && editBankSlug !== 'custom' ? BANKS.find(b => b.slug === editBankSlug) || null : null}
-                  isEmpty={false}
-                />
-              </div>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              {/* Coluna Esquerda: Preview do Card + Vincular Banco */}
+              <div className="space-y-4">
+                {editName && (
+                  <div className="animate-in fade-in zoom-in-95 duration-300">
+                    <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Visualização do Card</span>
+                    <AccountCard
+                      name={editName}
+                      balance={parseFloat(String(accountBalances[editAccount] ?? 0)) || 0}
+                      corHex={editCor}
+                      bank={editBankSlug && editBankSlug !== 'custom' ? BANKS.find(b => b.slug === editBankSlug) || null : null}
+                      isEmpty={false}
+                    />
+                  </div>
+                )}
 
-            <div>
-              <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Apelido (Label)</label>
-              <input
-                type="text"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium"
-                required
-              />
-            </div>
+                <div>
+                  <label htmlFor="edit-bank-select" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Vincular Instituição (Logo/Cores)</label>
+                  <select
+                    id="edit-bank-select"
+                    value={editBankSlug}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditBankSlug(val);
+                      if (val && val !== 'custom') {
+                        const bk = BANKS.find(b => b.slug === val);
+                        if (bk) {
+                          setEditCor(bk.primary);
+                        }
+                      }
+                    }}
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
+                  >
+                    <option value="">Nenhum / Sem Vínculo</option>
+                    {BANKS.filter(b => b.name !== 'Carteira').map((b) => (
+                      <option key={b.slug || b.name} value={b.slug || b.name}>
+                        {b.name}
+                      </option>
+                    ))}
+                    <option value="custom">Outro / Personalizado</option>
+                  </select>
+                </div>
+              </div>
 
-            <div>
-              <label htmlFor="edit-bank-select" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Vincular Instituição (Logo/Cores)</label>
-              <select
-                id="edit-bank-select"
-                value={editBankSlug}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setEditBankSlug(val);
-                  if (val && val !== 'custom') {
-                    const bk = BANKS.find(b => b.slug === val);
-                    if (bk) {
-                      setEditCor(bk.primary);
-                    }
-                  }
-                }}
-                className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
-              >
-                <option value="">Nenhum / Sem Vínculo</option>
-                {BANKS.filter(b => b.name !== 'Carteira').map((b) => (
-                  <option key={b.slug || b.name} value={b.slug || b.name}>
-                    {b.name}
-                  </option>
-                ))}
-                <option value="custom">Outro / Personalizado</option>
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Modelo</label>
-                <select
-                  value={editTipo}
-                  onChange={(e) => setEditTipo(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
-                >
-                  {TIPOS_CONTA.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-              <div className="flex flex-col justify-center pl-2">
-                 <label className="flex items-center gap-3 cursor-pointer group mt-4">
-                   <input
-                     type="checkbox"
-                     checked={editIncluir}
-                     onChange={(e) => setEditIncluir(e.target.checked)}
-                     className="w-4 h-4 rounded-md border-si-5 text-blue-600 focus:ring-blue-500 bg-transparent"
-                   />
-                   <span className="text-xs font-bold text-si-3 group-hover:text-si-1 uppercase tracking-wider transition-colors">Somar</span>
-                 </label>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Agência</label>
-                <input type="text" value={editAgency} onChange={(e) => setEditAgency(e.target.value)} placeholder="0001-7"
-                  className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium" />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Nº da Conta</label>
-                <input type="text" value={editAccountNumber} onChange={(e) => setEditAccountNumber(e.target.value)} placeholder="12345-8"
-                  className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Moeda</label>
-              <select value={editCurrency} onChange={(e) => setEditCurrency(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium">
-                {MOEDAS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2 mt-2">Cor Customizada</label>
-              <div className="flex flex-wrap gap-2">
-                {CORES_CONTA.map((c) => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    onClick={() => setEditCor(c.value)}
-                    className="w-7 h-7 rounded-full border-2 focus:outline-none transition-transform hover:scale-110"
-                    style={{ backgroundColor: c.value, borderColor: editCor === c.value ? '#fff' : 'transparent' }}
+              {/* Coluna Direita: Dados Adicionais */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Apelido (Label)</label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium"
+                    required
                   />
-                ))}
-              </div>
-            </div>
-            {editTipo === 'Conta corrente' && (
-              <div className="space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition-colors">
-                  <input type="checkbox" checked={editCheque} onChange={(e) => setEditCheque(e.target.checked)}
-                    className="w-4 h-4 rounded-md text-amber-500 focus:ring-amber-500 bg-transparent" />
-                  <span className="text-sm font-medium text-amber-300">Tem Cheque Especial</span>
-                </label>
-                {editCheque && (
-                  <div className="grid grid-cols-2 gap-3 pl-2">
-                    <div>
-                      <label className="block text-[11px] font-bold text-amber-400/70 uppercase tracking-wider mb-1">Limite (R$)</label>
-                      <input type="text" inputMode="decimal" value={editChequeLimite} onChange={(e) => setEditChequeLimite(e.target.value.replace(/[^0-9,.]/, ''))} placeholder="1.000,00"
-                        className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-amber-500/30 text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-sm font-medium" />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-amber-400/70 uppercase tracking-wider mb-1">Juros % a.m.</label>
-                      <input type="text" inputMode="decimal" value={editChequeJuros} onChange={(e) => setEditChequeJuros(e.target.value.replace(/[^0-9,.]/, ''))} placeholder="12,5"
-                        className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-amber-500/30 text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-sm font-medium" />
-                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Modelo</label>
+                    <select
+                      value={editTipo}
+                      onChange={(e) => setEditTipo(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
+                    >
+                      {TIPOS_CONTA.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Moeda</label>
+                    <select value={editCurrency} onChange={(e) => setEditCurrency(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium">
+                      {MOEDAS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Agência</label>
+                    <input type="text" value={editAgency} onChange={(e) => setEditAgency(e.target.value)} placeholder="0001-7"
+                      className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium" />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Nº da Conta</label>
+                    <input type="text" value={editAccountNumber} onChange={(e) => setEditAccountNumber(e.target.value)} placeholder="12345-8"
+                      className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium" />
+                  </div>
+                </div>
+
+                <div className="flex flex-col justify-center">
+                   <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-si-border-md bg-si-over-1 hover:bg-si-over-2 transition-colors">
+                     <input
+                       type="checkbox"
+                       checked={editIncluir}
+                       onChange={(e) => setEditIncluir(e.target.checked)}
+                       className="w-4 h-4 rounded-md border-si-5 text-blue-600 focus:ring-blue-500 bg-transparent"
+                     />
+                     <span className="text-xs font-bold text-si-3 group-hover:text-si-1 uppercase tracking-wider transition-colors">Consolidar no Patrimônio</span>
+                   </label>
+                </div>
+
+                {editTipo === 'Conta corrente' && (
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition-colors">
+                      <input type="checkbox" checked={editCheque} onChange={(e) => setEditCheque(e.target.checked)}
+                        className="w-4 h-4 rounded-md text-amber-500 focus:ring-amber-500 bg-transparent" />
+                      <span className="text-sm font-medium text-amber-300">Tem Cheque Especial</span>
+                    </label>
+                    {editCheque && (
+                      <div className="grid grid-cols-2 gap-3 pl-2">
+                        <div>
+                          <label className="block text-[11px] font-bold text-amber-400/70 uppercase tracking-wider mb-1">Limite (R$)</label>
+                          <input type="text" inputMode="decimal" value={editChequeLimite} onChange={(e) => setEditChequeLimite(e.target.value.replace(/[^0-9,.]/, ''))} placeholder="1.000,00"
+                            className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-amber-500/30 text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-sm font-medium" />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-amber-400/70 uppercase tracking-wider mb-1">Juros % a.m.</label>
+                          <input type="text" inputMode="decimal" value={editChequeJuros} onChange={(e) => setEditChequeJuros(e.target.value.replace(/[^0-9,.]/, ''))} placeholder="12,5"
+                            className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-amber-500/30 text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-sm font-medium" />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
+            </div>
             
-            <div className="flex gap-3 pt-4">
-              <button type="button" onClick={() => setEditAccount(null)} className="flex-1 py-3.5 rounded-xl bg-si-over-2 text-si-3 hover:text-si-1 font-bold text-sm transition-colors uppercase tracking-wider">Cancelar</button>
-              <button type="submit" disabled={busy} className="flex-[2] py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 uppercase tracking-wider">
+            <div className="flex gap-3 pt-4 w-full">
+              <button type="button" onClick={() => setEditAccount(null)} className="flex-1 py-3 rounded-xl bg-si-over-2 text-si-3 hover:text-si-1 font-bold text-sm transition-colors uppercase tracking-wider">Cancelar</button>
+              <button type="submit" disabled={busy} className="flex-[2] py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 uppercase tracking-wider">
                 {busy ? 'Salvando...' : 'Aplicar Preferências'}
               </button>
             </div>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PluggyConnect } from 'react-pluggy-connect';
 import { httpsCallable } from 'firebase/functions';
 import { Link2, Loader2 } from 'lucide-react';
-import { functions } from '../../firebase';
+import { fnsBR } from '../../firebase';
 import { updateUserDoc } from '../../services/persistUserData';
 import type { UserData } from '../../types/userData';
 
@@ -50,7 +50,7 @@ export function OpenFinanceConnect({
     setLocalError(null);
     setBusy(true);
     try {
-      const fn = httpsCallable<unknown, { accessToken?: string }>(functions, 'pluggyCreateConnectToken');
+      const fn = httpsCallable<unknown, { accessToken?: string }>(fnsBR, 'pluggyCreateConnectToken');
       const res = await fn({});
       const accessToken = res.data?.accessToken;
       if (!accessToken) throw new Error('Resposta sem token de conexão.');
@@ -85,14 +85,14 @@ export function OpenFinanceConnect({
       openFinanceSyncedAt: new Date().toISOString(),
     });
     try {
-      const reg = httpsCallable(functions, 'registrarOpenBanking');
+      const reg = httpsCallable(fnsBR, 'registrarOpenBanking');
       await reg({});
     } catch {
       // servidor pode já ter marcado; ignorar
     }
     let syncOk = false;
     try {
-      const sync = httpsCallable<unknown, { ok?: boolean; synced?: number; message?: string }>(functions, 'pluggySyncAccounts');
+      const sync = httpsCallable<unknown, { ok?: boolean; synced?: number; message?: string }>(fnsBR, 'pluggySyncAccounts');
       await sync({});
       syncOk = true;
     } catch (e: unknown) {

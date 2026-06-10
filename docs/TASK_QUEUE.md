@@ -1,11 +1,11 @@
 ---
 pipeline_version: "1.0"
-status: IDLE
-task_id: ""
-priority: ""
-created_at: ""
-updated_at: "2026-04-14T15:00:00-03:00"
-assigned_to: ""
+status: COMPLETED
+task_id: "20260607-009"
+priority: "high"
+created_at: "2026-06-07T21:20:00-03:00"
+updated_at: "2026-06-08T09:25:00-03:00"
+assigned_to: "Claude Cowork"
 ---
 
 # 🔄 Sibanki AI Pipeline — Fila de Tarefas
@@ -14,13 +14,32 @@ assigned_to: ""
 
 ## 📋 TAREFA ATUAL
 
-_Nenhuma tarefa em andamento. Pipeline em IDLE._
+### Tarefa `20260607-009` — Região Cloud Functions, Lançamentos por IA e Investimentos Inteligentes 🔄
+
+- **Status:** `WAITING_CURSOR`
+- **Prioridade:** Alta
+- **Atribuída a:** Cursor
+- **Criada em:** 2026-06-07T21:20:00-03:00
+- **Descrição:** Executar o plano de implementação aprovado para alinhar as regiões das Cloud Functions, aprimorar o fluxo de lançamentos por IA com seleção de contas, e implementar investimentos inteligentes com quantidade/preço de compra e autocomplete de ticker.
+- **Plano de Referência:** [implementation_plan.md](file:///C:/Users/jscha/.gemini/antigravity-ide/brain/47c1bdb1-59b3-42da-9f9b-38cffa022d5a/implementation_plan.md)
+- **Checklist de Tarefas:** [task.md](file:///C:/Users/jscha/.gemini/antigravity-ide/brain/47c1bdb1-59b3-42da-9f9b-38cffa022d5a/task.md)
 
 ---
 
-## 🤖 RESULTADO DO CURSOR
+## ✅ RESULTADO (Claude Cowork — 08/06/2026)
 
-_Nenhum resultado pendente._
+**Stream 1 — Regiões Cloud Functions (frontend)**
+- `OpenFinanceConnect.tsx`: substituído `functions` (fnsUS) por `fnsBR` nas 3 chamadas Pluggy (`pluggyCreateConnectToken`, `registrarOpenBanking`, `pluggySyncAccounts`). AppContext já usava `fnsBR` desde sessão anterior.
+- Callsites de IA/BRAPI ficam em `fnsUS` (correto per arquitetura).
+
+**Stream 2 — Conta no modal de confirmação IA**
+- `Transactions.tsx`: adicionado estado `aiAccount`; preenchido com `entry.account` extraído pela IA; dropdown `<select>` no modal de confirmação (OCR/Voz) permite ajustar a conta antes de confirmar; `confirmAiEntry` aplica a conta selecionada.
+
+**Stream 3 — Investimentos inteligentes**
+- `brapi.ts`: adicionada função `searchB3Tickers(query)` via callable `brapiSearch`.
+- `Growth.tsx`: estados `formQtd`, `formPrecoCompra`, `tickerSuggestions`; autocomplete com debounce 350ms para tipos RV (Ações/FIIs/ETFs); seleção de ticker busca preço atual e preenche `formPrecoCompra`; campos qtd × preço → atualiza valor automaticamente; qtd/precoCompra salvos no Firestore; listagem exibe "X cotas · R$ Y/un".
+
+**tsc --noEmit**: zero erros. **118/118 Vitest**: passando.
 
 ---
 
@@ -48,8 +67,8 @@ _Nenhum resultado pendente._
 **Próximos passos sugeridos:**
 1. **[PENDENTE HUMANO]** Deploy: `firebase deploy --only "functions:sentinelaGeoCheck,functions:aplicarRecorrentesDoMes"`
 2. Testar manualmente o Sentinela Geo com coordenadas de um shopping ou supermercado (e agora aeroportos e postos de gasolina) + cartão com `cardBenefits` cadastrado.
-3. Tarefa de backlog: wire `validators.ts` ao `persistUserData.ts` — **CONCLUÍDA** (já verificado que o `modifyUserDoc` usa as validações).
-4. Considerar adicionar `airport`, `gas_station` ao `determineIntents` — **CONCLUÍDA** (adicionado na sessão do Antigravity).
+3. Tarefa de backlog: wire `validators.ts` ao `persistUserData.ts` — `CONCLUÍDA` (já verificado que o `modifyUserDoc` usa as validações).
+4. Considerar adicionar `airport`, `gas_station` ao `determineIntents` — `CONCLUÍDA` (adicionado na sessão do Antigravity).
 
 O pipeline técnico encontra-se limpo. Nenhuma pendência técnica crítica em aberto no momento.
 
@@ -63,3 +82,4 @@ O pipeline técnico encontra-se limpo. Nenhuma pendência técnica crítica em a
 | 20260414-006 | 14/04/2026 | Cloud Function recorrentes | ✅ COMPLETED |
 | 20260414-007 | 14/04/2026 | CreditObligation CRUD - modal de cadastro, lista, marking | ✅ COMPLETED |
 | 20260414-008 | 14/04/2026 | Sentinela Geo com sugestão tática de cartão por cenário + ciclo | ✅ COMPLETED |
+| 20260607-009 | 08/06/2026 | Regiões CF frontend, conta no modal IA, investimentos inteligentes (qtd/preço/autocomplete) | ✅ COMPLETED |

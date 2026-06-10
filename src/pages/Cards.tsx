@@ -15,8 +15,10 @@ import {
   ValidationError,
 } from '../services/persistUserData';
 import { Modal } from '../components/ui/Modal';
-
-import { CreditCard, Plus, FileText, Trash2, Pencil, ShieldCheck } from 'lucide-react';import type { Card, CardBenefits, CardPurchase } from '../types/userData';
+import { CreditCard, Plus, FileText, Trash2, Pencil, ShieldCheck, Search, Building2 } from 'lucide-react';
+import type { Card, CardBenefits, CardPurchase } from '../types/userData';
+import { BANKS } from '../components/banks/bankData';
+import { BankLogo } from '../components/banks/BankLogo';
 import {
   getCatalogEntry,
   listCatalogByFlag,
@@ -27,24 +29,6 @@ import { inferCardBenefitsFromMeta } from '../utils/inferCardBenefitsFromMeta';
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard', 'Outros'];
-const BANCOS = [
-  'Nubank',
-  'Itaú',
-  'Bradesco',
-  'Santander',
-  'Banco do Brasil',
-  'Caixa',
-  'Inter',
-  'C6',
-  'BTG',
-  'XP',
-  'Mercado Pago',
-  'PicPay',
-  'PagBank',
-  'Will',
-  'Neon',
-  'Outros',
-];
 const CORES_CARTAO = [
   { value: '#4F8CFF', label: 'Azul' },
   { value: '#10b981', label: 'Verde' },
@@ -86,6 +70,36 @@ export default function Cards() {
   const [deleteCardId, setDeleteCardId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // States para seleção visual de instituições
+  const [selectedBankSlug, setSelectedBankSlug] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editBankSlug, setEditBankSlug] = useState('');
+  const [editSearchQuery, setEditSearchQuery] = useState('');
+
+  const handleSelectBank = (slug: string) => {
+    setSelectedBankSlug(slug);
+    if (slug === 'custom' || !slug) {
+      setName('');
+      setBank('Outros');
+      setColor('#4F8CFF');
+    } else {
+      const selected = BANKS.find(b => (b.slug || b.name) === slug);
+      if (selected) {
+        setName(selected.name);
+        setBank(selected.name);
+        setColor(selected.primary);
+      }
+    }
+  };
+
+  const filteredBanks = searchQuery.trim()
+    ? BANKS.filter(b => b.name !== 'Carteira' && (
+        b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.keywords.some(k => k.toLowerCase().includes(searchQuery.toLowerCase()))
+      ))
+    : BANKS.filter(b => b.name !== 'Carteira');
+
 
   const [importOpen, setImportOpen] = useState(false);
   const [importCardId, setImportCardId] = useState<number | null>(null);
@@ -231,6 +245,8 @@ export default function Cards() {
       setAddBenefitsManual(false);
       setAddPendingBenefits(null);
       setAddBenefitsBadge(false);
+      setSelectedBankSlug('');
+      setSearchQuery('');
     } catch (err) {
       if (err instanceof ValidationError) setError(err.errors.join('\n'));
       else setError(err instanceof Error ? err.message : 'Erro inesperado ao salvar cartão.');
@@ -246,13 +262,19 @@ export default function Cards() {
     setEditCloseDay(card.closeDay ?? 10);
     setEditDueDay(card.dueDay ?? 15);
     setEditFlag(card.flag ?? 'Visa');
-    setEditBank((card as Card & { bank?: string }).bank ?? 'Outros');
+    const cardBank = (card as Card & { bank?: string }).bank ?? 'Outros';
+    setEditBank(cardBank);
     setEditColor(card.color ?? '#4F8CFF');
     setEditAnnualFee(String((card as Card & { annualFee?: number }).annualFee ?? ''));
     setEditAnnualFeeMonth((card as Card & { annualFeeMonth?: number }).annualFeeMonth ?? 1);
     setEditBenefitsManual(card.cardBenefits?.source === 'manual');
     setEditPendingBenefits(null);
     setEditBenefitsBadge(false);
+    
+    // Auto-match bank slug
+    const matchedBank = BANKS.find(b => b.name.toLowerCase() === cardBank.toLowerCase() || b.keywords.some(k => cardBank.toLowerCase().includes(k)));
+    setEditBankSlug(matchedBank?.slug ?? 'custom');
+    setEditSearchQuery('');
     setError(null);
   };
 
@@ -264,14 +286,20 @@ export default function Cards() {
     setError(null);
     setBusy(true);
     try {
+      const finalBank = editBankSlug && editBankSlug !== 'custom'
+        ? BANKS.find(b => b.slug === editBankSlug)?.name ?? 'Outros'
+        : editBank;
+      const finalColor = editBankSlug && editBankSlug !== 'custom'
+        ? BANKS.find(b => b.slug === editBankSlug)?.primary ?? '#4F8CFF'
+        : editColor;
       await updateCard(user.uid, cards, editCardId, {
         name: editName.trim(),
         limit: Math.round(limitNum * 100) / 100,
         closeDay: editCloseDay,
         dueDay: editDueDay,
         flag: editFlag,
-        bank: editBank,
-        color: editColor,
+        bank: finalBank,
+        color: finalColor,
         annualFee: Math.round(annualFeeNum * 100) / 100,
         annualFeeMonth: editAnnualFeeMonth,
         ...(editPendingBenefits && !editBenefitsManual ? { cardBenefits: editPendingBenefits } : {}),
@@ -968,256 +996,239 @@ export default function Cards() {
         </div>
       </Modal>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Novo cartão">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Novo cartão" size="3xl">
         <form onSubmit={handleAdd} className="space-y-4">
           {error && (
             <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2 text-rose-400 text-sm">
               {error}
             </div>
           )}
-          <div>
-            <label htmlFor="card-name" className="block text-xs font-medium text-si-5 mb-1">Nome do cartão</label>
-            <input
-              id="card-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={tryInferAddBenefits}
-              placeholder="Ex: Nubank, Itaú"
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="card-limit" className="block text-xs font-medium text-si-5 mb-1">Limite (R$)</label>
-            <input
-              id="card-limit"
-              type="text"
-              inputMode="decimal"
-              value={limit}
-              onChange={(e) => setLimit(e.target.value.replace(/[^0-9,.-]/, ''))}
-              placeholder="0,00"
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="card-close" className="block text-xs font-medium text-si-5 mb-1">Dia fechamento</label>
-              <select
-                id="card-close"
-                value={closeDay}
-                onChange={(e) => setCloseDay(Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
-              >
-                {DAYS.map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="card-due" className="block text-xs font-medium text-si-5 mb-1">Dia vencimento</label>
-              <select
-                id="card-due"
-                value={dueDay}
-                onChange={(e) => setDueDay(Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
-              >
-                {DAYS.map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label htmlFor="card-flag" className="block text-xs font-medium text-si-5 mb-1">Bandeira</label>
-            <select
-              id="card-flag"
-              value={flag}
-              onChange={(e) => setFlag(e.target.value)}
-              onBlur={tryInferAddBenefits}
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
-            >
-              {BANDEIRAS.map((b) => (
-                <option key={b} value={b}>{b}</option>
-              ))}
-            </select>
-            {addBenefitsBadge && !addBenefitsManual && (
-              <div className="mt-2 space-y-1">
-                <span className="text-amber-400 text-[10px] tracking-[0.18em] uppercase block">
-                  Benefícios sugeridos pela bandeira — confirme no app do banco
-                </span>
-                <button
-                  type="button"
-                  className="text-si-4 text-xs underline"
-                  onClick={() => {
-                    setAddBenefitsManual(true);
-                    setAddBenefitsBadge(false);
-                    setAddPendingBenefits(null);
-                  }}
-                >
-                  Prefiro preencher manualmente
-                </button>
-              </div>
-            )}
-          </div>
-          <div>
-            <label htmlFor="card-bank" className="block text-xs font-medium text-si-5 mb-1">Banco</label>
-            <select
-              id="card-bank"
-              value={bank}
-              onChange={(e) => setBank(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
-            >
-              {BANCOS.map((b) => (
-                <option key={b} value={b}>{b}</option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="card-annual-fee" className="block text-xs font-medium text-si-5 mb-1">Anuidade (R$)</label>
-              <input
-                id="card-annual-fee"
-                type="text"
-                inputMode="decimal"
-                value={annualFee}
-                onChange={(e) => setAnnualFee(e.target.value.replace(/[^0-9,.-]/g, ''))}
-                placeholder="0,00"
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="card-annual-fee-month" className="block text-xs font-medium text-si-5 mb-1">Mês da cobrança</label>
-              <select
-                id="card-annual-fee-month"
-                value={annualFeeMonth}
-                onChange={(e) => setAnnualFeeMonth(Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
-              >
-                {MESES.map((m, idx) => (
-                  <option key={m} value={idx + 1}>{m}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-si-5 mb-1">Cor</label>
-            <div className="flex flex-wrap gap-2">
-              {CORES_CARTAO.map((c) => (
-                <button
-                  key={c.value}
-                  type="button"
-                  onClick={() => setColor(c.value)}
-                  className="w-8 h-8 rounded-full border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ backgroundColor: c.value, borderColor: color === c.value ? '#fff' : 'transparent' }}
-                  title={c.label}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={busy}
-              className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm"
-            >
-              {busy ? 'Salvando…' : 'Adicionar'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setModalOpen(false)}
-              className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </Modal>
 
-      <Modal open={editCardId != null} onClose={() => setEditCardId(null)} title="Editar cartão">
-        {editCardId != null && (
-          <form onSubmit={handleSaveEdit} className="space-y-4">
-            {error && (
-              <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2 text-rose-400 text-sm">
-                {error}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            {/* Coluna Esquerda: Preview do Cartão + Busca e Seleção de Banco */}
+            <div className="space-y-4">
+              <div className="animate-in fade-in zoom-in-95 duration-300">
+                <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Visualização do Cartão</span>
+                <div className="flex justify-center">
+                  <CreditCardVisual
+                    name={name || 'Meu Cartão'}
+                    limit={parseFloat(limit.replace(',', '.')) || 0}
+                    flag={flag}
+                    color={color}
+                    size="md"
+                  />
+                </div>
               </div>
-            )}
-            <div>
-              <label htmlFor="edit-card-name" className="block text-xs font-medium text-si-5 mb-1">Nome</label>
-              <input
-                id="edit-card-name"
-                type="text"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                onBlur={tryInferEditBenefits}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
-                required
-              />
+
+              {/* Busca e Grade de Bancos */}
+              <div className="space-y-3">
+                <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Instituição Emissora</span>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-3.5 w-3.5 text-zinc-500" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar emissor ou banco..."
+                    className="w-full pl-9 pr-4 py-2 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-xs"
+                  />
+                </div>
+
+                <div className="max-h-40 overflow-y-auto pr-1 grid grid-cols-2 gap-2 border border-si-border/60 rounded-xl p-2 bg-black/10">
+                  {filteredBanks.map((b) => {
+                    const isClicked = selectedBankSlug === b.slug;
+                    return (
+                      <button
+                        key={b.slug || b.name}
+                        type="button"
+                        onClick={() => handleSelectBank(b.slug || b.name)}
+                        className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 hover:scale-[1.03] text-center ${
+                          isClicked
+                            ? 'bg-white/[0.04] border-white/20 text-white shadow-lg font-bold'
+                            : 'bg-si-over-1 border-si-border text-zinc-400 hover:text-white hover:border-white/10'
+                        }`}
+                      >
+                        <div 
+                          className={`w-7 h-7 rounded-full flex items-center justify-center p-1 shadow-inner select-none shrink-0 overflow-hidden ${
+                            !b.logoBg ? 'bg-white' : ''
+                          }`}
+                          style={b.logoBg ? { backgroundColor: b.logoBg } : undefined}
+                        >
+                          <BankLogo 
+                            bank={b} 
+                            size={16} 
+                            backgroundHex={b.logoBg || '#ffffff'} 
+                          />
+                        </div>
+                        <span className="text-[9px] font-semibold uppercase tracking-wider truncate w-full">{b.name}</span>
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    onClick={() => handleSelectBank('custom')}
+                    className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 hover:scale-[1.03] text-center ${
+                      selectedBankSlug === 'custom'
+                        ? 'bg-white/[0.04] border-white/20 text-white shadow-lg font-bold'
+                        : 'bg-si-over-1 border-si-border text-zinc-400 hover:text-white hover:border-white/10'
+                    }`}
+                  >
+                    <div className="w-7 h-7 rounded-full bg-zinc-800 border border-zinc-700/50 flex items-center justify-center p-1 shadow-inner select-none shrink-0 overflow-hidden">
+                      <Building2 className="w-4 h-4 text-zinc-400" />
+                    </div>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider truncate w-full">Personalizado</span>
+                  </button>
+                </div>
+              </div>
             </div>
-            <div>
-              <label htmlFor="edit-card-limit" className="block text-xs font-medium text-si-5 mb-1">Limite (R$)</label>
-              <input
-                id="edit-card-limit"
-                type="text"
-                inputMode="decimal"
-                value={editLimit}
-                onChange={(e) => setEditLimit(e.target.value.replace(/[^0-9,.-]/, ''))}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            {/* Coluna Direita: Campos do Formulário */}
+            <div className="space-y-4">
               <div>
-                <label htmlFor="edit-card-close" className="block text-xs font-medium text-si-5 mb-1">Dia fechamento</label>
-                <select
-                  id="edit-card-close"
-                  value={editCloseDay}
-                  onChange={(e) => setEditCloseDay(Number(e.target.value))}
-                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
-                >
-                  {DAYS.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
+                <label htmlFor="card-name" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Nome do cartão</label>
+                <input
+                  id="card-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onBlur={tryInferAddBenefits}
+                  placeholder="Ex: Itaú Visa Infinite, Nubank Violeta"
+                  className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                  required
+                />
               </div>
+
               <div>
-                <label htmlFor="edit-card-due" className="block text-xs font-medium text-si-5 mb-1">Dia vencimento</label>
-                <select
-                  id="edit-card-due"
-                  value={editDueDay}
-                  onChange={(e) => setEditDueDay(Number(e.target.value))}
-                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
-                >
-                  {DAYS.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
+                <label htmlFor="card-limit" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Limite (R$)</label>
+                <input
+                  id="card-limit"
+                  type="text"
+                  inputMode="decimal"
+                  value={limit}
+                  onChange={(e) => setLimit(e.target.value.replace(/[^0-9,.-]/, ''))}
+                  placeholder="0,00"
+                  className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                />
               </div>
-            </div>
-            <div>
-              <label htmlFor="edit-card-flag" className="block text-xs font-medium text-si-5 mb-1">Bandeira</label>
-              <select
-                id="edit-card-flag"
-                value={editFlag}
-                onChange={(e) => setEditFlag(e.target.value)}
-                onBlur={tryInferEditBenefits}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
-              >
-                {BANDEIRAS.map((b) => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
-              {editBenefitsBadge && !editBenefitsManual && (
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="card-close" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Fechamento (Dia)</label>
+                  <select
+                    id="card-close"
+                    value={closeDay}
+                    onChange={(e) => setCloseDay(Number(e.target.value))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                  >
+                    {DAYS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="card-due" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Vencimento (Dia)</label>
+                  <select
+                    id="card-due"
+                    value={dueDay}
+                    onChange={(e) => setDueDay(Number(e.target.value))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                  >
+                    {DAYS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="card-flag" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Bandeira</label>
+                  <select
+                    id="card-flag"
+                    value={flag}
+                    onChange={(e) => setFlag(e.target.value)}
+                    onBlur={tryInferAddBenefits}
+                    className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                  >
+                    {BANDEIRAS.map((b) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                </div>
+                {selectedBankSlug === 'custom' && (
+                  <div>
+                    <label htmlFor="card-bank-custom" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Nome do Banco</label>
+                    <input
+                      id="card-bank-custom"
+                      type="text"
+                      value={bank}
+                      onChange={(e) => setBank(e.target.value)}
+                      placeholder="Ex: Crefisa"
+                      className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="card-annual-fee" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Anuidade (R$)</label>
+                  <input
+                    id="card-annual-fee"
+                    type="text"
+                    inputMode="decimal"
+                    value={annualFee}
+                    onChange={(e) => setAnnualFee(e.target.value.replace(/[^0-9,.-]/g, ''))}
+                    placeholder="0,00"
+                    className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="card-annual-fee-month" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Mês Cobrança</label>
+                  <select
+                    id="card-annual-fee-month"
+                    value={annualFeeMonth}
+                    onChange={(e) => setAnnualFeeMonth(Number(e.target.value))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                  >
+                    {MESES.map((m, idx) => (
+                      <option key={m} value={idx + 1}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {selectedBankSlug === 'custom' && (
+                <div>
+                  <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Cor do Card</label>
+                  <div className="flex flex-wrap gap-2">
+                    {CORES_CARTAO.map((c) => (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => setColor(c.value)}
+                        className="w-7 h-7 rounded-full border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ backgroundColor: c.value, borderColor: color === c.value ? '#fff' : 'transparent' }}
+                        title={c.label}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {addBenefitsBadge && !addBenefitsManual && (
                 <div className="mt-2 space-y-1">
-                  <span className="text-amber-400 text-[10px] tracking-[0.18em] uppercase block">
+                  <span className="text-amber-400 text-[9px] tracking-[0.18em] uppercase block">
                     Benefícios sugeridos pela bandeira — confirme no app do banco
                   </span>
                   <button
                     type="button"
                     className="text-si-4 text-xs underline"
                     onClick={() => {
-                      setEditBenefitsManual(true);
-                      setEditBenefitsBadge(false);
-                      setEditPendingBenefits(null);
+                      setAddBenefitsManual(true);
+                      setAddBenefitsBadge(false);
+                      setAddPendingBenefits(null);
                     }}
                   >
                     Prefiro preencher manualmente
@@ -1225,67 +1236,247 @@ export default function Cards() {
                 </div>
               )}
             </div>
-            <div>
-              <label htmlFor="edit-card-bank" className="block text-xs font-medium text-si-5 mb-1">Banco</label>
-              <select
-                id="edit-card-bank"
-                value={editBank}
-                onChange={(e) => setEditBank(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
-              >
-                {BANCOS.map((b) => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="edit-card-annual-fee" className="block text-xs font-medium text-si-5 mb-1">Anuidade (R$)</label>
-                <input
-                  id="edit-card-annual-fee"
-                  type="text"
-                  inputMode="decimal"
-                  value={editAnnualFee}
-                  onChange={(e) => setEditAnnualFee(e.target.value.replace(/[^0-9,.-]/g, ''))}
-                  placeholder="0,00"
-                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
-                />
+          </div>
+
+          <div className="flex gap-3 pt-3">
+            <button
+              type="button"
+              onClick={() => setModalOpen(false)}
+              className="flex-1 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-bold text-sm hover:bg-si-over-3 uppercase tracking-wider"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={busy}
+              className="flex-[2] py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm uppercase tracking-wider shadow-lg shadow-blue-600/20"
+            >
+              {busy ? 'Salvando…' : 'Adicionar Cartão'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={editCardId != null} onClose={() => setEditCardId(null)} title="Editar cartão" size="3xl">
+        {editCardId != null && (
+          <form onSubmit={handleSaveEdit} className="space-y-4">
+            {error && (
+              <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2 text-rose-400 text-sm">
+                {error}
               </div>
-              <div>
-                <label htmlFor="edit-card-annual-fee-month" className="block text-xs font-medium text-si-5 mb-1">Mês da cobrança</label>
-                <select
-                  id="edit-card-annual-fee-month"
-                  value={editAnnualFeeMonth}
-                  onChange={(e) => setEditAnnualFeeMonth(Number(e.target.value))}
-                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
-                >
-                  {MESES.map((m, idx) => (
-                    <option key={m} value={idx + 1}>{m}</option>
-                  ))}
-                </select>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              {/* Coluna Esquerda: Preview do Cartão + Vincular Banco */}
+              <div className="space-y-4">
+                <div className="animate-in fade-in zoom-in-95 duration-300">
+                  <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Visualização do Cartão</span>
+                  <div className="flex justify-center">
+                    <CreditCardVisual
+                      name={editName || 'Meu Cartão'}
+                      limit={parseFloat(editLimit.replace(',', '.')) || 0}
+                      flag={editFlag}
+                      color={editColor}
+                      size="md"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="edit-bank-select" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Vincular Instituição (Logo/Cores)</label>
+                  <select
+                    id="edit-bank-select"
+                    value={editBankSlug}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditBankSlug(val);
+                      if (val && val !== 'custom') {
+                        const bk = BANKS.find(b => b.slug === val);
+                        if (bk) {
+                          setEditColor(bk.primary);
+                        }
+                      }
+                    }}
+                    className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                  >
+                    <option value="">Nenhum / Sem Vínculo</option>
+                    {BANKS.filter(b => b.name !== 'Carteira').map((b) => (
+                      <option key={b.slug || b.name} value={b.slug || b.name}>
+                        {b.name}
+                      </option>
+                    ))}
+                    <option value="custom">Outro / Personalizado</option>
+                  </select>
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-si-5 mb-1">Cor</label>
-              <div className="flex flex-wrap gap-2">
-                {CORES_CARTAO.map((c) => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    onClick={() => setEditColor(c.value)}
-                    className="w-8 h-8 rounded-full border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    style={{ backgroundColor: c.value, borderColor: editColor === c.value ? '#fff' : 'transparent' }}
-                    title={c.label}
+
+              {/* Coluna Direita: Dados Adicionais */}
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="edit-card-name" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Nome do cartão</label>
+                  <input
+                    id="edit-card-name"
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onBlur={tryInferEditBenefits}
+                    className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                    required
                   />
-                ))}
+                </div>
+
+                <div>
+                  <label htmlFor="edit-card-limit" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Limite (R$)</label>
+                  <input
+                    id="edit-card-limit"
+                    type="text"
+                    inputMode="decimal"
+                    value={editLimit}
+                    onChange={(e) => setEditLimit(e.target.value.replace(/[^0-9,.-]/, ''))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="edit-card-close" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Fechamento (Dia)</label>
+                    <select
+                      id="edit-card-close"
+                      value={editCloseDay}
+                      onChange={(e) => setEditCloseDay(Number(e.target.value))}
+                      className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                    >
+                      {DAYS.map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="edit-card-due" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Vencimento (Dia)</label>
+                    <select
+                      id="edit-card-due"
+                      value={editDueDay}
+                      onChange={(e) => setEditDueDay(Number(e.target.value))}
+                      className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                    >
+                      {DAYS.map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="edit-card-flag" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Bandeira</label>
+                    <select
+                      id="edit-card-flag"
+                      value={editFlag}
+                      onChange={(e) => setEditFlag(e.target.value)}
+                      onBlur={tryInferEditBenefits}
+                      className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                    >
+                      {BANDEIRAS.map((b) => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {editBankSlug === 'custom' && (
+                    <div>
+                      <label htmlFor="edit-card-bank-custom" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Nome do Banco</label>
+                      <input
+                        id="edit-card-bank-custom"
+                        type="text"
+                        value={editBank}
+                        onChange={(e) => setEditBank(e.target.value)}
+                        placeholder="Ex: Crefisa"
+                        className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="edit-card-annual-fee" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Anuidade (R$)</label>
+                    <input
+                      id="edit-card-annual-fee"
+                      type="text"
+                      inputMode="decimal"
+                      value={editAnnualFee}
+                      onChange={(e) => setEditAnnualFee(e.target.value.replace(/[^0-9,.-]/g, ''))}
+                      placeholder="0,00"
+                      className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit-card-annual-fee-month" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Mês Cobrança</label>
+                    <select
+                      id="edit-card-annual-fee-month"
+                      value={editAnnualFeeMonth}
+                      onChange={(e) => setEditAnnualFeeMonth(Number(e.target.value))}
+                      className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                    >
+                      {MESES.map((m, idx) => (
+                        <option key={m} value={idx + 1}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {editBankSlug === 'custom' && (
+                  <div>
+                    <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Cor do Card</label>
+                    <div className="flex flex-wrap gap-2">
+                      {CORES_CARTAO.map((c) => (
+                        <button
+                          key={c.value}
+                          type="button"
+                          onClick={() => setEditColor(c.value)}
+                          className="w-7 h-7 rounded-full border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          style={{ backgroundColor: c.value, borderColor: editColor === c.value ? '#fff' : 'transparent' }}
+                          title={c.label}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {editBenefitsBadge && !editBenefitsManual && (
+                  <div className="mt-2 space-y-1">
+                    <span className="text-amber-400 text-[9px] tracking-[0.18em] uppercase block">
+                      Benefícios sugeridos pela bandeira — confirme no app do banco
+                    </span>
+                    <button
+                      type="button"
+                      className="text-si-4 text-xs underline"
+                      onClick={() => {
+                        setEditBenefitsManual(true);
+                        setEditBenefitsBadge(false);
+                        setEditPendingBenefits(null);
+                      }}
+                    >
+                      Prefiro preencher manualmente
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="flex gap-3 pt-2">
-              <button type="submit" disabled={busy} className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm">
-                {busy ? 'Salvando…' : 'Salvar'}
-              </button>
-              <button type="button" onClick={() => setEditCardId(null)} className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3">
+
+            <div className="flex gap-3 pt-3">
+              <button
+                type="button"
+                onClick={() => setEditCardId(null)}
+                className="flex-1 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-bold text-sm hover:bg-si-over-3 uppercase tracking-wider"
+              >
                 Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={busy}
+                className="flex-[2] py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm uppercase tracking-wider shadow-lg shadow-blue-600/20"
+              >
+                {busy ? 'Salvando…' : 'Salvar Alterações'}
               </button>
             </div>
           </form>
