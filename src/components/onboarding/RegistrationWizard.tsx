@@ -13,13 +13,16 @@ import { OpenFinanceConnect } from '../openFinance/OpenFinanceConnect';
 import { trackPlatformEvent } from '../../services/platformEvents';
 
 // ─── Steps ────────────────────────────────────────────────────────────────────
+// Ação #7 (Análise 360): ordem invertida para entregar VALOR antes de pedir
+// confiança. CPF primeiro → "Dinheiro Esquecido" (BCB) como momento uau →
+// só então a conexão bancária (a boa vontade gerada aumenta a conversão OF).
 const STEPS = [
-  { id: 'bancos',     label: 'Conectar Bancos',     icon: Building2 },
   { id: 'identidade', label: 'Identidade',          icon: User      },
+  { id: 'valores',    label: 'Dinheiro Esquecido',  icon: Banknote  },
+  { id: 'bancos',     label: 'Conectar Bancos',     icon: Building2 },
   { id: 'contato',    label: 'Contato',             icon: Phone     },
   { id: 'financeiro', label: 'Perfil Financeiro',   icon: Briefcase },
   { id: 'objetivo',   label: 'Objetivos',           icon: Target    },
-  { id: 'valores',    label: 'Dinheiro Esquecido',  icon: Banknote  },
 ] as const;
 
 // ─── Opções ───────────────────────────────────────────────────────────────────
