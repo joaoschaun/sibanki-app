@@ -9,7 +9,7 @@ import { Database, Trash2, Upload, FileDown, FileText, MapPin, ArrowRight, Spark
 import { RoundUpToggle } from '../components/ui/RoundUpWidget';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { httpsCallable } from 'firebase/functions';
-import { fnsBR } from '../firebase';
+import { fnsBR, fnsUS } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
 import { useLanguage } from '../hooks/useLanguage';
@@ -32,7 +32,13 @@ export default function Settings() {
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null);
-  const [planType, setPlanType] = useState<'gratuito' | 'pro'>('gratuito');
+  /**
+   * Ação #1 (Análise 360): o plano efetivo vem de `data.plan` — campo gravado
+   * SOMENTE pelo webhook Stripe (Admin SDK). O antigo toggle local
+   * `settings.planType` virou vulnerabilidade (usuário se promovia a Pro) e
+   * foi removido; o campo legado segue lido apenas para exibição.
+   */
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [telegramEnabled, setTelegramEnabled] = useState(false);
   const [whatsEnabled, setWhatsEnabled] = useState(false);
   const [emailWeekly, setEmailWeekly] = useState(false);
@@ -56,7 +62,6 @@ export default function Settings() {
   useEffect(() => {
     const s = (data as any)?.settings;
     if (!s) return;
-    if (s.planType === 'pro' || s.planType === 'gratuito') setPlanType(s.planType);
     setTelegramEnabled(Boolean(s.telegramEnabled));
     setWhatsEnabled(Boolean(s.whatsEnabled));
     setEmailWeekly(Boolean(s.emailWeekly));
@@ -322,7 +327,6 @@ export default function Settings() {
         briefingDiarioEmail: briefingDiario, // lido por dailyBriefingEmailService
         settings: {
           ...((data as any)?.settings ?? {}),
-          planType,
           telegramEnabled,
           whatsEnabled,
           emailWeekly,
@@ -543,24 +547,73 @@ export default function Settings() {
       <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
         <div>
           <h3 className="font-semibold text-si-1">Meu plano</h3>
-          <p className="text-si-5 text-sm mt-1">Visualize e altere seu plano atual do app.</p>
+          <p className="text-si-5 text-sm mt-1">
+            Plano atual:{' '}
+            <span className="font-semibold text-si-2 uppercase">
+              {((data as any)?.plan === 'pro' || (data as any)?.plan === 'familia')
+                ? (data as any).plan
+                : 'gratuito'}
+            </span>
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        {((data as any)?.plan === 'pro' || (data as any)?.plan === 'familia') ? (
           <button
             type="button"
-            onClick={() => setPlanType('gratuito')}
-            className={`px-4 py-2 rounded-xl border text-sm ${planType === 'gratuito' ? 'bg-blue-600 border-blue-600 text-si-1' : 'bg-si-over-2 border-si-border-md text-si-3 hover:bg-si-over-3'}`}
+            disabled={checkoutBusy}
+            onClick={async () => {
+              setCheckoutBusy(true);
+              setError(null);
+              try {
+                const portalFn = httpsCallable<Record<string, never>, { url?: string }>(fnsUS, 'createPortal');
+                const res = await portalFn({});
+                if (res.data?.url) window.location.assign(res.data.url);
+              } catch (err) {
+                setError(err instanceof Error ? err.message : 'Erro ao abrir portal de assinatura.');
+              } finally {
+                setCheckoutBusy(false);
+              }
+            }}
+            className="px-4 py-2 rounded-xl border text-sm bg-si-over-2 border-si-border-md text-si-2 hover:bg-si-over-3 disabled:opacity-50"
           >
-            Gratuito
+            {checkoutBusy ? 'Abrindo…' : 'Gerenciar assinatura'}
           </button>
-          <button
-            type="button"
-            onClick={() => setPlanType('pro')}
-            className={`px-4 py-2 rounded-xl border text-sm ${planType === 'pro' ? 'bg-blue-600 border-blue-600 text-si-1' : 'bg-si-over-2 border-si-border-md text-si-3 hover:bg-si-over-3'}`}
-          >
-            Pro
-          </button>
-        </div>
+        ) : (
+          <div className="space-y-2">
+            <button
+              type="button"
+              disabled={checkoutBusy || !import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY}
+              onClick={async () => {
+                const priceId = import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY as string | undefined;
+                if (!priceId) return;
+                setCheckoutBusy(true);
+                setError(null);
+                try {
+                  const checkoutFn = httpsCallable<
+                    { priceId: string; plan: string; billing: string },
+                    { url?: string }
+                  >(fnsUS, 'createCheckout');
+                  const res = await checkoutFn({ priceId, plan: 'pro', billing: 'monthly' });
+                  if (res.data?.url) window.location.assign(res.data.url);
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : 'Erro ao iniciar assinatura.');
+                } finally {
+                  setCheckoutBusy(false);
+                }
+              }}
+              className="px-4 py-2 rounded-xl border text-sm bg-si-over-2 border-si-border-md text-si-2 hover:bg-si-over-3 disabled:opacity-50"
+            >
+              {checkoutBusy ? 'Abrindo…' : 'Assinar Sibanki Pro (30 dias grátis)'}
+            </button>
+            {!import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY && (
+              <p className="text-[11px] text-si-5">
+                Assinatura em breve — aguardando configuração de preços (VITE_STRIPE_PRICE_PRO_MONTHLY).
+              </p>
+            )}
+            <p className="text-[11px] text-si-5">
+              Pro inclui: consultor IA ilimitado, Open Finance, relatórios PDF, lançamento por voz/foto e bot WhatsApp.
+            </p>
+          </div>
+        )}
       </section>
 
       <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">

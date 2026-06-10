@@ -33,14 +33,13 @@ function currentMonthKey() {
 
 /**
  * Resolve o plano efetivo do usuário a partir do documento users/{uid}.
- * Aceita tanto `plan` (canônico: 'gratuito'|'pro'|'familia') quanto o
- * legado `settings.planType`.
+ * Confia SOMENTE em `plan` (gravado pelo webhook Stripe via Admin SDK).
+ * O legado `settings.planType` é editável pelo cliente e NÃO é aceito aqui —
+ * seria bypass trivial do limite.
  */
 function resolvePlan(userData) {
   const plan = userData && userData.plan;
   if (plan === "pro" || plan === "familia") return plan;
-  const legacy = userData && userData.settings && userData.settings.planType;
-  if (legacy === "pro" || legacy === "familia") return legacy;
   return "gratuito";
 }
 

@@ -3,7 +3,7 @@ import {
   Receipt, TrendingUp, Wallet, CreditCard, Target, PieChart,
   FileBarChart, Calendar, User, Settings, MoreHorizontal, ChevronDown,
   Handshake, Users, Heart, MessageCircle, LayoutDashboard, ShoppingBag,
-  Coins, BookOpen, Wrench, Flame, Bitcoin, ShieldCheck, Zap,
+  Coins, BookOpen, Wrench, Flame, ShieldCheck, Zap,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';

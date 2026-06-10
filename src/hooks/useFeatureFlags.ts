@@ -112,8 +112,10 @@ export function useFeatureFlags() {
   const [loaded, setLoaded] = useState(false);
 
   const userPlan: UserPlan = useMemo(() => {
-    const settings = (data as any)?.settings;
-    const plan = settings?.planType;
+    // Ação #1 (Análise 360): plano efetivo vem de `data.plan` (gravado só pelo
+    // webhook Stripe / Admin SDK). O legado settings.planType era editável pelo
+    // cliente — qualquer usuário se promovia a Pro — e deixou de ser aceito.
+    const plan = (data as { plan?: string } | null)?.plan;
     if (plan === 'pro' || plan === 'familia') return plan;
     return 'free';
   }, [data]);

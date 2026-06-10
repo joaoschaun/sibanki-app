@@ -239,7 +239,7 @@ export default function MeuCpf() {
       {/* ── NEGATIVAÇÕES ── */}
       {activeTab === 'Negativações' && (
         <div className="bg-si-card rounded-2xl border border-si-border relative">
-          {!isConnected && <ComingSoonOverlay message="Conecte seu CPF para visualizar negativações em tempo real" />}
+          {!isConnected && <ComingSoonOverlay label="Conecte seu CPF para visualizar negativações em tempo real" />}
           {negativacoesCount === 0 ? (
             <div className="text-center py-16 animate-fade-in">
               <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
@@ -272,7 +272,7 @@ export default function MeuCpf() {
       {/* ── CONSULTAS ── */}
       {activeTab === 'Consultas' && (
         <div className="bg-si-card rounded-2xl border border-si-border relative">
-          {!isConnected && <ComingSoonOverlay message="Conecte seu CPF para visualizar consultas em tempo real" />}
+          {!isConnected && <ComingSoonOverlay label="Conecte seu CPF para visualizar consultas em tempo real" />}
           <div className="px-6 py-3 border-b border-si-border flex items-center justify-between">
             <span className="text-sm font-semibold text-si-3">{consultasCount} consultas nos últimos 90 dias</span>
             <span className={`text-xs font-bold px-2 py-1 rounded-full ${
@@ -304,7 +304,7 @@ export default function MeuCpf() {
       {/* ── ALERTAS ── */}
       {activeTab === 'Alertas' && (
         <div className="bg-si-card rounded-2xl border border-si-border relative">
-          {!isConnected && <ComingSoonOverlay message="Conecte seu CPF para visualizar alertas em tempo real" />}
+          {!isConnected && <ComingSoonOverlay label="Conecte seu CPF para visualizar alertas em tempo real" />}
           <div className="px-6 py-3 border-b border-si-border flex items-center justify-between">
             <span className="text-sm font-semibold text-si-3">Alertas recentes</span>
             {isConnected && unreadAlerts > 0 && (
@@ -355,7 +355,7 @@ export default function MeuCpf() {
       {/* ── PROTEÇÃO ── */}
       {activeTab === 'Proteção' && (
         <div className="space-y-4 relative">
-          {!isConnected && <ComingSoonOverlay message="Conecte seu CPF para ativar a proteção e alertas" />}
+          {!isConnected && <ComingSoonOverlay label="Conecte seu CPF para ativar a proteção e alertas" />}
           <div className="bg-gradient-to-br from-indigo-500/10 to-blue-500/10 rounded-2xl border border-indigo-500/20 p-6 animate-fade-in">
             <div className="flex items-center gap-3 mb-3">
               <Lock className="w-6 h-6 text-indigo-400" />

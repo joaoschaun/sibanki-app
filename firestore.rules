@@ -136,9 +136,15 @@ service cloud.firestore {
 
     // Legado (root): app React / hosting staging usam users/{uid} — só o dono lê/escreve.
     // Não confundir com tenants/{tenantId}/users/{userId} (regras acima).
+    // Ação #1 (Análise 360): `plan` e `stripeCustomerId` são gravados SOMENTE
+    // pelo webhook Stripe (Admin SDK). Cliente não pode se autopromover a Pro.
     match /users/{userId} {
       allow read: if isAuthed() && request.auth.uid == userId;
-      allow create, update: if isAuthed() && request.auth.uid == userId;
+      allow create: if isAuthed() && request.auth.uid == userId &&
+        (!("plan" in request.resource.data) || request.resource.data.plan == "gratuito");
+      allow update: if isAuthed() && request.auth.uid == userId &&
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(["plan", "stripeCustomerId"]);
       allow delete: if false;
     }
 

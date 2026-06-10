@@ -45,7 +45,7 @@ export function InvestmentInsights({ investments, entries, investorProfile, hasO
   if (investments.length === 0) return null;
 
   const {
-    totalAtual, totalAplicado, totalPnl, rentabPct,
+    totalAtual, totalPnl, rentabPct,
     rentabAnualizadaPct, cdiAnualPct, vsCodiPct,
     rendaPassivaMensal, fireTarget, firePct, monthlyExpenses,
     allocation,

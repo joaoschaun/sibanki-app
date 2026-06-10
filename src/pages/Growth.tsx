@@ -7,7 +7,7 @@ import { addInvestment, updateInvestment, deleteInvestment, addEntry, updateUser
 import type { Entry, Investment, InvestorProfileAnswers, InvestorProfile } from '../types/userData';
 import { INVESTMENT_TYPES, DEFAULT_ACCOUNTS } from '../constants/defaults';
 import { Modal } from '../components/ui/Modal';
-import { TrendingUp, Plus, Pencil, Trash2, Calculator, ChevronDown, Zap, ArrowRight, Search, ShieldCheck, Bitcoin, Bell, Eye, Link2 } from 'lucide-react';
+import { TrendingUp, Plus, Calculator, Zap, ArrowRight, Search, ShieldCheck, Bitcoin, Bell, Eye, Link2 } from 'lucide-react';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
 import { useNavigate } from 'react-router-dom';
 import { fetchB3Quote, searchB3Tickers } from '../services/brapi';
@@ -40,8 +40,7 @@ import { PriceAlertModal } from '../components/investment/PriceAlertModal';
 const RV_TYPES = ['Ações', 'FIIs', 'ETFs'];
 
 export default function Growth() {
-  const { user, investments, accounts, entries, loading, investorProfile, hasOpenFinance, dataFreshness, verifiedEntries, data } = useAppContext();
-  const isPro = (data as any)?.plan === 'pro' || (data as any)?.plan === 'familia';
+  const { user, investments, accounts, entries, loading, investorProfile, hasOpenFinance, dataFreshness, verifiedEntries } = useAppContext();
   const { triggerWithToast } = useSibcoinToast();
   const navigate = useNavigate();
   const [addOpen, setAddOpen] = useState(false);
@@ -91,7 +90,6 @@ export default function Growth() {
 
 
   // UI state
-  const [showProventos, setShowProventos] = useState(false);
   const [activeTab, setActiveTab] = useState<'carteira' | 'analise_b3' | 'cripto' | 'simuladores' | 'perfil' | 'watchlist' | 'open_finance_inv'>('carteira');
   // Alerta de preço: ticker selecionado para abrir modal
   const [alertModalTicker, setAlertModalTicker] = useState<{ ticker: string; nome?: string; currentPrice?: number } | null>(null);
@@ -127,9 +125,6 @@ export default function Growth() {
     };
   }, [calcInitial, calcMonthly, calcRate, calcPeriod, calcPeriodType]);
 
-  const totalAplicado = investments.reduce((s, i) => s + (i.valor ?? 0), 0);
-  const totalAtual = investments.reduce((s, i) => s + (i.atual ?? i.valor ?? 0), 0);
-  const rentab = totalAplicado > 0 ? ((totalAtual - totalAplicado) / totalAplicado) * 100 : 0;
 
   const openAdd = () => {
     setFormDate(new Date().toISOString().slice(0, 10));

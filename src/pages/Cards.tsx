@@ -75,7 +75,6 @@ export default function Cards() {
   const [selectedBankSlug, setSelectedBankSlug] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [editBankSlug, setEditBankSlug] = useState('');
-  const [editSearchQuery, setEditSearchQuery] = useState('');
 
   const handleSelectBank = (slug: string) => {
     setSelectedBankSlug(slug);
@@ -274,7 +273,6 @@ export default function Cards() {
     // Auto-match bank slug
     const matchedBank = BANKS.find(b => b.name.toLowerCase() === cardBank.toLowerCase() || b.keywords.some(k => cardBank.toLowerCase().includes(k)));
     setEditBankSlug(matchedBank?.slug ?? 'custom');
-    setEditSearchQuery('');
     setError(null);
   };
 
