@@ -737,7 +737,7 @@ export default function Transactions() {
         <div className="bg-si-card rounded-2xl border border-si-border overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-si-border text-[10px] font-bold text-si-5 uppercase tracking-widest">
+              <tr className="border-b border-si-border text-[11px] font-bold text-si-5 uppercase tracking-widest">
                 <th className="px-6 py-4">Descrição</th>
                 <th className="px-6 py-4">Data</th>
                 <th className="px-6 py-4 text-right">Valor</th>

@@ -27,7 +27,7 @@ export function IrPanel({ ir }: Props) {
       <div className="bg-si-card border border-si-border rounded-2xl p-5">
         <div className="flex items-center gap-2 mb-3">
           <Receipt className="w-4 h-4 text-zinc-500" />
-          <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">IR Estimado</h4>
+          <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">IR Estimado</h4>
         </div>
         <p className="text-sm text-zinc-500">Nenhum ganho de capital para tributar no momento.</p>
       </div>
@@ -40,24 +40,24 @@ export function IrPanel({ ir }: Props) {
     <div className="bg-si-card border border-si-border rounded-2xl p-5 space-y-4">
       <div className="flex items-center gap-2">
         <Receipt className="w-4 h-4 text-zinc-400" />
-        <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">IR Estimado (ganho de capital)</h4>
+        <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">IR Estimado (ganho de capital)</h4>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Ganho bruto</p>
+          <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-0.5">Ganho bruto</p>
           <p className="text-lg font-black text-emerald-400">{fmtBRL(ganhoTotal)}</p>
-          <p className="text-[10px] text-zinc-600">valor atual − aplicado</p>
+          <p className="text-[11px] text-zinc-600">valor atual − aplicado</p>
         </div>
         <div>
-          <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">IR estimado</p>
+          <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-0.5">IR estimado</p>
           <p className="text-lg font-black text-amber-400">{fmtBRL(irAnual)}</p>
-          <p className="text-[10px] text-zinc-600">{irPct.toFixed(1)}% do ganho</p>
+          <p className="text-[11px] text-zinc-600">{irPct.toFixed(1)}% do ganho</p>
         </div>
         <div>
-          <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Ganho líquido</p>
+          <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-0.5">Ganho líquido</p>
           <p className="text-lg font-black text-si-1">{fmtBRL(ganhoLiquido)}</p>
-          <p className="text-[10px] text-zinc-600">após IR estimado</p>
+          <p className="text-[11px] text-zinc-600">após IR estimado</p>
         </div>
       </div>
 
@@ -73,7 +73,7 @@ export function IrPanel({ ir }: Props) {
             style={{ width: `${irPct}%` }}
           />
         </div>
-        <div className="flex justify-between text-[10px] text-zinc-600">
+        <div className="flex justify-between text-[11px] text-zinc-600">
           <span>Líquido ({(100 - irPct).toFixed(0)}%)</span>
           <span>IR ({irPct.toFixed(0)}%)</span>
         </div>
@@ -83,15 +83,15 @@ export function IrPanel({ ir }: Props) {
       <div className="pt-1 border-t border-si-border">
         <div className="flex items-center gap-1.5 mb-2">
           <Info className="w-3 h-3 text-zinc-600" />
-          <span className="text-[10px] text-zinc-600">Alíquotas utilizadas nesta estimativa</span>
+          <span className="text-[11px] text-zinc-600">Alíquotas utilizadas nesta estimativa</span>
         </div>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] text-zinc-500">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-zinc-500">
           <div className="flex justify-between"><span>Ações (venda &gt; R$20k/mês)</span><span className="font-bold text-zinc-400">15%</span></div>
           <div className="flex justify-between"><span>FIIs</span><span className="font-bold text-zinc-400">20%</span></div>
           <div className="flex justify-between"><span>Renda Fixa / CDB</span><span className="font-bold text-zinc-400">17,5%*</span></div>
           <div className="flex justify-between"><span>Criptoativos</span><span className="font-bold text-zinc-400">15%</span></div>
         </div>
-        <p className="text-[10px] text-zinc-700 mt-2">
+        <p className="text-[11px] text-zinc-700 mt-2">
           * Estimativa para prazo médio. Consulte um contador para declaração oficial.
           Alíquota média ponderada: {(aliquotaMedia * 100).toFixed(1)}%.
         </p>

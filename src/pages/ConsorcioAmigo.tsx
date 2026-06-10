@@ -115,7 +115,7 @@ export default function ConsorcioAmigo() {
           { label: 'Em circulação',    value: fmtBRL(totalCirculating) },
         ].map(({ label, value }) => (
           <div key={label} className="bg-si-card border border-si-border rounded-2xl p-4 text-center">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">{label}</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">{label}</p>
             <p className="text-xl font-bold text-si-1 mt-1">{value}</p>
           </div>
         ))}
@@ -126,7 +126,7 @@ export default function ConsorcioAmigo() {
         <EmptyState onNew={() => setCreating(true)} />
       ) : (
         <div className="space-y-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Seus grupos</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Seus grupos</p>
           {groups.map((group) => {
             const activeRound = group.rounds.find((r) => r.status === 'active');
             const completedRounds = group.rounds.filter((r) => r.status === 'completed').length;
@@ -168,7 +168,7 @@ export default function ConsorcioAmigo() {
 
       {/* Como funciona */}
       <div className="bg-si-card border border-si-border rounded-2xl p-5 space-y-4">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Como funciona</p>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Como funciona</p>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           {[
             { n: '1', t: 'Crie o grupo',  d: 'Defina valor, frequência e regras' },
@@ -303,7 +303,7 @@ function CreateGroupFlow({ adminName, onSave, onCancel }: CreateGroupFlowProps) 
       {/* Step 0 — Configuração do grupo */}
       {step === 0 && (
         <div className="bg-si-card border border-si-border rounded-2xl p-6 space-y-5">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Configuração do grupo</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Configuração do grupo</p>
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-si-4 uppercase tracking-wider">Nome do grupo</label>
@@ -388,7 +388,7 @@ function CreateGroupFlow({ adminName, onSave, onCancel }: CreateGroupFlowProps) 
       {step === 1 && (
         <div className="space-y-4">
           <div className="bg-si-card border border-si-border rounded-2xl p-5 space-y-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Convidar participantes</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Convidar participantes</p>
 
             <div className="flex items-center gap-3 p-3 bg-si-over-1 rounded-xl">
               <div className="w-8 h-8 rounded-full bg-si-over-2 flex items-center justify-center shrink-0">
@@ -464,7 +464,7 @@ function CreateGroupFlow({ adminName, onSave, onCancel }: CreateGroupFlowProps) 
 
           {amount > 0 && members.length > 0 && (
             <div className="bg-si-over-1 rounded-xl p-4 space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Resumo do grupo</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Resumo do grupo</p>
               <div className="flex justify-between text-sm"><span className="text-si-4">Participantes</span><span className="font-bold text-si-1">{totalParticipants}</span></div>
               <div className="flex justify-between text-sm"><span className="text-si-4">Contribuição</span><span className="font-bold text-si-1">{fmtBRL(amount)} por pessoa</span></div>
               <div className="flex justify-between text-sm"><span className="text-si-4">Cota por rodada</span><span className="font-bold text-emerald-400">{fmtBRL(poolPerRound)}</span></div>
@@ -478,7 +478,7 @@ function CreateGroupFlow({ adminName, onSave, onCancel }: CreateGroupFlowProps) 
       {step === 2 && (
         <div className="space-y-4">
           <div className="bg-si-card border border-si-border rounded-2xl p-6 space-y-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Resumo do grupo</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Resumo do grupo</p>
             {[
               { label: 'Nome',          value: form.name },
               { label: 'Participantes', value: `${totalParticipants} pessoas` },
@@ -496,7 +496,7 @@ function CreateGroupFlow({ adminName, onSave, onCancel }: CreateGroupFlowProps) 
           </div>
 
           <div className="bg-si-card border border-si-border rounded-2xl p-5 space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Participantes convidados</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Participantes convidados</p>
             {members.map((m, i) => (
               <div key={i} className="flex items-center gap-2 text-sm text-si-3">
                 <User className="w-3.5 h-3.5 text-si-5" />
@@ -604,7 +604,7 @@ function GroupDetail({ group, onBack, onDrawWinner }: GroupDetailProps) {
           { label: 'Sorteio',   value: DRAW_LABELS[group.drawMethod].split(' ')[0] },
         ].map(({ label, value }) => (
           <div key={label} className="bg-si-card border border-si-border rounded-xl p-3 text-center">
-            <p className="text-[10px] uppercase tracking-widest text-si-5 font-bold">{label}</p>
+            <p className="text-[11px] uppercase tracking-widest text-si-5 font-bold">{label}</p>
             <p className="font-bold text-si-1 text-sm mt-1">{value}</p>
           </div>
         ))}
@@ -629,7 +629,7 @@ function GroupDetail({ group, onBack, onDrawWinner }: GroupDetailProps) {
       {activeRound && (
         <div className="bg-si-card border border-emerald-500/20 rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Rodada {activeRound.number} — Ativa</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-400">Rodada {activeRound.number} — Ativa</p>
             <p className="text-xs text-si-5">Vence {fmtDate(activeRound.dueDate)}</p>
           </div>
           <div className="flex items-center justify-between">

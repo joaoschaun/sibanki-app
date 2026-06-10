@@ -138,7 +138,7 @@ export default function AceitarEmprestimo() {
 
         {/* Contrato */}
         <div className="bg-si-card border border-si-border rounded-2xl p-5 space-y-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Condições do empréstimo</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Condições do empréstimo</p>
           {[
             { icon: <User       className="w-3.5 h-3.5" />, label: 'De',            value: loan.credorName },
             { icon: <User       className="w-3.5 h-3.5" />, label: 'Para',          value: loan.devedorName },
@@ -163,7 +163,7 @@ export default function AceitarEmprestimo() {
         {/* Parcelas */}
         <div className="bg-si-card border border-si-border rounded-2xl overflow-hidden">
           <div className="px-5 py-3 border-b border-si-border">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Calendário de pagamentos</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Calendário de pagamentos</p>
           </div>
           <div className="divide-y divide-white/5 max-h-48 overflow-y-auto">
             {loan.installmentsList.map((i) => (

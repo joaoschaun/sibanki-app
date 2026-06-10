@@ -502,7 +502,7 @@ export default function Social() {
                       )}
                     </div>
                   </div>
-                  <span className="text-[10px] text-si-4 max-w-14 truncate">{s.nickname}</span>
+                  <span className="text-[11px] text-si-4 max-w-14 truncate">{s.nickname}</span>
                 </button>
               ))}
             </div>

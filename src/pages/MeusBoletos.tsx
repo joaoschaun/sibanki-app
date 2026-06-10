@@ -200,7 +200,7 @@ export default function MeusBoletos() {
           >
             {t}
             {t === 'Alertas' && unreadAlerts > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-black text-[10px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-black text-[11px] font-bold rounded-full flex items-center justify-center">
                 {unreadAlerts}
               </span>
             )}
@@ -243,9 +243,9 @@ export default function MeusBoletos() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium text-si-1 text-sm">{b.beneficiario}</p>
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${cfg.color}`}>{cfg.label}</span>
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${srcCfg.bg} ${srcCfg.color}`}>{srcCfg.label}</span>
-                        {b.recorrente && <span className="text-[10px] text-zinc-600">↻ Recorrente</span>}
+                        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full border ${cfg.color}`}>{cfg.label}</span>
+                        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${srcCfg.bg} ${srcCfg.color}`}>{srcCfg.label}</span>
+                        {b.recorrente && <span className="text-[11px] text-zinc-600">↻ Recorrente</span>}
                       </div>
                       <p className="text-xs text-si-5 mt-0.5">{b.descricao}</p>
                       <p className="text-xs text-zinc-600 mt-0.5">

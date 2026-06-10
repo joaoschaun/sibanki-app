@@ -136,7 +136,7 @@ export function Sidebar({
 
   const row = (active: boolean) => cn(
     base,
-    'px-2.5 py-[7px] w-full text-[10.5px] font-semibold tracking-[0.06em] uppercase',
+    'px-2.5 py-[7px] w-full text-[11px] font-semibold tracking-[0.06em] uppercase',
     active
       ? 'bg-si-over-2 text-si-1'
       : 'text-si-5 hover:text-si-3 hover:bg-si-over-1'
@@ -151,7 +151,7 @@ export function Sidebar({
     cn('w-[14px] h-[14px] shrink-0', active ? 'text-si-1' : 'text-si-5');
 
   const sectionLabel = cn(
-    'text-[8.5px] font-bold tracking-[0.22em] uppercase text-si-5 px-2.5 mb-1 mt-0.5 select-none'
+    'text-[10px] font-bold tracking-[0.22em] uppercase text-si-5 px-2.5 mb-1 mt-0.5 select-none'
   );
 
   function NavLink({ item }: { item: NavItem }) {
@@ -198,7 +198,7 @@ export function Sidebar({
         <Link to="/consultor-ia" className="flex items-center gap-2 min-w-0">
           {collapsed ? (
             <div className="w-6 h-6 rounded-md bg-si-over-3 flex items-center justify-center">
-              <span className="text-si-2 text-[10px] font-black">S</span>
+              <span className="text-si-2 text-[11px] font-black">S</span>
             </div>
           ) : (
             <img
@@ -278,7 +278,7 @@ export function Sidebar({
                         to={item.path}
                         className={cn(
                           base,
-                          'px-2.5 py-[6px] w-full text-[10px] font-semibold tracking-[0.06em] uppercase',
+                          'px-2.5 py-[6px] w-full text-[11px] font-semibold tracking-[0.06em] uppercase',
                           active
                             ? 'text-si-2 bg-si-over-1'
                             : 'text-si-5 hover:text-si-3 hover:bg-si-over-1'

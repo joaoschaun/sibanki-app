@@ -94,7 +94,7 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
         <div className="w-full max-w-md bg-[#111111] border border-si-border-md rounded-2xl shadow-2xl flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-si-border">
-            <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-si-4">
+            <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-si-4">
               Enviar Feedback
             </span>
             <button
@@ -118,7 +118,7 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
               <button
                 type="button"
                 onClick={handleClose}
-                className="mt-2 px-5 py-2 text-[10px] font-bold tracking-[0.15em] uppercase border border-si-border rounded-lg hover:bg-si-over-2 transition-colors text-si-3"
+                className="mt-2 px-5 py-2 text-[11px] font-bold tracking-[0.15em] uppercase border border-si-border rounded-lg hover:bg-si-over-2 transition-colors text-si-3"
               >
                 Fechar
               </button>
@@ -127,7 +127,7 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
             <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-6 py-5">
               {/* Category selector */}
               <div>
-                <p className="text-[9px] font-bold tracking-[0.18em] uppercase text-si-5 mb-3">
+                <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-si-5 mb-3">
                   Categoria
                 </p>
                 <div className="grid grid-cols-3 gap-2">
@@ -143,7 +143,7 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                       }`}
                     >
                       {cat.icon}
-                      <span className="text-[8px] font-bold tracking-[0.12em] leading-tight">
+                      <span className="text-[10px] font-bold tracking-[0.12em] leading-tight">
                         {cat.label}
                       </span>
                     </button>
@@ -155,7 +155,7 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
               <div>
                 <label
                   htmlFor="fb-title"
-                  className="block text-[9px] font-bold tracking-[0.18em] uppercase text-si-5 mb-2"
+                  className="block text-[10px] font-bold tracking-[0.18em] uppercase text-si-5 mb-2"
                 >
                   Título
                 </label>
@@ -174,7 +174,7 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
               <div>
                 <label
                   htmlFor="fb-description"
-                  className="block text-[9px] font-bold tracking-[0.18em] uppercase text-si-5 mb-2"
+                  className="block text-[10px] font-bold tracking-[0.18em] uppercase text-si-5 mb-2"
                 >
                   Descrição
                 </label>
@@ -187,7 +187,7 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                   rows={4}
                   className="w-full bg-si-over-1 border border-si-border rounded-lg px-3 py-2.5 text-sm text-si-2 placeholder:text-si-5 focus:outline-none focus:border-si-border-md transition-colors resize-none"
                 />
-                <p className="text-right text-[9px] text-si-5 mt-1">
+                <p className="text-right text-[10px] text-si-5 mt-1">
                   {description.length}/1000
                 </p>
               </div>
@@ -196,7 +196,7 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
               <button
                 type="submit"
                 disabled={!category || !title.trim() || !description.trim() || loading}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-si-border bg-si-over-2 hover:bg-si-over-3 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-[10px] font-bold tracking-[0.15em] uppercase text-si-2"
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-si-border bg-si-over-2 hover:bg-si-over-3 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-[11px] font-bold tracking-[0.15em] uppercase text-si-2"
               >
                 {loading ? (
                   <span className="w-4 h-4 border-2 border-si-4 border-t-si-2 rounded-full animate-spin" />

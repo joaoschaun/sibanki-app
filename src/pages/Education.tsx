@@ -44,12 +44,12 @@ function LevelBadge({ level, xp, xpProgress, xpToNext }: {
             <Star className="w-4 h-4 text-violet-400" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Nível</p>
+            <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Nível</p>
             <p className="text-lg font-bold text-white leading-none">{level}</p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">XP total</p>
+          <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">XP total</p>
           <p className="text-sm font-bold text-zinc-200">{xp} XP</p>
         </div>
       </div>
@@ -60,7 +60,7 @@ function LevelBadge({ level, xp, xpProgress, xpToNext }: {
             style={{ width: `${xpProgress}%` }}
           />
         </div>
-        <p className="text-[10px] text-zinc-600">{xpToNext} XP para nível {level + 1}</p>
+        <p className="text-[11px] text-zinc-600">{xpToNext} XP para nível {level + 1}</p>
       </div>
     </div>
   );
@@ -108,7 +108,7 @@ function DiagnosticCard({ onClick }: { onClick: () => void }) {
     <div className="bg-si-card border border-si-border rounded-2xl p-5 space-y-3">
       <div className="flex items-center gap-2">
         <Brain className="w-4 h-4 text-blue-400" />
-        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Diagnóstico personalizado</p>
+        <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Diagnóstico personalizado</p>
       </div>
       <div className="space-y-2.5">
         {insights.map((ins, i) => (
@@ -186,7 +186,7 @@ function LessonViewer({ lessonId, onClose, onComplete, alreadyCompleted, record 
             <span className="text-lg">{lesson.icon}</span>
             <div>
               <p className="text-sm font-bold text-white leading-tight">{lesson.title}</p>
-              <p className="text-[10px] text-zinc-500 flex items-center gap-1.5 mt-0.5">
+              <p className="text-[11px] text-zinc-500 flex items-center gap-1.5 mt-0.5">
                 <Clock className="w-3 h-3" /> {lesson.duration}
                 <span className="text-zinc-700">·</span>
                 <Zap className="w-3 h-3 text-amber-400" /> {lesson.xp} XP
@@ -211,7 +211,7 @@ function LessonViewer({ lessonId, onClose, onComplete, alreadyCompleted, record 
                 return (
                   <div key={i} className="flex gap-3">
                     <div className="w-5 h-5 rounded-full bg-white/[0.06] flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="text-[9px] font-bold text-zinc-500">{i + 1}</span>
+                      <span className="text-[10px] font-bold text-zinc-500">{i + 1}</span>
                     </div>
                     <p className="text-sm text-zinc-400 leading-relaxed">
                       {parts.map((part, j) =>
@@ -226,13 +226,13 @@ function LessonViewer({ lessonId, onClose, onComplete, alreadyCompleted, record 
             </div>
 
             <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-xl p-4 space-y-1.5">
-              <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Exemplo prático</p>
+              <p className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest">Exemplo prático</p>
               <p className="text-sm text-zinc-400 leading-relaxed">{lesson.example}</p>
             </div>
 
             <div className="flex flex-wrap gap-1.5">
               {lesson.tags.map((tag) => (
-                <span key={tag} className="px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.06] text-[10px] text-zinc-500">{tag}</span>
+                <span key={tag} className="px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-zinc-500">{tag}</span>
               ))}
             </div>
 
@@ -265,7 +265,7 @@ function LessonViewer({ lessonId, onClose, onComplete, alreadyCompleted, record 
                   style={{ width: `${(current / lesson.quiz.length) * 100}%` }}
                 />
               </div>
-              <p className="text-[10px] text-zinc-500 shrink-0">{current + 1}/{lesson.quiz.length}</p>
+              <p className="text-[11px] text-zinc-500 shrink-0">{current + 1}/{lesson.quiz.length}</p>
             </div>
 
             <div className="space-y-3">
@@ -296,7 +296,7 @@ function LessonViewer({ lessonId, onClose, onComplete, alreadyCompleted, record 
                       onClick={() => handleAnswer(i)}
                       disabled={revealed}
                     >
-                      <span className={`w-5 h-5 shrink-0 rounded-full border flex items-center justify-center text-[10px] font-bold mt-0.5 ${revealed && isCorrect ? 'border-emerald-500 text-emerald-400' : revealed && isSelected ? 'border-rose-500 text-rose-400' : 'border-white/[0.15] text-zinc-500'}`}>
+                      <span className={`w-5 h-5 shrink-0 rounded-full border flex items-center justify-center text-[11px] font-bold mt-0.5 ${revealed && isCorrect ? 'border-emerald-500 text-emerald-400' : revealed && isSelected ? 'border-rose-500 text-rose-400' : 'border-white/[0.15] text-zinc-500'}`}>
                         {String.fromCharCode(65 + i)}
                       </span>
                       <span className="leading-relaxed">{opt}</span>
@@ -392,7 +392,7 @@ function TrailCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm font-bold text-zinc-200">{trail.title}</p>
-            <span className={`text-[10px] font-bold uppercase tracking-widest ${levelColors[trail.level] ?? 'text-zinc-500'}`}>
+            <span className={`text-[11px] font-bold uppercase tracking-widest ${levelColors[trail.level] ?? 'text-zinc-500'}`}>
               {trail.level}
             </span>
           </div>
@@ -404,11 +404,11 @@ function TrailCard({
                 style={{ width: `${trailProgress.pct}%` }}
               />
             </div>
-            <span className="text-[10px] text-zinc-500 shrink-0">{trailProgress.completed}/{trailProgress.total}</span>
+            <span className="text-[11px] text-zinc-500 shrink-0">{trailProgress.completed}/{trailProgress.total}</span>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[10px] font-bold text-zinc-600">{trail.totalXp} XP</span>
+          <span className="text-[11px] font-bold text-zinc-600">{trail.totalXp} XP</span>
           {trailProgress.pct === 100 && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
           {expanded
             ? <ChevronDown className="w-4 h-4 text-zinc-600" />
@@ -430,17 +430,17 @@ function TrailCard({
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${done ? 'bg-emerald-500/15' : 'bg-white/[0.05]'}`}>
                   {done
                     ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    : <span className="text-[10px] font-bold text-zinc-600">{idx + 1}</span>}
+                    : <span className="text-[11px] font-bold text-zinc-600">{idx + 1}</span>}
                 </div>
                 <span className="text-base shrink-0">{lesson.icon}</span>
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-bold ${done ? 'text-zinc-400' : 'text-zinc-200'}`}>{lesson.title}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] text-zinc-600 flex items-center gap-1">
+                    <span className="text-[11px] text-zinc-600 flex items-center gap-1">
                       <Clock className="w-2.5 h-2.5" /> {lesson.duration}
                     </span>
-                    <span className="text-zinc-700 text-[10px]">·</span>
-                    <span className="text-[10px] text-amber-500/70 flex items-center gap-1">
+                    <span className="text-zinc-700 text-[11px]">·</span>
+                    <span className="text-[11px] text-amber-500/70 flex items-center gap-1">
                       <Zap className="w-2.5 h-2.5" /> {lesson.xp} XP
                     </span>
                   </div>
@@ -508,11 +508,11 @@ function Calculadoras() {
   const jcTotal = (parseFloat(jcCapital.replace(',', '.')) || 0) + (parseFloat(jcAporte.replace(',', '.')) || 0) * (parseInt(jcAnos) || 10) * 12;
 
   const inputCls = 'w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-white/20';
-  const labelCls = 'text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-1.5';
+  const labelCls = 'text-[11px] font-bold text-zinc-500 uppercase tracking-widest block mb-1.5';
 
   return (
     <div className="space-y-4">
-      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">4 calculadoras com seus dados reais</p>
+      <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">4 calculadoras com seus dados reais</p>
 
       {/* 50-30-20 */}
       <div className="bg-si-card border border-si-border rounded-2xl p-5 space-y-4">
@@ -533,8 +533,8 @@ function Calculadoras() {
             ].map(({ label, pct, color, bg }) => (
               <div key={label} className={`${bg} rounded-xl p-3 text-center`}>
                 <p className={`text-base font-bold ${color}`}>{fmtBRL(renda * pct)}</p>
-                <p className="text-[10px] text-zinc-500 mt-0.5">{label}</p>
-                <p className={`text-[10px] font-bold ${color} mt-0.5`}>{(pct * 100).toFixed(0)}%</p>
+                <p className="text-[11px] text-zinc-500 mt-0.5">{label}</p>
+                <p className={`text-[11px] font-bold ${color} mt-0.5`}>{(pct * 100).toFixed(0)}%</p>
               </div>
             ))}
           </div>
@@ -549,14 +549,14 @@ function Calculadoras() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white/[0.03] rounded-xl p-3">
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Gasto médio/mês</p>
+            <p className="text-[11px] text-zinc-500 uppercase tracking-widest">Gasto médio/mês</p>
             <p className="text-base font-bold text-zinc-200 mt-0.5">{fmtBRL(burnRateMonthly)}</p>
-            <p className="text-[10px] text-zinc-600 mt-0.5">últimos 90 dias</p>
+            <p className="text-[11px] text-zinc-600 mt-0.5">últimos 90 dias</p>
           </div>
           <div className="bg-white/[0.03] rounded-xl p-3">
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Ld atual</p>
+            <p className="text-[11px] text-zinc-500 uppercase tracking-widest">Ld atual</p>
             <p className="text-base font-bold text-zinc-200 mt-0.5">{Math.round(freedom.days)} dias</p>
-            <p className="text-[10px] text-zinc-600 mt-0.5">{freedom.status}</p>
+            <p className="text-[11px] text-zinc-600 mt-0.5">{freedom.status}</p>
           </div>
         </div>
         {burnRateMonthly > 0 && (
@@ -601,7 +601,7 @@ function Calculadoras() {
             <input type="number" value={retornoIF} onChange={(e) => setRetornoIF(e.target.value)} className={inputCls} />
           </div>
           <div className="flex flex-col justify-end">
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Patrimônio atual</p>
+            <p className="text-[11px] text-zinc-500 uppercase tracking-widest">Patrimônio atual</p>
             <p className="text-sm font-bold text-zinc-200 mt-0.5">{fmtBRL(patrimonioAtual)}</p>
           </div>
         </div>
@@ -609,12 +609,12 @@ function Calculadoras() {
           <div className="bg-white/[0.03] border border-white/[0.05] rounded-xl p-4 space-y-3">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Patrimônio alvo (25×)</p>
+                <p className="text-[11px] text-zinc-500 uppercase tracking-widest">Patrimônio alvo (25×)</p>
                 <p className="text-xl font-bold text-white">{fmtBRL(patrimonioAlvo)}</p>
               </div>
               {mesesIF !== null && (
                 <div className="text-right">
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Estimativa</p>
+                  <p className="text-[11px] text-zinc-500 uppercase tracking-widest">Estimativa</p>
                   <p className="text-sm font-bold text-emerald-400">
                     {Math.round(mesesIF / 12)} anos{mesesIF % 12 > 0 ? ` e ${mesesIF % 12}m` : ''}
                   </p>
@@ -622,7 +622,7 @@ function Calculadoras() {
               )}
             </div>
             <div className="space-y-1">
-              <div className="flex justify-between text-[10px] text-zinc-500">
+              <div className="flex justify-between text-[11px] text-zinc-500">
                 <span>Progresso</span>
                 <span>{Math.min(100, Math.round((patrimonioAtual / patrimonioAlvo) * 100))}%</span>
               </div>
@@ -656,18 +656,18 @@ function Calculadoras() {
         {jcFV > 0 && (
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-white/[0.03] rounded-xl p-3">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Total investido</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-widest">Total investido</p>
               <p className="text-base font-bold text-zinc-300">{fmtBRL(jcTotal)}</p>
             </div>
             <div className="bg-violet-500/10 border border-violet-500/15 rounded-xl p-3">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Valor final</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-widest">Valor final</p>
               <p className="text-base font-bold text-violet-400">{fmtBRL(jcFV)}</p>
             </div>
             <div className="col-span-2 bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Juros gerados</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-widest">Juros gerados</p>
               <p className="text-lg font-bold text-emerald-400">{fmtBRL(jcFV - jcTotal)}</p>
               {jcTotal > 0 && (
-                <p className="text-[10px] text-zinc-600 mt-0.5">×{(jcFV / jcTotal).toFixed(1)} vezes o investido</p>
+                <p className="text-[11px] text-zinc-600 mt-0.5">×{(jcFV / jcTotal).toFixed(1)} vezes o investido</p>
               )}
             </div>
           </div>
@@ -726,7 +726,7 @@ function Glossario() {
           <div key={term.term} className="bg-si-card border border-si-border rounded-xl p-4">
             <div className="flex items-start justify-between gap-2 mb-1.5">
               <p className="text-sm font-bold text-zinc-200">{term.term}</p>
-              <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 ${
+              <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 ${
                 term.category === 'sibanki'       ? 'bg-blue-500/10 text-blue-400' :
                 term.category === 'investimentos' ? 'bg-violet-500/10 text-violet-400' :
                 term.category === 'crédito'       ? 'bg-amber-500/10 text-amber-400' :
@@ -822,7 +822,7 @@ export default function Education() {
                 ].map(({ val, label }) => (
                   <div key={label} className="bg-si-card border border-si-border rounded-xl p-3 text-center">
                     <p className="text-lg font-bold text-zinc-200">{val}</p>
-                    <p className="text-[10px] text-zinc-500 mt-0.5">{label}</p>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">{label}</p>
                   </div>
                 ))}
               </div>
@@ -836,7 +836,7 @@ export default function Education() {
               return (
                 <div className="bg-si-card border border-si-border rounded-2xl overflow-hidden">
                   <div className="px-5 py-3 border-b border-white/[0.06]">
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                    <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">
                       {metrics.completedCount === 0 ? 'Por onde começar' : 'Próxima lição recomendada'}
                     </p>
                   </div>
@@ -850,12 +850,12 @@ export default function Education() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-zinc-200 leading-tight">{lesson.title}</p>
-                      <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${trail.textColor}`}>{trail.title}</p>
+                      <p className={`text-[11px] font-bold uppercase tracking-widest mt-0.5 ${trail.textColor}`}>{trail.title}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] text-zinc-600 flex items-center gap-1">
+                        <span className="text-[11px] text-zinc-600 flex items-center gap-1">
                           <Clock className="w-2.5 h-2.5" /> {lesson.duration}
                         </span>
-                        <span className="text-[10px] text-amber-500/70 flex items-center gap-1">
+                        <span className="text-[11px] text-amber-500/70 flex items-center gap-1">
                           <Zap className="w-2.5 h-2.5" /> {lesson.xp} XP
                         </span>
                       </div>
@@ -870,7 +870,7 @@ export default function Education() {
 
             {/* Progresso por trilha */}
             <div className="bg-si-card border border-si-border rounded-2xl p-5 space-y-3">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Progresso por trilha</p>
+              <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Progresso por trilha</p>
               <div className="space-y-3">
                 {TRAILS.map((trail) => {
                   const tp = metrics.trailProgress[trail.id] ?? { pct: 0, completed: 0, total: trail.lessons.length };
@@ -885,7 +885,7 @@ export default function Education() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-xs font-bold text-zinc-400 truncate">{trail.title}</p>
-                          <span className="text-[10px] text-zinc-600 shrink-0 ml-2">{tp.completed}/{tp.total}</span>
+                          <span className="text-[11px] text-zinc-600 shrink-0 ml-2">{tp.completed}/{tp.total}</span>
                         </div>
                         <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
                           <div

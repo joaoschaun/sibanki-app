@@ -347,19 +347,19 @@ export default function LandingPage() {
               <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               <span className="text-white font-extrabold text-sm tracking-tighter relative z-10">S</span>
             </div>
-            <span className="text-[10px] font-bold tracking-[0.25em] uppercase text-zinc-100 select-none">Sibanki</span>
+            <span className="text-[11px] font-bold tracking-[0.25em] uppercase text-zinc-100 select-none">Sibanki</span>
           </div>
 
           <div className="flex items-center gap-6">
             <button 
               onClick={() => navigate('/login')}
-              className="text-[10px] font-bold text-zinc-400 hover:text-white uppercase tracking-[0.2em] transition-colors py-2"
+              className="text-[11px] font-bold text-zinc-400 hover:text-white uppercase tracking-[0.2em] transition-colors py-2"
             >
               Entrar
             </button>
             <button 
               onClick={() => handleGetStarted(selectedPlan)}
-              className="text-[10px] font-bold bg-zinc-100 hover:bg-white text-black uppercase tracking-[0.2em] transition-all px-5 py-3 rounded-xl hover:scale-[1.02] shadow-xl shadow-black/40"
+              className="text-[11px] font-bold bg-zinc-100 hover:bg-white text-black uppercase tracking-[0.2em] transition-all px-5 py-3 rounded-xl hover:scale-[1.02] shadow-xl shadow-black/40"
             >
               Começar agora
             </button>
@@ -369,7 +369,7 @@ export default function LandingPage() {
 
       {/* ── Hero Section ───────────────────────────────────────────────────── */}
       <header className="max-w-6xl mx-auto px-4 sm:px-6 pt-28 pb-24 text-center relative z-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/5 bg-white/[0.01] text-[9px] font-bold uppercase tracking-[0.25em] text-zinc-400 mb-8 select-none">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/5 bg-white/[0.01] text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-400 mb-8 select-none">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> SIBANKI FINANCIAL OPERATING SYSTEM (v2.1)
         </div>
 
@@ -385,7 +385,7 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
           <button 
             onClick={() => handleGetStarted('pro')}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-zinc-100 hover:bg-white text-black text-[10px] font-bold uppercase tracking-[0.2em] transition-all px-7 py-4.5 rounded-xl shadow-2xl hover:scale-[1.02]"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-zinc-100 hover:bg-white text-black text-[11px] font-bold uppercase tracking-[0.2em] transition-all px-7 py-4.5 rounded-xl shadow-2xl hover:scale-[1.02]"
           >
             Iniciar degustação de 30 dias <ArrowRight className="w-3.5 h-3.5" />
           </button>
@@ -394,7 +394,7 @@ export default function LandingPage() {
               const el = document.getElementById('demo');
               el?.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="w-full sm:w-auto bg-[#0a0a0a] hover:bg-zinc-900 border border-white/10 text-zinc-300 text-[10px] font-bold uppercase tracking-[0.2em] transition-colors px-7 py-4.5 rounded-xl"
+            className="w-full sm:w-auto bg-[#0a0a0a] hover:bg-zinc-900 border border-white/10 text-zinc-300 text-[11px] font-bold uppercase tracking-[0.2em] transition-colors px-7 py-4.5 rounded-xl"
           >
             Ver demonstração
           </button>
@@ -410,7 +410,7 @@ export default function LandingPage() {
               <Shield className="w-4 h-4 text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-[10px] font-bold text-white uppercase tracking-[0.25em] mb-3">Dias de Liberdade (Ld)</h3>
+              <h3 className="text-[11px] font-bold text-white uppercase tracking-[0.25em] mb-3">Dias de Liberdade (Ld)</h3>
               <p className="text-[11px] text-zinc-400 leading-relaxed">
                 A única métrica que importa. O Sibanki calcula quantos dias seu patrimônio líquido cobriria seus custos habituais caso sua fonte de renda ativa cessasse hoje.
               </p>
@@ -423,7 +423,7 @@ export default function LandingPage() {
               <TrendingUp className="w-4 h-4 text-blue-400" />
             </div>
             <div>
-              <h3 className="text-[10px] font-bold text-white uppercase tracking-[0.25em] mb-3">Spread Gap (Sg)</h3>
+              <h3 className="text-[11px] font-bold text-white uppercase tracking-[0.25em] mb-3">Spread Gap (Sg)</h3>
               <p className="text-[11px] text-zinc-400 leading-relaxed">
                 Evite perdas financeiras invisíveis. Comparamos as taxas de juros de suas dívidas e faturas parceladas com a liquidez de seus rendimentos e investimentos ativos.
               </p>
@@ -436,7 +436,7 @@ export default function LandingPage() {
               <Zap className="w-4 h-4 text-purple-400" />
             </div>
             <div>
-              <h3 className="text-[10px] font-bold text-white uppercase tracking-[0.25em] mb-3">Sovereignty Score (Sv)</h3>
+              <h3 className="text-[11px] font-bold text-white uppercase tracking-[0.25em] mb-3">Sovereignty Score (Sv)</h3>
               <p className="text-[11px] text-zinc-400 leading-relaxed">
                 Análise comportamental. Um motor matemático avalia a qualidade estrutural de cada despesa, pontuando transações com base no impacto na sua liberdade.
               </p>
@@ -473,7 +473,7 @@ export default function LandingPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveMockTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-colors ${
                     activeMockTab === tab.id
                       ? 'bg-zinc-100 text-black shadow-lg shadow-black/10'
                       : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'
@@ -492,53 +492,53 @@ export default function LandingPage() {
                   {/* Grid de KPIs */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="bg-[#111]/40 border border-white/[0.04] p-5 rounded-2xl">
-                      <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Dias de Liberdade</p>
+                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Dias de Liberdade</p>
                       <p className="text-3xl font-black text-emerald-400 leading-none mb-1">182 <span className="text-xs font-bold text-zinc-500 uppercase">dias</span></p>
-                      <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded">Soberano</span>
+                      <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded">Soberano</span>
                     </div>
                     <div className="bg-[#111]/40 border border-white/[0.04] p-5 rounded-2xl">
-                      <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Spread Gap</p>
+                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Spread Gap</p>
                       <p className="text-3xl font-black text-blue-400 leading-none mb-1">+2.45% <span className="text-xs font-bold text-zinc-500 uppercase">a.m.</span></p>
-                      <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest bg-blue-500/10 px-2 py-0.5 rounded">Zona Saudável</span>
+                      <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-500/10 px-2 py-0.5 rounded">Zona Saudável</span>
                     </div>
                     <div className="bg-[#111]/40 border border-white/[0.04] p-5 rounded-2xl">
-                      <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Score Soberano</p>
+                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Score Soberano</p>
                       <p className="text-3xl font-black text-white leading-none mb-1">84 <span className="text-xs font-bold text-zinc-500 uppercase">pts</span></p>
-                      <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest bg-zinc-800 px-2 py-0.5 rounded">Autonomia Alta</span>
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest bg-zinc-800 px-2 py-0.5 rounded">Autonomia Alta</span>
                     </div>
                   </div>
 
                   {/* Evolução de Patrimônio */}
                   <div className="bg-[#111]/20 border border-white/[0.04] rounded-2xl p-6">
                     <div className="flex justify-between items-center mb-6">
-                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Fluxo de Patrimônio (Evolução)</span>
-                      <span className="text-[10px] text-zinc-400 font-semibold tracking-wider">Últimos 6 meses</span>
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Fluxo de Patrimônio (Evolução)</span>
+                      <span className="text-[11px] text-zinc-400 font-semibold tracking-wider">Últimos 6 meses</span>
                     </div>
                     <div className="h-32 flex items-end justify-between gap-4 pt-4 border-b border-white/5 relative">
                       <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/5 pointer-events-none" />
                       <div className="flex-1 flex flex-col items-center gap-2 group cursor-pointer">
                         <div className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 border-t border-emerald-500/30 rounded-t h-16 transition-all duration-300 flex items-end justify-center" />
-                        <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-wider">Dez</span>
+                        <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-wider">Dez</span>
                       </div>
                       <div className="flex-1 flex flex-col items-center gap-2 group cursor-pointer">
                         <div className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 border-t border-emerald-500/30 rounded-t h-20 transition-all duration-300 flex items-end justify-center" />
-                        <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-wider">Jan</span>
+                        <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-wider">Jan</span>
                       </div>
                       <div className="flex-1 flex flex-col items-center gap-2 group cursor-pointer">
                         <div className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 border-t border-emerald-500/30 rounded-t h-24 transition-all duration-300 flex items-end justify-center" />
-                        <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-wider">Fev</span>
+                        <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-wider">Fev</span>
                       </div>
                       <div className="flex-1 flex flex-col items-center gap-2 group cursor-pointer">
                         <div className="w-full bg-[#111] hover:bg-zinc-800 border-t border-zinc-700 rounded-t h-12 transition-all duration-300 flex items-end justify-center" />
-                        <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-wider">Mar</span>
+                        <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-wider">Mar</span>
                       </div>
                       <div className="flex-1 flex flex-col items-center gap-2 group cursor-pointer">
                         <div className="w-full bg-emerald-500/20 hover:bg-emerald-500/30 border-t border-emerald-500/40 rounded-t h-28 transition-all duration-300 flex items-end justify-center" />
-                        <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-wider">Abr</span>
+                        <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-wider">Abr</span>
                       </div>
                       <div className="flex-1 flex flex-col items-center gap-2 group cursor-pointer">
                         <div className="w-full bg-emerald-500/30 hover:bg-emerald-500/40 border-t border-emerald-500/50 rounded-t h-32 transition-all duration-300 flex items-end justify-center" />
-                        <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-wider">Mai</span>
+                        <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-wider">Mai</span>
                       </div>
                     </div>
                   </div>
@@ -547,7 +547,7 @@ export default function LandingPage() {
 
               {activeMockTab === 'tx' && (
                 <div className="space-y-4">
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Lançamentos Recentes com Sv Score</p>
+                  <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Lançamentos Recentes com Sv Score</p>
                   <div className="divide-y divide-white/[0.04] border border-white/5 rounded-2xl bg-[#111]/10 overflow-hidden">
                     {/* Netflix */}
                     <div className="flex items-center justify-between gap-4 p-4 hover:bg-white/[0.02] transition-colors">
@@ -557,12 +557,12 @@ export default function LandingPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-white truncate">Netflix</p>
-                          <p className="text-[10px] text-zinc-500">28 Mai · Assinaturas · Nubank</p>
+                          <p className="text-[11px] text-zinc-500">28 Mai · Assinaturas · Nubank</p>
                         </div>
                       </div>
                       <div className="text-right shrink-0 flex items-center gap-3">
                         <span className="text-xs font-bold text-rose-400">- R$ 55,90</span>
-                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/10 text-emerald-400">92 Sv</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400">92 Sv</span>
                       </div>
                     </div>
 
@@ -574,12 +574,12 @@ export default function LandingPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-white truncate">iFood Delivery</p>
-                          <p className="text-[10px] text-zinc-500">28 Mai · Alimentação · Itaú Crédito</p>
+                          <p className="text-[11px] text-zinc-500">28 Mai · Alimentação · Itaú Crédito</p>
                         </div>
                       </div>
                       <div className="text-right shrink-0 flex items-center gap-3">
                         <span className="text-xs font-bold text-rose-400">- R$ 82,00</span>
-                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-500/10 text-amber-400">54 Sv</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400">54 Sv</span>
                       </div>
                     </div>
 
@@ -591,12 +591,12 @@ export default function LandingPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-white truncate">Uber Trip</p>
-                          <p className="text-[10px] text-zinc-500">27 Mai · Transporte · Nubank</p>
+                          <p className="text-[11px] text-zinc-500">27 Mai · Transporte · Nubank</p>
                         </div>
                       </div>
                       <div className="text-right shrink-0 flex items-center gap-3">
                         <span className="text-xs font-bold text-rose-400">- R$ 24,90</span>
-                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/10 text-emerald-400">88 Sv</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400">88 Sv</span>
                       </div>
                     </div>
 
@@ -608,12 +608,12 @@ export default function LandingPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-white truncate">Hospedagem Airbnb</p>
-                          <p className="text-[10px] text-zinc-500">24 Mai · Viagens · Inter (Parcelado 1/3)</p>
+                          <p className="text-[11px] text-zinc-500">24 Mai · Viagens · Inter (Parcelado 1/3)</p>
                         </div>
                       </div>
                       <div className="text-right shrink-0 flex items-center gap-3">
                         <span className="text-xs font-bold text-rose-400">- R$ 450,00</span>
-                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-rose-500/10 text-rose-400">32 Sv</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400">32 Sv</span>
                       </div>
                     </div>
                   </div>
@@ -624,10 +624,10 @@ export default function LandingPage() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center bg-violet-500/[0.03] border border-violet-500/10 rounded-2xl p-4">
                     <div>
-                      <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Total de Assinaturas Mapeadas</p>
+                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Total de Assinaturas Mapeadas</p>
                       <p className="text-lg font-black text-white">R$ 139,80/mês</p>
                     </div>
-                    <span className="px-2 py-1 bg-violet-500/10 border border-violet-500/20 rounded-lg text-[9px] font-bold text-violet-400 uppercase tracking-widest">3 Serviços Ativos</span>
+                    <span className="px-2 py-1 bg-violet-500/10 border border-violet-500/20 rounded-lg text-[10px] font-bold text-violet-400 uppercase tracking-widest">3 Serviços Ativos</span>
                   </div>
 
                   {/* Vazamento invisível Alerta */}
@@ -646,21 +646,21 @@ export default function LandingPage() {
                     <div className="flex justify-between p-4">
                       <div>
                         <p className="text-xs font-bold text-white">Spotify Premium</p>
-                        <p className="text-[10px] text-zinc-500">Todo dia 10 · Freq: Mensal</p>
+                        <p className="text-[11px] text-zinc-500">Todo dia 10 · Freq: Mensal</p>
                       </div>
                       <span className="text-xs font-bold text-zinc-300">R$ 24,90</span>
                     </div>
                     <div className="flex justify-between p-4">
                       <div>
                         <p className="text-xs font-bold text-white">Netflix Premium</p>
-                        <p className="text-[10px] text-zinc-500">Todo dia 15 · Freq: Mensal</p>
+                        <p className="text-[11px] text-zinc-500">Todo dia 15 · Freq: Mensal</p>
                       </div>
                       <span className="text-xs font-bold text-zinc-300">R$ 55,90</span>
                     </div>
                     <div className="flex justify-between p-4">
                       <div>
                         <p className="text-xs font-bold text-white">Wellhub (Gympass)</p>
-                        <p className="text-[10px] text-zinc-500">Todo dia 28 · Freq: Mensal</p>
+                        <p className="text-[11px] text-zinc-500">Todo dia 28 · Freq: Mensal</p>
                       </div>
                       <span className="text-xs font-bold text-zinc-300">R$ 59,00</span>
                     </div>
@@ -697,12 +697,12 @@ export default function LandingPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-2">
                         <Navigation className="w-4 h-4 text-cyan-400" />
-                        <span className="text-[10px] font-bold text-white uppercase tracking-wider">Sentinela GPS Simulado</span>
+                        <span className="text-[11px] font-bold text-white uppercase tracking-wider">Sentinela GPS Simulado</span>
                       </div>
                       <button
                         onClick={handleSimulateGPS}
                         disabled={gpsChecking}
-                        className="px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/25 hover:bg-cyan-500/20 text-cyan-300 text-[10px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50 relative overflow-hidden"
+                        className="px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/25 hover:bg-cyan-500/20 text-cyan-300 text-[11px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50 relative overflow-hidden"
                       >
                         {gpsChecking ? 'Escaneando...' : 'Verificar Localização'}
                       </button>
@@ -733,7 +733,7 @@ export default function LandingPage() {
               )}
             </div>
 
-            <div className="flex items-center justify-between border-t border-white/[0.04] pt-4 mt-8 text-[10px] text-zinc-500">
+            <div className="flex items-center justify-between border-t border-white/[0.04] pt-4 mt-8 text-[11px] text-zinc-500">
               <span>Preview funcional interativo</span>
               <button onClick={() => handleGetStarted('pro')} className="text-emerald-400 hover:underline">Experimentar na minha conta real →</button>
             </div>
@@ -757,8 +757,8 @@ export default function LandingPage() {
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
             <div>
               <div className="flex justify-between items-center mb-8">
-                <h3 className="text-[10px] font-bold text-white uppercase tracking-[0.25em]">Calculadora de Liberdade</h3>
-                <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded uppercase tracking-wider">Métrica Ld</span>
+                <h3 className="text-[11px] font-bold text-white uppercase tracking-[0.25em]">Calculadora de Liberdade</h3>
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded uppercase tracking-wider">Métrica Ld</span>
               </div>
 
               <p className="text-xs text-zinc-400 mb-8 leading-relaxed">
@@ -803,8 +803,8 @@ export default function LandingPage() {
             {/* Output */}
             <div className={`border rounded-2xl p-6 transition-all duration-300 ${ldResult.tier.bg} ${ldResult.tier.border}`}>
               <div className="flex items-center justify-between mb-4">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Resultado do Ld</span>
-                <span className={`text-[10px] font-bold uppercase tracking-widest ${ldResult.tier.color}`}>
+                <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Resultado do Ld</span>
+                <span className={`text-[11px] font-bold uppercase tracking-widest ${ldResult.tier.color}`}>
                   {ldResult.tier.label}
                 </span>
               </div>
@@ -825,8 +825,8 @@ export default function LandingPage() {
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-[10px] font-bold text-white uppercase tracking-[0.25em]">Simulador de Integração</h3>
-                <span className="text-[9px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded uppercase tracking-wider">WhatsApp & Telegram</span>
+                <h3 className="text-[11px] font-bold text-white uppercase tracking-[0.25em]">Simulador de Integração</h3>
+                <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded uppercase tracking-wider">WhatsApp & Telegram</span>
               </div>
 
               <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
@@ -845,7 +845,7 @@ export default function LandingPage() {
                       }`}>
                         {msg.text}
                         {msg.sub && (
-                          <div className="mt-2.5 text-[10px] font-semibold text-emerald-400 border-t border-white/5 pt-1.5">
+                          <div className="mt-2.5 text-[11px] font-semibold text-emerald-400 border-t border-white/5 pt-1.5">
                             {msg.sub}
                           </div>
                         )}
@@ -862,7 +862,7 @@ export default function LandingPage() {
                   {micRecording && (
                     <div className="flex items-center gap-2 pl-2 text-rose-500 bg-rose-500/5 border border-rose-500/10 rounded-xl px-3 py-2 animate-pulse w-fit">
                       <Mic className="w-3.5 h-3.5 text-rose-500" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">Escaner de Voz Ativo...</span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider">Escaner de Voz Ativo...</span>
                       <div className="flex gap-0.5">
                         <span className="w-1 h-3 bg-rose-500 rounded-full" />
                         <span className="w-1 h-4 bg-rose-500 rounded-full" />
@@ -876,33 +876,33 @@ export default function LandingPage() {
 
             {/* Chat CTAs */}
             <div className="space-y-3">
-              <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest text-center">Simule um envio de texto ou áudio</p>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-center">Simule um envio de texto ou áudio</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button 
                   onClick={() => triggerChatSimulation('happy')}
                   disabled={isTyping || micRecording}
                   className="p-3.5 border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] text-left rounded-xl transition-colors disabled:opacity-50"
                 >
-                  <span className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider block mb-1">Gasto Simples</span>
-                  <span className="text-[10px] text-zinc-300 font-medium leading-normal block">"Gastei R$ 75 de Uber..."</span>
+                  <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block mb-1">Gasto Simples</span>
+                  <span className="text-[11px] text-zinc-300 font-medium leading-normal block">"Gastei R$ 75 de Uber..."</span>
                 </button>
                 <button 
                   onClick={() => triggerChatSimulation('investment')}
                   disabled={isTyping || micRecording}
                   className="p-3.5 border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] text-left rounded-xl transition-colors disabled:opacity-50"
                 >
-                  <span className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider block mb-1">Investimento</span>
-                  <span className="text-[10px] text-zinc-300 font-medium leading-normal block">"Comprei 10 cotas MXRF..."</span>
+                  <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block mb-1">Investimento</span>
+                  <span className="text-[11px] text-zinc-300 font-medium leading-normal block">"Comprei 10 cotas MXRF..."</span>
                 </button>
                 <button 
                   onClick={() => triggerChatSimulation('voice')}
                   disabled={isTyping || micRecording}
                   className="p-3.5 border border-rose-500/10 bg-rose-500/[0.02] hover:bg-rose-500/[0.04] text-left rounded-xl transition-colors disabled:opacity-50 flex flex-col justify-between"
                 >
-                  <span className="text-[8px] text-rose-400 font-bold uppercase tracking-wider block mb-1 flex items-center gap-1">
+                  <span className="text-[10px] text-rose-400 font-bold uppercase tracking-wider block mb-1 flex items-center gap-1">
                     <Mic className="w-3 h-3 text-rose-500 animate-pulse" /> Simular Áudio
                   </span>
-                  <span className="text-[10px] text-zinc-300 font-medium leading-normal block">"Falar despesa iFood no débito"</span>
+                  <span className="text-[11px] text-zinc-300 font-medium leading-normal block">"Falar despesa iFood no débito"</span>
                 </button>
               </div>
             </div>
@@ -927,13 +927,13 @@ export default function LandingPage() {
               <Lock className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-emerald-500/10 px-2.5 py-0.5 rounded text-[8px] font-bold text-emerald-400 uppercase tracking-widest mb-4">Leitura Protegida (Read-Only)</div>
+              <div className="inline-flex items-center gap-2 bg-emerald-500/10 px-2.5 py-0.5 rounded text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-4">Leitura Protegida (Read-Only)</div>
               <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-2">Open Finance Sem Complicações</h3>
               <p className="text-xs text-zinc-400 leading-relaxed mb-6">
                 O Sibanki sincroniza seus saldos de faturas e contas em segundo plano via infraestrutura regulada pelo Banco Central. Segurança em conformidade com a LGPD: nós nunca pedimos permissão de escrita ou transações. É um espelho inteligente para sua soberania.
               </p>
             </div>
-            <div className="flex gap-4 border-t border-white/5 pt-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            <div className="flex gap-4 border-t border-white/5 pt-4 text-[11px] font-bold text-zinc-500 uppercase tracking-widest">
               <span>✓ Criptografia AES-256</span>
               <span>✓ Parceria com a Pluggy</span>
             </div>
@@ -973,14 +973,14 @@ export default function LandingPage() {
                 Proteja-se contra a exposição. Comparamos suas reservas líquidas de curtíssimo prazo contra todas as contas e compromissos cadastrados para os próximos 30 dias.
               </p>
               <div className="space-y-2">
-                <div className="flex justify-between text-[10px] text-zinc-400">
+                <div className="flex justify-between text-[11px] text-zinc-400">
                   <span>Reservas Líquidas</span>
                   <span className="text-emerald-400 font-bold">R$ 45.000</span>
                 </div>
                 <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                   <div className="h-full bg-emerald-500" style={{ width: '75%' }} />
                 </div>
-                <div className="flex justify-between text-[10px] text-zinc-400 pt-1">
+                <div className="flex justify-between text-[11px] text-zinc-400 pt-1">
                   <span>Passivo 30 dias</span>
                   <span className="text-rose-400 font-bold">R$ 12.000</span>
                 </div>
@@ -1000,7 +1000,7 @@ export default function LandingPage() {
               {/* Botão de simular troca de logo */}
               <button 
                 onClick={() => setLogoTheme(prev => prev === 'virtus' ? 'alfa' : 'virtus')}
-                className="px-3 py-1 bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[9px] font-bold rounded-lg uppercase tracking-wider hover:bg-purple-500/20"
+                className="px-3 py-1 bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[10px] font-bold rounded-lg uppercase tracking-wider hover:bg-purple-500/20"
               >
                 Alternar Branding
               </button>
@@ -1046,7 +1046,7 @@ export default function LandingPage() {
               </div>
               <div>
                 <p className="text-xs font-bold text-white">Thiago Castilho</p>
-                <p className="text-[10px] text-zinc-500">Ld atual: 198 dias · Soberano</p>
+                <p className="text-[11px] text-zinc-500">Ld atual: 198 dias · Soberano</p>
               </div>
             </div>
           </div>
@@ -1065,7 +1065,7 @@ export default function LandingPage() {
               </div>
               <div>
                 <p className="text-xs font-bold text-white">Mariana Pires</p>
-                <p className="text-[10px] text-zinc-500">Ld atual: 280 dias · Soberano</p>
+                <p className="text-[11px] text-zinc-500">Ld atual: 280 dias · Soberano</p>
               </div>
             </div>
           </div>
@@ -1084,7 +1084,7 @@ export default function LandingPage() {
               </div>
               <div>
                 <p className="text-xs font-bold text-white">Rodrigo Soares</p>
-                <p className="text-[10px] text-zinc-500">Ld atual: 410 dias · Inabalável</p>
+                <p className="text-[11px] text-zinc-500">Ld atual: 410 dias · Inabalável</p>
               </div>
             </div>
           </div>
@@ -1121,7 +1121,7 @@ export default function LandingPage() {
                     <div className="flex justify-between items-start mb-6">
                       <h3 className="text-xs font-bold text-white uppercase tracking-widest">{plan.name}</h3>
                       {key === 'pro' && (
-                        <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full uppercase tracking-wider">Mais Popular</span>
+                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full uppercase tracking-wider">Mais Popular</span>
                       )}
                     </div>
                     <div className="flex items-baseline gap-1 mb-3">
@@ -1228,11 +1228,11 @@ export default function LandingPage() {
             <span className="text-xs font-black tracking-widest uppercase text-zinc-500">Sibanki</span>
           </div>
 
-          <p className="text-[9px] text-zinc-600 uppercase tracking-widest text-center">
+          <p className="text-[10px] text-zinc-600 uppercase tracking-widest text-center">
             &copy; {new Date().getFullYear()} Sibanki OS. Todos os direitos reservados.
           </p>
 
-          <div className="flex items-center gap-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+          <div className="flex items-center gap-4 text-[11px] font-bold text-zinc-500 uppercase tracking-widest">
             <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-zinc-500" /> Criptografia de Nível Militar</span>
           </div>
         </div>

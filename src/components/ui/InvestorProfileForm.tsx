@@ -28,7 +28,7 @@ export function InvestorProfileForm({
 
   return (
     <section id="investidor" className="w-full max-w-3xl scroll-mt-24 rounded-2xl border border-si-border bg-si-card p-6">
-      <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-si-4 mb-1">Investimentos</p>
+      <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-si-4 mb-1">Investimentos</p>
       <h3 className="font-semibold text-si-1 mb-1">Perfil do investidor — Suitability</h3>
       <p className="text-si-5 text-sm mb-4">
         Objetivo, horizonte e tolerância a risco orientam sugestões e o raio X da carteira em Crescimento.

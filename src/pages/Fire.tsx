@@ -22,7 +22,7 @@ export default function Fire() {
 
       {/* O que vai ser */}
       <div className="bg-si-card rounded-2xl border border-si-border p-6 space-y-5">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">O que vai ter aqui</p>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">O que vai ter aqui</p>
         <div className="space-y-4">
           {[
             { icon: <Target className="w-4 h-4 text-orange-400" />, title: 'Meta de independência financeira', desc: 'Calcule quanto você precisa acumular para viver dos rendimentos' },
@@ -45,7 +45,7 @@ export default function Fire() {
 
       {/* Seu Ld como prévia */}
       <div className="bg-si-card rounded-2xl border border-si-border p-5">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-si-5 mb-3">Por enquanto, acompanhe seu progresso em</p>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-si-5 mb-3">Por enquanto, acompanhe seu progresso em</p>
         <button
           onClick={() => navigate('/dashboard')}
           className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-si-over-2 border border-si-border hover:border-si-border-md transition-colors"

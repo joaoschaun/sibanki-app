@@ -109,14 +109,14 @@ export function BenchmarkPanel({ rentabAnualizadaPct, cdiAnualPct, selicAnualPct
     <div className="bg-si-card border border-si-border rounded-2xl p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Benchmark</h4>
+          <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Benchmark</h4>
           <p className="text-xs text-zinc-400 mt-0.5">Rentabilidade anualizada vs mercado</p>
         </div>
         <div className="text-right">
           <p className={`text-lg font-black ${ganhoAbsoluto >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
             {ganhoAbsoluto >= 0 ? '+' : ''}R$ {Math.abs(ganhoAbsoluto).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
           </p>
-          <p className="text-[10px] text-zinc-600">P&L total</p>
+          <p className="text-[11px] text-zinc-600">P&L total</p>
         </div>
       </div>
 

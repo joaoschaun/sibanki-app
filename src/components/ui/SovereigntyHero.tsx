@@ -131,7 +131,7 @@ export function SovereigntyHero({
             <p className="text-si-5 text-xs mt-0.5 capitalize">{dateStr}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="bg-si-over-2 text-si-4 text-[10px] font-bold px-2 py-1 rounded-md border border-si-border hidden sm:flex items-center gap-1">
+            <span className="bg-si-over-2 text-si-4 text-[11px] font-bold px-2 py-1 rounded-md border border-si-border hidden sm:flex items-center gap-1">
               <Shield className="w-3 h-3" /> {score}
             </span>
             <Link
@@ -202,7 +202,7 @@ export function SovereigntyHero({
         ) : (
           <div className="bg-si-over-1 rounded-xl border border-si-border p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-si-4">Glossário rápido</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-si-4">Glossário rápido</p>
               <button type="button" onClick={() => setShowExplanation(false)} className="text-si-5 hover:text-si-3">
                 <X className="w-3.5 h-3.5" />
               </button>

@@ -9,7 +9,7 @@ export function ComingSoonBadge({ children, className = '' }: Props) {
   return (
     <span className={`relative inline-flex ${className}`}>
       {children}
-      <span className="absolute -top-2 -right-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/90 text-[10px] font-bold text-white shadow-lg whitespace-nowrap z-10">
+      <span className="absolute -top-2 -right-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/90 text-[11px] font-bold text-white shadow-lg whitespace-nowrap z-10">
         <Clock className="w-2.5 h-2.5" /> Em breve
       </span>
     </span>

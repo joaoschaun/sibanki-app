@@ -116,7 +116,7 @@ export function OpenFinanceInvestSync() {
           <div>
             <p className="text-sm font-bold text-zinc-200">Investimentos Open Finance</p>
             {syncedAt && (
-              <p className="text-[10px] text-zinc-600 flex items-center gap-1 mt-0.5">
+              <p className="text-[11px] text-zinc-600 flex items-center gap-1 mt-0.5">
                 <Clock className="w-2.5 h-2.5" />
                 Última sync: {fmtDate(syncedAt)}
               </p>
@@ -163,7 +163,7 @@ export function OpenFinanceInvestSync() {
             </p>
           </div>
           <div className="bg-white/[0.03] border border-white/[0.05] rounded-xl p-3 text-left space-y-1.5">
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">O que será importado</p>
+            <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">O que será importado</p>
             {['Ações e FIIs (custodiados na B3)', 'ETFs e fundos de investimento', 'Renda fixa (CDB, LCI, LCA, Tesouro)', 'Cripto (quando disponível pela corretora)'].map((item) => (
               <div key={item} className="flex items-center gap-2">
                 <div className="w-1 h-1 rounded-full bg-zinc-600" />
@@ -180,11 +180,11 @@ export function OpenFinanceInvestSync() {
           {/* KPIs */}
           <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
             <div className="px-5 py-3">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Total importado</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-widest">Total importado</p>
               <p className="text-lg font-bold text-white mt-0.5">{fmtBRL(total)}</p>
             </div>
             <div className="px-5 py-3">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest">P&L</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-widest">P&L</p>
               <p className={`text-lg font-bold mt-0.5 ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                 {pnl >= 0 ? '+' : ''}{fmtBRL(pnl)}
               </p>
@@ -197,12 +197,12 @@ export function OpenFinanceInvestSync() {
               <div key={inv.pluggyId} className="flex items-center gap-3 px-5 py-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-zinc-200 truncate">{inv.nome}</p>
-                  <p className="text-[10px] text-zinc-500">{inv.institutionName} · {inv.tipo}</p>
+                  <p className="text-[11px] text-zinc-500">{inv.institutionName} · {inv.tipo}</p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-sm font-bold text-zinc-200">{fmtBRL(inv.valorAtual)}</p>
                   {inv.pnlPct != null && (
-                    <p className={`text-[10px] font-bold ${inv.pnlPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <p className={`text-[11px] font-bold ${inv.pnlPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                       {inv.pnlPct >= 0 ? '+' : ''}{inv.pnlPct.toFixed(1)}%
                     </p>
                   )}
@@ -215,7 +215,7 @@ export function OpenFinanceInvestSync() {
           </div>
 
           <div className="px-5 py-3 border-t border-white/[0.06]">
-            <p className="text-[10px] text-zinc-600">
+            <p className="text-[11px] text-zinc-600">
               {investments.length} posições importadas · Sincronizado {fmtDate(syncedAt)}
             </p>
           </div>

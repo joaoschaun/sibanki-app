@@ -82,7 +82,7 @@ export function AppLoadingScreen() {
           <h2 className="text-white font-bold text-sm tracking-[0.25em] uppercase select-none">
             Sibanki
           </h2>
-          <p className="text-zinc-500 text-[10px] font-semibold tracking-[0.18em] uppercase select-none animate-wave-text">
+          <p className="text-zinc-500 text-[11px] font-semibold tracking-[0.18em] uppercase select-none animate-wave-text">
             Sincronizando soberania financeira
           </p>
         </div>

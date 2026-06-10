@@ -59,14 +59,14 @@ function EnvelopeInput({ value, onSave }: { value: number; onSave: (v: number) =
         onKeyDown={e => {
           if (e.key === 'Enter') { onSave(parseFloat(str.replace(',', '.')) || 0); setEditing(false); }
         }}
-        className="bg-si-bg border border-blue-500 rounded px-1.5 py-0.5 text-[10px] w-24 text-si-1"
+        className="bg-si-bg border border-blue-500 rounded px-1.5 py-0.5 text-[11px] w-24 text-si-1"
       />
     );
   }
   return (
     <button
       onClick={() => { setStr(String(value)); setEditing(true); }}
-      className="text-[10px] text-si-5 hover:text-blue-400"
+      className="text-[11px] text-si-5 hover:text-blue-400"
     >
       Envelope: {value > 0 ? fmtBRL(value) : '— definir'}
     </button>
@@ -623,7 +623,7 @@ export default function Budget() {
             <div className="bg-si-card border border-si-border rounded-2xl p-6 text-center">
               <p className="text-xs text-si-5 mb-1">Alocado</p>
               <p className="text-xl font-bold text-blue-400">{fmtBRL(totalAlocado)}</p>
-              <p className="text-[10px] text-si-5 mt-0.5">
+              <p className="text-[11px] text-si-5 mt-0.5">
                 {renda > 0 ? ((totalAlocado / renda) * 100).toFixed(0) : 0}% da renda
               </p>
             </div>
@@ -632,12 +632,12 @@ export default function Budget() {
               <p className={`text-xl font-bold ${zeroado ? 'text-emerald-400' : 'text-amber-400'}`}>{fmtBRL(naoAlocado)}</p>
               {!zeroado && (
                 <button onClick={handleAlocarTudo} disabled={busy}
-                  className="mt-1 text-[10px] text-blue-400 hover:underline disabled:opacity-50">
+                  className="mt-1 text-[11px] text-blue-400 hover:underline disabled:opacity-50">
                   Alocar tudo
                 </button>
               )}
               {zeroado && (
-                <p className="text-[10px] text-emerald-400 mt-0.5 flex items-center justify-center gap-1">
+                <p className="text-[11px] text-emerald-400 mt-0.5 flex items-center justify-center gap-1">
                   <CheckCircle className="w-3 h-3" /> Todo real tem destino
                 </p>
               )}
@@ -660,7 +660,7 @@ export default function Budget() {
                     <span className="text-sm font-semibold text-si-1">{cat}</span>
                     <div className="flex items-center gap-3 flex-wrap justify-end">
                       {rollover !== 0 && (
-                        <span className="text-[10px] text-si-5 bg-si-over-2 px-1.5 py-0.5 rounded border border-si-border">
+                        <span className="text-[11px] text-si-5 bg-si-over-2 px-1.5 py-0.5 rounded border border-si-border">
                           {rollover > 0 ? `+${fmtBRL(rollover)} rollover` : `${fmtBRL(rollover)} rollover`}
                         </span>
                       )}
@@ -680,7 +680,7 @@ export default function Budget() {
                       style={{ width: `${Math.min(100, pct)}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] text-si-5">
+                  <div className="flex justify-between text-[11px] text-si-5">
                     <span>Gasto: {fmtBRL(gasto)} de {fmtBRL(totalDisponivel)} disponíveis</span>
                     <EnvelopeInput value={alocado} onSave={v => handleSaveEnvelope(cat, v)} />
                   </div>

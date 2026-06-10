@@ -37,7 +37,7 @@ export function SovereigntyBadge({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
-          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold border transition-colors ${tier.bg} ${tier.text} ${tier.border} hover:opacity-80`}
+          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-bold border transition-colors ${tier.bg} ${tier.text} ${tier.border} hover:opacity-80`}
           title={`Sv ${score} — ${tier.label}`}
         >
           <span className="opacity-60">Sv</span>
@@ -79,7 +79,7 @@ export function SovereigntyBadge({
             )}
 
             {/* Escala de referência */}
-            <div className="pt-1 border-t border-si-border text-[10px] text-si-5 space-y-0.5">
+            <div className="pt-1 border-t border-si-border text-[11px] text-si-5 space-y-0.5">
               <div className="flex justify-between"><span className="text-emerald-400">80–100</span><span>Soberano</span></div>
               <div className="flex justify-between"><span className="text-blue-400">50–79</span><span>Consciente</span></div>
               <div className="flex justify-between"><span className="text-amber-400">25–49</span><span>Atenção</span></div>
@@ -89,7 +89,7 @@ export function SovereigntyBadge({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="w-full text-[10px] text-si-5 hover:text-si-3 mt-1"
+              className="w-full text-[11px] text-si-5 hover:text-si-3 mt-1"
             >
               Fechar
             </button>
@@ -117,7 +117,7 @@ export function SovereigntyBadge({
         />
       </div>
       {daysLost > 0 && (
-        <p className="text-[10px] text-si-5">−{daysLost}d liberdade · {fmtBRL(opportunityCost10y)} em 10a</p>
+        <p className="text-[11px] text-si-5">−{daysLost}d liberdade · {fmtBRL(opportunityCost10y)} em 10a</p>
       )}
     </div>
   );

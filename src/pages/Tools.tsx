@@ -349,7 +349,7 @@ function SimPortabilidade() {
                     : <p className="text-xs text-rose-400">mais caro</p>}
                 </div>
                 {opt.worthIt && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shrink-0">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shrink-0">
                     ✓ Vale portar
                   </span>
                 )}

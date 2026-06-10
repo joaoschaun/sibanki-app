@@ -177,7 +177,7 @@ export default function Cripto() {
           <p className="text-si-5 text-xs">Cotações ao vivo via CoinGecko API</p>
         </div>
         <button onClick={handleRefresh}
-          className="flex items-center gap-1.5 text-si-4 hover:text-si-2 text-xs transition-colors bg-si-over-2 hover:bg-si-over-3 border border-si-border px-3 py-1.5 rounded-xl font-semibold uppercase tracking-wider text-[10px]"
+          className="flex items-center gap-1.5 text-si-4 hover:text-si-2 text-xs transition-colors bg-si-over-2 hover:bg-si-over-3 border border-si-border px-3 py-1.5 rounded-xl font-semibold uppercase tracking-wider text-[11px]"
         >
           {loading
             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -245,7 +245,7 @@ export default function Cripto() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-si-1">{a.symbol}</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${CATEGORY_COLOR[a.category]}`}>
+                      <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${CATEGORY_COLOR[a.category]}`}>
                         {a.category}
                       </span>
                     </div>

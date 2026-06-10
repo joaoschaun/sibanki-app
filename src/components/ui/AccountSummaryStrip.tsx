@@ -41,7 +41,7 @@ export function AccountSummaryStrip({ className }: { className?: string }) {
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-si-3 min-w-0">
         <span>
-          <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-si-5 block mb-0.5">
+          <span className="text-[11px] font-bold tracking-[0.18em] uppercase text-si-5 block mb-0.5">
             Plano
           </span>
           {planLabel}
@@ -50,7 +50,7 @@ export function AccountSummaryStrip({ className }: { className?: string }) {
         <span className="flex items-start gap-2 min-w-0">
           <Building2 className="w-4 h-4 text-si-4 shrink-0 mt-0.5" aria-hidden />
           <span className="min-w-0">
-            <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-si-5 block mb-0.5">
+            <span className="text-[11px] font-bold tracking-[0.18em] uppercase text-si-5 block mb-0.5">
               Open Finance
             </span>
             <span className="text-si-2">
@@ -62,7 +62,7 @@ export function AccountSummaryStrip({ className }: { className?: string }) {
       </div>
       <Link
         to="/configuracoes#open-finance"
-        className="text-[10px] font-bold tracking-[0.18em] uppercase text-si-2 hover:text-si-1 border border-si-border rounded-lg px-3 py-1.5 bg-si-over-2 hover:bg-si-over-3 shrink-0"
+        className="text-[11px] font-bold tracking-[0.18em] uppercase text-si-2 hover:text-si-1 border border-si-border rounded-lg px-3 py-1.5 bg-si-over-2 hover:bg-si-over-3 shrink-0"
       >
         Gerenciar conexão
       </Link>

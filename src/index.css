@@ -55,6 +55,26 @@
   --si-cat-investimentos-text: #2dd4bf;
   --si-cat-assinaturas-bg: rgba(139, 92, 246, 0.10);
   --si-cat-assinaturas-text: #a78bfa;
+
+  /* ── PALETA SEMÂNTICA DE FEEDBACK (Ação #9 — Análise 360) ──────────────────
+     Exceção FORMAL à regra monocromática do Pierre. Cor só é permitida para
+     comunicar ESTADO FINANCEIRO, nunca para decoração:
+       positive → conquista, spread positivo, meta batida    (emerald)
+       warning  → atenção, orçamento perto do teto           (amber)
+       risk     → perigo, dívida cara, auto-sabotagem        (rose)
+       projection → projeções/futuro (Portal do Tempo)       (violet)
+       info     → neutro informativo                          (blue)
+     Gradientes coloridos seguem PROIBIDOS. Use bg + text destes pares. */
+  --si-positive-bg: rgba(16, 185, 129, 0.10);
+  --si-positive-text: #34d399;
+  --si-warning-bg: rgba(245, 158, 11, 0.10);
+  --si-warning-text: #fbbf24;
+  --si-risk-bg: rgba(244, 63, 94, 0.10);
+  --si-risk-text: #fb7185;
+  --si-projection-bg: rgba(139, 92, 246, 0.10);
+  --si-projection-text: #a78bfa;
+  --si-info-bg: rgba(59, 130, 246, 0.10);
+  --si-info-text: #60a5fa;
 }
 
 [data-theme="light"] {
@@ -108,6 +128,18 @@
   --si-cat-investimentos-text: #0f766e;
   --si-cat-assinaturas-bg: rgba(109, 40, 217, 0.08);
   --si-cat-assinaturas-text: #5b21b6;
+
+  /* Paleta semântica de feedback (light) */
+  --si-positive-bg: rgba(5, 150, 105, 0.08);
+  --si-positive-text: #047857;
+  --si-warning-bg: rgba(217, 119, 6, 0.08);
+  --si-warning-text: #b45309;
+  --si-risk-bg: rgba(225, 29, 72, 0.08);
+  --si-risk-text: #be123c;
+  --si-projection-bg: rgba(124, 58, 237, 0.08);
+  --si-projection-text: #6d28d9;
+  --si-info-bg: rgba(37, 99, 235, 0.08);
+  --si-info-text: #1d4ed8;
 }
 
 /* ─────────────────────────────────────────────
@@ -156,6 +188,18 @@
   --color-si-cat-investimentos-text: var(--si-cat-investimentos-text);
   --color-si-cat-assinaturas-bg: var(--si-cat-assinaturas-bg);
   --color-si-cat-assinaturas-text: var(--si-cat-assinaturas-text);
+
+  /* Paleta semântica de feedback (bg-si-positive-bg, text-si-risk-text, …) */
+  --color-si-positive-bg: var(--si-positive-bg);
+  --color-si-positive-text: var(--si-positive-text);
+  --color-si-warning-bg: var(--si-warning-bg);
+  --color-si-warning-text: var(--si-warning-text);
+  --color-si-risk-bg: var(--si-risk-bg);
+  --color-si-risk-text: var(--si-risk-text);
+  --color-si-projection-bg: var(--si-projection-bg);
+  --color-si-projection-text: var(--si-projection-text);
+  --color-si-info-bg: var(--si-info-bg);
+  --color-si-info-text: var(--si-info-text);
 }
 
 /* ─────────────────────────────────────────────

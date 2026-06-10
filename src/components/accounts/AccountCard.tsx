@@ -160,21 +160,21 @@ export function AccountCard({
               {name}
             </h3>
             <div className="flex items-center gap-2 mt-0.5">
-              {tipo && <p className="text-[10px] opacity-60 font-semibold uppercase tracking-wider">{tipo}</p>}
+              {tipo && <p className="text-[11px] opacity-60 font-semibold uppercase tracking-wider">{tipo}</p>}
               {currency !== 'BRL' && (
-                <span className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">{currency}</span>
+                <span className="text-[10px] font-black tracking-widest px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">{currency}</span>
               )}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {ofBadge && (
-            <span className={cn("flex items-center gap-1 px-2 py-1 rounded-full border text-[9px] font-bold tracking-wider uppercase", ofBadge.cls)}>
+            <span className={cn("flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-bold tracking-wider uppercase", ofBadge.cls)}>
               <ofBadge.icon className="w-3 h-3" />{ofBadge.label}
             </span>
           )}
           {isOverdraft && (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 text-[9px] font-bold uppercase">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-bold uppercase">
               <AlertTriangle className="w-3 h-3" /> Juros
             </div>
           )}

@@ -1058,7 +1058,7 @@ export default function Cards() {
                             backgroundHex={b.logoBg || '#ffffff'} 
                           />
                         </div>
-                        <span className="text-[9px] font-semibold uppercase tracking-wider truncate w-full">{b.name}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider truncate w-full">{b.name}</span>
                       </button>
                     );
                   })}
@@ -1075,7 +1075,7 @@ export default function Cards() {
                     <div className="w-7 h-7 rounded-full bg-zinc-800 border border-zinc-700/50 flex items-center justify-center p-1 shadow-inner select-none shrink-0 overflow-hidden">
                       <Building2 className="w-4 h-4 text-zinc-400" />
                     </div>
-                    <span className="text-[9px] font-semibold uppercase tracking-wider truncate w-full">Personalizado</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider truncate w-full">Personalizado</span>
                   </button>
                 </div>
               </div>
@@ -1217,7 +1217,7 @@ export default function Cards() {
 
               {addBenefitsBadge && !addBenefitsManual && (
                 <div className="mt-2 space-y-1">
-                  <span className="text-amber-400 text-[9px] tracking-[0.18em] uppercase block">
+                  <span className="text-amber-400 text-[10px] tracking-[0.18em] uppercase block">
                     Benefícios sugeridos pela bandeira — confirme no app do banco
                   </span>
                   <button
@@ -1442,7 +1442,7 @@ export default function Cards() {
 
                 {editBenefitsBadge && !editBenefitsManual && (
                   <div className="mt-2 space-y-1">
-                    <span className="text-amber-400 text-[9px] tracking-[0.18em] uppercase block">
+                    <span className="text-amber-400 text-[10px] tracking-[0.18em] uppercase block">
                       Benefícios sugeridos pela bandeira — confirme no app do banco
                     </span>
                     <button
@@ -1520,7 +1520,7 @@ export default function Cards() {
             </p>
             {catalogRowsForModal.length > 0 && (
               <div className="rounded-xl border border-si-border-md bg-si-over-1 p-3 space-y-3">
-                <p className="text-[10px] font-bold text-si-5 uppercase tracking-[0.18em]">Catálogo de referência</p>
+                <p className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Catálogo de referência</p>
                 <p className="text-xs text-si-5 leading-relaxed">
                   Perfis típicos para bandeira <span className="text-si-3">{benefitsModalCard?.flag ?? '—'}</span>.
                   São referências de mercado — confira sempre no app do banco antes de confiar em 100%.

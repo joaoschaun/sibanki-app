@@ -183,7 +183,7 @@ export default function MeuCpf() {
           >
             {t}
             {t === 'Alertas' && isConnected && unreadAlerts > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-black text-[10px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-black text-[11px] font-bold rounded-full flex items-center justify-center">
                 {unreadAlerts}
               </span>
             )}
@@ -205,8 +205,8 @@ export default function MeuCpf() {
               ].map((b) => (
                 <div key={b.label} className="text-center">
                   <div className={`h-1.5 rounded-full ${b.color} mb-1`} />
-                  <p className="text-[10px] text-si-5 font-medium">{b.label}</p>
-                  <p className="text-[10px] text-zinc-600">{b.range}</p>
+                  <p className="text-[11px] text-si-5 font-medium">{b.label}</p>
+                  <p className="text-[11px] text-zinc-600">{b.range}</p>
                 </div>
               ))}
             </div>
@@ -257,7 +257,7 @@ export default function MeuCpf() {
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-rose-400">R$ {n.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                    <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
                       n.status === 'ativa' ? 'bg-rose-500/20 text-rose-400' :
                       n.status === 'quitada' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-si-zinc-8 text-si-5'
                     }`}>{n.status}</span>

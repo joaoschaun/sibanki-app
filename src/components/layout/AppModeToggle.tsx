@@ -49,7 +49,7 @@ export function AppModeToggle() {
         role="tab"
         aria-selected={!isAssistant}
         onClick={goVision}
-        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md text-[10px] font-bold tracking-[0.12em] uppercase transition-colors ${
+        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md text-[11px] font-bold tracking-[0.12em] uppercase transition-colors ${
           !isAssistant
             ? 'bg-si-over-3 text-si-1 border border-si-border-md'
             : 'text-si-4 hover:text-si-2'
@@ -63,7 +63,7 @@ export function AppModeToggle() {
         role="tab"
         aria-selected={isAssistant}
         onClick={goAssistant}
-        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md text-[10px] font-bold tracking-[0.12em] uppercase transition-colors ${
+        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md text-[11px] font-bold tracking-[0.12em] uppercase transition-colors ${
           isAssistant
             ? 'bg-si-over-3 text-si-1 border border-si-border-md'
             : 'text-si-4 hover:text-si-2'

@@ -21,7 +21,7 @@ import {
 import { tooltipStyle } from '../charts/chartConfig';
 import { scoreToRedBlueHsl } from '../../utils/scoreHue';
 
-const LABEL = 'text-[10px] font-bold text-si-5 uppercase tracking-[0.18em]';
+const LABEL = 'text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]';
 
 export interface FundamentalScorecardProps {
   ticker: string;
@@ -66,7 +66,7 @@ function SemiGauge({ value }: { value: number }) {
         <span className="text-3xl font-bold tabular-nums" style={{ color: scoreToRedBlueHsl(v) }}>
           {v}
         </span>
-        <span className="text-[10px] font-bold text-si-5 uppercase tracking-[0.2em]">de 100</span>
+        <span className="text-[11px] font-bold text-si-5 uppercase tracking-[0.2em]">de 100</span>
         <span className="sr-only">Escala visual: 0 vermelho a 100 azul</span>
       </div>
     </div>
@@ -164,7 +164,7 @@ export function FundamentalScorecard({
               {tier.label}
             </span>
           </p>
-          <p className="text-center text-[9px] text-si-5 tracking-wide">0 vermelho → 100 azul</p>
+          <p className="text-center text-[10px] text-si-5 tracking-wide">0 vermelho → 100 azul</p>
           <div className="space-y-2 text-sm border-t border-si-border pt-3">
             <div className="flex justify-between gap-2">
               <span className="text-si-5">Preço atual</span>
@@ -194,7 +194,7 @@ export function FundamentalScorecard({
               </>
             )}
           </div>
-          <p className="text-[10px] text-si-4 leading-relaxed">
+          <p className="text-[11px] text-si-4 leading-relaxed">
             Média simples dos preços dos métodos disponíveis (Graham, Bazin e valor intrínseco Buffett). Cada
             método pode puxar a média para cima ou para baixo — use como referência, não como alvo único.
           </p>
@@ -217,7 +217,7 @@ export function FundamentalScorecard({
                     {pack.graham.upsidePct >= 0 ? 'Upside' : 'Downside'}{' '}
                     {Math.abs(pack.graham.upsidePct).toFixed(1)}% vs preço
                   </p>
-                  <p className="text-[10px] text-si-4 mt-2 font-mono">√(22,5 × LPA × VPA)</p>
+                  <p className="text-[11px] text-si-4 mt-2 font-mono">√(22,5 × LPA × VPA)</p>
                   {typeof pe === 'number' && pe > 0 && (
                     <p className="text-[11px] text-si-4 mt-1">P/L {pe.toFixed(1)}</p>
                   )}
@@ -256,7 +256,7 @@ export function FundamentalScorecard({
                   {typeof dy === 'number' && (
                     <p className="text-[11px] text-si-4 mt-2">DY {dy.toFixed(2)}%</p>
                   )}
-                  <div ref={bazinTipRef} className="mt-1 flex items-center gap-1.5 text-[10px] text-si-5 relative group w-fit">
+                  <div ref={bazinTipRef} className="mt-1 flex items-center gap-1.5 text-[11px] text-si-5 relative group w-fit">
                     <span>
                       Base Bazin:{' '}
                       {pack.bazin.base === 'dps12m'
@@ -281,7 +281,7 @@ export function FundamentalScorecard({
                     <div
                       id="bazin-tip"
                       role="tooltip"
-                      className={`absolute left-0 top-full mt-1 z-20 w-64 rounded-lg border border-si-border-md bg-si-bg/95 p-2 text-[10px] leading-snug text-si-4 transition-opacity ${
+                      className={`absolute left-0 top-full mt-1 z-20 w-64 rounded-lg border border-si-border-md bg-si-bg/95 p-2 text-[11px] leading-snug text-si-4 transition-opacity ${
                         bazinTipOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100'
                       }`}
                     >
@@ -348,7 +348,7 @@ export function FundamentalScorecard({
                 </span>
               </div>
               <p className="text-sm font-bold text-si-1 mb-2">Score {pack.buffett.score}/100</p>
-              <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-si-5 mb-2">
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-si-5 mb-2">
                 <span>Moat {pack.buffett.moatScore}/25</span>
                 <span>Gestão {pack.buffett.mgtScore}/25</span>
                 <span>Saúde {pack.buffett.finScore}/25</span>

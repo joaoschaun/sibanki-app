@@ -33,7 +33,7 @@ export function RebalancingPanel({ allocation, totalAtual, profile }: Props) {
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <Target className="w-4 h-4 text-zinc-400" />
-            <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Rebalanceamento</h4>
+            <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Rebalanceamento</h4>
           </div>
           <p className="text-xs text-zinc-400">
             {needsRebalance
@@ -41,7 +41,7 @@ export function RebalancingPanel({ allocation, totalAtual, profile }: Props) {
               : 'Carteira alinhada ao perfil — nenhuma ação necessária'}
           </p>
         </div>
-        <span className="text-[10px] px-2 py-1 rounded-full bg-si-over-1 border border-si-border text-zinc-400 shrink-0 capitalize">{profile}</span>
+        <span className="text-[11px] px-2 py-1 rounded-full bg-si-over-1 border border-si-border text-zinc-400 shrink-0 capitalize">{profile}</span>
       </div>
 
       {/* Grid de alocações */}
@@ -59,10 +59,10 @@ export function RebalancingPanel({ allocation, totalAtual, profile }: Props) {
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[10px] text-zinc-500">Atual: {slice.pct.toFixed(1)}%</span>
-                <span className="text-[10px] text-zinc-600">→</span>
-                <span className="text-[10px] text-zinc-400">Alvo: {slice.targetPctMin}–{slice.targetPctMax}%</span>
-                <span className="text-[10px] text-rose-400 ml-auto">{fmtPct(slice.delta)}</span>
+                <span className="text-[11px] text-zinc-500">Atual: {slice.pct.toFixed(1)}%</span>
+                <span className="text-[11px] text-zinc-600">→</span>
+                <span className="text-[11px] text-zinc-400">Alvo: {slice.targetPctMin}–{slice.targetPctMax}%</span>
+                <span className="text-[11px] text-rose-400 ml-auto">{fmtPct(slice.delta)}</span>
               </div>
             </div>
           </div>
@@ -81,10 +81,10 @@ export function RebalancingPanel({ allocation, totalAtual, profile }: Props) {
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[10px] text-zinc-500">Atual: {slice.pct.toFixed(1)}%</span>
-                <span className="text-[10px] text-zinc-600">→</span>
-                <span className="text-[10px] text-zinc-400">Alvo: {slice.targetPctMin}–{slice.targetPctMax}%</span>
-                <span className="text-[10px] text-emerald-400 ml-auto">{fmtPct(slice.delta)}</span>
+                <span className="text-[11px] text-zinc-500">Atual: {slice.pct.toFixed(1)}%</span>
+                <span className="text-[11px] text-zinc-600">→</span>
+                <span className="text-[11px] text-zinc-400">Alvo: {slice.targetPctMin}–{slice.targetPctMax}%</span>
+                <span className="text-[11px] text-emerald-400 ml-auto">{fmtPct(slice.delta)}</span>
               </div>
             </div>
           </div>
@@ -97,7 +97,7 @@ export function RebalancingPanel({ allocation, totalAtual, profile }: Props) {
             <div className="flex-1 min-w-0 flex items-center justify-between">
               <span className="text-[11px] text-zinc-400">{slice.tipo}</span>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-zinc-500">{slice.pct.toFixed(1)}%</span>
+                <span className="text-[11px] text-zinc-500">{slice.pct.toFixed(1)}%</span>
                 <CheckCircle2 className="w-3 h-3 text-emerald-500/60" />
               </div>
             </div>
@@ -106,7 +106,7 @@ export function RebalancingPanel({ allocation, totalAtual, profile }: Props) {
       </div>
 
       {needsRebalance && (
-        <p className="text-[10px] text-zinc-600 pt-1">
+        <p className="text-[11px] text-zinc-600 pt-1">
           Valores baseados no ponto médio do alvo do perfil <span className="capitalize">{profile}</span>. Rebalanceamento não obriga venda — considere aportar nas classes subrepresentadas.
         </p>
       )}

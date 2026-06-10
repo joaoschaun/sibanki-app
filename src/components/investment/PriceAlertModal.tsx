@@ -85,7 +85,7 @@ export function PriceAlertModal({ ticker, nome, currentPrice, onClose }: Props) 
             <Bell className="w-4 h-4 text-amber-400" />
             <div>
               <p className="text-sm font-bold text-white">{ticker}</p>
-              {nome && <p className="text-[10px] text-zinc-500">{nome}</p>}
+              {nome && <p className="text-[11px] text-zinc-500">{nome}</p>}
             </div>
           </div>
           <button
@@ -101,7 +101,7 @@ export function PriceAlertModal({ ticker, nome, currentPrice, onClose }: Props) 
         <div className="px-5 py-5 space-y-5">
           {/* Condição */}
           <div>
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
+            <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
               Notificar quando
             </p>
             <div className="grid grid-cols-2 gap-2">
@@ -134,7 +134,7 @@ export function PriceAlertModal({ ticker, nome, currentPrice, onClose }: Props) 
 
           {/* Preço-alvo */}
           <div>
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-2">
+            <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest block mb-2">
               Preço-alvo (R$)
             </label>
             <div className="flex items-center gap-2">
@@ -150,7 +150,7 @@ export function PriceAlertModal({ ticker, nome, currentPrice, onClose }: Props) 
               />
             </div>
             {currentPrice && (
-              <p className="text-[10px] text-zinc-600 mt-1.5">
+              <p className="text-[11px] text-zinc-600 mt-1.5">
                 Preço atual: {fmtBRL(currentPrice)}
               </p>
             )}
@@ -168,7 +168,7 @@ export function PriceAlertModal({ ticker, nome, currentPrice, onClose }: Props) 
         {/* Alertas existentes */}
         {existing.length > 0 && (
           <div className="px-5 pb-4 space-y-2">
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">
               Alertas ativos para {ticker}
             </p>
             {existing.map((a) => (

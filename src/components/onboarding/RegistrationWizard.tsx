@@ -376,8 +376,8 @@ export function RegistrationWizard({ open, onClose, onComplete }: Props) {
               {/* Ld Estimado Card */}
               <div className={`rounded-xl border p-4 transition-all duration-300 ${freedomTier.bg}`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-si-5 uppercase font-bold tracking-wider">Ld Estimado (Dias de Liberdade)</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded border uppercase font-extrabold tracking-wider ${
+                  <span className="text-[11px] text-si-5 uppercase font-bold tracking-wider">Ld Estimado (Dias de Liberdade)</span>
+                  <span className={`text-[11px] px-2 py-0.5 rounded border uppercase font-extrabold tracking-wider ${
                     gastosVal > 0 && totalReserva > 0 
                       ? (estimatedLd > 365 ? 'bg-violet-500/15 text-violet-300 border-violet-500/30' :
                          estimatedLd > 180 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' :
@@ -410,7 +410,7 @@ export function RegistrationWizard({ open, onClose, onComplete }: Props) {
                 </p>
 
                 {gastosVal > 0 && totalReserva > 0 && (
-                  <p className="text-[10px] text-si-5 mt-2 border-t border-si-border/30 pt-2">
+                  <p className="text-[11px] text-si-5 mt-2 border-t border-si-border/30 pt-2">
                     Cálculo preliminar: {totalReserva.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })} em reservas totais / {gastosVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })} de custos por mês.
                   </p>
                 )}

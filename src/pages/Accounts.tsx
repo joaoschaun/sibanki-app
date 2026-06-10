@@ -467,7 +467,7 @@ export default function Accounts() {
                             backgroundHex={b.logoBg || '#ffffff'} 
                           />
                         </div>
-                        <span className="text-[9px] font-semibold uppercase tracking-wider truncate w-full">{b.name}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider truncate w-full">{b.name}</span>
                       </button>
                     );
                   })}
@@ -484,7 +484,7 @@ export default function Accounts() {
                     <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700/50 flex items-center justify-center p-1 shadow-inner select-none shrink-0 overflow-hidden">
                       <Building2 className="w-4.5 h-4.5 text-zinc-400" />
                     </div>
-                    <span className="text-[9px] font-semibold uppercase tracking-wider truncate w-full">Personalizado</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider truncate w-full">Personalizado</span>
                   </button>
                 </div>
               </div>

@@ -566,7 +566,7 @@ export default function Dashboard() {
                     setTxSearch('');
                   }
                 }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-full text-[10px] font-bold tracking-[0.1em] uppercase border transition-all ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-full text-[11px] font-bold tracking-[0.1em] uppercase border transition-all ${
                   active
                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                     : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border-si-border'
@@ -581,7 +581,7 @@ export default function Dashboard() {
         <button
           type="button"
           onClick={() => setShowEditor((v) => !v)}
-          className="self-end sm:self-auto px-3 py-1.5 rounded-md bg-si-over-1 border border-si-border text-[10px] font-bold text-si-5 hover:bg-si-over-2 hover:text-si-3 uppercase tracking-[0.1em] transition-colors"
+          className="self-end sm:self-auto px-3 py-1.5 rounded-md bg-si-over-1 border border-si-border text-[11px] font-bold text-si-5 hover:bg-si-over-2 hover:text-si-3 uppercase tracking-[0.1em] transition-colors"
         >
           {showEditor ? 'Fechar' : 'Editar'}
         </button>
@@ -671,7 +671,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-3">
                   <Zap className="w-3.5 h-3.5 text-si-5" />
-                  <h3 className="text-[10px] font-bold text-si-5 uppercase tracking-[0.18em]">Próximas Ações</h3>
+                  <h3 className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Próximas Ações</h3>
                 </div>
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${HEALTH_COLORS[healthLevel] ?? 'text-si-4 bg-si-over-1 border-si-border'}`}>
                   <span>{healthLevel}</span>
@@ -723,10 +723,10 @@ export default function Dashboard() {
             <div className="bg-si-card rounded-2xl border border-si-border p-6">
               <div className="flex items-center justify-between gap-4 mb-4">
                 <div>
-                  <h3 className="text-[10px] font-bold text-si-5 uppercase tracking-[0.18em]">Primeiros Passos</h3>
+                  <h3 className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Primeiros Passos</h3>
                   <p className="text-si-5 text-xs mt-0.5">Configure seu controle financeiro.</p>
                 </div>
-                <span className="text-[10px] font-bold text-si-4 uppercase tracking-wide">
+                <span className="text-[11px] font-bold text-si-4 uppercase tracking-wide">
                   {primeirosPassos.doneCount}/{primeirosPassos.steps.length}
                 </span>
               </div>
@@ -962,7 +962,7 @@ export default function Dashboard() {
           <div className="bg-si-card border border-si-border rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div>
-                <h3 className="text-[10px] font-bold text-si-5 uppercase tracking-[0.18em]">Transações Recentes</h3>
+                <h3 className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Transações Recentes</h3>
                 <p className="text-si-5 text-xs mt-0.5">Últimos lançamentos e impacto Sv em tempo real.</p>
               </div>
               <div className="relative w-full sm:w-64">
@@ -1250,9 +1250,9 @@ export default function Dashboard() {
                           <div className="flex items-center gap-1.5">
                             <span className="font-semibold text-si-1">{item.category}</span>
                             {overBudget ? (
-                              <span className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 font-bold text-[9px] uppercase">Estourado</span>
+                              <span className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 font-bold text-[10px] uppercase">Estourado</span>
                             ) : warning ? (
-                              <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold text-[9px] uppercase">Atenção</span>
+                              <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold text-[10px] uppercase">Atenção</span>
                             ) : null}
                           </div>
                           <span className="text-si-4">

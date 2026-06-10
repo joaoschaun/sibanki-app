@@ -304,7 +304,7 @@ export default function Profile() {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold tracking-[0.1em] uppercase border transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold tracking-[0.1em] uppercase border transition-all ${
                 active
                   ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                   : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border-si-border'
@@ -470,8 +470,8 @@ export default function Profile() {
                   
                   <div className="flex justify-between items-start z-10">
                     <div>
-                      <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">Cartão Soberano</h4>
-                      <span className={`text-[10px] font-bold uppercase tracking-wider ${cardThemes.textColor} block mt-0.5`}>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Cartão Soberano</h4>
+                      <span className={`text-[11px] font-bold uppercase tracking-wider ${cardThemes.textColor} block mt-0.5`}>
                         {cardThemes.badge}
                       </span>
                     </div>
@@ -489,11 +489,11 @@ export default function Profile() {
                     
                     <div className="flex justify-between items-end mt-4">
                       <div>
-                        <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">Titular</p>
+                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Titular</p>
                         <p className="text-xs font-bold text-zinc-300 truncate max-w-[150px]">{name || user?.displayName || 'Usuário Sibanki'}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">Saldo SibCoin</p>
+                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Saldo SibCoin</p>
                         <p className="text-xs font-black text-emerald-400">₵ {sibcoins.toLocaleString()}</p>
                       </div>
                     </div>
@@ -504,22 +504,22 @@ export default function Profile() {
 
             {/* Dados consolidados */}
             <div className="bg-si-card rounded-2xl border border-si-border p-5 space-y-4">
-              <h3 className="font-bold text-si-1 text-[10px] uppercase tracking-[0.15em] border-b border-si-border pb-2 text-zinc-400">Dados Consolidados</h3>
+              <h3 className="font-bold text-si-1 text-[11px] uppercase tracking-[0.15em] border-b border-si-border pb-2 text-zinc-400">Dados Consolidados</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#111] p-3 rounded-xl border border-white/[0.03] text-center">
-                  <p className="text-[8px] text-si-5 font-bold uppercase tracking-wider mb-1">FinScore</p>
+                  <p className="text-[10px] text-si-5 font-bold uppercase tracking-wider mb-1">FinScore</p>
                   <p className="text-lg font-black text-emerald-400">{score}</p>
                 </div>
                 <div className="bg-[#111] p-3 rounded-xl border border-white/[0.03] text-center">
-                  <p className="text-[8px] text-si-5 font-bold uppercase tracking-wider mb-1">Lançamentos</p>
+                  <p className="text-[10px] text-si-5 font-bold uppercase tracking-wider mb-1">Lançamentos</p>
                   <p className="text-lg font-black text-si-1">{entries.length}</p>
                 </div>
                 <div className="bg-[#111] p-3 rounded-xl border border-white/[0.03] text-center">
-                  <p className="text-[8px] text-si-5 font-bold uppercase tracking-wider mb-1">Metas</p>
+                  <p className="text-[10px] text-si-5 font-bold uppercase tracking-wider mb-1">Metas</p>
                   <p className="text-lg font-black text-si-1">{goals.length}</p>
                 </div>
                 <div className="bg-[#111] p-3 rounded-xl border border-white/[0.03] text-center">
-                  <p className="text-[8px] text-si-5 font-bold uppercase tracking-wider mb-1">Contas</p>
+                  <p className="text-[10px] text-si-5 font-bold uppercase tracking-wider mb-1">Contas</p>
                   <p className="text-lg font-black text-si-1">{accounts.length}</p>
                 </div>
               </div>
@@ -739,7 +739,7 @@ export default function Profile() {
             <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/10 text-xs leading-relaxed text-zinc-300">
               <p className="font-bold text-amber-400 uppercase tracking-wider mb-1">✉ Convite Pendente / Ativo</p>
               <p>O e-mail <span className="font-bold text-si-1">{data.family.inviteEmail}</span> está associado ao seu Modo Família com permissão de <span className="font-bold text-si-1">{data.family.role === 'editor' ? 'Visualizar e Lançar' : 'Somente Visualizar'}</span>.</p>
-              <p className="text-[10px] text-zinc-500 mt-2">Atualizado em: {new Date(data.family.updatedAt).toLocaleDateString('pt-BR')} às {new Date(data.family.updatedAt).toLocaleTimeString('pt-BR')}</p>
+              <p className="text-[11px] text-zinc-500 mt-2">Atualizado em: {new Date(data.family.updatedAt).toLocaleDateString('pt-BR')} às {new Date(data.family.updatedAt).toLocaleTimeString('pt-BR')}</p>
             </div>
           )}
 

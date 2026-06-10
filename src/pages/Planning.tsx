@@ -364,7 +364,7 @@ export default function Planning() {
                         <div>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-xs font-semibold text-si-2">Previsão de Tempo</span>
-                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${statusCor}`}>
+                            <span className={`px-1.5 py-0.5 rounded text-[11px] font-bold border ${statusCor}`}>
                               {statusText}
                             </span>
                           </div>

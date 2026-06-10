@@ -42,7 +42,7 @@ export function PortfolioEvolutionChart({ history }: Props) {
   if (data.length < 2) {
     return (
       <div className="bg-si-card border border-si-border rounded-2xl p-5">
-        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Evolução Patrimonial</p>
+        <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Evolução Patrimonial</p>
         <p className="text-sm text-zinc-500 mt-4">
           Histórico disponível após pelo menos 2 meses de aportes registrados.
         </p>
@@ -56,10 +56,10 @@ export function PortfolioEvolutionChart({ history }: Props) {
     <div className="bg-si-card border border-si-border rounded-2xl p-5 space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Evolução Patrimonial</p>
+          <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Evolução Patrimonial</p>
           <p className="text-xs text-zinc-500 mt-0.5">Aportes acumulados e valor de mercado</p>
         </div>
-        <div className="flex items-center gap-3 text-[10px] text-zinc-500">
+        <div className="flex items-center gap-3 text-[11px] text-zinc-500">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-0.5 bg-zinc-500 inline-block rounded" />
             Investido

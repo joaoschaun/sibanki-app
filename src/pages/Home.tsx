@@ -424,29 +424,29 @@ export default function Home() {
 
           {/* Dias de Liberdade */}
           <div className="bg-si-card border border-si-border rounded-xl p-4 lg:p-5 flex sm:flex-col items-center sm:items-start gap-4 sm:gap-0">
-            <p className="text-[10px] font-bold text-si-5 uppercase tracking-widest sm:mb-2 shrink-0">Dias de Liberdade</p>
+            <p className="text-[11px] font-bold text-si-5 uppercase tracking-widest sm:mb-2 shrink-0">Dias de Liberdade</p>
             <p className={`text-3xl lg:text-5xl font-black tabular-nums leading-none ${FREEDOM_COLORS[freedom.status] ?? 'text-si-1'}`}>
               {freedom.days > 9999 ? '∞' : freedom.days}
             </p>
-            <p className="text-[10px] text-si-5 sm:mt-1.5 uppercase tracking-wide hidden sm:block">
+            <p className="text-[11px] text-si-5 sm:mt-1.5 uppercase tracking-wide hidden sm:block">
               {freedom.status.replace(/-/g, ' ')}
             </p>
           </div>
 
           {/* Status Financeiro */}
           <div className="bg-si-card border border-si-border rounded-xl p-4 lg:p-5 flex sm:flex-col items-center sm:items-start gap-4 sm:gap-0">
-            <p className="text-[10px] font-bold text-si-5 uppercase tracking-widest sm:mb-2 shrink-0">Status</p>
+            <p className="text-[11px] font-bold text-si-5 uppercase tracking-widest sm:mb-2 shrink-0">Status</p>
             <p className={`text-lg lg:text-2xl font-black uppercase tracking-tight leading-none ${HEALTH_COLORS[healthLevel] ?? 'text-si-1'}`}>
               {healthLevel}
             </p>
-            <p className="text-[10px] text-si-5 sm:mt-1.5 hidden sm:block">
+            <p className="text-[11px] text-si-5 sm:mt-1.5 hidden sm:block">
               {JOURNEY_LABELS[journeyStage] ?? journeyStage}
             </p>
           </div>
 
           {/* Próxima Ação */}
           <div className="bg-si-card border border-si-border rounded-xl p-4 lg:p-5 flex sm:flex-col items-center sm:items-start gap-4 sm:gap-0">
-            <p className="text-[10px] font-bold text-si-5 uppercase tracking-widest sm:mb-2 shrink-0">Próxima Ação</p>
+            <p className="text-[11px] font-bold text-si-5 uppercase tracking-widest sm:mb-2 shrink-0">Próxima Ação</p>
             {nextBestActions[0] ? (
               <Link
                 to={ACTION_MAP[nextBestActions[0]]?.to ?? '/consultor-ia'}
@@ -475,7 +475,7 @@ export default function Home() {
         <div className="flex-1 min-w-0">
           {/* Header: nome + badge OF */}
           <div className="flex items-center justify-between mb-2 gap-3">
-            <p className="text-[10px] font-bold text-si-4 uppercase tracking-[0.15em]">Arquiteto Soberano</p>
+            <p className="text-[11px] font-bold text-si-4 uppercase tracking-[0.15em]">Arquiteto Soberano</p>
             {hasOpenFinance && (
               <SyncBadge
                 syncedAt={openFinanceSyncedAt}
@@ -527,7 +527,7 @@ export default function Home() {
                       }`}>
                         <BoldText text={item.text} />
                         {item.verified && (
-                          <span className="ml-1.5 inline-flex items-center text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 rounded px-1 py-0.5 align-middle">
+                          <span className="ml-1.5 inline-flex items-center text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 rounded px-1 py-0.5 align-middle">
                             ✓ OF
                           </span>
                         )}
@@ -599,7 +599,7 @@ export default function Home() {
 
       {/* ── quick actions grid ── */}
       <div>
-        <p className="text-[10px] font-bold text-si-5 uppercase tracking-[0.18em] mb-3">Acesso Rápido</p>
+        <p className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em] mb-3">Acesso Rápido</p>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 lg:gap-3">
           {ACTIONS.map(({ icon: Icon, label, to }) => (
             <Link
@@ -616,7 +616,7 @@ export default function Home() {
 
       {/* ── footer: dias de liberdade + score ── */}
       {!loading && (
-        <div className="flex items-center justify-center gap-4 lg:gap-6 text-[10px] text-si-5 pt-2 pb-2 uppercase tracking-[0.12em]">
+        <div className="flex items-center justify-center gap-4 lg:gap-6 text-[11px] text-si-5 pt-2 pb-2 uppercase tracking-[0.12em]">
           <span className="flex items-center gap-1.5">
             <Shield className="w-3 h-3 text-si-5" />
             {freedom.days} dias de liberdade

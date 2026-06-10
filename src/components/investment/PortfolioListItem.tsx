@@ -70,13 +70,13 @@ export function PortfolioListItem({ investment: inv, onEdit, onDelete, onAlert }
         {/* Nome + tipo */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-si-1 truncate">{inv.nome}</p>
-          <p className="text-[10px] text-zinc-500">{inv.tipo}{qtd > 0 ? ` · ${qtd} cotas` : ''}</p>
+          <p className="text-[11px] text-zinc-500">{inv.tipo}{qtd > 0 ? ` · ${qtd} cotas` : ''}</p>
         </div>
 
         {/* Valor atual */}
         <div className="text-right shrink-0">
           <p className="text-sm font-bold text-si-1">{fmtBRL(atual)}</p>
-          <p className={`text-[10px] font-bold flex items-center gap-0.5 justify-end ${pnlColor}`}>
+          <p className={`text-[11px] font-bold flex items-center gap-0.5 justify-end ${pnlColor}`}>
             <PnlIcon className="w-2.5 h-2.5" />
             {pnl > 0 ? '+' : ''}{fmtBRL(pnl)} ({pnlPct > 0 ? '+' : ''}{pnlPct.toFixed(1)}%)
           </p>
@@ -95,7 +95,7 @@ export function PortfolioListItem({ investment: inv, onEdit, onDelete, onAlert }
           {ticker && (
             <div className="rounded-lg overflow-hidden border border-si-border">
               <div className="px-3 pt-2 pb-1 flex items-center justify-between">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest">{ticker} · 90 dias</span>
+                <span className="text-[11px] text-zinc-500 uppercase tracking-widest">{ticker} · 90 dias</span>
               </div>
               <PriceChart ticker={ticker} height={150} />
             </div>
@@ -104,34 +104,34 @@ export function PortfolioListItem({ investment: inv, onEdit, onDelete, onAlert }
           {/* Métricas detalhadas */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Aplicado</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-0.5">Aplicado</p>
               <p className="font-bold text-zinc-300">{fmtBRL(aplicado)}</p>
             </div>
             <div>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Valor atual</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-0.5">Valor atual</p>
               <p className="font-bold text-si-1">{fmtBRL(atual)}</p>
             </div>
             {inv.precoCompra != null && (
               <div>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Preço médio</p>
+                <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-0.5">Preço médio</p>
                 <p className="font-bold text-zinc-300">{fmtBRL(inv.precoCompra)}</p>
               </div>
             )}
             {dy != null && dy > 0 && (
               <div>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">DY real</p>
+                <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-0.5">DY real</p>
                 <p className="font-bold text-emerald-400">{dy.toFixed(2)}% a.a.</p>
               </div>
             )}
             {Number(inv.proventosMensais) > 0 && (
               <div>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Renda/mês</p>
+                <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-0.5">Renda/mês</p>
                 <p className="font-bold text-emerald-400">{fmtBRL(Number(inv.proventosMensais))}</p>
               </div>
             )}
             {inv.conta && (
               <div>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Conta</p>
+                <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-0.5">Conta</p>
                 <p className="font-bold text-zinc-400 truncate">{inv.conta}</p>
               </div>
             )}

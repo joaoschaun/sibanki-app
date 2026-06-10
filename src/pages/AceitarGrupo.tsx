@@ -142,7 +142,7 @@ export default function AceitarGrupo() {
 
         {/* Detalhes */}
         <div className="bg-si-card border border-si-border rounded-2xl p-5 space-y-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Como vai funcionar</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Como vai funcionar</p>
           {[
             { icon: <Users      className="w-3.5 h-3.5" />, label: 'Participantes', value: `${group.totalParticipants} pessoas` },
             { icon: <DollarSign className="w-3.5 h-3.5" />, label: 'Sua contribuição', value: `${fmtBRL(group.contributionAmount)} por rodada` },
@@ -165,7 +165,7 @@ export default function AceitarGrupo() {
 
         {/* Como funciona */}
         <div className="bg-si-over-1 rounded-xl p-4 space-y-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">O que acontece após aceitar</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">O que acontece após aceitar</p>
           {[
             'Você entra no grupo e recebe lembretes de cada rodada',
             'Contribua no dia da rodada — o admin confirma o pagamento',

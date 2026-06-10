@@ -128,7 +128,7 @@ export default function CrediAmigo() {
           { label: 'Quitados',   value: paidCount,          sub: 'concluídos' },
         ].map(({ label, value, sub }) => (
           <div key={label} className="bg-si-card border border-si-border rounded-2xl p-4 text-center">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">{label}</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">{label}</p>
             <p className="text-xl font-bold text-si-1 mt-1">{value}</p>
             <p className="text-xs text-si-5">{sub}</p>
           </div>
@@ -140,7 +140,7 @@ export default function CrediAmigo() {
         <EmptyState onNew={() => setCreating(true)} />
       ) : (
         <div className="space-y-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Seus empréstimos</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Seus empréstimos</p>
           {loans.map((loan) => {
             const paid = loan.installmentsList.filter((i) => i.status === 'paid').length;
             const st = statusLabel(loan.status);
@@ -157,8 +157,8 @@ export default function CrediAmigo() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-si-1">{counterpart(loan)}</p>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
-                    {overdue && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-rose-400 bg-rose-500/10">Atrasado</span>}
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
+                    {overdue && <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-rose-400 bg-rose-500/10">Atrasado</span>}
                   </div>
                   <p className="text-xs text-si-5 mt-0.5">
                     {loan.role === 'credor' ? 'Você emprestou' : 'Você deve'} · {loan.installments}× {fmtBRL(calcInstallments(loan.amount, loan.interestRate, loan.installments))}
@@ -187,7 +187,7 @@ export default function CrediAmigo() {
 
       {/* Como funciona */}
       <div className="bg-si-card border border-si-border rounded-2xl p-5 space-y-4">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Como funciona</p>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Como funciona</p>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           {[
             { n: '1', t: 'Crie',     d: 'Defina valor, juros e parcelas' },
@@ -331,7 +331,7 @@ const canNext = [
       {/* Step 0 — Detalhes do empréstimo */}
       {step === 0 && (
         <div className="bg-si-card border border-si-border rounded-2xl p-6 space-y-5">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Detalhes do empréstimo</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Detalhes do empréstimo</p>
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-si-4 uppercase tracking-wider">Valor</label>
@@ -401,7 +401,7 @@ const canNext = [
           {/* Preview */}
           {amount > 0 && (
             <div className="bg-si-over-1 rounded-xl p-4 space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Resumo</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Resumo</p>
               <div className="flex justify-between text-sm">
                 <span className="text-si-4">Valor emprestado</span>
                 <span className="font-bold text-si-1">{fmtBRL(amount)}</span>
@@ -424,7 +424,7 @@ const canNext = [
       {/* Step 1 — Dados do devedor */}
       {step === 1 && (
         <div className="bg-si-card border border-si-border rounded-2xl p-6 space-y-5">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Quem vai receber?</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Quem vai receber?</p>
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-si-4 uppercase tracking-wider">Nome</label>
@@ -486,7 +486,7 @@ const canNext = [
       {step === 2 && (
         <div className="space-y-4">
           <div className="bg-si-card border border-si-border rounded-2xl p-6 space-y-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Resumo do contrato</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Resumo do contrato</p>
             {[
               { label: 'Credor',         value: credorName },
               { label: 'Devedor',        value: form.counterpartName },
@@ -580,22 +580,22 @@ function LoanDetail({ loan, onBack, onMarkPaid }: LoanDetailProps) {
         </button>
         <div className="flex-1">
           <h2 className="font-bold text-si-1">{counterpart(loan)}</h2>
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
         </div>
       </div>
 
       {/* Valores */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-si-card border border-si-border rounded-xl p-3 text-center">
-          <p className="text-[10px] uppercase tracking-widest text-si-5 font-bold">Total</p>
+          <p className="text-[11px] uppercase tracking-widest text-si-5 font-bold">Total</p>
           <p className="font-bold text-si-1 mt-1">{fmtBRL(loan.amount)}</p>
         </div>
         <div className="bg-si-card border border-si-border rounded-xl p-3 text-center">
-          <p className="text-[10px] uppercase tracking-widest text-si-5 font-bold">Pago</p>
+          <p className="text-[11px] uppercase tracking-widest text-si-5 font-bold">Pago</p>
           <p className="font-bold text-emerald-400 mt-1">{fmtBRL(paidAmt)}</p>
         </div>
         <div className="bg-si-card border border-si-border rounded-xl p-3 text-center">
-          <p className="text-[10px] uppercase tracking-widest text-si-5 font-bold">Restante</p>
+          <p className="text-[11px] uppercase tracking-widest text-si-5 font-bold">Restante</p>
           <p className="font-bold text-si-1 mt-1">{fmtBRL(remaining)}</p>
         </div>
       </div>
@@ -617,7 +617,7 @@ function LoanDetail({ loan, onBack, onMarkPaid }: LoanDetailProps) {
       {/* Parcelas */}
       <div className="bg-si-card border border-si-border rounded-2xl overflow-hidden">
         <div className="px-5 py-3 border-b border-si-border">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Parcelas</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Parcelas</p>
         </div>
         <div className="divide-y divide-white/5">
           {loan.installmentsList.map((inst) => {
@@ -652,7 +652,7 @@ function LoanDetail({ loan, onBack, onMarkPaid }: LoanDetailProps) {
 
       {/* Detalhes */}
       <div className="bg-si-card border border-si-border rounded-2xl p-5 space-y-3">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Detalhes</p>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Detalhes</p>
         {[
           { icon: <User         className="w-3.5 h-3.5" />, label: loan.devedorContactType === 'whatsapp' ? 'WhatsApp' : 'E-mail', value: loan.devedorContact },
           { icon: <TrendingDown className="w-3.5 h-3.5" />, label: 'Juros', value: loan.interestRate === 0 ? 'Sem juros' : `${loan.interestRate}% a.m.` },

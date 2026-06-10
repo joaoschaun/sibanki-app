@@ -261,7 +261,7 @@ export default function Loja() {
               <div className="h-1 bg-si-over-2 rounded-full overflow-hidden">
                 <div className="h-full bg-amber-400/60 rounded-full transition-all" style={{ width: `${tierProgress.pct}%` }} />
               </div>
-              <p className="text-[10px] text-si-5 mt-1">
+              <p className="text-[11px] text-si-5 mt-1">
                 {tierProgress.remaining.toLocaleString('pt-BR')} SC para {tierProgress.nextLabel}
               </p>
             </div>
@@ -302,7 +302,7 @@ export default function Loja() {
                 <Zap className="w-5 h-5 text-emerald-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-emerald-400/70 uppercase tracking-widest font-bold">Baseado nos seus gastos</p>
+                <p className="text-[11px] text-emerald-400/70 uppercase tracking-widest font-bold">Baseado nos seus gastos</p>
                 <p className="text-sm text-si-2 mt-0.5">
                   Você gasta <strong className="text-si-1">R$ {contextualRec.topAmt.toFixed(0)}/mês</strong> em {contextualRec.topCat}
                   {' '}—{' '}
@@ -352,7 +352,7 @@ export default function Loja() {
           {/* Destaques — grid 2 colunas */}
           {!loading && featured.length > 0 && filterCat === 'Todos' && !search && (
             <div>
-              <p className="text-[10px] font-bold tracking-widest uppercase text-si-5 mb-3 flex items-center gap-2">
+              <p className="text-[11px] font-bold tracking-widest uppercase text-si-5 mb-3 flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Maiores cashbacks
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -366,7 +366,7 @@ export default function Loja() {
           {/* Todas as lojas */}
           {!loading && (
             <div>
-              <p className="text-[10px] font-bold tracking-widest uppercase text-si-5 mb-3">
+              <p className="text-[11px] font-bold tracking-widest uppercase text-si-5 mb-3">
                 {search || filterCat !== 'Todos'
                   ? `${filtered.length} resultado${filtered.length !== 1 ? 's' : ''}`
                   : `Todas as lojas · ${filtered.length}`}
@@ -397,7 +397,7 @@ export default function Loja() {
           {/* Como funciona */}
           {!loading && (
             <div className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-si-5">Como funciona</p>
+              <p className="text-[11px] font-bold tracking-widest uppercase text-si-5">Como funciona</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
                   { n: '1', icon: <ExternalLink className="w-4 h-4 text-si-4" />, label: 'Ative a oferta', sub: 'Clique em "Ativar" — você é redirecionado com link rastreado' },
@@ -428,14 +428,14 @@ export default function Loja() {
               <Trophy className="w-7 h-7 text-amber-400" />
             </div>
             <div className="flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Saldo disponível</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Saldo disponível</p>
               <p className="text-3xl font-bold text-amber-400 leading-tight">
                 {balance.toLocaleString('pt-BR')} <span className="text-lg">SC</span>
               </p>
               <p className="text-xs text-si-5 mt-0.5">≈ R$ {(balance * 0.01).toFixed(2)}</p>
             </div>
             <div className="text-right">
-              <p className="text-[10px] uppercase tracking-widest text-si-5 font-bold">Tier</p>
+              <p className="text-[11px] uppercase tracking-widest text-si-5 font-bold">Tier</p>
               <p className={`text-sm font-bold ${tierCfg.color}`}>{tierCfg.label}</p>
               {multiplier > 1 && <p className="text-xs text-amber-400 font-bold mt-0.5">{multiplier}× cashback</p>}
             </div>
@@ -457,7 +457,7 @@ export default function Loja() {
                       <span className="text-3xl leading-none">{r.emoji}</span>
                       <div>
                         <p className="font-semibold text-si-1 text-sm leading-tight">{r.title}</p>
-                        <span className={`inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full mt-1 ${REWARD_COLOR[r.category]}`}>
+                        <span className={`inline-block text-[11px] font-bold px-1.5 py-0.5 rounded-full mt-1 ${REWARD_COLOR[r.category]}`}>
                           {r.category}
                         </span>
                       </div>
@@ -511,7 +511,7 @@ export default function Loja() {
               { label: 'Transações',      value: String(sibcoinHistory.length),             color: 'text-si-2'     },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-si-card border border-si-border rounded-xl p-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-si-5 mb-1">{label}</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-si-5 mb-1">{label}</p>
                 <p className={`text-lg font-bold ${color}`}>{value}</p>
               </div>
             ))}
@@ -602,25 +602,25 @@ function OfferCard({ offer, multiplier, onActivate, ldImpact }: OfferCardProps) 
           <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
             <span className="font-bold text-si-1 text-sm leading-tight">{offer.merchant}</span>
             {offer.cashbackPct >= 5 && (
-              <span className="text-[9px] font-bold bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+              <span className="text-[10px] font-bold bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                 <Star className="w-2.5 h-2.5" /> TOP
               </span>
             )}
           </div>
           <p className="text-xs text-si-5 truncate">{offer.desc}</p>
-          <span className="text-[10px] text-si-5/60 font-medium mt-1 inline-block">{offer.network}</span>
+          <span className="text-[11px] text-si-5/60 font-medium mt-1 inline-block">{offer.network}</span>
         </div>
       </div>
       <div className="px-4 pb-4 space-y-2">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-2xl font-bold text-emerald-400 leading-none">{effective}%</p>
-            <p className="text-[10px] text-si-5 uppercase tracking-widest font-bold">cashback</p>
+            <p className="text-[11px] text-si-5 uppercase tracking-widest font-bold">cashback</p>
           </div>
           {ldImpact && (
             <div className="text-right">
-              <p className="text-[10px] text-blue-400/80 font-semibold">{ldImpact}</p>
-              <p className="text-[9px] text-si-5">por R$200 comprados</p>
+              <p className="text-[11px] text-blue-400/80 font-semibold">{ldImpact}</p>
+              <p className="text-[10px] text-si-5">por R$200 comprados</p>
             </div>
           )}
         </div>
@@ -644,15 +644,15 @@ function OfferRow({ offer, multiplier, onActivate, ldImpact }: OfferCardProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p className="font-semibold text-si-1 text-sm">{offer.merchant}</p>
-          <span className="text-[9px] text-si-5/50 font-medium hidden sm:inline">{offer.network}</span>
+          <span className="text-[10px] text-si-5/50 font-medium hidden sm:inline">{offer.network}</span>
         </div>
         <p className="text-xs text-si-5 truncate">{offer.desc}</p>
-        {ldImpact && <p className="text-[10px] text-blue-400/70 font-semibold mt-0.5">{ldImpact} por R$200</p>}
+        {ldImpact && <p className="text-[11px] text-blue-400/70 font-semibold mt-0.5">{ldImpact} por R$200</p>}
       </div>
       <div className="flex items-center gap-4 shrink-0">
         <div className="text-right">
           <p className="text-xl font-bold text-emerald-400 leading-none">{effective}%</p>
-          <p className="text-[9px] text-si-5 uppercase tracking-widest font-bold">cashback</p>
+          <p className="text-[10px] text-si-5 uppercase tracking-widest font-bold">cashback</p>
         </div>
         <button
           onClick={() => onActivate(offer)}

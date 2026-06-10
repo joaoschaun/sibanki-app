@@ -82,7 +82,7 @@ export function InvestmentInsights({ investments, entries, investorProfile, hasO
           <Zap className="w-4 h-4 text-blue-400" />
           <span className="text-sm font-semibold text-white">Raio X da Carteira</span>
         </div>
-        <span className="text-[10px] text-zinc-600">{dataLabel}</span>
+        <span className="text-[11px] text-zinc-600">{dataLabel}</span>
       </div>
 
       {/* Grid principal */}
@@ -97,8 +97,8 @@ export function InvestmentInsights({ investments, entries, investorProfile, hasO
             {fmtPct(rentabPct, true)}
           </p>
           <div className="mt-1 space-y-0.5">
-            <p className="text-[10px] text-zinc-600">sobre o aplicado</p>
-            <p className={`text-[10px] font-semibold ${vsCodiPct >= 0 ? 'text-emerald-400/80' : 'text-rose-400/80'}`}>
+            <p className="text-[11px] text-zinc-600">sobre o aplicado</p>
+            <p className={`text-[11px] font-semibold ${vsCodiPct >= 0 ? 'text-emerald-400/80' : 'text-rose-400/80'}`}>
               {vsCodiPct >= 0 ? '+' : ''}{vsCodiPct.toFixed(1)}% vs CDI ({cdiAnualPct.toFixed(1)}%)
             </p>
           </div>
@@ -111,7 +111,7 @@ export function InvestmentInsights({ investments, entries, investorProfile, hasO
             <span className="text-[11px] text-zinc-500 uppercase tracking-wider">Renda passiva</span>
           </div>
           <p className="text-2xl font-bold text-white tabular-nums">{fmtBRL(rendaPassivaMensal)}</p>
-          <p className="text-[10px] text-zinc-600 mt-0.5">estimado/mês (DY + proventos)</p>
+          <p className="text-[11px] text-zinc-600 mt-0.5">estimado/mês (DY + proventos)</p>
         </div>
 
         {/* Dias de liberdade */}
@@ -126,7 +126,7 @@ export function InvestmentInsights({ investments, entries, investorProfile, hasO
                 {diasLiberdade > 9999 ? '∞' : diasLiberdade.toLocaleString('pt-BR')}
                 <span className="text-sm font-normal text-zinc-500 ml-1">dias</span>
               </p>
-              <p className="text-[10px] text-zinc-600 mt-0.5">
+              <p className="text-[11px] text-zinc-600 mt-0.5">
                 {mesesLiberdade >= 12 ? `${(mesesLiberdade / 12).toFixed(1)} anos` : `${mesesLiberdade.toFixed(1)} meses`}
               </p>
             </>
@@ -183,7 +183,7 @@ export function InvestmentInsights({ investments, entries, investorProfile, hasO
             — {alignMsg}
           </span>
           {hasOpenFinance && dataFreshness === 'fresh' && (
-            <span className="ml-auto shrink-0 text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
+            <span className="ml-auto shrink-0 text-[11px] text-emerald-500 font-semibold flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
               OF verificado
             </span>

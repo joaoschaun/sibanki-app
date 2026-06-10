@@ -68,14 +68,14 @@ export default function Assinaturas() {
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className={cardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Gasto mensal</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Gasto mensal</p>
           <p className="text-2xl font-bold text-violet-400">
             R$ {totalMonthly.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
           <p className="text-xs text-si-5">Soma de todas as assinaturas ativas</p>
         </div>
         <div className={cardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-si-5">Identificadas</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-si-5">Identificadas</p>
           <p className="text-2xl font-bold text-si-1">{subscriptions.length}</p>
           <p className="text-xs text-si-5">Por categoria ou palavras-chave</p>
         </div>
@@ -86,7 +86,7 @@ export default function Assinaturas() {
         <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/25 space-y-2">
           <div className="flex items-center gap-2 text-rose-400">
             <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Potencial Vazamento Invisível</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest">Potencial Vazamento Invisível</span>
           </div>
           <p className="text-xs text-si-3 leading-relaxed">
             As assinaturas abaixo estão cadastradas, mas <strong>não registramos despesas nos últimos 60 dias</strong>.

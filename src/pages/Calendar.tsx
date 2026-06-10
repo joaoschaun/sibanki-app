@@ -192,13 +192,13 @@ export default function Calendar() {
                         {cell.items.slice(0, 2).map((e, j) => (
                           <div
                             key={j}
-                            className={`text-[10px] truncate ${e.type === 'receita' ? 'text-emerald-400' : 'text-rose-400'}`}
+                            className={`text-[11px] truncate ${e.type === 'receita' ? 'text-emerald-400' : 'text-rose-400'}`}
                           >
                             {(e.desc || e.category || '').slice(0, 10)}
                           </div>
                         ))}
                         {cell.items.length > 2 && (
-                          <div className="text-[10px] text-si-5">+{cell.items.length - 2}</div>
+                          <div className="text-[11px] text-si-5">+{cell.items.length - 2}</div>
                         )}
                       </div>
                     )}

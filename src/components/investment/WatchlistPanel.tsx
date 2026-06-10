@@ -38,7 +38,7 @@ const fmtPct = (v: number, sign = true) =>
 
 function GrahamBadge({ verdict, discount }: { verdict?: string; discount?: number }) {
   if (!verdict || verdict === 'SEM_DADOS') {
-    return <span className="text-[10px] text-zinc-600">Sem dados</span>;
+    return <span className="text-[11px] text-zinc-600">Sem dados</span>;
   }
   const color = verdict === 'DESCONTO_ATRATIVO'
     ? 'text-emerald-400'
@@ -53,7 +53,7 @@ function GrahamBadge({ verdict, discount }: { verdict?: string; discount?: numbe
       : 'Acima do justo';
 
   return (
-    <span className={`text-[10px] font-bold ${color}`}>
+    <span className={`text-[11px] font-bold ${color}`}>
       {label}{discount != null ? ` (${fmtPct(discount)})` : ''}
     </span>
   );
@@ -61,7 +61,7 @@ function GrahamBadge({ verdict, discount }: { verdict?: string; discount?: numbe
 
 function BazinBadge({ verdict, ceiling }: { verdict?: string; ceiling?: number }) {
   if (!verdict || verdict === 'SEM_DADOS') {
-    return <span className="text-[10px] text-zinc-600">Sem dados</span>;
+    return <span className="text-[11px] text-zinc-600">Sem dados</span>;
   }
   const color = verdict === 'ABAIXO_TETO'
     ? 'text-emerald-400'
@@ -76,7 +76,7 @@ function BazinBadge({ verdict, ceiling }: { verdict?: string; ceiling?: number }
       : 'Acima do teto';
 
   return (
-    <span className={`text-[10px] font-bold ${color}`}>
+    <span className={`text-[11px] font-bold ${color}`}>
       {label}{ceiling ? ` (teto ${fmtBRL(ceiling)})` : ''}
     </span>
   );
@@ -95,7 +95,7 @@ function RsiBadge({ rsi, signal }: { rsi?: number; signal?: string }) {
       ? 'Sobrecomprado'
       : 'Neutro';
   return (
-    <span className={`text-[10px] font-bold ${color}`}>RSI {rsi.toFixed(0)} · {label}</span>
+    <span className={`text-[11px] font-bold ${color}`}>RSI {rsi.toFixed(0)} · {label}</span>
   );
 }
 
@@ -155,7 +155,7 @@ function ItemRow({ item, onRemove, onRefresh, onAlert, onRaioX }: ItemRowProps) 
             <p className="text-sm font-bold text-si-1">{item.ticker}</p>
             {hasAlerts && <Bell className="w-3 h-3 text-amber-400" />}
           </div>
-          <p className="text-[10px] text-zinc-500 truncate">{item.nome} · {item.tipo}</p>
+          <p className="text-[11px] text-zinc-500 truncate">{item.nome} · {item.tipo}</p>
         </div>
 
         {/* Análise snapshot */}
@@ -164,7 +164,7 @@ function ItemRow({ item, onRemove, onRefresh, onAlert, onRaioX }: ItemRowProps) 
             <p className="text-xs font-bold text-zinc-300">{fmtBRL(item.precoNaAdicao)}</p>
           )}
           {item.precoAlvo && (
-            <p className="text-[10px] text-zinc-500 flex items-center gap-1 justify-end">
+            <p className="text-[11px] text-zinc-500 flex items-center gap-1 justify-end">
               <Target className="w-2.5 h-2.5" />
               {fmtBRL(item.precoAlvo)}
               {distToAlvo != null && (
@@ -185,7 +185,7 @@ function ItemRow({ item, onRemove, onRefresh, onAlert, onRaioX }: ItemRowProps) 
           {/* Análise fundamentalista */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="bg-white/[0.03] border border-white/[0.05] rounded-xl p-3 space-y-1">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Graham</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-widest font-bold">Graham</p>
               {item.grahamIntrinsicValue && (
                 <p className="text-xs text-zinc-300 font-bold">Justo: {fmtBRL(item.grahamIntrinsicValue)}</p>
               )}
@@ -193,14 +193,14 @@ function ItemRow({ item, onRemove, onRefresh, onAlert, onRaioX }: ItemRowProps) 
             </div>
 
             <div className="bg-white/[0.03] border border-white/[0.05] rounded-xl p-3 space-y-1">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Bazin</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-widest font-bold">Bazin</p>
               <BazinBadge verdict={item.bazinVerdict} ceiling={item.bazinCeiling} />
             </div>
 
             <div className="bg-white/[0.03] border border-white/[0.05] rounded-xl p-3 space-y-1">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Técnico</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-widest font-bold">Técnico</p>
               <RsiBadge rsi={item.rsi} signal={item.rsiSignal} />
-              {item.rsi == null && <span className="text-[10px] text-zinc-600">Sem dados</span>}
+              {item.rsi == null && <span className="text-[11px] text-zinc-600">Sem dados</span>}
             </div>
           </div>
 
@@ -213,7 +213,7 @@ function ItemRow({ item, onRemove, onRefresh, onAlert, onRaioX }: ItemRowProps) 
 
           {/* Atualizado em */}
           {item.updatedAt && (
-            <p className="text-[10px] text-zinc-600">
+            <p className="text-[11px] text-zinc-600">
               Atualizado: {new Date(item.updatedAt).toLocaleDateString('pt-BR')}
             </p>
           )}
@@ -307,17 +307,17 @@ export function WatchlistPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Watchlist</p>
+          <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Watchlist</p>
           <p className="text-xs text-zinc-500 mt-0.5">Ativos monitorados — análise Graham/Bazin automática</p>
         </div>
         {items.length > 0 && (
-          <span className="text-[10px] text-zinc-600">{items.length} {items.length === 1 ? 'ativo' : 'ativos'}</span>
+          <span className="text-[11px] text-zinc-600">{items.length} {items.length === 1 ? 'ativo' : 'ativos'}</span>
         )}
       </div>
 
       {/* Formulário de adição */}
       <div className="bg-si-card border border-si-border rounded-2xl p-4 space-y-3">
-        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Adicionar ativo</p>
+        <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Adicionar ativo</p>
         <div className="flex gap-2">
           <input
             type="text"
@@ -352,7 +352,7 @@ export function WatchlistPanel() {
         {addError && (
           <p className="text-[11px] text-rose-400">{addError}</p>
         )}
-        <p className="text-[10px] text-zinc-600">
+        <p className="text-[11px] text-zinc-600">
           A análise Graham/Bazin/RSI é buscada automaticamente ao adicionar.
         </p>
       </div>

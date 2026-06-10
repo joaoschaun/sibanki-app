@@ -403,7 +403,7 @@ export default function Growth() {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold tracking-[0.1em] uppercase border transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold tracking-[0.1em] uppercase border transition-all ${
                 active
                   ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                   : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border-si-border'
@@ -454,9 +454,9 @@ export default function Growth() {
                 { label: 'Renda passiva/mês', value: `R$ ${metrics.rendaPassivaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`, sub: `YoC ${metrics.yieldOnCost.toFixed(1)}% a.a.`, color: 'text-si-1' },
               ].map((kpi) => (
                 <div key={kpi.label} className="bg-si-card rounded-2xl border border-si-border p-4">
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">{kpi.label}</p>
+                  <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-1">{kpi.label}</p>
                   <p className={`text-xl font-black ${kpi.color}`}>{kpi.value}</p>
-                  {kpi.sub && <p className="text-[10px] text-zinc-500 mt-0.5">{kpi.sub}</p>}
+                  {kpi.sub && <p className="text-[11px] text-zinc-500 mt-0.5">{kpi.sub}</p>}
                 </div>
               ))}
             </div>
@@ -497,7 +497,7 @@ export default function Growth() {
           {/* 7. Lista de ativos — expandível com gráfico inline */}
           <div className="space-y-2">
             <div className="flex items-center justify-between px-1">
-              <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">
                 Ativos ({investments.length}) — clique para expandir
               </h3>
             </div>
@@ -561,12 +561,12 @@ export default function Growth() {
               {/* Header do Ativo */}
               <div className="flex items-center justify-between gap-4 flex-wrap border-b border-si-border pb-4">
                 <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Ativo Consultado</p>
+                  <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Ativo Consultado</p>
                   <p className="text-xl font-black text-si-1">{b3Data.ticker} <span className="text-si-4 text-xs font-normal normal-case ml-2">({b3Data.type || 'Ações'})</span></p>
                   <p className="text-sm text-si-4 truncate max-w-[400px]">{b3Data.name}</p>
                 </div>
                 <div className="text-right space-y-1">
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Preço atual</p>
+                  <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Preço atual</p>
                   <p className="text-2xl font-black text-si-1">R$ {b3Data.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                   <p className={`text-xs font-bold ${b3Data.changePct > 0 ? 'text-emerald-400' : b3Data.changePct < 0 ? 'text-rose-400' : 'text-si-4'}`}>
                     {b3Data.changePct > 0 ? '+' : ''}{b3Data.changePct.toFixed(2)}% ({b3Data.change.toFixed(2)})
@@ -574,7 +574,7 @@ export default function Growth() {
                   <button
                     type="button"
                     onClick={() => setAlertModalTicker({ ticker: b3Data.ticker, nome: b3Data.name, currentPrice: b3Data.price })}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-[10px] font-bold text-amber-400 hover:bg-amber-500/15 transition-colors ml-auto"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-[11px] font-bold text-amber-400 hover:bg-amber-500/15 transition-colors ml-auto"
                   >
                     <Bell className="w-3 h-3" /> Criar alerta
                   </button>
@@ -584,8 +584,8 @@ export default function Growth() {
               {/* Gráfico de Preço — TradingView Lightweight Charts */}
               <div className="rounded-xl overflow-hidden border border-si-border">
                 <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Histórico de Preço (120 dias)</span>
-                  <span className="text-[10px] text-zinc-600">velas diárias</span>
+                  <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Histórico de Preço (120 dias)</span>
+                  <span className="text-[11px] text-zinc-600">velas diárias</span>
                 </div>
                 <PriceChart ticker={b3Data.ticker} height={240} />
               </div>
@@ -593,27 +593,27 @@ export default function Growth() {
               {/* Grid de Indicadores Básicos */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 text-xs bg-[#111] p-4 rounded-xl border border-white/[0.04]">
                 <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Setor</p>
+                  <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Setor</p>
                   <p className="text-si-2 font-medium truncate">{b3Data.sector || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Div. Yield</p>
+                  <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Div. Yield</p>
                   <p className="text-si-2 font-bold">{typeof b3Data.dy === 'number' ? `${b3Data.dy.toFixed(2)}%` : '—'}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">P/L</p>
+                  <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">P/L</p>
                   <p className="text-si-2 font-bold">{typeof b3Data.pe === 'number' ? b3Data.pe.toFixed(2) : '—'}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">P/VP</p>
+                  <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">P/VP</p>
                   <p className="text-si-2 font-bold">{typeof b3Data.pvp === 'number' ? b3Data.pvp.toFixed(2) : '—'}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">LPA</p>
+                  <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">LPA</p>
                   <p className="text-si-2 font-bold">{typeof b3Data.lpa === 'number' ? `R$ ${b3Data.lpa.toFixed(2)}` : '—'}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">VPA</p>
+                  <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">VPA</p>
                   <p className="text-si-2 font-bold">{typeof b3Data.vpa === 'number' ? `R$ ${b3Data.vpa.toFixed(2)}` : '—'}</p>
                 </div>
               </div>
@@ -627,16 +627,16 @@ export default function Growth() {
                   return (
                     <div className="bg-[#111] border border-white/[0.04] p-5 rounded-2xl flex flex-col justify-between">
                       <div>
-                        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Valor Intrínseco (Graham)</span>
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Valor Intrínseco (Graham)</span>
                         <span className="text-lg font-black text-si-1">R$ {graham.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       </div>
                       <div className="mt-4">
                         {graham.status === 'desconto' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 uppercase tracking-wider border border-emerald-500/20">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 uppercase tracking-wider border border-emerald-500/20">
                             ✓ {graham.marginOfSafety.toFixed(0)}% desconto
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[9px] font-bold bg-rose-500/10 text-rose-400 uppercase tracking-wider border border-rose-500/20">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 uppercase tracking-wider border border-rose-500/20">
                             ⚠ Sem margem de segurança
                           </span>
                         )}
@@ -652,16 +652,16 @@ export default function Growth() {
                   return (
                     <div className="bg-[#111] border border-white/[0.04] p-5 rounded-2xl flex flex-col justify-between">
                       <div>
-                        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Preço Teto (Bazin @ 6%)</span>
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Preço Teto (Bazin @ 6%)</span>
                         <span className="text-lg font-black text-si-1">R$ {bazin.precoTeto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       </div>
                       <div className="mt-4">
                         {bazin.status === 'compra' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 uppercase tracking-wider border border-emerald-500/20">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 uppercase tracking-wider border border-emerald-500/20">
                             ✓ Compra (+{bazin.upside.toFixed(0)}% upside)
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[9px] font-bold bg-amber-500/10 text-amber-400 uppercase tracking-wider border border-amber-500/20">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 uppercase tracking-wider border border-amber-500/20">
                             ⚠ Acima do teto
                           </span>
                         )}
@@ -693,11 +693,11 @@ export default function Growth() {
                   return (
                     <div className="bg-[#111] border border-white/[0.04] p-5 rounded-2xl flex flex-col justify-between">
                       <div>
-                        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Solidez Contábil</span>
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Solidez Contábil</span>
                         <span className="text-lg font-black text-si-1">{solidez.score} / 9 <span className="text-xs font-semibold text-zinc-500">pontos</span></span>
                       </div>
                       <div className="mt-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[9px] font-bold border uppercase tracking-wider ${verdictColors[solidez.verdict]}`}>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold border uppercase tracking-wider ${verdictColors[solidez.verdict]}`}>
                           {verdictLabels[solidez.verdict]}
                         </span>
                       </div>
@@ -736,7 +736,7 @@ export default function Growth() {
                 </div>
               )}
               
-              <p className="text-[10px] text-zinc-600 mt-1">Dados fundamentalistas calculados e normalizados pelo Sovereignty Engine.</p>
+              <p className="text-[11px] text-zinc-600 mt-1">Dados fundamentalistas calculados e normalizados pelo Sovereignty Engine.</p>
             </div>
           )}
         </section>
@@ -839,19 +839,19 @@ export default function Growth() {
             <div className="bg-[#111] border border-white/[0.04] p-5 rounded-2xl space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-0.5">Total Acumulado</span>
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-0.5">Total Acumulado</span>
                   <span className="text-xl font-black text-emerald-400">
                     R$ {calcResult.totalAcumulado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-0.5">Total Investido</span>
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-0.5">Total Investido</span>
                   <span className="text-base font-bold text-zinc-300">
                     R$ {calcResult.totalInvestido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-0.5">Juros Ganhos</span>
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-0.5">Juros Ganhos</span>
                   <span className="text-base font-bold text-blue-400">
                     R$ {calcResult.totalJuros.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
@@ -871,7 +871,7 @@ export default function Growth() {
                       style={{ width: `${(calcResult.totalJuros / calcResult.totalAcumulado) * 100}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] text-zinc-500">
+                  <div className="flex justify-between text-[11px] text-zinc-500">
                     <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-zinc-500 rounded-full" /> Investido ({((calcResult.totalInvestido / calcResult.totalAcumulado) * 100).toFixed(0)}%)</span>
                     <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full" /> Juros ({((calcResult.totalJuros / calcResult.totalAcumulado) * 100).toFixed(0)}%)</span>
                   </div>
@@ -926,7 +926,7 @@ export default function Growth() {
                       <ShieldCheck className="w-8 h-8" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Seu perfil calculado</p>
+                      <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Seu perfil calculado</p>
                       <h3 className={`text-2xl font-black uppercase ${
                         currentProfile.profile === 'conservador' ? 'text-emerald-400' :
                         currentProfile.profile === 'arrojado' ? 'text-purple-400' : 'text-blue-400'
@@ -957,7 +957,7 @@ export default function Growth() {
                 {/* Lado Direito: Diretrizes de Alocação e Alinhamento */}
                 <div className="space-y-4 border-t border-si-border md:border-t-0 md:border-l md:pl-6 pt-6 md:pt-0">
                   <div>
-                    <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Diretrizes de Alocação Sugeridas</h4>
+                    <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Diretrizes de Alocação Sugeridas</h4>
                     <ul className="space-y-2 text-xs text-zinc-300">
                       {currentProfile.profile === 'conservador' && (
                         <>
@@ -1159,7 +1159,7 @@ export default function Growth() {
                       className="w-full text-left px-4 py-2 hover:bg-si-over-2 text-sm flex items-center gap-3">
                       <span className="font-bold text-si-1 w-20 shrink-0">{s.ticker}</span>
                       <span className="text-si-4 truncate">{s.name}</span>
-                      {s.type && <span className="ml-auto text-[10px] text-si-5 uppercase">{s.type}</span>}
+                      {s.type && <span className="ml-auto text-[11px] text-si-5 uppercase">{s.type}</span>}
                     </button>
                   </li>
                 ))}

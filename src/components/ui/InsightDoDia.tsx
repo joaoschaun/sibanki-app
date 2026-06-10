@@ -536,7 +536,7 @@ export function InsightDoDia({
         <div className="flex items-center justify-between mb-1.5 gap-2">
           <p className="text-xs font-bold text-emerald-400">Arquiteto Soberano</p>
           {hasOpenFinance && dataFreshness === 'fresh' && (
-            <span className="text-[10px] text-emerald-400/70 flex items-center gap-1">
+            <span className="text-[11px] text-emerald-400/70 flex items-center gap-1">
               ● extrato verificado
             </span>
           )}

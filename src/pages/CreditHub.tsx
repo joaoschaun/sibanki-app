@@ -400,7 +400,7 @@ export default function CreditHub() {
                     </div>
                     <Target className="w-10 h-10 shrink-0 opacity-60" />
                   </div>
-                  <div className="flex justify-between items-center text-[10px] text-si-5 mt-4 pt-3 border-t border-si-border/30">
+                  <div className="flex justify-between items-center text-[11px] text-si-5 mt-4 pt-3 border-t border-si-border/30">
                     <span>Reserva líquida: <strong className="text-si-2">{fmtBRL(liquidityWall)}</strong></span>
                     <span>Exposição 30d: <strong className="text-rose-400">{fmtBRL(shortTermExposure)}</strong></span>
                   </div>
@@ -502,7 +502,7 @@ export default function CreditHub() {
                       <span className="w-2.5 h-2.5 rounded-full shrink-0 mt-0.5" style={{ backgroundColor: item.color }} />
                       <div className="min-w-0">
                         <p className="font-semibold text-si-2 truncate">{item.label}</p>
-                        <p className="text-[10px] text-si-5">{pct.toFixed(0)}% ({fmtBRL(item.amount)})</p>
+                        <p className="text-[11px] text-si-5">{pct.toFixed(0)}% ({fmtBRL(item.amount)})</p>
                       </div>
                     </div>
                   );
@@ -696,7 +696,7 @@ export default function CreditHub() {
                   </div>
                   {item.action && (
                     <ComingSoonBadge>
-                      <button disabled className="shrink-0 px-2 py-1 rounded-lg bg-violet-600/20 text-violet-400/50 text-[10px] font-semibold cursor-not-allowed flex items-center gap-0.5">
+                      <button disabled className="shrink-0 px-2 py-1 rounded-lg bg-violet-600/20 text-violet-400/50 text-[11px] font-semibold cursor-not-allowed flex items-center gap-0.5">
                         {item.action} <ArrowUpRight className="w-3 h-3" />
                       </button>
                     </ComingSoonBadge>
@@ -746,7 +746,7 @@ export default function CreditHub() {
                 <div className="text-center py-10 border border-dashed border-si-border rounded-xl space-y-2">
                   <CheckCircle className="w-8 h-8 mx-auto text-emerald-400 opacity-60" />
                   <p className="text-xs font-semibold text-si-2">Nenhuma dívida pendente detectada!</p>
-                  <p className="text-[10px] text-si-5">Seu patrimônio está livre de juros. Parabéns!</p>
+                  <p className="text-[11px] text-si-5">Seu patrimônio está livre de juros. Parabéns!</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -754,17 +754,17 @@ export default function CreditHub() {
                     {payoffResult.orderedDebts.map((d) => (
                       <div key={d.name} className="flex items-center justify-between border-b border-si-border/40 last:border-0 pb-2.5 last:pb-0">
                         <div className="flex items-center gap-2">
-                          <span className="w-5.5 h-5.5 rounded-full bg-violet-600/20 text-violet-400 text-[10px] font-bold flex items-center justify-center shrink-0">
+                          <span className="w-5.5 h-5.5 rounded-full bg-violet-600/20 text-violet-400 text-[11px] font-bold flex items-center justify-center shrink-0">
                             {d.payoffPriority}
                           </span>
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-si-2 truncate">{d.name}</p>
-                            <p className="text-[10px] text-si-5">Juros de {(d.monthlyRate * 100).toFixed(1)}% a.m.</p>
+                            <p className="text-[11px] text-si-5">Juros de {(d.monthlyRate * 100).toFixed(1)}% a.m.</p>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-xs font-bold text-si-1">{fmtBRL(d.balance)}</p>
-                          <p className="text-[9px] text-rose-400 font-medium">Juros: {fmtBRL(d.monthlyInterestCost)}/mês</p>
+                          <p className="text-[10px] text-rose-400 font-medium">Juros: {fmtBRL(d.monthlyInterestCost)}/mês</p>
                         </div>
                       </div>
                     ))}
@@ -795,7 +795,7 @@ export default function CreditHub() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] text-si-5 font-semibold mb-0.5 block">Valor do Item (R$)</label>
+                <label className="text-[11px] text-si-5 font-semibold mb-0.5 block">Valor do Item (R$)</label>
                 <input
                   type="number"
                   value={simValue}
@@ -804,7 +804,7 @@ export default function CreditHub() {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-si-5 font-semibold mb-0.5 block">Desconto à Vista (%)</label>
+                <label className="text-[11px] text-si-5 font-semibold mb-0.5 block">Desconto à Vista (%)</label>
                 <input
                   type="number"
                   value={simDiscount}
@@ -813,7 +813,7 @@ export default function CreditHub() {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-si-5 font-semibold mb-0.5 block flex justify-between">
+                <label className="text-[11px] text-si-5 font-semibold mb-0.5 block flex justify-between">
                   <span>Parcelas</span>
                   <span className="text-violet-400 font-bold">{simInstallments}x</span>
                 </label>
@@ -827,7 +827,7 @@ export default function CreditHub() {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-si-5 font-semibold mb-0.5 block">Rendimento (% a.m. CDI)</label>
+                <label className="text-[11px] text-si-5 font-semibold mb-0.5 block">Rendimento (% a.m. CDI)</label>
                 <input
                   type="number"
                   step="0.05"
@@ -885,13 +885,13 @@ export default function CreditHub() {
               return (
                 <div className={`rounded-xl border p-4 space-y-3 ${style.bg} ${style.border}`}>
                   <div className="flex items-center justify-between">
-                    <span className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${style.badge}`}>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${style.badge}`}>
                       {purchaseDecisionResult.breakdown.recommendation}
                     </span>
                     <Icon className={`w-4 h-4 ${style.text}`} />
                   </div>
                   <div>
-                    <p className="text-[10px] text-si-5">Vantagem Líquida Calculada</p>
+                    <p className="text-[11px] text-si-5">Vantagem Líquida Calculada</p>
                     <p className="text-xl font-bold text-si-1">
                       {fmtBRL(purchaseDecisionResult.netAdvantage)}
                     </p>
@@ -899,11 +899,11 @@ export default function CreditHub() {
 
                   {/* Portal do Tempo */}
                   <div className="p-3 bg-violet-500/5 border border-violet-500/10 rounded-lg space-y-1">
-                    <div className="flex items-center gap-1.5 text-violet-400 font-semibold text-[9px] uppercase tracking-wider">
+                    <div className="flex items-center gap-1.5 text-violet-400 font-semibold text-[10px] uppercase tracking-wider">
                       <Clock className="w-3.5 h-3.5 text-violet-400 shrink-0" />
                       <span>Portal do Tempo (Custo de Oportunidade)</span>
                     </div>
-                    <p className="text-[9px] text-si-4 leading-normal">
+                    <p className="text-[10px] text-si-4 leading-normal">
                       Se desistir desta compra e investir os <span className="font-semibold text-si-1">{fmtBRL(purchaseDecisionResult.cashPrice)}</span> a uma taxa real estimada de <span className="font-semibold text-si-1">0.8% a.m.</span>, em **10 anos** seu capital valeria:
                     </p>
                     <p className="text-base font-extrabold text-violet-400">
@@ -911,12 +911,12 @@ export default function CreditHub() {
                     </p>
                   </div>
 
-                  <div className="p-3 rounded-lg bg-si-bg/40 border border-si-border/30 text-[10px] text-si-4 leading-relaxed whitespace-pre-line">
+                  <div className="p-3 rounded-lg bg-si-bg/40 border border-si-border/30 text-[11px] text-si-4 leading-relaxed whitespace-pre-line">
                     {purchaseDecisionResult.narrativa}
                   </div>
 
                   {/* Comparativo de Custo */}
-                  <div className="border border-si-border/30 rounded-lg overflow-hidden text-[10px]">
+                  <div className="border border-si-border/30 rounded-lg overflow-hidden text-[11px]">
                     <div className="grid grid-cols-3 bg-si-zinc-8/50 border-b border-si-border/30 p-1.5 text-si-4 font-bold">
                       <span>Métrica</span>
                       <span className="text-right">À Vista</span>
@@ -1003,7 +1003,7 @@ export default function CreditHub() {
                     <p className={`font-bold ${o.color} text-xs mb-0.5`}>{o.title}</p>
                     <p className="text-[11px] text-si-5 leading-normal mb-2.5">{o.desc}</p>
                     <ComingSoonBadge>
-                      <button disabled className={`px-3 py-1.5 rounded-xl text-[10px] font-bold ${o.bg} ${o.color}/50 border ${o.border} cursor-not-allowed flex items-center gap-1`}>
+                      <button disabled className={`px-3 py-1.5 rounded-xl text-[11px] font-bold ${o.bg} ${o.color}/50 border ${o.border} cursor-not-allowed flex items-center gap-1`}>
                         {o.cta} <ChevronRight className="w-3 h-3" />
                       </button>
                     </ComingSoonBadge>
@@ -1012,7 +1012,7 @@ export default function CreditHub() {
               </div>
             ))}
 
-            <p className="text-[10px] text-zinc-600 text-center">
+            <p className="text-[11px] text-zinc-600 text-center">
               Oportunidades exibidas conforme sua saúde financeira atual. Nunca oferecemos crédito que piore sua situação.
             </p>
           </div>
@@ -1085,11 +1085,11 @@ export default function CreditHub() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-si-bg p-3 border border-si-border rounded-xl">
-                <p className="text-[10px] text-si-5 uppercase font-semibold">Saldo Devedor Atual</p>
+                <p className="text-[11px] text-si-5 uppercase font-semibold">Saldo Devedor Atual</p>
                 <p className="text-sm font-bold text-rose-400">{fmtBRL(selectedAmortizationLoan.balanceUsed ?? 0)}</p>
               </div>
               <div className="bg-si-bg p-3 border border-si-border rounded-xl">
-                <p className="text-[10px] text-si-5 uppercase font-semibold">Parcela Mensal Atual</p>
+                <p className="text-[11px] text-si-5 uppercase font-semibold">Parcela Mensal Atual</p>
                 <p className="text-sm font-bold text-si-1">{fmtBRL(selectedAmortizationLoan.monthlyInstallment ?? 0)}</p>
               </div>
             </div>
@@ -1138,7 +1138,7 @@ export default function CreditHub() {
                   <span className="text-xs font-bold text-violet-400 uppercase tracking-wider">
                     Análise do Impacto
                   </span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                     amortizationResult.worthIt ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
                   }`}>
                     {amortizationResult.worthIt ? 'Recomendado' : 'Avaliar Alternativas'}
@@ -1147,20 +1147,20 @@ export default function CreditHub() {
 
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
-                    <p className="text-[10px] text-si-5">Nova Parcela Estimada</p>
+                    <p className="text-[11px] text-si-5">Nova Parcela Estimada</p>
                     <p className="text-base font-bold text-si-1">{fmtBRL(amortizationResult.newMonthlyPayment)}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-si-5">Economia Mensal</p>
+                    <p className="text-[11px] text-si-5">Economia Mensal</p>
                     <p className="text-base font-bold text-emerald-400">+{fmtBRL(amortizationResult.monthlySavings)}</p>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-si-bg/50 border border-si-border/40 text-[10px] text-si-4 leading-relaxed whitespace-pre-line">
+                <div className="p-3 rounded-lg bg-si-bg/50 border border-si-border/40 text-[11px] text-si-4 leading-relaxed whitespace-pre-line">
                   {amortizationResult.narrativa}
                 </div>
 
-                <div className="flex justify-between text-[10px] text-si-5 border-t border-si-border/30 pt-3">
+                <div className="flex justify-between text-[11px] text-si-5 border-t border-si-border/30 pt-3">
                   <span>Retorno do aporte (Break-even): <strong>{amortizationResult.monthsToBreakeven} meses</strong></span>
                   <span>Economia acumulada 10a: <strong>{fmtBRL(amortizationResult.totalSaved10y)}</strong></span>
                 </div>
