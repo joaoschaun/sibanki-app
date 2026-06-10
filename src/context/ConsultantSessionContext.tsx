@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useAppContext } from './AppContext';
+import { useIntelligence } from './IntelligenceContext';
 import { functions } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
 import { buildFinancialContextString } from '../utils/consultantContext';
@@ -153,6 +154,7 @@ export function ConsultantSessionProvider({ children }: { children: ReactNode })
     financialProfile,
     loading: dataLoading,
   } = useAppContext();
+  const { freedom } = useIntelligence();
 
   const [messages, setMessages] = useState<ConsultantChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -182,7 +184,15 @@ export function ConsultantSessionProvider({ children }: { children: ReactNode })
 
   useEffect(() => {
     if (messages.length === 0 && !dataLoading) {
-      setMessages([{ role: 'ai', content: formatConsultantReply(WELCOME), time: Date.now() }]);
+      const hasData = entries.length > 0 || accounts.length > 0;
+      let welcome: string;
+      if (hasData && freedom.days > 0) {
+        const tier = freedom.status === 'fragil' ? 'Frágil' : freedom.status === 'em-construcao' ? 'Em construção' : freedom.status === 'resiliente' ? 'Resiliente' : freedom.status === 'soberano' ? 'Soberano' : 'Inabalável';
+        welcome = `**Assistente Sibanki**\n\nSeu **Ld (Dias de Liberdade) é ${freedom.days}** — nível **${tier}**.\n\nPergunte sobre seus gastos, metas, investimentos ou peça uma análise da sua situação financeira.`;
+      } else {
+        welcome = WELCOME;
+      }
+      setMessages([{ role: 'ai', content: formatConsultantReply(welcome), time: Date.now() }]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataLoading]);
@@ -348,7 +358,13 @@ export function ConsultantSessionProvider({ children }: { children: ReactNode })
         });
 
         if (!fetchRes.ok) {
-           throw new Error("Falha na conexão de inteligência. Tente novamente.");
+          // 429 = limite mensal de IA do plano (usageLimitService) — preservar a mensagem do servidor.
+          let serverMsg = '';
+          try {
+            const body = await fetchRes.json();
+            serverMsg = String(body?.error || '');
+          } catch { /* corpo não-JSON */ }
+          throw new Error(serverMsg || 'Falha na conexão de inteligência. Tente novamente.');
         }
 
         const reader = fetchRes.body?.getReader();
@@ -457,9 +473,11 @@ export function ConsultantSessionProvider({ children }: { children: ReactNode })
         const code = (err as { code?: string })?.code ?? '';
         const msg = (err as { message?: string })?.message ?? 'Erro ao conectar. Tente novamente.';
         const friendly =
-          code === 'functions/resource-exhausted' || /quota|limite|rate limit/i.test(msg)
-            ? 'Limite de uso do consultor por hoje atingido. Tente em alguns minutos ou amanhã.'
-            : msg;
+          /plano gratuito/i.test(msg)
+            ? msg // mensagem do limite mensal já vem pronta do servidor (com upsell Pro)
+            : code === 'functions/resource-exhausted' || /quota|limite|rate limit/i.test(msg)
+              ? 'Limite de uso do consultor por hoje atingido. Tente em alguns minutos ou amanhã.'
+              : msg;
         void trackPlatformEvent('advisor_reply_failed', {
           source: 'react_consultant_page',
           code,
