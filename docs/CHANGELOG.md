@@ -17,6 +17,22 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Análise 360 — execução das 10 ações (10/06/2026, Claude Cowork, branch `audit/analise-360`)
+- **Análise:** `docs/ANALISE-360-SISTEMA-2026-06-10.md` (v1 + reanálise pós-execução).
+- **#1 Billing:** plano efetivo passa a vir de `users/{uid}.plan` (só webhook Stripe escreve; `firestore.rules` bloqueia cliente de alterar `plan`/`stripeCustomerId`); toggle local Gratuito/Pro removido de Configurações; botões "Assinar Sibanki Pro" (createCheckout) e "Gerenciar assinatura" (createPortal); `useFeatureFlags` confia só em `data.plan`. Checklist operacional: `docs/STRIPE-ATIVACAO.md`.
+- **#2 Limites do gratuito:** `functions/services/user/usageLimitService.js` — teto mensal de mensagens IA (default 40, env `FREE_AI_MESSAGES_PER_MONTH`) imposto server-side em `chatApi` e `chatStreamApi` (429); contador em `users/{uid}/usage/ai` (rule read-only p/ cliente); front preserva a mensagem de upsell.
+- **#3 Funil de ativação:** eventos `activation_signup_completed` (wizard), `activation_of_connected` e `activation_first_entry` (AppContext), `activation_ld_computed` (IntelligenceContext); allowlist atualizada em `trackPlatformEvent`. Doc: `docs/FUNIL-ATIVACAO.md`.
+- **#4 Testes do engine:** já existiam (sovereigntyEngine 37 casos + decisionEngine) — análise v1 corrigida; baseline 127/127 verde.
+- **#5 App Check:** React SPA inicializa App Check quando `VITE_APPCHECK_SITE_KEY` definida (`src/firebase.ts`, dynamic import); plano de 2 fases em `docs/APP_CHECK.md`. **Pendente João:** chave reCAPTCHA + `ENFORCE_APP_CHECK=true` + deploy.
+- **#6 Sidebar modo simples:** padrão com 8 itens (Principal + Contas/Crédito + rodapé); resto atrás de "Menu completo" (localStorage `sib_sidebar_full`); rota oculta ativa auto-expande.
+- **#7 Onboarding invertido:** ordem Identidade → Dinheiro Esquecido (BCB) → Conectar Bancos → Contato → Financeiro → Objetivos.
+- **#8 Refator Dashboard:** 5 sub-abas extraídas para `src/components/dashboard/` (Transações, Parcelamentos, Assinaturas, Categorias, Cartões+Sentinela); `Dashboard.tsx` 1406 → 724 linhas.
+- **#9 Design:** sweep tipográfico em 50 arquivos (mín. 10px; labels 11px); paleta semântica de feedback (`si-positive/warning/risk/projection/info`) em `index.css` dark+light; regra formalizada em `docs/DESIGN-PALETA-SEMANTICA.md`.
+- **#10 Migração entries:** plano completo em `docs/MIGRACAO-ENTRIES-SUBCOLECAO.md` (4 fases, dual-write, rollback) — execução depende de aprovação.
+- **Qualidade restaurada:** 14 erros tsc pré-existentes corrigidos (MeuCpf `label`, unused vars em Growth/Cards/Sidebar/InvestmentInsights); `tsc --noEmit` zero erros; 127/127 testes; build OK.
+- **Governança:** commit snapshot do trabalho não commitado de sessões anteriores (292 arquivos) isolado no início da branch, autorizado pelo João.
+- **Deploys pendentes (João/Antigravity):** `firestore:rules`, `functions:chatApi,chatStreamApi,trackPlatformEvent`, `hosting:app` — ver `docs/STRIPE-ATIVACAO.md` §5 e `docs/APP_CHECK.md`.
+
 ### Correções de Consistência e Contraste no Modo Claro e Escuro (09/06/2026)
 - **`src/index.css`**: Criadas variáveis CSS dinâmicas para as cores das categorias financeiras nos modos claro e escuro, registrando-as como classes utilitárias no Tailwind CSS v4.
 - **`src/components/layout/Header.tsx`**: Substituído o fundo preto estático (`bg-[#0a0a0a]`) pelo fundo semântico `bg-si-card` que muda com o tema.

@@ -169,3 +169,91 @@ O Dashboard com 6 sub-abas (sessão 09/06) e o CreditHub com simuladores empurra
 ---
 
 *Documento gerado em 10/06/2026. Medições citadas (linhas de arquivo, contagem de `any`, estado do Stripe, navegação) foram verificadas diretamente no código nesta data.*
+
+---
+---
+
+# REANÁLISE 360° — PÓS-EXECUÇÃO DAS 10 AÇÕES (10/06/2026, mesma data)
+
+> As 10 ações da tabela acima foram executadas na branch `audit/analise-360`
+> (9 commits). Esta seção reavalia cada lente com o que mudou, o que foi
+> descoberto durante a execução e o que permanece em aberto.
+
+## NOTAS REVISADAS
+
+| Lente | Antes | Depois | O que moveu |
+|---|---|---|---|
+| Comercial | 5/10 | **6,5/10** | Gating Pro real + limite do gratuito + funil instrumentado. Falta o passo operacional (priceIds) para virar receita de fato |
+| Dev sênior | 7,5/10 | **8,5/10** | Dashboard refatorado, tsc restaurado a zero, vulnerabilidade de plano fechada, App Check pronto, plano de migração escrito |
+| Usuário | 6/10 | **7/10** | Sidebar simples por padrão, onboarding entrega valor (BCB) antes de pedir confiança, tipografia legível |
+| Design | 7/10 | **7,5/10** | Paleta semântica formalizada, mínimo tipográfico imposto. Auditoria de modo claro segue pendente |
+
+## O QUE FOI FEITO (com descobertas da execução)
+
+1. **Billing destravado no código (#1).** A descoberta mais importante da
+   execução: o plano era **autoeditável pelo cliente** — qualquer usuário
+   virava "pro" pelo toggle de Configurações ou escrevendo `plan` direto no
+   Firestore (as rules permitiam). Fechado nas três camadas: rules bloqueiam
+   `plan`/`stripeCustomerId`, `useFeatureFlags` só aceita `data.plan`
+   (server-set) e a UI virou checkout/portal Stripe de verdade.
+2. **Custo variável protegido (#2).** Gratuito agora tem teto de 40 mensagens
+   IA/mês imposto no servidor (transação Firestore em `users/{uid}/usage/ai`),
+   com mensagem de upsell preservada no front. Pro/Família ilimitados.
+3. **Funil mensurável (#3).** Quatro marcos D0 instrumentados
+   (cadastro → OF → primeiro lançamento → primeiro Ld real) com dedup por uid.
+   A pergunta "quantos usuários chegam ao momento uau?" agora tem resposta.
+4. **Correção da própria análise (#4).** A v1 afirmou que o `sovereigntyEngine`
+   não tinha testes — **estava errado**: existem 37 casos + decisionEngine +
+   validators (127 testes no total). Registrado como lição: medir antes de
+   afirmar, sempre.
+5. **App Check a um deploy de distância (#5).** O React SPA não inicializava
+   App Check (só o legado). Agora inicializa quando `VITE_APPCHECK_SITE_KEY`
+   existe — ativação em 2 fases documentada.
+6. **Sobrecarga cognitiva atacada (#6, #7, #9).** Sidebar abre com 8 itens em
+   vez de ~22; onboarding mostra "dinheiro esquecido" no BCB antes de pedir
+   conexão bancária; nenhum texto de UI abaixo de 10px (sweep em 50 arquivos);
+   cor agora tem gramática (paleta semântica documentada).
+7. **Dashboard deixou de ser monolito (#8).** 1.406 → 724 linhas; as 5
+   sub-abas viraram componentes isolados em `components/dashboard/`, cada um
+   com seus próprios memos — o padrão CreditHubSections aplicado.
+8. **Dívida estrutural com plano (#10).** Migração `entries[]` → subcoleção
+   especificada em 4 fases com dual-write e rollback.
+
+## O QUE A EXECUÇÃO REVELOU DE NOVO
+
+- **Higiene de branch:** havia 292 arquivos modificados não commitados de
+  sessões anteriores (incluindo o tsc quebrado com 14 erros — o baseline
+  "zero erros" do CHANGELOG de 07/06 já não era verdade). Isolado em commit
+  snapshot e corrigido. Sugestão de processo: cada agente commita ao fim da
+  própria sessão (AGENTS.md §8 poderia exigir isso).
+- **`Map<number>` vs ids de entry, `settings.planType` espalhado:** pequenas
+  inconsistências de tipo/contrato que merecem uma passada dedicada.
+- **Light mode:** `InvestmentInsights.tsx` está 100% hardcoded em dark
+  (`#0d0d0f`, `zinc-*`, `text-white`) — catalogado em
+  `docs/DESIGN-PALETA-SEMANTICA.md` §3 com o grep para achar os demais.
+
+## O QUE SÓ O JOÃO PODE FAZER AGORA (gate operacional)
+
+1. **Stripe (30 min):** criar os priceIds + `STRIPE_PRICE_TO_PLAN` +
+   `VITE_STRIPE_PRICE_PRO_MONTHLY` + webhook — roteiro em
+   `docs/STRIPE-ATIVACAO.md`. Sem isso, todo o gating construído cobra zero.
+2. **Deploys:** `firestore:rules` (CRÍTICO — fecha a brecha do plano),
+   `functions:chatApi,chatStreamApi,trackPlatformEvent`, `hosting:app`.
+3. **App Check:** chave reCAPTCHA v3 → fase Monitoring → `ENFORCE_APP_CHECK=true`.
+4. **PR da branch `audit/analise-360`** para revisão e merge (regra de ouro:
+   código que toca dinheiro precisa do seu aprove).
+
+## PRÓXIMAS 5 PRIORIDADES (pós-merge)
+
+1. Ativação Stripe completa + primeiro teste de checkout ponta a ponta.
+2. Rodar o funil por 2 semanas e definir metas reais de conversão por etapa.
+3. Quebrar `Cards.tsx` (1.688) e `Growth.tsx` (1.350) no padrão das sub-abas.
+4. Auditoria de modo claro (grep do §3 da doc de design) + unificar logos.
+5. Fase 0–1 da migração entries (teto de segurança + dual-write).
+
+**Tese revisada:** o gap deixou de ser código — é operação. Um bloco de ~2h
+do João (Stripe + deploys + App Check) converte o trabalho desta branch em
+produto cobrável, protegido e mensurável.
+
+*Reanálise gerada em 10/06/2026 após execução das 10 ações. Verificação final:
+`tsc --noEmit` zero erros · 127/127 testes unit · build Vite OK · 9 commits.*
