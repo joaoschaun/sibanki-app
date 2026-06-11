@@ -8,13 +8,44 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Sibanki" />
   <meta name="description" content="Gestão financeira pessoal e familiar com IA integrada" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Sibanki" />
+  <meta property="og:title" content="Sibanki — Controle financeiro com IA" />
+  <meta property="og:description" content="Veja sua realidade financeira com clareza: Open Finance, consultor IA e Dias de Liberdade. Sem compartilhar senha bancária." />
+  <meta property="og:url" content="https://sibanki.com.br/" />
+  <meta property="og:image" content="https://sibanki.com.br/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Sibanki — Controle financeiro com IA" />
+  <meta name="twitter:description" content="Veja sua realidade financeira com clareza: Open Finance, consultor IA e Dias de Liberdade." />
+  <meta name="twitter:image" content="https://sibanki.com.br/og-image.png" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" type="image/svg+xml" href="/icon-192.svg" />
   <link rel="apple-touch-icon" href="/icon-192.svg" />
   <title>Sibanki - Controle Financeiro</title>
+  <style>
+    /* Splash pré-React: evita tela branca/preta vazia enquanto o bundle carrega */
+    html, body { margin: 0; background: #0a0a0a; }
+    #sib-splash {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      background: #0a0a0a; color: #fff;
+      font-family: Inter, -apple-system, system-ui, sans-serif;
+    }
+    #sib-splash .sib-logo { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; animation: sib-pulse 1.6s ease-in-out infinite; }
+    #sib-splash .sib-tag { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.45); }
+    @keyframes sib-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+  </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <div id="sib-splash">
+      <div class="sib-logo">Sibanki</div>
+      <div class="sib-tag">Controle financeiro com IA</div>
+    </div>
+  </div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

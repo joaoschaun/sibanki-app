@@ -8,7 +8,8 @@
  */
 import { useState, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
-import { fnsUS } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth, fnsUS } from '../firebase';
 
 const CACHE_KEY = 'sib_market_rates';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
@@ -114,8 +115,17 @@ export function useMarketRates(): MarketRates {
       }
     }
 
-    fetchRates();
-    return () => { cancelled = true; };
+    // fixedIncomeCatalogApi exige usuário autenticado — sem este gate, toda
+    // visita anônima (ex.: tela de login) gerava um 401 e uma invocação à toa.
+    let started = false;
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && !started && !cancelled) {
+        started = true;
+        fetchRates();
+      }
+    });
+
+    return () => { cancelled = true; unsubscribe(); };
   }, []);
 
   return rates;

@@ -15,6 +15,7 @@ const FILES = [
   'sw.js',
   'icon-192.svg',
   'icon-512.svg',
+  'og-image.png',
 ];
 
 let copied = 0;

@@ -94,7 +94,7 @@ export default function Login() {
           {registerMode ? 'Crie sua conta para começar.' : 'Entre para acessar seus dados.'}
         </p>
         <div className="mb-6 grid gap-2 text-[11px] text-si-5">
-          <div className="rounded-lg border border-si-border bg-si-over-1 px-3 py-2">Sem compartilhar senha bancaria no app</div>
+          <div className="rounded-lg border border-si-border bg-si-over-1 px-3 py-2">Sem compartilhar senha bancária no app</div>
           <div className="rounded-lg border border-si-border bg-si-over-1 px-3 py-2">Leitura para insights: sem movimentar seu dinheiro</div>
         </div>
 
