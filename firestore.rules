@@ -144,7 +144,8 @@ service cloud.firestore {
         (!("plan" in request.resource.data) || request.resource.data.plan == "gratuito");
       allow update: if isAuthed() && request.auth.uid == userId &&
         !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(["plan", "stripeCustomerId"]);
+          .hasAny(["plan", "planProvider", "stripeCustomerId",
+                   "asaasCustomerId", "asaasSubscriptionId", "asaasPendingPlan"]);
       allow delete: if false;
     }
 

@@ -17,6 +17,15 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Entrega e Unificação do Módulo Família (10/06/2026, Antigravity)
+- **Modo Família Unificado**: Integração completa das páginas de casal (`Casal.tsx`) e filhos (`Filhos.tsx`) sob uma única rota canônica `/casal`.
+- **Navegação Sincronizada**: Adicionado controle de abas reativo utilizando query string (`?tab=casal` ou `?tab=filhos`), integrado de forma transparente ao roteamento.
+- **Redirecionamentos**: Configurado redirecionamento automático da rota `/filhos` para `/casal?tab=filhos` em `App.tsx` para compatibilidade retroativa, limpando também declarações de variáveis lazy não utilizadas.
+- **Propriedade hideHeader**: Adicionado suporte a `hideHeader?: boolean` ao componente de filhos (`Filhos.tsx`) para ocultar títulos redundantes quando renderizado no dashboard de abas.
+- **Gating de Plano & Upsell**: Gating rígido do Modo Família via hook `useFeatureFlags` (`familia_compartilhado`). Exibição de tela de bloqueio e upsell premium com design de alto contraste e link direto para upgrade de conta.
+- **Sidebar**: Renomeado o link do menu sob o grupo `socialNav` de "Casal" para "Família".
+- **Qualidade**: typecheck (`tsc --noEmit`) concluído sem erros; 127/127 testes unitários Vitest rodando com sucesso.
+
 ### Análise 360 — execução das 10 ações (10/06/2026, Claude Cowork, branch `audit/analise-360`)
 - **Análise:** `docs/ANALISE-360-SISTEMA-2026-06-10.md` (v1 + reanálise pós-execução).
 - **#1 Billing:** plano efetivo passa a vir de `users/{uid}.plan` (só webhook Stripe escreve; `firestore.rules` bloqueia cliente de alterar `plan`/`stripeCustomerId`); toggle local Gratuito/Pro removido de Configurações; botões "Assinar Sibanki Pro" (createCheckout) e "Gerenciar assinatura" (createPortal); `useFeatureFlags` confia só em `data.plan`. Checklist operacional: `docs/STRIPE-ATIVACAO.md`.

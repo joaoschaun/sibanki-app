@@ -18,6 +18,12 @@ import { useDashboardMode } from '../hooks/useDashboardMode';
 import { useSuggestiveMode } from '../hooks/useSuggestiveMode';
 import { OpenFinanceConnect } from '../components/openFinance/OpenFinanceConnect';
 
+/**
+ * Provedor de billing ativo. 'asaas' (default — conta Stripe BR travada no
+ * onboarding) ou 'stripe'. Trocar via VITE_BILLING_PROVIDER sem mexer em código.
+ */
+const BILLING_PROVIDER = (import.meta.env.VITE_BILLING_PROVIDER as string | undefined) === 'stripe' ? 'stripe' : 'asaas';
+
 export default function Settings() {
   const { user, data, entries, entriesInline, accounts, accountBalances, cards, goals, investments, budgets, categories, recurrents, loading } = useAppContext();
   const userName = user?.displayName ?? (data?.name as string) ?? '';
@@ -564,18 +570,31 @@ export default function Settings() {
               setCheckoutBusy(true);
               setError(null);
               try {
-                const portalFn = httpsCallable<Record<string, never>, { url?: string }>(fnsUS, 'createPortal');
-                const res = await portalFn({});
-                if (res.data?.url) window.location.assign(res.data.url);
+                if (((data as any)?.planProvider ?? BILLING_PROVIDER) === 'asaas') {
+                  if (!window.confirm('Cancelar sua assinatura? Você volta para o plano gratuito imediatamente.')) {
+                    setCheckoutBusy(false);
+                    return;
+                  }
+                  const cancelFn = httpsCallable<Record<string, never>, { ok?: boolean }>(fnsUS, 'cancelAsaasSubscription');
+                  await cancelFn({});
+                } else {
+                  const portalFn = httpsCallable<Record<string, never>, { url?: string }>(fnsUS, 'createPortal');
+                  const res = await portalFn({});
+                  if (res.data?.url) window.location.assign(res.data.url);
+                }
               } catch (err) {
-                setError(err instanceof Error ? err.message : 'Erro ao abrir portal de assinatura.');
+                setError(err instanceof Error ? err.message : 'Erro ao gerenciar assinatura.');
               } finally {
                 setCheckoutBusy(false);
               }
             }}
             className="px-4 py-2 rounded-xl border text-sm bg-si-over-2 border-si-border-md text-si-2 hover:bg-si-over-3 disabled:opacity-50"
           >
-            {checkoutBusy ? 'Abrindo…' : 'Gerenciar assinatura'}
+            {checkoutBusy
+              ? 'Processando…'
+              : ((data as any)?.planProvider ?? BILLING_PROVIDER) === 'asaas'
+                ? 'Cancelar assinatura'
+                : 'Gerenciar assinatura'}
           </button>
         ) : (
           <div className="space-y-3">
@@ -589,18 +608,29 @@ export default function Settings() {
                 <button
                   key={opt.label}
                   type="button"
-                  disabled={checkoutBusy || !opt.priceId}
+                  disabled={checkoutBusy || (BILLING_PROVIDER === 'stripe' && !opt.priceId)}
                   onClick={async () => {
-                    if (!opt.priceId) return;
                     setCheckoutBusy(true);
                     setError(null);
                     try {
-                      const checkoutFn = httpsCallable<
-                        { priceId: string; plan: string; billing: string },
-                        { url?: string }
-                      >(fnsUS, 'createCheckout');
-                      const res = await checkoutFn({ priceId: opt.priceId as string, plan: opt.plan, billing: opt.billing });
-                      if (res.data?.url) window.location.assign(res.data.url);
+                      let url: string | undefined;
+                      if (BILLING_PROVIDER === 'asaas') {
+                        const checkoutFn = httpsCallable<
+                          { plan: string; billing: string },
+                          { url?: string }
+                        >(fnsUS, 'createAsaasCheckout');
+                        const res = await checkoutFn({ plan: opt.plan, billing: opt.billing });
+                        url = res.data?.url ?? undefined;
+                      } else {
+                        if (!opt.priceId) return;
+                        const checkoutFn = httpsCallable<
+                          { priceId: string; plan: string; billing: string },
+                          { url?: string }
+                        >(fnsUS, 'createCheckout');
+                        const res = await checkoutFn({ priceId: opt.priceId as string, plan: opt.plan, billing: opt.billing });
+                        url = res.data?.url ?? undefined;
+                      }
+                      if (url) window.location.assign(url);
                     } catch (err) {
                       setError(err instanceof Error ? err.message : 'Erro ao iniciar assinatura.');
                     } finally {
@@ -610,7 +640,9 @@ export default function Settings() {
                   className="px-4 py-3 rounded-xl border text-left bg-si-over-2 border-si-border-md hover:bg-si-over-3 disabled:opacity-50 transition-colors"
                 >
                   <span className="block text-sm font-semibold text-si-1">{opt.label}</span>
-                  <span className="block text-[11px] text-si-4 mt-0.5">{opt.price} · 30 dias grátis</span>
+                  <span className="block text-[11px] text-si-4 mt-0.5">
+                    {opt.price}{BILLING_PROVIDER === 'asaas' ? ' · Pix, cartão ou boleto' : ' · 30 dias grátis'}
+                  </span>
                 </button>
               ))}
             </div>

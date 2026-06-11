@@ -150,6 +150,21 @@ exports.getUserPlan = functions.https.onCall(async (data, context) => {
   return stripeService.getUserPlan(data, context);
 });
 
+// ── Asaas (provedor BR — substitui Stripe enquanto a conta Stripe não ativa) ──
+const asaasService = require("./services/billing/asaasService");
+
+exports.createAsaasCheckout = functions.https.onCall(async (data, context) => {
+  return asaasService.createAsaasCheckout(data, context);
+});
+
+exports.cancelAsaasSubscription = functions.https.onCall(async (data, context) => {
+  return asaasService.cancelAsaasSubscription(data, context);
+});
+
+exports.asaasWebhook = functions.https.onRequest(async (req, res) => {
+  return asaasService.handleAsaasWebhook(req, res);
+});
+
 exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
   return stripeService.handleStripeWebhook(req, res);
 });
