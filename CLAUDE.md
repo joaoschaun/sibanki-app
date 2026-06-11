@@ -1240,3 +1240,20 @@ assigned_to: "cursor"
 ---
 ```
 E preencher as seções: **Descrição**, **Contexto / Arquivos relevantes**, **Critérios de aceitação**, **Notas para o Cursor**.
+
+### Análise do sibanki.com.br + quick wins (11/06/2026)
+
+**Contexto:** análise completa do domínio público `sibanki.com.br` (Cloudflare na frente do Firebase Hosting) sob três lentes: comercial, usuário e dev. Relatórios/screenshots em `analise-sibanki/` (não versionado).
+
+**Achados principais (ainda abertos):**
+- 🔴 **Sem landing page pública** — toda rota deslogada cai no login; funil de aquisição inexistente (maior alavanca comercial pendente).
+- `/sitemap.xml` cai no rewrite do SPA (soft-404); robots.txt é o gerenciado da Cloudflare; título estático único em todas as rotas.
+- Health check: tudo verde exceto `monetizzeToken: missing`.
+
+**Correções aplicadas (branch `claude/brave-chebyshev-3d8df8`, rebased em `audit/analise-360` — commit `d45c08c`):**
+- **`firebase.json`**: headers de HTML com `source: "**"` em vez de `"**/*.html"` — no Firebase Hosting o match é contra o **path da requisição**, não o arquivo do rewrite; CSP/no-cache **nunca eram aplicados** nas rotas do SPA (produção servia `max-age=3600` default → risco de tela branca pós-deploy). Adicionados `frame-ancestors`, `X-Frame-Options: SAMEORIGIN` (DENY quebraria self-framing previsto no frame-src), `Referrer-Policy`, `nosniff`. Vale para targets `app` e `staging`. **Requer deploy de hosting para valer.**
+- **`useMarketRates.ts`**: gate de auth via `onAuthStateChanged` — antes toda visita anônima gerava 401 + invocação paga de `fixedIncomeCatalogApi`.
+- **`Login.tsx`**: "senha bancaria" → "senha bancária".
+- **`index.html`**: OG/Twitter tags (preview WhatsApp) + splash estático pulsante dentro de `#root` (mata a tela preta de ~5s da 1ª visita; React substitui ao montar).
+- **`scripts/generate-og-image.mjs`** gera `public/og-image.png` (1200×630); `prepare-dist.mjs` copia para `dist/`. `scripts/verify-splash.mjs` valida o splash com JS bloqueado.
+- Validado: `tsc --noEmit` OK, `npm run build` OK, splash verificado por screenshot. **Sem deploy nesta sessão.**
