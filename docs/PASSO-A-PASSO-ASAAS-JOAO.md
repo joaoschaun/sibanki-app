@@ -99,8 +99,11 @@ ASAAS_ENV=sandbox
 Cole no PowerShell (um de cada vez, espere terminar):
 
 ```powershell
-firebase deploy --only functions:createAsaasCheckout,functions:cancelAsaasSubscription,functions:asaasWebhook
+firebase deploy --only "functions:createAsaasCheckout,functions:cancelAsaasSubscription,functions:asaasWebhook"
 ```
+
+> As **aspas** são obrigatórias no PowerShell — sem elas a vírgula quebra o
+> comando e aparece "No function matches given --only filters".
 
 ```powershell
 firebase deploy --only firestore:rules
