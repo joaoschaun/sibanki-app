@@ -28,24 +28,36 @@ export function SpotlightTour({ tourId, steps, onComplete }: Props) {
   const tickRef = useRef<number | null>(null);
 
   const tourDone = (data as any)?.tourModulos?.[tourId];
+  // Passos cujo elemento realmente existe na tela atual (mobile/sidebar
+  // colapsada/modo simples escondem âncoras — apontar para o nada era o bug).
+  const [activeSteps, setActiveSteps] = useState<SpotlightStep[]>([]);
 
   useEffect(() => {
     if (tourDone) return;
-    const t = setTimeout(() => setVisible(true), 800);
+    const t = setTimeout(() => {
+      const found = steps.filter((s) => document.querySelector(s.selector));
+      // Tour só faz sentido com pelo menos 2 âncoras visíveis.
+      if (found.length >= 2) {
+        setActiveSteps(found);
+        setVisible(true);
+      }
+    }, 800);
     return () => clearTimeout(t);
-  }, [tourDone]);
+  }, [tourDone, steps]);
 
   const positionSpotlight = useCallback(() => {
-    if (!visible || index >= steps.length) return;
-    const el = document.querySelector(steps[index].selector);
+    if (!visible || index >= activeSteps.length) return;
+    const el = document.querySelector(activeSteps[index].selector);
     if (el) {
       const r = el.getBoundingClientRect();
       setRect(r);
       el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } else {
+      // Elemento sumiu (ex.: usuário navegou) → avança em vez de apontar o vazio.
       setRect(null);
+      setIndex((i) => i + 1);
     }
-  }, [visible, index, steps]);
+  }, [visible, index, activeSteps]);
 
   useEffect(() => {
     positionSpotlight();
@@ -68,13 +80,19 @@ export function SpotlightTour({ tourId, steps, onComplete }: Props) {
   }, [user?.uid, data, tourId, onComplete]);
 
   const next = () => {
-    if (index < steps.length - 1) setIndex((i) => i + 1);
+    if (index < activeSteps.length - 1) setIndex((i) => i + 1);
     else finish();
   };
 
-  if (!visible || tourDone || index >= steps.length) return null;
+  if (!visible || tourDone) return null;
+  if (index >= activeSteps.length) {
+    // Esgotou os passos por skip automático → encerra e marca como visto.
+    void finish();
+    return null;
+  }
 
-  const step = steps[index];
+  const step = activeSteps[index];
+  const isLast = index === activeSteps.length - 1;
   const sr = rect;
 
   const spotStyle: React.CSSProperties = sr ? {
@@ -122,10 +140,10 @@ export function SpotlightTour({ tourId, steps, onComplete }: Props) {
         </div>
         <p className="text-si-4 text-sm leading-relaxed mb-4">{step.body}</p>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-si-5">{index + 1}/{steps.length}</span>
+          <span className="text-xs text-si-5">{index + 1}/{activeSteps.length}</span>
           <button type="button" onClick={next}
             className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold">
-            {step.last ? 'Concluir' : 'Próximo'} <ChevronRight className="w-4 h-4" />
+            {isLast ? 'Concluir' : 'Próximo'} <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>

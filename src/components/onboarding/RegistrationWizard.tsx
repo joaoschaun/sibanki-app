@@ -313,7 +313,22 @@ export function RegistrationWizard({ open, onClose, onComplete }: Props) {
           {currentStep.id === 'contato' && (
             <>
               <Input label="Telefone / WhatsApp" value={form.tel} onChange={(v) => set('tel', v)} placeholder="(11) 99999-9999" />
-              <Input label="CEP" value={form.cep} onChange={(v) => set('cep', v)} onBlur={() => lookupCEP(form.cep)} placeholder="00000-000" loading={cepLoading} />
+              <Input
+                label="CEP"
+                value={form.cep}
+                onChange={(v) => {
+                  const digits = v.replace(/\D/g, '').slice(0, 8);
+                  const masked = digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
+                  set('cep', masked);
+                  // Autopreenche estado/cidade assim que o CEP completa 8 dígitos
+                  // (onBlur sozinho falhava no mobile: a pessoa toca "Avançar" sem sair do campo).
+                  if (digits.length === 8) lookupCEP(digits);
+                }}
+                onBlur={() => lookupCEP(form.cep)}
+                placeholder="00000-000"
+                loading={cepLoading}
+              />
+              {cepLoading && <p className="text-[11px] text-si-5 -mt-2">Buscando endereço…</p>}
               <div className="grid grid-cols-2 gap-3">
                 <Input label="Estado" value={form.estado} onChange={(v) => set('estado', v)} placeholder="UF" />
                 <Input label="Cidade" value={form.cidade} onChange={(v) => set('cidade', v)} placeholder="Cidade" />

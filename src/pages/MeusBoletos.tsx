@@ -9,6 +9,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSibcoinToast } from '../hooks/useSibcoinToast';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
 import { ComingSoonOverlay } from '../components/ui/ComingSoonBadge';
+import { EmptyState } from '../components/ui/EmptyState';
 import {
   FileText, Bell, Zap, Brain, CheckCircle, AlertTriangle,
   Clock, Calendar, Filter, Wifi, Building2,
@@ -124,6 +125,9 @@ export default function MeusBoletos() {
    */
   const { triggerWithToast } = useSibcoinToast();
   useEffect(() => {
+    // FIX 10/06/2026: só recompensa quando o DDA REAL está ativo —
+    // antes dava SibCoin por boletos de demonstração.
+    if (!isConnected) return;
     const hasDda = DEMO_BOLETOS.some((b) => b.source === 'dda');
     const key = 'sibcoin_dda_boleto_triggered';
     if (hasDda && !localStorage.getItem(key)) {
@@ -131,7 +135,10 @@ export default function MeusBoletos() {
       triggerWithToast('dda_boleto_detected');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isConnected]);
+
+  // UX primeiro contato: sem DDA ativo, nada de boletos falsos por padrão.
+  const [showDemo, setShowDemo] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -163,6 +170,35 @@ export default function MeusBoletos() {
             </p>
           </div>
         </div>
+      )}
+
+      {/* Estado vazio: DDA não ativo → sem boletos falsos */}
+      {!isConnected && !showDemo && (
+        <div className="bg-si-card rounded-2xl border border-si-border">
+          <EmptyState
+            icon={<FileText className="w-8 h-8" />}
+            title="Nenhum boleto monitorado ainda"
+            description="Ative o DDA (Débito Direto Autorizado) para capturar seus boletos automaticamente. Enquanto isso, suas contas podem ser registradas em Lançamentos."
+            actionLabel="Registrar um lançamento"
+            actionTo="/lancamentos"
+          />
+          <div className="flex items-center justify-center pb-6">
+            <button type="button" onClick={() => setShowDemo(true)} className="text-xs text-si-5 underline underline-offset-2 hover:text-si-3">
+              Ver demonstração do módulo
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(isConnected || showDemo) && <>
+      {showDemo && !isConnected && (
+        <button
+          type="button"
+          onClick={() => setShowDemo(false)}
+          className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/25 px-3 py-1.5 rounded-xl hover:bg-amber-500/20"
+        >
+          DEMONSTRAÇÃO — sair
+        </button>
       )}
 
       {/* SibCoin Mission Banner — Acao 8 */}
@@ -401,6 +437,7 @@ export default function MeusBoletos() {
           </div>
         </div>
       )}
+      </>}
     </div>
   );
 }

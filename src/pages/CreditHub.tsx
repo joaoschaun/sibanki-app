@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { ComingSoonBadge } from '../components/ui/ComingSoonBadge';
+import { EmptyState } from '../components/ui/EmptyState';
 import { Modal } from '../components/ui/Modal';
 import { getBillingMonth } from '../services/persistUserData';
 import type { CreditAccount, CreditSnapshot } from '../types/userData';
@@ -108,7 +109,11 @@ export default function CreditHub() {
     (data?.creditAccounts && data.creditAccounts.length > 0)
   );
 
-  const isDemo = !hasRealData;
+  // UX primeiro contato (10/06/2026): conta nova NÃO vê mais números falsos
+  // como se fossem dela. Demo só aparece se o usuário pedir explicitamente.
+  const [showDemo, setShowDemo] = useState(false);
+  const isDemo = !hasRealData && showDemo;
+  const isEmpty = !hasRealData && !showDemo;
 
   const accounts: CreditAccount[] = useMemo(() => {
     if (isDemo) return DEMO_ACCOUNTS;
@@ -334,12 +339,38 @@ export default function CreditHub() {
           <p className="text-si-5 text-sm mt-1">Visão consolidada do seu passivo financeiro</p>
         </div>
         {isDemo && (
-          <span className="text-xs text-si-5 bg-si-zinc-8 border border-si-border px-3 py-1.5 rounded-xl">
-            dados demo
-          </span>
+          <button
+            type="button"
+            onClick={() => setShowDemo(false)}
+            className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/25 px-3 py-1.5 rounded-xl hover:bg-amber-500/20"
+          >
+            DEMONSTRAÇÃO — sair
+          </button>
         )}
       </div>
 
+      {/* Estado vazio: conta nova sem cartões/dívidas — nada de números falsos */}
+      {isEmpty && (
+        <div className="bg-si-card rounded-2xl border border-si-border">
+          <EmptyState
+            icon={<CreditCard className="w-8 h-8" />}
+            title="Seu crédito ainda não tem dados"
+            description="Adicione um cartão manualmente ou conecte seu banco via Open Finance para ver limites, faturas e seu nível de pressão de crédito aqui."
+            actionLabel="Adicionar cartão"
+            actionTo="/credito/cartoes"
+          />
+          <div className="flex items-center justify-center gap-4 pb-6 text-xs">
+            <Link to="/configuracoes#open-finance" className="text-si-4 underline underline-offset-2 hover:text-si-2">
+              Conectar banco (Open Finance)
+            </Link>
+            <button type="button" onClick={() => setShowDemo(true)} className="text-si-5 underline underline-offset-2 hover:text-si-3">
+              Ver demonstração
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!isEmpty && <>
       {/* Tabs */}
       <div className="flex gap-1 bg-si-card rounded-xl p-1 border border-si-border overflow-x-auto">
         {TABS.map((t) => (
@@ -1179,6 +1210,7 @@ export default function CreditHub() {
           </div>
         </Modal>
       )}
+      </>}
 
     </div>
   );
