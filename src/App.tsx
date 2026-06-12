@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { IntelligenceProvider } from './context/IntelligenceContext';
@@ -12,10 +12,8 @@ import { Header } from './components/layout/Header';
 import { BottomNavigation } from './components/layout/BottomNavigation';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { AppLoadingScreen } from './components/ui/AppLoadingScreen';
-import { OnboardingTour } from './components/ui/OnboardingTour';
 import { SibcoinToastContainer } from './components/sibcoin/SibcoinToastContainer';
 import { RegistrationWizard } from './components/onboarding/RegistrationWizard';
-import { SpotlightTour, GLOBAL_TOUR_STEPS } from './components/ui/SpotlightTour';
 import { InstallPrompt } from './components/ui/InstallPrompt';
 import { ConsultantDrawer } from './components/consultant/ConsultantDrawer';
 import { captureRefParam, useReferral } from './hooks/useReferral';
@@ -76,11 +74,6 @@ function PageLoader() {
   );
 }
 
-function OnboardingTourRedirect() {
-  const navigate = useNavigate();
-  return <OnboardingTour onComplete={() => navigate('/consultor-ia', { replace: true })} />;
-}
-
 function FloatingConsultantButton() {
   const location = useLocation();
   const openDrawer = useUiStore((s) => s.openConsultantDrawer);
@@ -94,11 +87,11 @@ function FloatingConsultantButton() {
     <button
       type="button"
       onClick={openDrawer}
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-si-card border border-si-border-md text-si-1 shadow-lg hover:bg-si-over-2 transition-all duration-200 hover:scale-[1.02]"
+      title="Falar com o Assistente"
+      className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-12 h-12 rounded-full bg-si-card border border-si-border-md text-si-1 shadow-lg hover:bg-si-over-2 transition-all duration-200 hover:scale-105"
       aria-label="Abrir o Assistente"
     >
-      <MessageCircle className="w-5 h-5 text-si-3 shrink-0" aria-hidden />
-      <span className="text-sm font-medium hidden sm:inline">Falar com o Assistente</span>
+      <MessageCircle className="w-5 h-5 text-si-2 shrink-0" aria-hidden />
     </button>
   );
 }
@@ -115,7 +108,16 @@ function AuthenticatedShell() {
   const [sidebarOpenGroup, setSidebarOpenGroup] = useState<SidebarOpenGroup>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const showWizard = user && !authLoading && !(data as any)?.cadastroCompleto;
+  /** "Depois" do wizard persiste por usuário (7 dias) — antes era state volátil e o modal voltava a cada reload. */
+  const wizardKey = user ? `sib_wizard_adiado_${user.uid}` : '';
   const [wizardDismissed, setWizardDismissed] = useState(false);
+  useEffect(() => {
+    if (!wizardKey) return;
+    try {
+      const t = Number(localStorage.getItem(wizardKey) || 0);
+      setWizardDismissed(Date.now() - t < 7 * 24 * 60 * 60 * 1000);
+    } catch { /* localStorage indisponível — segue volátil */ }
+  }, [wizardKey]);
   const [minSplashTimeDone, setMinSplashTimeDone] = useState(false);
 
   // Splash mínimo de 1,2s (suficiente para mostrar o vídeo/logo sem bloquear usuários)
@@ -271,13 +273,14 @@ function AuthenticatedShell() {
       {/* ── Botão flutuante + drawer do Assistente ───────────────────── */}
       <FloatingConsultantButton />
       <ConsultantDrawer />
-      <OnboardingTourRedirect />
       <SibcoinToastContainer />
       <RegistrationWizard
         open={!!showWizard && !wizardDismissed}
-        onClose={() => setWizardDismissed(true)}
+        onClose={() => {
+          setWizardDismissed(true);
+          try { if (wizardKey) localStorage.setItem(wizardKey, String(Date.now())); } catch { /* noop */ }
+        }}
       />
-      <SpotlightTour tourId="global" steps={GLOBAL_TOUR_STEPS} />
       <InstallPrompt uid={user?.uid} />
       <BottomNavigation onMenuClick={handleToggle} />
     </div>

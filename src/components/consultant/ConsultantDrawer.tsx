@@ -134,7 +134,7 @@ export function ConsultantDrawer() {
       <div className="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-si-bg border-l border-si-border shadow-2xl z-[101] flex flex-col transform transition-transform duration-300 ease-in-out">
         <div className="flex items-center justify-between p-4 border-b border-si-border bg-si-card">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
+            <div className="p-2 rounded-lg bg-si-over-2 text-si-2">
               <MessageCircle className="w-5 h-5" />
             </div>
             <div>
@@ -159,13 +159,13 @@ export function ConsultantDrawer() {
             <div className="text-center py-10 space-y-3">
               <Lock className="w-8 h-8 text-blue-400 mx-auto" />
               <p className="text-sm font-bold text-si-1">{upsellInfo.label}</p>
-              <a href="/configuracoes" className="text-xs px-4 py-2 bg-blue-600 text-white rounded-lg inline-block">Ver planos</a>
+              <a href="/configuracoes" className="text-xs px-4 py-2 bg-white text-zinc-900 rounded-lg inline-block font-semibold">Ver planos</a>
             </div>
           ) : (
             <>
               {messages.map((m, i) => (
                 <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${m.role === 'user' ? 'bg-blue-600/90 text-white rounded-br-sm' : 'bg-si-over-2 border border-si-border-md text-si-2 rounded-bl-sm'}`}>
+                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${m.role === 'user' ? 'bg-white text-zinc-900 rounded-br-sm' : 'bg-si-over-2 border border-si-border-md text-si-2 rounded-bl-sm'}`}>
                     {m.role === 'user' ? (
                       <span className="whitespace-pre-wrap">{m.content}</span>
                     ) : (
@@ -214,7 +214,7 @@ export function ConsultantDrawer() {
               type="button"
               onClick={() => void handleSend()}
               disabled={sending || !input.trim() || !consultorAllowed}
-              className="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50 shrink-0 transition-colors"
+              className="p-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 disabled:opacity-50 shrink-0 transition-colors"
             >
               <Send className="w-5 h-5" />
             </button>

@@ -74,7 +74,7 @@ function RecurrenceModal({
                   onClick={() => setFreq(opt.value)}
                   className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all border ${
                     freq === opt.value
-                      ? 'bg-blue-600 border-blue-500 text-si-1'
+                      ? 'bg-si-over-3 border-si-1 text-si-1'
                       : 'bg-si-over-2 border-si-border-md text-si-4 hover:bg-si-over-3'
                   }`}
                 >
@@ -103,7 +103,7 @@ function RecurrenceModal({
                     onClick={() => setDurationType(opt.value as RecurrenceSettings['durationType'])}
                     className={`py-2 px-2 rounded-xl text-xs font-semibold transition-all border flex flex-col items-center gap-1 ${
                       durationType === opt.value
-                        ? 'bg-blue-600 border-blue-500 text-si-1'
+                        ? 'bg-si-over-3 border-si-1 text-si-1'
                         : 'bg-si-over-2 border-si-border-md text-si-4 hover:bg-si-over-3'
                     }`}
                   >
@@ -168,7 +168,7 @@ function RecurrenceModal({
           <button
             type="button"
             onClick={() => onConfirm({ freq, durationType, repeatCount, endDate })}
-            className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 text-sm font-bold transition-colors"
+            className="flex-1 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold transition-colors"
           >
             Confirmar
           </button>
@@ -356,7 +356,7 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
             <button
               type="button"
               onClick={() => setShowRecurrenceModal(true)}
-              className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${isRecurring ? 'bg-blue-600 text-si-1' : 'bg-si-over-2 text-si-4 hover:bg-si-over-3'}`}
+              className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${isRecurring ? 'bg-white text-zinc-900' : 'bg-si-over-2 text-si-4 hover:bg-si-over-3'}`}
             >
               Sim
             </button>

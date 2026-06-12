@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { auth } from '../../firebase';
 import { signOut } from 'firebase/auth';
 // ✅ FIX: Removido useAuth + useFinancialData duplicados → usa AppContext (único listener Firestore)
@@ -7,7 +7,43 @@ import { useAppContext } from '../../context/AppContext';
 import { Menu, Sun, Moon, Bell, User, LogOut, FileBarChart, Calendar, MessageSquarePlus } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import { FeedbackModal } from '../ui/FeedbackModal';
-import { AppModeToggle } from './AppModeToggle';
+
+/** Título da página atual no header — substitui o "SIBANKI" estático (S1, 12/06/2026). */
+const ROUTE_TITLES: Array<[prefix: string, title: string]> = [
+  ['/consultor-ia', 'Assistente'],
+  ['/dashboard', 'Painel'],
+  ['/lancamentos', 'Lançamentos'],
+  ['/contas', 'Contas'],
+  ['/credito', 'Crédito'],
+  ['/crescimento', 'Investimentos'],
+  ['/orcamento', 'Orçamento'],
+  ['/planejamento', 'Metas'],
+  ['/recorrentes', 'Recorrentes'],
+  ['/loja', 'Loja'],
+  ['/casal', 'Família'],
+  ['/credi-amigo', 'Credi Amigo'],
+  ['/consorcio-amigo', 'Consórcio'],
+  ['/relatorios', 'Relatórios'],
+  ['/calendario', 'Calendário'],
+  ['/educacao', 'Educação'],
+  ['/ferramentas', 'Ferramentas'],
+  ['/fire', 'FIRE'],
+  ['/meu-cpf', 'Meu CPF'],
+  ['/meus-boletos', 'Meus Boletos'],
+  ['/sibcoin', 'SibCoin'],
+  ['/filiados', 'Filiados'],
+  ['/social', 'Comunidade'],
+  ['/perfil', 'Perfil'],
+  ['/configuracoes', 'Configurações'],
+  ['/conquistas', 'Conquistas'],
+  ['/cripto', 'Cripto'],
+  ['/solucoes', 'Soluções'],
+];
+
+function pageTitle(pathname: string): string {
+  const hit = ROUTE_TITLES.find(([p]) => pathname.startsWith(p));
+  return hit ? hit[1] : '';
+}
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -18,6 +54,7 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
   // ✅ FIX: Usa AppContext — elimina o 2º listener Firestore que causava freeze na UI
   const { user, data } = useAppContext();
   const { theme, toggleTheme } = useTheme();
+  const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -43,8 +80,8 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
   return (
     // ✅ FIX: Removido onMouseLeave do header — causava fechamento prematuro do dropdown
     //        ao mover o mouse para o sidebar ou conteúdo principal
-    <header className="h-14 bg-si-card border-b border-si-border grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-6 shrink-0 relative z-50">
-      <div className="flex items-center gap-3 min-w-0 justify-self-start">
+    <header className="h-14 bg-si-card border-b border-si-border flex items-center justify-between gap-2 px-4 sm:px-6 shrink-0 relative z-50">
+      <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
           onClick={onMenuClick}
@@ -55,14 +92,12 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
         >
           <Menu className="w-4 h-4 text-si-4" />
         </button>
-        <h1 className="text-xs font-bold tracking-[0.2em] uppercase text-si-3 truncate">Sibanki</h1>
+        <h1 className="text-[11px] font-bold tracking-[0.2em] uppercase text-si-4 truncate">
+          {pageTitle(location.pathname)}
+        </h1>
       </div>
 
-      <div className="justify-self-center">
-        <AppModeToggle />
-      </div>
-
-      <div className="flex items-center gap-2 justify-self-end">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={toggleTheme}

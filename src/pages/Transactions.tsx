@@ -447,20 +447,20 @@ export default function Transactions() {
               onClick={() => recording ? stopRecording() : startRecording()}
               disabled={sttBusy}
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium disabled:opacity-50 ${
-                recording ? 'border-rose-500 bg-rose-500/20 text-rose-300 animate-pulse' : 'border-violet-500/30 bg-violet-500/15 text-violet-300'
+                recording ? 'border-rose-500 bg-rose-500/20 text-rose-300 animate-pulse' : 'border-si-border-md bg-si-over-2 text-si-3'
               }`}
               title="Lançar por voz">
               <Mic className="w-4 h-4" /> {sttBusy ? 'Transcrevendo…' : recording ? 'Parar' : 'Voz'}
             </button>
           )}
           <button type="button" onClick={() => setImportOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-500/30 bg-blue-500/15 text-blue-300 text-sm font-medium"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-si-border-md bg-si-over-2 text-si-2 text-sm font-medium"
             title="Importar CSV/OFX">
             <Upload className="w-4 h-4" /> Importar
           </button>
           <button type="button"
             onClick={async () => { try { const { generateReportPdf } = await import('../utils/generateReportPdf'); generateReportPdf({ userName, entries, investments: { length: (data?.investments ?? []).length }, goals: { length: (data?.goals ?? []).length } }); } catch (err) { console.error(err); } }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 border border-blue-500 text-sm text-si-1 font-medium">
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-100 border border-white text-sm text-zinc-900 font-medium">
             <FileText className="w-4 h-4" /> PDF
           </button>
         </div>
@@ -481,7 +481,7 @@ export default function Transactions() {
               setSubTab(tab.id as 'lancar' | 'transf' | 'fixos');
             }}
             className={`flex-1 py-4 text-sm font-bold transition-colors ${
-              subTab === tab.id ? 'bg-blue-600/20 text-blue-400 border-b-2 border-blue-500' : 'text-si-4 hover:bg-si-over-2'
+              subTab === tab.id ? 'bg-si-over-2 text-si-1 border-b-2 border-si-1' : 'text-si-4 hover:bg-si-over-2'
             }`}
           >
             {tab.label}
@@ -558,7 +558,7 @@ export default function Transactions() {
                 onClick={() => applyPeriodPreset(p.key)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
                   filters.preset === p.key
-                    ? 'bg-blue-600 text-si-1 border-blue-600'
+                    ? 'bg-white text-zinc-900 border-white'
                     : 'bg-si-over-2 border-si-border-md text-si-4 hover:bg-si-over-3'
                 }`}
               >
@@ -650,7 +650,7 @@ export default function Transactions() {
               {search ? 'Nenhum lançamento encontrado para esta busca.' : 'Nenhum lançamento para o período selecionado.'}
               <div className="mt-4">
                 <button type="button" onClick={() => setAddOpen(true)}
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 text-sm font-bold">
+                  className="px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold">
                   + Novo lançamento
                 </button>
               </div>
@@ -787,7 +787,7 @@ export default function Transactions() {
             </div>
             <div className="flex gap-3 pt-2">
               <button type="button" onClick={() => setAiResult(null)} className="flex-1 py-2.5 rounded-xl border border-si-border text-si-4 text-sm hover:bg-si-over-2">Cancelar</button>
-              <button type="button" onClick={confirmAiEntry} disabled={busy} className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold disabled:opacity-50">{busy ? 'Salvando…' : 'Confirmar lançamento'}</button>
+              <button type="button" onClick={confirmAiEntry} disabled={busy} className="flex-1 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold disabled:opacity-50">{busy ? 'Salvando…' : 'Confirmar lançamento'}</button>
             </div>
           </div>
         )}

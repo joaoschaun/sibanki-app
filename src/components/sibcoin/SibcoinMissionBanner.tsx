@@ -1,15 +1,15 @@
 /**
  * SibcoinMissionBanner
  *
- * Shows a subtle banner on pages where the user can earn SibCoin,
- * highlighting the first pending mission relevant to that page.
+ * Chip discreto de missão SibCoin — não compete com o conteúdo da página.
+ * (Era um banner âmbar full-width; reduzido na varredura visual S1 de 12/06/2026.)
  *
  * Usage:
  *   <SibcoinMissionBanner eventType="entry_added" />
  */
 
 import { Link } from 'react-router-dom';
-import { Coins, ChevronRight } from 'lucide-react';
+import { Coins } from 'lucide-react';
 import { useSibcoin } from '../../hooks/useSibcoin';
 import type { SibcoinEventType } from '../../hooks/useSibcoin';
 
@@ -19,9 +19,9 @@ interface Props {
 }
 
 export function SibcoinMissionBanner({ eventType, className = '' }: Props) {
-  const { missions, balance, tier } = useSibcoin();
+  const { missions } = useSibcoin();
 
-  // Find first active, non-completed mission that matches this event
+  // Primeira missão ativa e não concluída relevante para esta página
   const mission = missions.find(
     (m) => (m as any).requiredEvent === eventType && !m.completed && m.active
   );
@@ -32,59 +32,20 @@ export function SibcoinMissionBanner({ eventType, className = '' }: Props) {
   const target   = (mission as any).target   as number | undefined;
   const hasProg  = typeof progress === 'number' && typeof target === 'number';
 
-  const TIER_GLOW: Record<string, string> = {
-    bronze:  'from-amber-600/10',
-    silver:  'from-slate-500/10',
-    gold:    'from-yellow-500/10',
-    diamond: 'from-cyan-500/10',
-  };
-
   return (
-    <div
-      className={`bg-gradient-to-r ${TIER_GLOW[tier] ?? 'from-amber-600/10'} to-transparent border border-amber-500/15 rounded-xl px-4 py-3 flex items-center gap-3 ${className}`}
-    >
-      <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-        <Coins className="w-4 h-4 text-amber-400" />
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-amber-300 truncate">
-          Missão: <span className="text-amber-400 font-bold">{mission.title}</span>
-        </p>
-        {hasProg ? (
-          <div className="flex items-center gap-2 mt-0.5">
-            <div className="flex-1 h-1 bg-amber-900/40 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-amber-400 rounded-full transition-all"
-                style={{ width: `${Math.min(100, (progress! / target!) * 100)}%` }}
-              />
-            </div>
-            <span className="text-[11px] text-amber-500 tabular-nums shrink-0">
-              {progress}/{target}
-            </span>
-          </div>
-        ) : (
-          <p className="text-xs text-amber-500/70 mt-0.5">{mission.description}</p>
+    <div className={`flex justify-end ${className}`}>
+      <Link
+        to="/sibcoin"
+        aria-label={`Missão: ${mission.title} — ver missões SibCoin`}
+        className="inline-flex items-center gap-2 rounded-full border border-si-border bg-si-over-1 px-3 py-1.5 text-[12px] text-si-4 hover:text-si-2 hover:bg-si-over-2 hover:border-si-border-md transition-colors max-w-full"
+      >
+        <Coins className="w-3.5 h-3.5 text-amber-400/80 shrink-0" aria-hidden />
+        <span className="truncate">{mission.title}</span>
+        {hasProg && (
+          <span className="tabular-nums text-si-5 shrink-0">{progress}/{target}</span>
         )}
-      </div>
-
-      <div className="flex items-center gap-2 shrink-0">
-        <span className="text-xs font-bold text-amber-400">+{mission.reward} SC</span>
-        <Link
-          to="/sibcoin"
-          className="text-amber-500/60 hover:text-amber-400 transition-colors"
-          aria-label="Ver missões SibCoin"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </Link>
-      </div>
-
-      {/* Show current balance hint if near a tier milestone */}
-      {balance > 0 && (
-        <span className="hidden sm:flex items-center gap-1 text-[11px] text-amber-600 shrink-0 border-l border-amber-500/10 pl-3">
-          <Coins className="w-3 h-3" />{balance.toLocaleString('pt-BR')} SC
-        </span>
-      )}
+        <span className="font-bold text-amber-400/90 shrink-0">+{mission.reward} SC</span>
+      </Link>
     </div>
   );
 }

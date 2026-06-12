@@ -375,7 +375,7 @@ export default function Growth() {
             <Plus className="w-4 h-4" /> Provento
           </button>
           <button type="button" onClick={openAdd}
-            className="bg-blue-600 hover:bg-blue-500 text-si-1 px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2">
+            className="bg-white hover:bg-zinc-100 text-zinc-900 px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2">
             <Plus className="w-4 h-4" /> Novo investimento
           </button>
         </div>
@@ -549,7 +549,7 @@ export default function Growth() {
                 className={inputCls} placeholder="Digite um ticker" />
             </div>
             <button type="submit" disabled={b3Loading}
-              className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 text-sm font-bold disabled:opacity-50 transition-colors">
+              className="px-6 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold disabled:opacity-50 transition-colors">
               {b3Loading ? 'Buscando…' : 'Buscar cotação'}
             </button>
           </form>
@@ -900,7 +900,7 @@ export default function Growth() {
             <button
               type="button"
               onClick={() => navigate('/ferramentas')}
-              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold text-sm transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm transition-colors"
             >
               <Calculator className="w-4 h-4" />
               Abrir Ferramentas
@@ -1110,7 +1110,7 @@ export default function Growth() {
                   <p className="text-xs text-si-5">Sugerido: <span className="font-semibold text-si-2 capitalize">{perfilCalculado.profile}</span> · score {perfilCalculado.score}</p>
                   <div className="flex gap-2">
                     <button type="submit" disabled={busy}
-                      className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 text-sm font-bold disabled:opacity-50">
+                      className="px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold disabled:opacity-50">
                       {busy ? 'Salvando…' : currentProfile ? 'Atualizar perfil' : 'Salvar perfil'}
                     </button>
                     {currentProfile && (
@@ -1226,7 +1226,7 @@ export default function Growth() {
           </div>
           <div className="flex gap-3 pt-2">
             <button type="submit" disabled={busy}
-              className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm">
+              className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 disabled:opacity-50 font-bold text-sm">
               {busy ? 'Salvando…' : 'Registrar'}
             </button>
             <button type="button" onClick={() => setAddOpen(false)}
@@ -1271,7 +1271,7 @@ export default function Growth() {
           </div>
           <div className="flex gap-3 pt-2">
             <button type="submit" disabled={busy}
-              className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold text-sm disabled:opacity-50">
+              className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm disabled:opacity-50">
               {busy ? 'Salvando…' : 'Registrar'}
             </button>
             <button type="button" onClick={() => setAddProventoOpen(false)}
@@ -1303,7 +1303,7 @@ export default function Growth() {
             </div>
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={busy}
-                className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm">
+                className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 disabled:opacity-50 font-bold text-sm">
                 {busy ? 'Salvando…' : 'Salvar'}
               </button>
               <button type="button" onClick={() => setEditingAtual(null)}

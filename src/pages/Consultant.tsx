@@ -273,7 +273,7 @@ export default function Consultant() {
         <Lock className="w-12 h-12 text-blue-400 mx-auto" />
         <h2 className="text-xl font-bold text-si-1">{upsellInfo.label}</h2>
         <p className="text-si-4 text-sm">{upsellInfo.upsell}</p>
-        <a href="/configuracoes" className="inline-block px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm">Ver planos</a>
+        <a href="/configuracoes" className="inline-block px-6 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm">Ver planos</a>
       </div>
     );
   }
@@ -283,7 +283,7 @@ export default function Consultant() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <div className="flex flex-wrap items-start gap-3 gap-y-2">
-        <div className="p-3 rounded-xl bg-blue-500/20 text-blue-400 shrink-0">
+        <div className="p-3 rounded-xl bg-si-over-2 text-si-2 shrink-0">
           <MessageCircle className="w-6 h-6" />
         </div>
         <div className="min-w-0 flex-1">
@@ -320,7 +320,7 @@ export default function Consultant() {
               <div
                 className={`max-w-[85%] rounded-2xl px-5 py-3.5 text-[15px] leading-relaxed ${
                   m.role === 'user'
-                    ? 'bg-blue-600 text-white rounded-br-sm shadow-sm'
+                    ? 'bg-white text-zinc-900 rounded-br-sm shadow-sm'
                     : 'bg-si-over-2 border border-si-border-md text-si-2 rounded-bl-sm shadow-sm'
                 }`}
               >
@@ -349,7 +349,7 @@ export default function Consultant() {
                 key={label}
                 type="button"
                 onClick={() => setInput(label)}
-                className="text-[13px] px-3.5 py-1.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
+                className="text-[13px] px-3.5 py-1.5 rounded-full bg-si-over-2 text-si-2 border border-si-border-md hover:bg-si-over-3 hover:text-si-1 transition-colors"
               >
               {label}
             </button>
@@ -357,7 +357,7 @@ export default function Consultant() {
           <button
               type="button"
               onClick={() => setShowDecisionForm((v) => !v)}
-              className="text-[13px] px-3.5 py-1.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 flex items-center gap-1.5 transition-colors"
+              className="text-[13px] px-3.5 py-1.5 rounded-full bg-si-over-2 text-si-2 border border-si-border-md hover:bg-si-over-3 hover:text-si-1 flex items-center gap-1.5 transition-colors"
             >
             <Scale className="w-3 h-3" />
             À Vista ou Parcelado?
@@ -365,7 +365,7 @@ export default function Consultant() {
         </div>
 
         {showDecisionForm && (
-          <div className="mx-3 mb-3 p-3 rounded-xl bg-violet-500/10 border border-violet-500/25 space-y-2">
+          <div className="mx-3 mb-3 p-3 rounded-xl bg-si-over-2 border border-si-border-md space-y-2">
             <p className="text-xs font-semibold text-violet-300">⚖️ Analisador: À Vista vs Parcelado</p>
             <div className="flex gap-2 flex-wrap">
               <div className="flex flex-col gap-1 flex-1 min-w-[110px]">
@@ -410,7 +410,7 @@ export default function Consultant() {
               <button
                 type="button"
                 onClick={handleDecisionAnalyze}
-                className="text-xs px-4 py-1.5 rounded-lg bg-violet-600/80 text-white hover:bg-violet-600 font-medium"
+                className="text-xs px-4 py-1.5 rounded-lg bg-white text-zinc-900 hover:bg-zinc-100 font-medium"
               >
                 Analisar →
               </button>
@@ -432,7 +432,7 @@ export default function Consultant() {
             type="button"
             onClick={() => void handleSend()}
             disabled={sending || !input.trim()}
-            className="p-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 disabled:opacity-50 shrink-0"
+            className="p-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 disabled:opacity-50 shrink-0"
             aria-label="Enviar"
           >
             <Send className="w-5 h-5" />

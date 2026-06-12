@@ -376,7 +376,7 @@ export default function CreditHub() {
         {TABS.map((t) => (
           <button key={t} onClick={() => setActiveTab(t)}
             className={`flex-1 py-2 px-2 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
-              activeTab === t ? 'bg-violet-600 text-si-1 shadow' : 'text-si-5 hover:text-si-3'
+              activeTab === t ? 'bg-white text-zinc-900 shadow' : 'text-si-5 hover:text-si-3'
             }`}
           >{t}</button>
         ))}
@@ -555,7 +555,7 @@ export default function CreditHub() {
               <h4 className="text-sm font-bold text-si-2">Lançamento & Detalhamento Manual</h4>
               <p className="text-xs text-si-5">Lance compras parceladas, anuidade e configure faturas sem Open Finance.</p>
             </div>
-            <Link to="/credito/cartoes" className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-si-1 text-xs font-bold transition-colors shrink-0 uppercase tracking-wider">
+            <Link to="/credito/cartoes" className="px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-bold transition-colors shrink-0 uppercase tracking-wider">
               Painel de Cartões
             </Link>
           </div>
@@ -566,7 +566,7 @@ export default function CreditHub() {
               <p>Nenhum cartão cadastrado.</p>
               <Link 
                 to="/credito/cartoes" 
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-si-1 text-xs font-bold transition-colors shadow-lg shadow-violet-600/20 uppercase tracking-wider"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-bold transition-colors uppercase tracking-wider"
               >
                 Criar Cartão Manualmente
               </Link>
@@ -604,7 +604,7 @@ export default function CreditHub() {
                 <UtilBar pct={pct} />
                 <div className="flex gap-2">
                   <ComingSoonBadge>
-                    <button disabled className="flex-1 py-2 rounded-xl bg-violet-600/20 text-violet-400/50 text-xs font-semibold cursor-not-allowed">
+                    <button disabled className="flex-1 py-2 rounded-xl bg-si-over-2 text-si-5 text-xs font-semibold cursor-not-allowed">
                       Pagar fatura
                     </button>
                   </ComingSoonBadge>
@@ -727,7 +727,7 @@ export default function CreditHub() {
                   </div>
                   {item.action && (
                     <ComingSoonBadge>
-                      <button disabled className="shrink-0 px-2 py-1 rounded-lg bg-violet-600/20 text-violet-400/50 text-[11px] font-semibold cursor-not-allowed flex items-center gap-0.5">
+                      <button disabled className="shrink-0 px-2 py-1 rounded-lg bg-si-over-2 text-si-5 text-[11px] font-semibold cursor-not-allowed flex items-center gap-0.5">
                         {item.action} <ArrowUpRight className="w-3 h-3" />
                       </button>
                     </ComingSoonBadge>
@@ -754,7 +754,7 @@ export default function CreditHub() {
                   onClick={() => setSelectedPayoffStrategy('avalanche')}
                   className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     selectedPayoffStrategy === 'avalanche'
-                      ? 'bg-violet-600 text-si-1 shadow'
+                      ? 'bg-white text-zinc-900 shadow'
                       : 'text-si-5 hover:text-si-3'
                   }`}
                 >
@@ -765,7 +765,7 @@ export default function CreditHub() {
                   onClick={() => setSelectedPayoffStrategy('bola-de-neve')}
                   className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     selectedPayoffStrategy === 'bola-de-neve'
-                      ? 'bg-violet-600 text-si-1 shadow'
+                      ? 'bg-white text-zinc-900 shadow'
                       : 'text-si-5 hover:text-si-3'
                   }`}
                 >
@@ -1202,7 +1202,7 @@ export default function CreditHub() {
               <button
                 type="button"
                 onClick={() => setSelectedAmortizationLoan(null)}
-                className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-si-1 text-xs font-bold transition-all uppercase tracking-wider"
+                className="flex-1 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-bold transition-all uppercase tracking-wider"
               >
                 Concluir Simulação
               </button>

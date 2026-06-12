@@ -261,7 +261,7 @@ export function RegistrationWizard({ open, onClose, onComplete }: Props) {
   const chipClass = (active: boolean) =>
     `px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
       active
-        ? 'bg-blue-600 border-blue-600 text-white'
+        ? 'bg-white border-white text-zinc-900'
         : 'bg-si-over-2 border-si-border-md text-si-3 hover:bg-si-over-3'
     }`;
 
@@ -287,7 +287,7 @@ export function RegistrationWizard({ open, onClose, onComplete }: Props) {
 
         {/* Barra de progresso */}
         <div className="h-1 bg-si-over-2 mx-6 rounded-full overflow-hidden">
-          <div className="h-full bg-blue-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+          <div className="h-full bg-si-1 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
         </div>
 
         {/* Conteúdo */}
@@ -594,7 +594,7 @@ export function RegistrationWizard({ open, onClose, onComplete }: Props) {
               type="button"
               onClick={handleNext}
               disabled={!isStepValid() || busy}
-              className="inline-flex items-center gap-1 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-bold"
+              className="inline-flex items-center gap-1 px-6 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 disabled:opacity-50 text-sm font-bold"
             >
               {busy
                 ? 'Salvando…'
