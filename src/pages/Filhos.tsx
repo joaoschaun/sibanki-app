@@ -192,7 +192,7 @@ export default function FilhosPage({ hideHeader = false }: { hideHeader?: boolea
                 <button
                   type="button"
                   onClick={() => setTarefaOpen(f.id)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-blue-600/20 text-blue-400 text-sm font-bold hover:bg-blue-600/30 flex items-center justify-center gap-1.5"
+                  className="flex-1 px-3 py-2 rounded-xl bg-si-over-2 text-si-2 text-sm font-bold hover:bg-si-over-3 flex items-center justify-center gap-1.5"
                 >
                   <ListChecks className="w-4 h-4" /> Nova tarefa
                 </button>
@@ -336,7 +336,7 @@ export default function FilhosPage({ hideHeader = false }: { hideHeader?: boolea
           </div>
           <button type="button" onClick={() => tarefaOpen && handleAddTarefa(tarefaOpen)}
             disabled={busy || !tarefaTitulo.trim()}
-            className="w-full px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm disabled:opacity-50">
+            className="w-full px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm disabled:opacity-50">
             {busy ? 'Salvando...' : 'Criar tarefa'}
           </button>
         </div>

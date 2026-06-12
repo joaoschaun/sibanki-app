@@ -129,7 +129,7 @@ export function TransferForm({
           type="button"
           disabled={busy}
           onClick={submit}
-          className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed text-si-1 font-bold text-sm"
+          className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-60 disabled:cursor-not-allowed text-zinc-900 font-bold text-sm"
         >
           {busy ? 'Salvando…' : 'Transferir'}
         </button>

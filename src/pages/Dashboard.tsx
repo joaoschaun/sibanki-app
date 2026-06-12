@@ -596,7 +596,7 @@ export default function Dashboard() {
                 </Link>
                 <Link
                   to="/consultor-ia"
-                  className="bg-blue-600 hover:bg-blue-500 text-si-1 px-4 py-2 rounded-xl text-sm font-semibold"
+                  className="bg-white hover:bg-zinc-100 text-zinc-900 px-4 py-2 rounded-xl text-sm font-semibold"
                 >
                   Pedir orientação ao consultor
                 </Link>

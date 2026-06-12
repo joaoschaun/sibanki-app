@@ -232,7 +232,7 @@ function NewPurchasePanel({
       {error && <p className="text-xs text-rose-400">{error}</p>}
       <div className="flex gap-2">
         <button type="submit" disabled={saving}
-          className="flex-1 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-sm font-medium transition-colors disabled:opacity-50">
+          className="flex-1 py-2 rounded-lg bg-white hover:bg-zinc-100 text-sm font-medium transition-colors disabled:opacity-50">
           {saving ? 'Salvando…' : 'Adicionar'}
         </button>
         <button type="button" onClick={onClose}

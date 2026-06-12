@@ -236,7 +236,7 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
           <button
             type="button"
             onClick={next}
-            className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold text-sm transition-colors"
+            className="flex-1 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm transition-colors"
           >
             {step === total - 1 ? '🚀 Começar!' : 'Próximo'}
           </button>

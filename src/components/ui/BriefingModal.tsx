@@ -95,7 +95,7 @@ export function BriefingModal() {
           </div>
         </div>
         <div className="p-4 border-t border-si-border-md">
-          <button type="button" onClick={handleClose} className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold text-sm">
+          <button type="button" onClick={handleClose} className="w-full py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm">
             Continuar
           </button>
         </div>

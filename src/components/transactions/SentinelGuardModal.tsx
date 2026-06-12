@@ -101,7 +101,7 @@ export function SentinelGuardModal({
               className={`w-full py-4 rounded-xl text-base font-bold transition-all shadow-lg hover:-translate-y-1 ${
                 isCritical 
                 ? 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-emerald-500/20' 
-                : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20'
+                : 'bg-white hover:bg-zinc-100 text-zinc-900 shadow-blue-500/20'
               }`}
             >
               Desistir e Reter Capital

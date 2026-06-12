@@ -165,7 +165,7 @@ export function InvestorProfileForm({
           <button
             type="submit"
             disabled={busy}
-            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 text-sm font-bold disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold disabled:opacity-50"
           >
             {busy ? 'Salvando…' : currentProfile ? 'Atualizar perfil' : 'Salvar perfil'}
           </button>

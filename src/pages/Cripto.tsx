@@ -216,7 +216,7 @@ export default function Cripto() {
         {TABS.map((t) => (
           <button key={t} onClick={() => setActiveTab(t)}
             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
-              activeTab === t ? 'bg-blue-600 text-si-1 shadow' : 'text-si-5 hover:text-si-3'
+              activeTab === t ? 'bg-white text-zinc-900 shadow' : 'text-si-5 hover:text-si-3'
             }`}
           >{t}</button>
         ))}
@@ -260,7 +260,7 @@ export default function Cripto() {
                       {a.change24h >= 0 ? '+' : ''}{a.change24h.toFixed(2)}%
                     </p>
                   </div>
-                  <button className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 text-xs font-semibold hover:bg-blue-600/30">
+                  <button className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 px-3 py-1.5 rounded-lg bg-si-over-2 text-si-2 text-xs font-semibold hover:bg-si-over-3">
                     Comprar
                   </button>
                 </div>
@@ -396,7 +396,7 @@ export default function Cripto() {
                   </div>
                   <p className="text-xs text-si-5 mt-0.5">Mínimo {s.minimo} · Lock {s.lock}</p>
                 </div>
-                <button className="px-4 py-2 rounded-xl bg-blue-600/20 text-blue-400 text-sm font-semibold hover:bg-blue-600/30 transition-colors">
+                <button className="px-4 py-2 rounded-xl bg-si-over-2 text-si-2 text-sm font-semibold hover:bg-si-over-3 transition-colors">
                   Fazer stake
                 </button>
               </div>

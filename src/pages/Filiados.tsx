@@ -136,7 +136,7 @@ export default function Filiados() {
           <Gift className="w-12 h-12 text-blue-400 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-si-1 mb-2">Disponível para planos Pro e Família</h3>
           <p className="text-si-5 text-sm max-w-md mx-auto mb-6">Indique amigos, acumule SibCoins e suba de nível. Quanto mais indicações ativas, maior seu multiplicador de recompensas.</p>
-          <a href="/configuracoes" className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm">Ver planos</a>
+          <a href="/configuracoes" className="px-6 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm">Ver planos</a>
         </div>
       </div>
     );
@@ -171,7 +171,7 @@ export default function Filiados() {
         <h3 className="text-sm font-bold text-si-4 uppercase tracking-wider mb-3">Seu link de indicação</h3>
         <div className="flex gap-2 items-center">
           <div className="flex-1 px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-sm text-si-3 truncate font-mono">{link || '...'}</div>
-          <button type="button" onClick={copiarLink} className="px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shrink-0">
+          <button type="button" onClick={copiarLink} className="px-4 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold shrink-0">
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           </button>
           <button type="button" onClick={compartilharWhatsApp} className="px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shrink-0" title="Compartilhar via WhatsApp">
@@ -198,7 +198,7 @@ export default function Filiados() {
           <div className="flex gap-2">
             {(['', 'pendente', 'ativo'] as const).map((s) => (
               <button key={s} type="button" onClick={() => setFilterStatus(s)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${filterStatus === s ? 'bg-blue-600 text-white' : 'bg-si-over-2 text-si-5 hover:bg-si-over-3'}`}>
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${filterStatus === s ? 'bg-white text-zinc-900' : 'bg-si-over-2 text-si-5 hover:bg-si-over-3'}`}>
                 {s === '' ? 'Todos' : s === 'pendente' ? 'Pendentes' : 'Ativos'}
               </button>
             ))}

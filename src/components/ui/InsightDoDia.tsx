@@ -576,7 +576,7 @@ export function InsightDoDia({
                       target: '/consultor-ia',
                     })
                   }
-                  className="bg-blue-600 hover:bg-blue-500 text-si-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors"
+                  className="bg-white hover:bg-zinc-100 text-zinc-900 px-4 py-2 rounded-xl font-bold text-sm transition-colors"
                 >
                   Ver no Consultor IA
                 </Link>
@@ -612,7 +612,7 @@ export function InsightDoDia({
                       relevanceScore: Math.round(insight.relevancia_score),
                     })
                   }
-                  className="bg-blue-600 hover:bg-blue-500 text-si-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors"
+                  className="bg-white hover:bg-zinc-100 text-zinc-900 px-4 py-2 rounded-xl font-bold text-sm transition-colors"
                 >
                   Ver no app
                 </Link>

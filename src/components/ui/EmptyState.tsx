@@ -20,13 +20,13 @@ export function EmptyState({ icon, title, description, actionLabel, actionTo, on
       <p className="text-sm text-si-5 max-w-sm leading-relaxed mb-6">{description}</p>
       {actionLabel && actionTo && (
         <Link to={actionTo}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition-colors">
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold transition-colors">
           {actionLabel}
         </Link>
       )}
       {actionLabel && onAction && !actionTo && (
         <button type="button" onClick={onAction}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition-colors">
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold transition-colors">
           {actionLabel}
         </button>
       )}

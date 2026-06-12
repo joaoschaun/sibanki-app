@@ -363,7 +363,7 @@ export default function Accounts() {
               <button
                 type="button"
                 onClick={() => setExtratoAccount(detailAccount)}
-                className="px-4 py-2 rounded-xl bg-blue-600 border border-blue-500 text-white text-sm font-bold hover:bg-blue-500 transition-colors shadow-[0_0_15px_-3px_rgba(37,99,235,0.4)]"
+                className="px-4 py-2 rounded-xl bg-white border border-white text-zinc-900 text-sm font-bold hover:bg-zinc-100 transition-colors"
               >
                 Simular App
               </button>
@@ -614,7 +614,7 @@ export default function Accounts() {
 
           <div className="flex gap-3 pt-3">
             <button type="button" onClick={() => setModalOpen(false)} className="flex-1 py-3.5 rounded-xl bg-si-over-2 text-si-3 hover:text-si-1 font-bold text-sm transition-colors uppercase tracking-wider">Cancelar</button>
-            <button type="submit" disabled={busy} className="flex-[2] py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 uppercase tracking-wider">
+            <button type="submit" disabled={busy} className="flex-[2] py-3.5 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 uppercase tracking-wider">
               {busy ? 'Processando...' : 'Autenticar Conta'}
             </button>
           </div>
@@ -641,7 +641,7 @@ export default function Accounts() {
             </div>
             <div className="flex gap-3 pt-3">
               <button type="button" onClick={() => setAdjustAccount(null)} className="flex-1 py-3.5 rounded-xl bg-si-over-2 text-si-3 hover:text-si-1 font-bold text-sm transition-colors uppercase tracking-wider">Descartar</button>
-              <button type="submit" disabled={busy} className="flex-[2] py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 uppercase tracking-wider">
+              <button type="submit" disabled={busy} className="flex-[2] py-3.5 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 uppercase tracking-wider">
                 {busy ? 'Calculando...' : 'Confirmar Ajuste'}
               </button>
             </div>
@@ -794,7 +794,7 @@ export default function Accounts() {
             
             <div className="flex gap-3 pt-4 w-full">
               <button type="button" onClick={() => setEditAccount(null)} className="flex-1 py-3 rounded-xl bg-si-over-2 text-si-3 hover:text-si-1 font-bold text-sm transition-colors uppercase tracking-wider">Cancelar</button>
-              <button type="submit" disabled={busy} className="flex-[2] py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 uppercase tracking-wider">
+              <button type="submit" disabled={busy} className="flex-[2] py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 uppercase tracking-wider">
                 {busy ? 'Salvando...' : 'Aplicar Preferências'}
               </button>
             </div>

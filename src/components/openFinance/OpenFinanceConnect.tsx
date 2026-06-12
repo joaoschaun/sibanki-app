@@ -120,7 +120,7 @@ export function OpenFinanceConnect({
         type="button"
         onClick={startConnect}
         disabled={disabled || busy}
-        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 text-sm font-semibold"
+        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 text-sm font-semibold"
       >
         {busy ? <Loader2 className="w-4 h-4 animate-spin shrink-0" /> : <Link2 className="w-4 h-4 shrink-0" />}
         Conectar aqui (Open Finance)

@@ -60,7 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="flex gap-3">
             {!tooManyErrors && (
               <button type="button" onClick={this.handleRetry}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition-colors">
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold transition-colors">
                 <RotateCcw className="w-4 h-4" />
                 Tentar novamente
               </button>

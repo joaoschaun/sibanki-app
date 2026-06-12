@@ -152,7 +152,7 @@ export function CoachSetup({
               </div>
               <Link
                 to={nextStep.link}
-                className="shrink-0 px-3 py-1.5 rounded-xl bg-violet-500 hover:bg-violet-400 text-white text-xs font-bold transition-colors"
+                className="shrink-0 px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-bold transition-colors"
               >
                 {nextStep.linkLabel}
               </Link>

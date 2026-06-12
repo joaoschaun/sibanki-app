@@ -276,7 +276,7 @@ export default function Social() {
           <button
             type="button"
             onClick={() => { setSetupOpen(true); setError(null); }}
-            className="bg-blue-600 hover:bg-blue-500 text-si-1 px-6 py-3 rounded-xl font-bold text-sm"
+            className="bg-white hover:bg-zinc-100 text-zinc-900 px-6 py-3 rounded-xl font-bold text-sm"
           >
             Configurar perfil da comunidade
           </button>
@@ -328,7 +328,7 @@ export default function Social() {
                 <button
                   type="submit"
                   disabled={busy || postText.trim().length < 10}
-                  className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 px-5 py-2 rounded-xl font-bold text-sm flex items-center gap-2"
+                  className="bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 px-5 py-2 rounded-xl font-bold text-sm flex items-center gap-2"
                 >
                   <Send className="w-4 h-4" /> Publicar
                 </button>
@@ -739,7 +739,7 @@ export default function Social() {
             </div>
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="submit" disabled={busy} className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm">
+            <button type="submit" disabled={busy} className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm">
               {busy ? 'Salvando…' : 'Salvar'}
             </button>
             <button type="button" onClick={() => setSetupOpen(false)} className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3">

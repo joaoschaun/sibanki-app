@@ -192,7 +192,7 @@ export default function Planning() {
         <button
           type="button"
           onClick={openAdd}
-          className="bg-blue-600 hover:bg-blue-500 text-si-1 px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2"
+          className="bg-white hover:bg-zinc-100 text-zinc-900 px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2"
         >
           <Plus className="w-4 h-4" /> Nova meta
         </button>
@@ -406,7 +406,7 @@ export default function Planning() {
                             type="button"
                             disabled={busy}
                             onClick={() => handleAporteRapido(gid, economia)}
-                            className="w-full py-2 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
+                            className="w-full py-2 bg-white hover:bg-zinc-100 text-zinc-900 font-bold rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
                           >
                             <Coins className="w-3.5 h-3.5" /> Aportar Sobra de {fmtBRL(economia)}
                           </button>
@@ -510,7 +510,7 @@ export default function Planning() {
             <button
               type="submit"
               disabled={busy}
-              className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm"
+              className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm"
             >
               {busy ? 'Salvando…' : 'Adicionar'}
             </button>
@@ -604,7 +604,7 @@ export default function Planning() {
               </div>
             </div>
             <div className="flex gap-3 pt-2">
-              <button type="submit" disabled={busy} className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm">
+              <button type="submit" disabled={busy} className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm">
                 {busy ? 'Salvando…' : 'Salvar'}
               </button>
               <button type="button" onClick={() => setEditing(null)} className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3">

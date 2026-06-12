@@ -178,7 +178,7 @@ export default function MeuCpf() {
             key={t}
             onClick={() => setActiveTab(t)}
             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors relative ${
-              activeTab === t ? 'bg-indigo-600 text-si-1 shadow' : 'text-si-5 hover:text-si-3'
+              activeTab === t ? 'bg-white text-zinc-900 shadow' : 'text-si-5 hover:text-si-3'
             }`}
           >
             {t}

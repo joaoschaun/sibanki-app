@@ -411,7 +411,7 @@ export default function Budget() {
             onClick={() => setMode('simples')}
             className={`px-3 py-1.5 rounded-lg transition-all ${
               mode === 'simples'
-                ? 'bg-blue-600 text-white shadow'
+                ? 'bg-white text-zinc-900 shadow'
                 : 'text-si-5 hover:text-si-3'
             }`}
           >
@@ -421,7 +421,7 @@ export default function Budget() {
             onClick={() => setMode('envelope')}
             className={`px-3 py-1.5 rounded-lg transition-all ${
               mode === 'envelope'
-                ? 'bg-blue-600 text-white shadow'
+                ? 'bg-white text-zinc-900 shadow'
                 : 'text-si-5 hover:text-si-3'
             }`}
           >
@@ -468,7 +468,7 @@ export default function Budget() {
                 type="button"
                 disabled={busy}
                 onClick={handleApplyBalanceadora}
-                className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-xs font-bold shrink-0 transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 text-xs font-bold shrink-0 transition-colors cursor-pointer"
               >
                 {busy ? 'Balanceando...' : 'Cobrir Furo'}
               </button>
@@ -580,7 +580,7 @@ export default function Budget() {
               </div>
             </div>
             <button type="button" onClick={handleDistribuir} disabled={busy || valorRendaPlanejada <= 0}
-              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 text-sm font-bold">
+              className="px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 text-sm font-bold">
               {busy ? 'Aplicando…' : 'Distribuir automaticamente'}
             </button>
           </section>
@@ -724,7 +724,7 @@ export default function Budget() {
                 </div>
                 <div className="flex gap-3">
                   <button onClick={handleMove} disabled={busy || !moveModal.to}
-                    className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold text-sm disabled:opacity-50">
+                    className="flex-1 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm disabled:opacity-50">
                     Mover
                   </button>
                   <button onClick={() => setMoveModal(null)} className="px-4 py-2.5 rounded-xl bg-si-over-2 text-si-4 text-sm">
@@ -751,7 +751,7 @@ export default function Budget() {
             </div>
             <div className="flex gap-3">
               <button type="submit" disabled={busy}
-                className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm">
+                className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm">
                 {busy ? 'Salvando…' : 'Salvar'}
               </button>
               <button type="button" onClick={() => setEditingCat(null)}

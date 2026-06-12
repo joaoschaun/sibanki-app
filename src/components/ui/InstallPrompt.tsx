@@ -77,7 +77,7 @@ export function InstallPrompt({ uid }: { uid?: string }) {
               <p className="text-xs text-si-5 mt-0.5">Acesse mais rápido direto da tela inicial do seu celular.</p>
               <div className="flex gap-2 mt-3">
                 <button type="button" onClick={handleInstall}
-                  className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold">
+                  className="px-4 py-1.5 rounded-lg bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-bold">
                   Instalar
                 </button>
                 <button type="button" onClick={dismissInstall}

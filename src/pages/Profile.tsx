@@ -408,7 +408,7 @@ export default function Profile() {
                 <button
                   type="submit"
                   disabled={busy}
-                  className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm flex items-center justify-center gap-2"
                 >
                   <User className="w-4 h-4" /> {busy ? 'Salvando…' : 'Salvar dados cadastrais'}
                 </button>
@@ -601,7 +601,7 @@ export default function Profile() {
                   <button
                     type="submit"
                     disabled={passwordBusy}
-                    className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm flex items-center justify-center gap-2"
                   >
                     <Lock className="w-4 h-4" /> {passwordBusy ? 'Alterando…' : 'Atualizar Senha'}
                   </button>
@@ -659,7 +659,7 @@ export default function Profile() {
                   <button
                     type="submit"
                     disabled={emailBusy}
-                    className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm"
+                    className="w-full py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm"
                   >
                     {emailBusy ? 'Alterando…' : 'Confirmar Novo E-mail'}
                   </button>
@@ -776,7 +776,7 @@ export default function Profile() {
               <button
                 type="submit"
                 disabled={familyBusy}
-                className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 text-sm font-bold transition-all"
+                className="px-6 py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 text-sm font-bold transition-all"
               >
                 {familyBusy ? 'Salvando…' : 'Salvar configurações de compartilhamento'}
               </button>

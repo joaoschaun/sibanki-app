@@ -416,7 +416,7 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
         {/* Botões */}
         <div className="flex gap-3 pt-2">
           <button type="submit"
-            className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold text-sm">
+            className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm">
             {entry ? 'Salvar' : 'Adicionar'}
           </button>
           <button type="button" onClick={onCancel}

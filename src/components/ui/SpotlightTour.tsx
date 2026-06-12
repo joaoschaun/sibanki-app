@@ -142,7 +142,7 @@ export function SpotlightTour({ tourId, steps, onComplete }: Props) {
         <div className="flex items-center justify-between">
           <span className="text-xs text-si-5">{index + 1}/{activeSteps.length}</span>
           <button type="button" onClick={next}
-            className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold">
+            className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold">
             {isLast ? 'Concluir' : 'Próximo'} <ChevronRight className="w-4 h-4" />
           </button>
         </div>

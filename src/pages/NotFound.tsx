@@ -12,7 +12,7 @@ export default function NotFound() {
       <div className="flex gap-4">
         <Link
           to="/"
-          className="bg-blue-600 hover:bg-blue-500 text-si-1 px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2"
+          className="bg-white hover:bg-zinc-100 text-zinc-900 px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2"
         >
           <Home className="w-4 h-4" /> Início
         </Link>

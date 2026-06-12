@@ -29,7 +29,7 @@ export function AccountsHeader({ totalBalance, onNewAccount, onOpenFinance }: Ac
         </button>
         <button
           onClick={onNewAccount}
-          className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-colors"
+          className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm transition-colors"
         >
           <Plus className="w-4 h-4" />
           <span>Nova Conta</span>

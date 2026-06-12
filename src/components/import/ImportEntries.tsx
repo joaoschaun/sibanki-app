@@ -280,7 +280,7 @@ export function ImportEntries({ open, onClose }: Props) {
               <p className="text-sm text-si-5 mt-1">Lançamentos adicionados com sucesso.</p>
               <div className="mt-6 flex gap-3 justify-center">
                 <button type="button" onClick={reset} className="px-4 py-2.5 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 text-sm">Importar mais</button>
-                <button type="button" onClick={() => { reset(); onClose(); }} className="px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold">Fechar</button>
+                <button type="button" onClick={() => { reset(); onClose(); }} className="px-4 py-2.5 rounded-xl bg-white text-zinc-900 text-sm font-bold">Fechar</button>
               </div>
             </div>
           ) : items.length === 0 ? (
@@ -288,7 +288,7 @@ export function ImportEntries({ open, onClose }: Props) {
               <div className="flex gap-2">
                 {(['csv', 'ofx', 'text'] as const).map((f) => (
                   <button key={f} type="button" onClick={() => setFormat(f)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium ${format === f ? 'bg-blue-600 text-white' : 'bg-si-over-2 text-si-4 hover:bg-si-over-3'}`}>
+                    className={`px-4 py-2 rounded-xl text-sm font-medium ${format === f ? 'bg-white text-zinc-900' : 'bg-si-over-2 text-si-4 hover:bg-si-over-3'}`}>
                     {f === 'csv' ? 'CSV' : f === 'ofx' ? 'OFX' : 'Colar texto'}
                   </button>
                 ))}
@@ -313,7 +313,7 @@ export function ImportEntries({ open, onClose }: Props) {
                     placeholder="Cole o texto do extrato aqui (data, descrição e valor em cada linha)"
                     className="w-full h-40 px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm resize-none focus:outline-none focus:border-blue-500" />
                   <button type="button" onClick={handlePaste} disabled={!pasteText.trim()}
-                    className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold disabled:opacity-50">
+                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold disabled:opacity-50">
                     Analisar texto
                   </button>
                 </div>
@@ -330,7 +330,7 @@ export function ImportEntries({ open, onClose }: Props) {
                   <button type="button" onClick={() => toggleAll(true)} className="text-xs text-blue-400 hover:underline">Todos</button>
                   <button type="button" onClick={() => toggleAll(false)} className="text-xs text-si-5 hover:underline">Nenhum</button>
                   <button type="button" onClick={categorizeWithAi} disabled={aiCatBusy}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-violet-600/20 text-violet-400 text-xs font-semibold hover:bg-violet-600/30 disabled:opacity-50"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-si-over-2 text-si-2 text-xs font-semibold hover:bg-si-over-3 disabled:opacity-50"
                     title="Usar IA para categorizar automaticamente">
                     <Sparkles className="w-3 h-3" /> {aiCatBusy ? 'Categorizando…' : 'IA Categorizar'}
                   </button>
@@ -389,7 +389,7 @@ export function ImportEntries({ open, onClose }: Props) {
           <div className="flex items-center justify-between px-6 py-4 border-t border-si-border">
             <button type="button" onClick={reset} className="text-sm text-si-5 hover:text-si-3">Voltar</button>
             <button type="button" onClick={confirmImport} disabled={busy || selected.length === 0}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold disabled:opacity-50">
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold disabled:opacity-50">
               <Check className="w-4 h-4" /> {busy ? `Importando... (${selected.length})` : `Importar ${selected.length} lançamentos`}
             </button>
           </div>

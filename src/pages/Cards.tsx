@@ -524,7 +524,7 @@ export default function Cards() {
               setAddBenefitsBadge(false);
               setModalOpen(true);
             }}
-            className="bg-blue-600 hover:bg-blue-500 text-si-1 px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2"
+            className="bg-white hover:bg-zinc-100 text-zinc-900 px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> Novo cartão
           </button>
@@ -813,7 +813,7 @@ export default function Cards() {
                 <button
                   type="submit"
                   disabled={lancarBusy}
-                  className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm"
+                  className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm"
                 >
                   {lancarBusy ? 'Salvando…' : 'Lançar'}
                 </button>
@@ -953,7 +953,7 @@ export default function Cards() {
             <button
               type="submit"
               disabled={importBusy}
-              className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-bold text-sm disabled:opacity-50"
+              className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm disabled:opacity-50"
             >
               {importBusy ? 'Importando…' : 'Importar'}
             </button>
@@ -1247,7 +1247,7 @@ export default function Cards() {
             <button
               type="submit"
               disabled={busy}
-              className="flex-[2] py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm uppercase tracking-wider shadow-lg shadow-blue-600/20"
+              className="flex-[2] py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm uppercase tracking-wider shadow-lg shadow-blue-600/20"
             >
               {busy ? 'Salvando…' : 'Adicionar Cartão'}
             </button>
@@ -1472,7 +1472,7 @@ export default function Cards() {
               <button
                 type="submit"
                 disabled={busy}
-                className="flex-[2] py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm uppercase tracking-wider shadow-lg shadow-blue-600/20"
+                className="flex-[2] py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm uppercase tracking-wider shadow-lg shadow-blue-600/20"
               >
                 {busy ? 'Salvando…' : 'Salvar Alterações'}
               </button>
@@ -1666,7 +1666,7 @@ export default function Cards() {
                 type="button"
                 onClick={saveBenefits}
                 disabled={benefitsBusy}
-                className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 font-bold text-sm"
+                className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm"
               >
                 {benefitsBusy ? 'Salvando...' : 'Salvar benefícios'}
               </button>
