@@ -33,6 +33,21 @@
   }
   </script>
 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "O Sibanki é grátis?", "acceptedAnswer": { "@type": "Answer", "text": "Sim. Você cria a conta, conecta seus bancos e vê seus Dias de Liberdade sem pagar nada e sem cadastrar cartão de crédito." } },
+      { "@type": "Question", "name": "Preciso compartilhar a senha do meu banco?", "acceptedAnswer": { "@type": "Answer", "text": "Nunca. A conexão é feita pelo Open Finance, sistema oficial regulado pelo Banco Central: você autoriza dentro do app do seu próprio banco e pode revogar quando quiser." } },
+      { "@type": "Question", "name": "O Sibanki movimenta o meu dinheiro?", "acceptedAnswer": { "@type": "Answer", "text": "Não. O acesso é somente leitura. Transferências, pagamentos e investimentos continuam acontecendo exclusivamente no seu banco ou corretora." } },
+      { "@type": "Question", "name": "O que são Dias de Liberdade (Ld)?", "acceptedAnswer": { "@type": "Answer", "text": "É o patrimônio líquido dividido pelo custo de vida real por dia: por quantos dias você consegue viver hoje sem nenhuma renda." } },
+      { "@type": "Question", "name": "Funciona com o meu banco?", "acceptedAnswer": { "@type": "Answer", "text": "Se o seu banco participa do Open Finance brasileiro (Nubank, Itaú, Bradesco, BB, Caixa, Santander, Inter, C6, BTG, XP e centenas de outros), funciona. Também é possível registrar tudo manualmente." } },
+      { "@type": "Question", "name": "Meus dados estão seguros?", "acceptedAnswer": { "@type": "Answer", "text": "Sim. Dados criptografados em trânsito e em repouso, regras de acesso individuais por usuário e conformidade com a LGPD. Você pode exportar ou apagar tudo quando quiser." } }
+    ]
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -89,7 +104,7 @@
       border-bottom: 1px solid transparent; transition: border-color .3s;
     }
     header.scrolled { border-bottom-color: var(--border); }
-    .nav { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+    .nav { display: flex; align-items: center; justify-content: space-between; height: 74px; }
     .nav .logo svg { display: block; }
     .nav-actions { display: flex; gap: 10px; align-items: center; }
     .nav-actions .btn { padding: 9px 18px; font-size: 13px; border-radius: 10px; }
@@ -275,17 +290,37 @@
     .scard h4 { color: var(--t1); font-size: 15px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.01em; }
     .scard p { font-size: 13px; color: var(--t3); }
 
+    /* FAQ */
+    .faq-list { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+    .faq-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: border-color .25s; }
+    .faq-item[open] { border-color: var(--border-md); }
+    .faq-item summary {
+      list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      gap: 16px; padding: 19px 24px; color: var(--t1); font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary .fx { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--over2); border: 1px solid var(--border-md); display: flex; align-items: center; justify-content: center; color: var(--t3); font-size: 14px; font-weight: 500; transition: transform .25s; }
+    .faq-item[open] summary .fx { transform: rotate(45deg); }
+    .faq-item .fa { padding: 0 24px 20px; font-size: 14.5px; color: var(--t3); line-height: 1.7; }
+    .faq-item .fa a { color: var(--t1); text-decoration: underline; text-underline-offset: 3px; }
+
     /* CTA final */
     .cta-end { text-align: center; padding: 130px 0 120px; position: relative; }
     .cta-end .glow2 { position: absolute; bottom: -100px; left: 50%; transform: translateX(-50%); width: 800px; height: 500px; background: radial-gradient(ellipse at center, rgba(255,255,255,0.05) 0%, transparent 60%); pointer-events: none; }
     .cta-end h2 { color: var(--t1); font-size: clamp(32px, 5vw, 56px); font-weight: 800; letter-spacing: -0.04em; line-height: 1.08; max-width: 700px; margin: 16px auto 18px; }
     .cta-end p { color: var(--t3); font-size: 17px; margin-bottom: 36px; }
 
-    footer { border-top: 1px solid var(--border); padding: 44px 0; }
-    .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px; }
-    footer .fine { font-size: 12px; color: var(--t4); }
-    footer nav { display: flex; gap: 22px; font-size: 13px; color: var(--t3); }
-    footer nav a:hover { color: var(--t1); }
+    footer { border-top: 1px solid var(--border); padding: 56px 0 36px; }
+    .footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.2fr; gap: 36px; margin-bottom: 44px; }
+    .footer-grid .fcol h5 { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--t4); margin-bottom: 16px; }
+    .footer-grid .fcol a { display: block; font-size: 13.5px; color: var(--t3); padding: 5px 0; transition: color .15s; }
+    .footer-grid .fcol a:hover { color: var(--t1); }
+    .footer-grid .fcol a .ext { font-size: 11px; color: var(--t4); margin-left: 4px; }
+    .footer-brand p { font-size: 13px; color: var(--t4); margin-top: 14px; max-width: 260px; line-height: 1.6; }
+    .footer-bottom { border-top: 1px solid var(--border); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .footer-bottom .fine { font-size: 12px; color: var(--t4); }
+    .footer-bottom .disclaimer { font-size: 11px; color: #4a4a4a; max-width: 640px; line-height: 1.6; }
+    @media (max-width: 880px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
 
     @media (max-width: 880px) {
       .feat { grid-template-columns: 1fr; gap: 40px; padding: 50px 0; }
@@ -302,7 +337,7 @@
   <header id="hdr">
     <div class="container nav">
       <a href="/" class="logo" aria-label="Sibanki">
-        <svg width="132" height="30" viewBox="0 0 132 30" xmlns="http://www.w3.org/2000/svg">
+        <svg width="167" height="38" viewBox="0 0 132 30" xmlns="http://www.w3.org/2000/svg">
           <rect x="5.6" y="4.4" width="16" height="4.6" rx="2.3" fill="#f5f5f5"/>
           <rect x="5" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(16 7.1 9.5)"/>
           <rect x="17.6" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(-16 19.7 9.5)"/>
@@ -551,6 +586,49 @@
       </div>
     </section>
 
+    <section class="block" id="faq" style="padding-top:40px;">
+      <div class="container">
+        <div class="sec-head rv">
+          <span class="label">Perguntas frequentes</span>
+          <h2>Tudo o que você quer saber<br />antes de se bancar</h2>
+        </div>
+        <div class="faq-list rv">
+          <details class="faq-item">
+            <summary>O Sibanki é grátis?<span class="fx">+</span></summary>
+            <div class="fa">Sim. Você cria a conta, conecta seus bancos e vê seus Dias de Liberdade sem pagar nada e sem cadastrar cartão de crédito. Recursos avançados fazem parte dos planos pagos, mas o essencial para enxergar sua vida financeira é gratuito.</div>
+          </details>
+          <details class="faq-item">
+            <summary>Preciso compartilhar a senha do meu banco?<span class="fx">+</span></summary>
+            <div class="fa">Nunca. A conexão é feita pelo <a href="https://openfinancebrasil.org.br" target="_blank" rel="noopener">Open Finance</a>, o sistema oficial regulado pelo Banco Central: você autoriza o compartilhamento dentro do app do seu próprio banco, e pode revogar quando quiser.</div>
+          </details>
+          <details class="faq-item">
+            <summary>O Sibanki movimenta o meu dinheiro?<span class="fx">+</span></summary>
+            <div class="fa">Não. O acesso é somente leitura: o Sibanki enxerga saldos e transações para gerar análises e conselhos. Transferências, pagamentos e investimentos continuam acontecendo exclusivamente no seu banco ou corretora.</div>
+          </details>
+          <details class="faq-item">
+            <summary>O que são "Dias de Liberdade" (Ld)?<span class="fx">+</span></summary>
+            <div class="fa">É a métrica central do Sibanki: seu patrimônio líquido dividido pelo seu custo de vida real por dia. O resultado diz por quantos dias você consegue viver hoje sem nenhuma renda — a medida mais honesta de soberania financeira que existe.</div>
+          </details>
+          <details class="faq-item">
+            <summary>Funciona com o meu banco?<span class="fx">+</span></summary>
+            <div class="fa">Se o seu banco participa do Open Finance brasileiro (praticamente todos os grandes: Nubank, Itaú, Bradesco, BB, Caixa, Santander, Inter, C6, BTG, XP e centenas de outros), funciona. Você também pode registrar contas e lançamentos manualmente.</div>
+          </details>
+          <details class="faq-item">
+            <summary>Como o Sibanki acha "dinheiro esquecido"?<span class="fx">+</span></summary>
+            <div class="fa">No cadastro, consultamos o sistema <a href="https://valoresareceber.bcb.gov.br" target="_blank" rel="noopener">Valores a Receber do Banco Central</a> com o seu CPF. Se houver saldo esquecido em alguma instituição, mostramos onde está e o link oficial para resgatar.</div>
+          </details>
+          <details class="faq-item">
+            <summary>Meus dados estão seguros?<span class="fx">+</span></summary>
+            <div class="fa">Sim. Dados criptografados em trânsito e em repouso na infraestrutura do Google Cloud, com regras de acesso individuais por usuário e conformidade com a <a href="/privacidade">LGPD</a>. Você pode exportar ou apagar tudo quando quiser.</div>
+          </details>
+          <details class="faq-item">
+            <summary>O consultor IA dá recomendação de investimento?<span class="fx">+</span></summary>
+            <div class="fa">O consultor analisa dados públicos de mercado (B3, Banco Central, Tesouro) no contexto da sua vida financeira e apresenta cenários e informações para a sua decisão. Ele não substitui um assessor credenciado pela <a href="https://www.gov.br/cvm" target="_blank" rel="noopener">CVM</a> — a decisão soberana é sempre sua.</div>
+          </details>
+        </div>
+      </div>
+    </section>
+
     <section class="cta-end">
       <div class="glow2"></div>
       <div class="container rv">
@@ -563,14 +641,39 @@
   </main>
 
   <footer>
-    <div class="container footer-inner">
-      <svg width="110" height="25" viewBox="0 0 132 30" style="opacity:.75"><rect x="5.6" y="4.4" width="16" height="4.6" rx="2.3" fill="#f5f5f5"/><rect x="5" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(16 7.1 9.5)"/><rect x="17.6" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(-16 19.7 9.5)"/><text x="31" y="21.5" font-family="Inter,sans-serif" font-size="17.5" font-weight="700" fill="#f5f5f5" letter-spacing="-0.7">sibanki</text></svg>
-      <nav>
-        <a href="https://app.sibanki.com.br/login">Entrar no app</a>
-        <a href="#conceitos">As métricas</a>
-        <a href="#produto">O sistema</a>
-      </nav>
-      <p class="fine">© 2026 Sibanki · Feito no Brasil</p>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="fcol footer-brand">
+          <svg width="132" height="30" viewBox="0 0 132 30" style="opacity:.85"><rect x="5.6" y="4.4" width="16" height="4.6" rx="2.3" fill="#f5f5f5"/><rect x="5" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(16 7.1 9.5)"/><rect x="17.6" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(-16 19.7 9.5)"/><text x="31" y="21.5" font-family="Inter,sans-serif" font-size="17.5" font-weight="700" fill="#f5f5f5" letter-spacing="-0.7">sibanki</text></svg>
+          <p>O sistema operacional financeiro brasileiro. Veja sua realidade com clareza e tome decisões soberanas.</p>
+        </div>
+        <div class="fcol">
+          <h5>Produto</h5>
+          <a href="https://app.sibanki.com.br/login">Entrar no app</a>
+          <a href="https://app.sibanki.com.br/login?modo=cadastro">Criar conta grátis</a>
+          <a href="#conceitos">As métricas</a>
+          <a href="#produto">O sistema</a>
+          <a href="#faq">Perguntas frequentes</a>
+        </div>
+        <div class="fcol">
+          <h5>Legal</h5>
+          <a href="/termos">Termos de Uso</a>
+          <a href="/privacidade">Privacidade &amp; LGPD</a>
+        </div>
+        <div class="fcol">
+          <h5>Links oficiais</h5>
+          <a href="https://www.bcb.gov.br" target="_blank" rel="noopener">Banco Central do Brasil<span class="ext">↗</span></a>
+          <a href="https://openfinancebrasil.org.br" target="_blank" rel="noopener">Open Finance Brasil<span class="ext">↗</span></a>
+          <a href="https://valoresareceber.bcb.gov.br" target="_blank" rel="noopener">Valores a Receber · BCB<span class="ext">↗</span></a>
+          <a href="https://www.b3.com.br" target="_blank" rel="noopener">B3 — Bolsa do Brasil<span class="ext">↗</span></a>
+          <a href="https://www.gov.br/cvm" target="_blank" rel="noopener">CVM<span class="ext">↗</span></a>
+          <a href="https://www.gov.br/anpd" target="_blank" rel="noopener">ANPD — Proteção de Dados<span class="ext">↗</span></a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="fine">© 2026 Sibanki · Feito no Brasil 🇧🇷</p>
+        <p class="disclaimer">O Sibanki é uma plataforma de organização e inteligência financeira. Não somos instituição financeira, não custodiamos valores e não realizamos recomendação individual de investimentos nos termos da regulamentação da CVM.</p>
+      </div>
     </div>
   </footer>
 
