@@ -15,7 +15,8 @@ import type { Entry } from '../types/userData';
 import { Modal } from '../components/ui/Modal';
 import { EntryForm } from '../components/transactions/EntryForm';
 import { TransferForm } from '../components/transactions/TransferForm';
-import { Search, Filter, X, FileText, Camera, Mic, Upload } from 'lucide-react';
+import { Search, Filter, X, FileText, Camera, Mic, Upload, Receipt } from 'lucide-react';
+import { EmptyState } from '../components/ui/EmptyState';
 import { functions } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
 // generateReportPdf carregado via dynamic import (evita vendor-pdf no load inicial)
@@ -646,15 +647,22 @@ export default function Transactions() {
               <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
             </div>
           ) : groupedByDate.length === 0 ? (
-            <div className="bg-si-card rounded-2xl border border-si-border p-12 text-center text-si-5 text-sm">
-              {search ? 'Nenhum lançamento encontrado para esta busca.' : 'Nenhum lançamento para o período selecionado.'}
-              <div className="mt-4">
-                <button type="button" onClick={() => setAddOpen(true)}
-                  className="px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold">
-                  + Novo lançamento
-                </button>
+            search ? (
+              <div className="bg-si-card rounded-2xl border border-si-border p-12 text-center text-si-5 text-sm">
+                Nenhum lançamento encontrado para esta busca.
               </div>
-            </div>
+            ) : (
+              <div className="bg-si-card rounded-2xl border border-si-border">
+                <EmptyState
+                  icon={<Receipt className="w-7 h-7" />}
+                  title="Cada lançamento vira inteligência"
+                  description="Registre receitas e despesas e o Sibanki calcula seu custo de vida real, seus Dias de Liberdade e o Sovereignty Score de cada gasto."
+                  actionLabel="+ Primeiro lançamento"
+                  onAction={() => setAddOpen(true)}
+                  assistantPrompt="Quero lançar uma despesa: "
+                />
+              </div>
+            )
           ) : (
             groupedByDate.map(([date, dayEntries]) => {
               const dayTotal = dayEntries.reduce((s, e) =>

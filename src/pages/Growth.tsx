@@ -9,6 +9,7 @@ import { INVESTMENT_TYPES, DEFAULT_ACCOUNTS } from '../constants/defaults';
 import { Modal } from '../components/ui/Modal';
 import { TrendingUp, Plus, Calculator, Zap, ArrowRight, Search, ShieldCheck, Bitcoin, Bell, Eye, Link2 } from 'lucide-react';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
+import { EmptyState } from '../components/ui/EmptyState';
 import { useNavigate } from 'react-router-dom';
 import { fetchB3Quote, searchB3Tickers } from '../services/brapi';
 import type { B3SearchResult, B3Quote } from '../services/brapi';
@@ -502,8 +503,15 @@ export default function Growth() {
               </h3>
             </div>
             {investments.length === 0 ? (
-              <div className="bg-si-card rounded-2xl border border-si-border p-12 text-center text-si-5">
-                Nenhum investimento ainda. Clique em &quot;Novo investimento&quot; para começar.
+              <div className="bg-si-card rounded-2xl border border-si-border">
+                <EmptyState
+                  icon={<TrendingUp className="w-7 h-7" />}
+                  title="Patrimônio que trabalha por você"
+                  description="Cadastre seus investimentos e o Sibanki calcula seu Spread Gap — a diferença entre o que seu dinheiro rende e o que suas dívidas custam — além de somá-los aos seus Dias de Liberdade."
+                  actionLabel="+ Novo investimento"
+                  onAction={() => setAddOpen(true)}
+                  assistantPrompt="Como começar a investir com o meu perfil?"
+                />
               </div>
             ) : (
               <div className="space-y-1">

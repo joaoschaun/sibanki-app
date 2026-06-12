@@ -26,8 +26,16 @@ import { Modal } from '../components/ui/Modal';
 import { getBillingMonth } from '../services/persistUserData';
 import type { CreditAccount, CreditSnapshot } from '../types/userData';
 import { analyzeInstallmentDecision, analyzeDebtPayoffStrategy, analyzeFgtsAmortization } from '../utils/decisionEngine';
+import { identifyBank } from '../components/banks/bankData';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Normaliza rótulos vindos do Open Finance ("nu bank" → "Nubank"). */
+function prettyLabel(raw: string): string {
+  const bank = identifyBank(raw);
+  if (bank) return bank.name;
+  return raw.replace(/\b\p{L}/gu, (c) => c.toUpperCase());
+}
 const fmtBRL = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -473,9 +481,9 @@ export default function CreditHub() {
           {/* Resumo de contas */}
           <div className="bg-si-card rounded-2xl border border-si-border overflow-hidden">
             <div className="px-5 py-4 border-b border-si-border flex items-center justify-between">
-              <span className="text-sm font-semibold text-si-3">{accounts.length} contas de crédito</span>
+              <span className="text-sm font-semibold text-si-3">{accounts.length} {accounts.length === 1 ? 'conta' : 'contas'} de crédito</span>
               <button onClick={() => setActiveTab('Cartões')}
-                className="text-xs text-violet-400 hover:underline flex items-center gap-1">
+                className="text-xs text-si-3 hover:text-si-1 hover:underline flex items-center gap-1">
                 Ver detalhes <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -487,7 +495,7 @@ export default function CreditHub() {
                 <div key={a.id} className="px-5 py-3 border-b border-si-border last:border-0">
                   <div className="flex items-center justify-between mb-1.5">
                     <div>
-                      <span className="text-sm font-medium text-si-2">{a.label}</span>
+                      <span className="text-sm font-medium text-si-2">{prettyLabel(a.label)}</span>
                       <span className="ml-2 text-xs text-zinc-600">{a.institution}</span>
                     </div>
                     <span className="text-sm font-semibold text-si-1">{fmtBRL(used)}</span>

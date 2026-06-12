@@ -210,7 +210,9 @@ function AuthenticatedShell() {
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Header onMenuClick={handleToggle} sidebarCollapsed={sidebarCollapsed} />
-        <main className="flex-1 overflow-y-auto p-4 pb-20 lg:p-8 lg:pb-8 space-y-6 lg:space-y-8">
+        <main className="flex-1 overflow-y-auto p-4 pb-20 lg:p-8 lg:pb-8">
+          {/* max-width global de conteúdo (S3 — linhas longas demais em telas largas) */}
+          <div className="max-w-[1180px] mx-auto w-full space-y-6 lg:space-y-8">
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/login" element={<Navigate to="/consultor-ia" replace />} />
@@ -268,6 +270,7 @@ function AuthenticatedShell() {
               <Route path="*" element={<ErrorBoundary><NotFound /></ErrorBoundary>} />
             </Routes>
           </Suspense>
+          </div>
         </main>
       </div>
       {/* ── Botão flutuante + drawer do Assistente ───────────────────── */}

@@ -336,10 +336,11 @@ export default function Accounts() {
         <div className="pt-8">
           <EmptyState
             icon={<Building2 className="w-8 h-8" />}
-            title="Nenhuma conta conectada"
-            description="Adicione suas contas bancárias para acompanhar saldos em tempo real e desbloquear as inteligências visuais do Sibanki."
+            title="Seu patrimônio começa aqui"
+            description="Conecte seus bancos pelo Open Finance ou adicione contas manualmente — é o que destrava seus Dias de Liberdade e todas as inteligências do Sibanki."
             actionLabel="+ Adicionar primeira conta"
             onAction={() => { setError(null); setModalOpen(true); }}
+            assistantPrompt="Como conecto meus bancos pelo Open Finance?"
           />
         </div>
       )}

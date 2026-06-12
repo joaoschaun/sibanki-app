@@ -211,10 +211,11 @@ export default function Planning() {
           <div className="col-span-full">
             <EmptyState
               icon={<Target className="w-7 h-7" />}
-              title="Nenhuma meta financeira"
-              description="Defina metas para organizar seus objetivos — reserva de emergência, viagem, investimento ou qualquer sonho que queira alcançar."
+              title="Todo dia de liberdade começa com uma meta"
+              description="Reserva de emergência, viagem, aposentadoria — defina o objetivo e o Sibanki acompanha o progresso e diz quanto poupar por mês."
               actionLabel="+ Nova meta"
               onAction={openAdd}
+              assistantPrompt="Me ajuda a definir uma meta de reserva de emergência?"
             />
           </div>
         ) : (

@@ -8,9 +8,11 @@ interface EmptyStateProps {
   actionLabel?: string;
   actionTo?: string;
   onAction?: () => void;
+  /** Ação secundária — padrão Sibanki: fazer pelo Assistente. */
+  assistantPrompt?: string;
 }
 
-export function EmptyState({ icon, title, description, actionLabel, actionTo, onAction }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, actionLabel, actionTo, onAction, assistantPrompt }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-6 text-center animate-in fade-in duration-500">
       <div className="w-16 h-16 rounded-2xl bg-si-over-2 border border-si-border flex items-center justify-center text-si-4 mb-5">
@@ -29,6 +31,15 @@ export function EmptyState({ icon, title, description, actionLabel, actionTo, on
           className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold transition-colors">
           {actionLabel}
         </button>
+      )}
+      {assistantPrompt && (
+        <Link
+          to="/consultor-ia"
+          state={{ initialMessage: assistantPrompt }}
+          className="mt-3 text-[13px] text-si-4 hover:text-si-2 transition-colors underline-offset-4 hover:underline"
+        >
+          ou faça pelo Assistente →
+        </Link>
       )}
     </div>
   );
