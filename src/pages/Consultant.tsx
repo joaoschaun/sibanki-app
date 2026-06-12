@@ -310,7 +310,7 @@ export default function Consultant() {
               {saud}{firstName ? `, ${firstName}` : ''}.
             </h2>
             <p className="text-si-4 text-[15px] mb-9 max-w-md leading-relaxed">
-              {freedom.days > 0 ? (
+              {freedom.days > 0 && freedom.days < 9999 ? (
                 <>Seu Ld está em <strong className="text-si-1 font-bold">{freedom.days} dias</strong> de liberdade. Como posso ajudar hoje?</>
               ) : (
                 'Sou o seu consultor com o contexto completo das suas finanças. Como posso ajudar hoje?'
