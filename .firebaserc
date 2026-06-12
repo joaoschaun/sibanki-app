@@ -6,6 +6,7 @@
     "virtus-financeiro-cd7bd": {
       "hosting": {
         "app": ["virtus-financeiro-cd7bd"],
+        "landing": ["sibanki-landing"],
         "legado": ["sibanki-legado"],
         "staging": ["staging-13a0b"],
         "docs": ["sibanki-docs"],

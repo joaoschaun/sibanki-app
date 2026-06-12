@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sibanki — Seu Sistema Operacional Financeiro</title>
+  <meta name="description" content="O Sibanki transforma seus dados financeiros em soberania: Dias de Liberdade, Spread Gap e Sovereignty Score. Conecte seus bancos via Open Finance e tome decisões com clareza." />
+  <link rel="canonical" href="https://www.sibanki.com.br/" />
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+
+  <!-- Open Graph / WhatsApp -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.sibanki.com.br/" />
+  <meta property="og:title" content="Sibanki — Seu Sistema Operacional Financeiro" />
+  <meta property="og:description" content="Quantos dias de liberdade o seu patrimônio compra? Descubra com o Sibanki." />
+  <meta property="og:image" content="https://www.sibanki.com.br/assets/og-image.png" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Sibanki — Seu Sistema Operacional Financeiro" />
+  <meta name="twitter:description" content="Quantos dias de liberdade o seu patrimônio compra? Descubra com o Sibanki." />
+  <meta name="twitter:image" content="https://www.sibanki.com.br/assets/og-image.png" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Sibanki",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web",
+    "url": "https://www.sibanki.com.br/",
+    "description": "Financial OS brasileiro: Dias de Liberdade, Spread Gap e Sovereignty Score com Open Finance.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "BRL" }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --si-bg: #0a0a0a;
+      --si-card: #111111;
+      --si-border: rgba(255,255,255,0.06);
+      --si-border-md: rgba(255,255,255,0.10);
+      --si-over-2: rgba(255,255,255,0.06);
+      --si-over-3: rgba(255,255,255,0.10);
+      --si-1: #f5f5f5;
+      --si-2: #c9c9c9;
+      --si-3: #9a9a9a;
+      --si-4: #6b6b6b;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--si-bg);
+      color: var(--si-2);
+      font-family: 'Inter', system-ui, sans-serif;
+      letter-spacing: -0.01em;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+    .label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--si-4);
+    }
+    a { color: inherit; text-decoration: none; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600;
+      border: 1px solid var(--si-border-md); background: var(--si-over-2);
+      color: var(--si-1); transition: background .15s ease, border-color .15s ease;
+      cursor: pointer;
+    }
+    .btn:hover { background: var(--si-over-3); border-color: rgba(255,255,255,0.18); }
+    .btn-primary { background: var(--si-1); color: #0a0a0a; border-color: var(--si-1); }
+    .btn-primary:hover { background: #ffffff; border-color: #ffffff; }
+
+    /* Header */
+    header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(10,10,10,0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--si-border);
+    }
+    .nav { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .nav img { height: 28px; width: auto; }
+    .nav-actions { display: flex; gap: 12px; align-items: center; }
+    .nav-actions .btn { padding: 9px 18px; font-size: 13px; }
+
+    /* Hero */
+    .hero { padding: 96px 0 72px; text-align: center; }
+    .hero h1 {
+      color: var(--si-1); font-size: clamp(34px, 5.5vw, 56px); font-weight: 800;
+      letter-spacing: -0.03em; line-height: 1.12; margin: 18px auto 20px; max-width: 760px;
+    }
+    .hero p.sub { font-size: 18px; color: var(--si-3); max-width: 600px; margin: 0 auto 36px; }
+    .hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .hero-note { margin-top: 16px; font-size: 12px; color: var(--si-4); }
+
+    /* Sections */
+    section { padding: 72px 0; border-top: 1px solid var(--si-border); }
+    .section-head { text-align: center; margin-bottom: 48px; }
+    .section-head h2 {
+      color: var(--si-1); font-size: clamp(24px, 3.5vw, 34px); font-weight: 700;
+      letter-spacing: -0.02em; margin-top: 12px;
+    }
+    .grid { display: grid; gap: 20px; }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .card {
+      background: var(--si-card); border: 1px solid var(--si-border);
+      border-radius: 14px; padding: 28px;
+    }
+    .card .metric { color: var(--si-1); font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 14px 0 6px; }
+    .card h3 { color: var(--si-1); font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .card p { font-size: 14px; color: var(--si-3); }
+
+    /* Feature list */
+    .feature-row { display: flex; gap: 16px; align-items: flex-start; padding: 20px 0; border-bottom: 1px solid var(--si-border); }
+    .feature-row:last-child { border-bottom: none; }
+    .feature-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--si-1); margin-top: 8px; flex-shrink: 0; }
+    .feature-row h3 { color: var(--si-1); font-size: 15px; font-weight: 600; }
+    .feature-row p { font-size: 14px; color: var(--si-3); }
+
+    /* CTA final */
+    .cta-final { text-align: center; }
+    .cta-final h2 { color: var(--si-1); font-size: clamp(26px, 4vw, 40px); font-weight: 800; letter-spacing: -0.025em; margin: 12px 0 16px; }
+    .cta-final p { color: var(--si-3); margin-bottom: 32px; max-width: 520px; margin-left: auto; margin-right: auto; }
+
+    footer { border-top: 1px solid var(--si-border); padding: 40px 0; }
+    .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    footer img { height: 22px; opacity: 0.7; }
+    footer .fine { font-size: 12px; color: var(--si-4); }
+    footer nav { display: flex; gap: 20px; font-size: 13px; color: var(--si-3); }
+    footer nav a:hover { color: var(--si-1); }
+
+    @media (max-width: 640px) {
+      .hero { padding: 64px 0 48px; }
+      section { padding: 56px 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container nav">
+      <a href="/" aria-label="Sibanki"><img src="/assets/logo.png" alt="Sibanki" /></a>
+      <div class="nav-actions">
+        <a class="btn" href="https://app.sibanki.com.br/login">Entrar</a>
+        <a class="btn btn-primary" href="https://app.sibanki.com.br/login?modo=cadastro">Criar conta</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" style="border-top:none">
+      <div class="container">
+        <span class="label">Financial OS · Brasil</span>
+        <h1>Quantos dias de liberdade o seu dinheiro compra?</h1>
+        <p class="sub">
+          O Sibanki não é um app de controle de gastos. É um sistema operacional
+          financeiro que transforma seus dados em decisões soberanas — conectado
+          aos seus bancos via Open Finance.
+        </p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="https://app.sibanki.com.br/login?modo=cadastro">Começar grátis</a>
+          <a class="btn" href="#conceitos">Como funciona</a>
+        </div>
+        <p class="hero-note">Grátis para começar · Sem cartão de crédito · Dados protegidos pelo Open Finance regulado pelo Banco Central</p>
+      </div>
+    </section>
+
+    <section id="conceitos">
+      <div class="container">
+        <div class="section-head">
+          <span class="label">Três métricas. Clareza total.</span>
+          <h2>O que nenhum banco te mostra</h2>
+        </div>
+        <div class="grid grid-3">
+          <div class="card">
+            <span class="label">Ld · Dias de Liberdade</span>
+            <div class="metric">127 dias</div>
+            <h3>Quanto tempo você vive sem renda</h3>
+            <p>Seu patrimônio líquido dividido pelo seu custo de vida real. A métrica mais honesta da sua saúde financeira — atualizada a cada lançamento.</p>
+          </div>
+          <div class="card">
+            <span class="label">Sg · Spread Gap</span>
+            <div class="metric">−1,8% a.m.</div>
+            <h3>Quanto suas dívidas drenam dos investimentos</h3>
+            <p>A diferença entre o rendimento médio do que você investe e o custo médio do que você deve. Se for negativa, você está pagando para perder.</p>
+          </div>
+          <div class="card">
+            <span class="label">Sv · Sovereignty Score</span>
+            <div class="metric">0–100</div>
+            <h3>Cada gasto avaliado em tempo real</h3>
+            <p>Cada transação recebe um score que mostra se ela aumenta ou reduz sua soberania financeira — antes que vire arrependimento.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container" style="max-width: 760px;">
+        <div class="section-head">
+          <span class="label">Tudo em um lugar</span>
+          <h2>Construído para a vida financeira brasileira</h2>
+        </div>
+        <div class="feature-row">
+          <div class="feature-dot"></div>
+          <div>
+            <h3>Open Finance integrado</h3>
+            <p>Conecte suas contas e cartões de qualquer banco. Saldos, transações e faturas sincronizados automaticamente — sem digitação manual.</p>
+          </div>
+        </div>
+        <div class="feature-row">
+          <div class="feature-dot"></div>
+          <div>
+            <h3>Consultor IA com o seu contexto completo</h3>
+            <p>Um assistente que conhece suas contas, dívidas, metas e investimentos. Análise de ações, ETFs, cripto e renda fixa com dados reais da B3 e do Banco Central.</p>
+          </div>
+        </div>
+        <div class="feature-row">
+          <div class="feature-dot"></div>
+          <div>
+            <h3>Hub de Crédito</h3>
+            <p>Cartões, faturas, empréstimos e plano de ação em um único painel — incluindo qual cartão usar em cada compra pelos benefícios.</p>
+          </div>
+        </div>
+        <div class="feature-row">
+          <div class="feature-dot"></div>
+          <div>
+            <h3>Dinheiro esquecido no Banco Central</h3>
+            <p>No cadastro, consultamos automaticamente os Valores a Receber do BCB no seu CPF. Tem gente que encontra dinheiro antes mesmo de usar o app.</p>
+          </div>
+        </div>
+        <div class="feature-row">
+          <div class="feature-dot"></div>
+          <div>
+            <h3>SibCoin — recompensas por bons hábitos</h3>
+            <p>Comportamentos financeiros saudáveis geram SibCoins, trocáveis por recompensas e descontos na loja de parceiros.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-final">
+      <div class="container">
+        <span class="label">Comece hoje</span>
+        <h2>Veja a sua realidade financeira com clareza</h2>
+        <p>Crie sua conta gratuita, conecte seus bancos em minutos e descubra seus Dias de Liberdade.</p>
+        <a class="btn btn-primary" href="https://app.sibanki.com.br/login?modo=cadastro">Criar conta grátis</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <img src="/assets/logo.png" alt="Sibanki" />
+      <nav>
+        <a href="https://app.sibanki.com.br/login">Entrar no app</a>
+        <a href="#conceitos">Como funciona</a>
+      </nav>
+      <p class="fine">© 2026 Sibanki · Feito no Brasil</p>
+    </div>
+  </footer>
+
+</body>
+</html>

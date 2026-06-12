@@ -17,6 +17,22 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Landing page pública + separação landing/app (11/06/2026, Claude Cowork)
+- **Causa raiz do "landing some"**: `hosting:app` serve de `dist/`, recriada do zero a cada `vite build` — qualquer landing colocada manualmente era apagada no deploy seguinte.
+- **Nova pasta `landing/`**: landing page estática (design Pierre: `#0a0a0a`, cards `#111111`, Inter, labels ALL CAPS) com hero, conceitos Ld/Sg/Sv, features (Open Finance, Consultor IA, Hub de Crédito, Valores a Receber BCB, SibCoin), CTAs para `app.sibanki.com.br`, OG tags, JSON-LD, `robots.txt` e `sitemap.xml` (corrige soft-404 do sitemap apontado na análise de 11/06).
+- **`firebase.json`**: novo target `landing` (public: `landing/`, sem rewrite SPA, cleanUrls, cache 5min no HTML / 24h em assets). ⚠️ Requer aprovação do João (AGENTS.md §5).
+- **`.firebaserc`**: target `landing` → site `sibanki-landing` (site ainda precisa ser criado: `firebase hosting:sites:create sibanki-landing`).
+- **`package.json`**: novo script `deploy:landing`.
+- **Arquitetura alvo**: `www.sibanki.com.br` + apex → landing; `app.sibanki.com.br` → React SPA (site `virtus-financeiro-cd7bd`). Login permanece dentro do app (`/login`), sem subdomínio de auth separado.
+- **Pendências manuais (João)**: criar site no Firebase, conectar domínios custom (www/apex → landing; app → app), ajustar DNS na Cloudflare, adicionar `app.sibanki.com.br` em Auth → Authorized domains, e deploy (`npm run deploy:landing`). Sem deploy nesta sessão.
+
+### Otimização de Design Mobile — Barra de Navegação Inferior (12/06/2026, Antigravity)
+- **Barra de Navegação Inferior (Bottom Navigation)**: Criação de `BottomNavigation.tsx` e integração em `App.tsx` para exibição exclusiva em telas menores (`lg:hidden`).
+- **Navegação Dinâmica**: Mapeamento das rotas principais para navegação instantânea no celular: Painel (`/dashboard`), Lançamentos (`/lancamentos`), Assistente (`/consultor-ia`) e Família (`/casal`).
+- **Menu Lateral Integrado**: Adicionado botão "Menu" no final da barra inferior para disparar a Sidebar drawer lateral original, dando acesso aos módulos secundários.
+- **Ajuste de Margens e Padding**: Adicionadas classes `pb-20` (mobile) e `lg:pb-8` (desktop) no container `<main>` de `App.tsx` para assegurar que nenhum conteúdo de página seja encoberto pela barra fixa inferior.
+- **Validação de Build e Tipagem**: Conclusão bem-sucedida do typecheck (`npm run typecheck`), testes unitários (`npm run test:unit`) e compilação de produção (`npm run build`).
+
 ### Entrega e Unificação do Módulo Família (10/06/2026, Antigravity)
 - **Modo Família Unificado**: Integração completa das páginas de casal (`Casal.tsx`) e filhos (`Filhos.tsx`) sob uma única rota canônica `/casal`.
 - **Navegação Sincronizada**: Adicionado controle de abas reativo utilizando query string (`?tab=casal` ou `?tab=filhos`), integrado de forma transparente ao roteamento.

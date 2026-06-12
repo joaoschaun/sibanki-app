@@ -16,6 +16,18 @@
       ]
     },
     {
+      "target": "landing",
+      "public": "landing",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "cleanUrls": true,
+      "headers": [
+        {"source":"**","headers":[{"key":"X-Content-Type-Options","value":"nosniff"},{"key":"Referrer-Policy","value":"strict-origin-when-cross-origin"},{"key":"X-Frame-Options","value":"SAMEORIGIN"}]},
+        {"source":"/","headers":[{"key":"Cache-Control","value":"public, max-age=300, must-revalidate"}]},
+        {"source":"/index.html","headers":[{"key":"Cache-Control","value":"public, max-age=300, must-revalidate"}]},
+        {"source":"/assets/**","headers":[{"key":"Cache-Control","value":"public, max-age=86400"}]}
+      ]
+    },
+    {
       "target": "legado",
       "public": "public",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],

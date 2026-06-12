@@ -29,7 +29,8 @@
     "deploy:staging": "npm run test:unit && npm run build && node scripts/clean-staging-dist.mjs && firebase deploy --only hosting:staging",
     "deploy:app": "npm run test:unit && npm run build && node scripts/prepare-dist.mjs && firebase deploy --only hosting:app",
     "deploy:legado": "npm run syntax-check && firebase deploy --only hosting:legado",
-    "deploy:doc-investidor": "firebase deploy --only hosting:doc-investidor"
+    "deploy:doc-investidor": "firebase deploy --only hosting:doc-investidor",
+    "deploy:landing": "firebase deploy --only hosting:landing"
   },
   "dependencies": {
     "clsx": "^2.1.1",
