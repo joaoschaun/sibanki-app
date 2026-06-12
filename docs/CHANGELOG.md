@@ -24,7 +24,8 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 - **`.firebaserc`**: target `landing` → site `sibanki-landing` (site ainda precisa ser criado: `firebase hosting:sites:create sibanki-landing`).
 - **`package.json`**: novo script `deploy:landing`.
 - **Arquitetura alvo**: `www.sibanki.com.br` + apex → landing; `app.sibanki.com.br` → React SPA (site `virtus-financeiro-cd7bd`). Login permanece dentro do app (`/login`), sem subdomínio de auth separado.
-- **Pendências manuais (João)**: criar site no Firebase, conectar domínios custom (www/apex → landing; app → app), ajustar DNS na Cloudflare, adicionar `app.sibanki.com.br` em Auth → Authorized domains, e deploy (`npm run deploy:landing`). Sem deploy nesta sessão.
+- **Executado na sessão (autorizado pelo João)**: site `sibanki-landing` criado + deploy realizado → https://sibanki-landing.web.app no ar. Commit `c971509` na branch `audit/analise-360`.
+- **Pendências manuais (João)**: conectar domínios custom no Firebase Console (www/apex → site landing; `app.sibanki.com.br` → site app), ajustar DNS na Cloudflare, adicionar `app.sibanki.com.br` em Auth → Authorized domains. Cutover do www só após o app responder em `app.sibanki.com.br`.
 
 ### Otimização de Design Mobile — Barra de Navegação Inferior (12/06/2026, Antigravity)
 - **Barra de Navegação Inferior (Bottom Navigation)**: Criação de `BottomNavigation.tsx` e integração em `App.tsx` para exibição exclusiva em telas menores (`lg:hidden`).
