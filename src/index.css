@@ -77,6 +77,11 @@
   --si-info-text: #60a5fa;
 }
 
+[data-theme="light"] img[src*="sibanki-logo"] {
+  /* logo monocromático branco → escuro no tema claro */
+  filter: invert(0.92);
+}
+
 [data-theme="light"] {
   /* Page / card surfaces */
   --si-bg:      #f0f4f8;
