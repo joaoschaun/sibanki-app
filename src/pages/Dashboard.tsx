@@ -181,7 +181,7 @@ export default function Dashboard() {
   const HEALTH_COLORS: Record<string, string> = {
     'critico': 'text-rose-400 bg-rose-500/10 border-rose-500/25',
     'pressao': 'text-amber-400 bg-amber-500/10 border-amber-500/25',
-    'atencao': 'text-blue-300 bg-blue-500/10 border-blue-500/25',
+    'atencao': 'text-amber-300 bg-amber-500/10 border-amber-500/25',
     'saudavel': 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25',
   };
 
@@ -318,7 +318,7 @@ export default function Dashboard() {
                 onClick={() => setActiveSubTab(tab.id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-full text-[11px] font-bold tracking-[0.1em] uppercase border transition-all ${
                   active
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    ? 'bg-white text-zinc-900 border-white'
                     : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border-si-border'
                 }`}
               >

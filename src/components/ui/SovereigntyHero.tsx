@@ -102,11 +102,15 @@ export function SovereigntyHero({
   const now = new Date();
   const hour = now.getHours();
   const greeting = hour >= 18 ? 'Boa noite' : hour >= 12 ? 'Boa tarde' : 'Bom dia';
-  const dateStr = now.toLocaleDateString('pt-BR', {
+  const dateRaw = now.toLocaleDateString('pt-BR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
   });
+  const dateStr = dateRaw.charAt(0).toUpperCase() + dateRaw.slice(1);
+
+  /** Sem despesas/burn rate o Ld vira o sentinela 99999 — tratar como "sem dados". */
+  const noLdData = freedom.days >= 9999 || freedom.dailyBurnRate <= 0;
 
   const fmtBRL2 = (v: number) =>
     v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -128,7 +132,7 @@ export function SovereigntyHero({
             <p className="text-si-4 text-sm">
               {greeting}, <span className="text-si-2 font-semibold">{userName}</span>
             </p>
-            <p className="text-si-5 text-xs mt-0.5 capitalize">{dateStr}</p>
+            <p className="text-si-5 text-xs mt-0.5">{dateStr}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className="bg-si-over-2 text-si-4 text-[11px] font-bold px-2 py-1 rounded-md border border-si-border hidden sm:flex items-center gap-1">
@@ -150,6 +154,25 @@ export function SovereigntyHero({
           <p className="text-si-5 text-xs uppercase tracking-widest font-semibold mb-2">
             Dias de Liberdade
           </p>
+          {noLdData ? (
+            /* Sem dados suficientes — não exibir o sentinela 99999 nem premiar conta vazia */
+            <>
+              <div className="flex items-end gap-2 leading-none">
+                <span className="text-[52px] sm:text-[72px] font-black tracking-tight leading-none text-si-4">—</span>
+              </div>
+              <p className="text-si-5 text-xs mt-2 text-center max-w-xs">
+                Ainda não há dados suficientes. Registre despesas ou conecte seu banco
+                para descobrir por quantos dias o seu patrimônio te banca.
+              </p>
+              <Link
+                to="/contas"
+                className="mt-4 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-bold transition-colors"
+              >
+                Conectar banco
+              </Link>
+            </>
+          ) : (
+            <>
           <div className="flex items-end gap-2 leading-none">
             <span className={`text-[52px] sm:text-[72px] font-black tracking-tight leading-none ${STATUS_NUM[freedom.status]}`}>
               {freedom.days}
@@ -165,21 +188,23 @@ export function SovereigntyHero({
           >
             {STATUS_LABEL[freedom.status]}
           </span>
+            </>
+          )}
 
           {/* Confidence badge — only shown when meaningful */}
-          {freedom.dataConfidence === 'alta' && (
+          {!noLdData && freedom.dataConfidence === 'alta' && (
             <span className="mt-2 flex items-center gap-1 text-[11px] text-emerald-400/80">
               <CheckCircle2 className="w-3 h-3" />
               {freedom.verifiedExpensesPct}% das despesas verificadas pelo banco
             </span>
           )}
-          {freedom.isEstimated && (
+          {!noLdData && freedom.isEstimated && (
             <span className="mt-2 flex items-center gap-1 text-[11px] text-amber-400/80">
               <AlertCircle className="w-3 h-3 text-amber-500" />
               baseado em estimativas do cadastro — adicione contas/lançamentos para precisão
             </span>
           )}
-          {!freedom.isEstimated && freedom.dataConfidence === 'baixa' && (
+          {!noLdData && !freedom.isEstimated && freedom.dataConfidence === 'baixa' && (
             <span className="mt-2 flex items-center gap-1 text-[11px] text-si-5">
               <AlertCircle className="w-3 h-3 text-amber-400/60" />
               baseado em dados manuais — conecte seu banco para maior precisão

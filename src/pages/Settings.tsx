@@ -451,7 +451,7 @@ export default function Settings() {
                 type="button"
                 onClick={handlePluggySyncAccounts}
                 disabled={ofSyncBusy}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-si-over-2 border border-blue-500/30 text-blue-300 text-sm font-medium hover:bg-blue-500/10 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-si-over-2 border border-si-border-md text-si-2 text-sm font-medium hover:bg-si-over-3 disabled:opacity-50"
               >
                 {ofSyncBusy ? (
                   <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
@@ -507,14 +507,14 @@ export default function Settings() {
             <button
               type="button"
               onClick={() => setDashboardMode('padrao')}
-              className={`px-4 py-2 rounded-xl border text-sm ${dashboardMode === 'padrao' ? 'bg-blue-600 border-blue-600 text-si-1' : 'bg-si-over-2 border-si-border-md text-si-3 hover:bg-si-over-3'}`}
+              className={`px-4 py-2 rounded-xl border text-sm ${dashboardMode === 'padrao' ? 'bg-white border-white text-zinc-900 font-semibold' : 'bg-si-over-2 border-si-border-md text-si-3 hover:bg-si-over-3'}`}
             >
               Padrão
             </button>
             <button
               type="button"
               onClick={() => setDashboardMode('caixa')}
-              className={`px-4 py-2 rounded-xl border text-sm ${dashboardMode === 'caixa' ? 'bg-blue-600 border-blue-600 text-si-1' : 'bg-si-over-2 border-si-border-md text-si-3 hover:bg-si-over-3'}`}
+              className={`px-4 py-2 rounded-xl border text-sm ${dashboardMode === 'caixa' ? 'bg-white border-white text-zinc-900 font-semibold' : 'bg-si-over-2 border-si-border-md text-si-3 hover:bg-si-over-3'}`}
             >
               Modo caixa
             </button>
@@ -532,7 +532,7 @@ export default function Settings() {
             aria-pressed={suggestiveMode}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm transition-colors ${
               suggestiveMode
-                ? 'bg-blue-600 border-blue-600 text-si-1'
+                ? 'bg-white border-white text-zinc-900 font-semibold'
                 : 'bg-si-over-2 border-si-border-md text-si-3 hover:bg-si-over-3'
             }`}
           >
@@ -732,7 +732,7 @@ export default function Settings() {
             <span className="text-xs font-bold text-emerald-400 px-2 py-1 rounded-lg bg-emerald-500/10">Ativo</span>
           ) : push.supported ? (
             <button type="button" onClick={push.requestPermission} disabled={push.loading}
-              className="px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 text-xs font-bold hover:bg-blue-600/30 disabled:opacity-50">
+              className="px-3 py-1.5 rounded-lg bg-si-over-2 text-si-2 text-xs font-bold hover:bg-si-over-3 disabled:opacity-50">
               {push.loading ? 'Ativando…' : 'Ativar'}
             </button>
           ) : (
@@ -745,7 +745,7 @@ export default function Settings() {
           type="button"
           onClick={handleSaveIntegrations}
           disabled={busy}
-          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-si-1 text-sm font-bold"
+          className="px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 text-sm font-bold"
         >
           {busy ? 'Salvando…' : 'Salvar plano e integrações'}
         </button>
@@ -810,7 +810,7 @@ export default function Settings() {
         <button
           type="button"
           onClick={handleBackupJson}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-si-1 font-medium text-sm"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-medium text-sm"
         >
           <Database className="w-4 h-4" />
           Backup JSON
