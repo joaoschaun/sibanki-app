@@ -8,7 +8,6 @@
   <link rel="canonical" href="https://www.sibanki.com.br/" />
   <link rel="icon" type="image/png" href="/assets/favicon.png?v=2" />
 
-  <!-- Open Graph / WhatsApp -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://www.sibanki.com.br/" />
   <meta property="og:title" content="Sibanki — Seu Sistema Operacional Financeiro" />
@@ -19,6 +18,7 @@
   <meta name="twitter:title" content="Sibanki — Seu Sistema Operacional Financeiro" />
   <meta name="twitter:description" content="Quantos dias de liberdade o seu patrimônio compra? Descubra com o Sibanki." />
   <meta name="twitter:image" content="https://www.sibanki.com.br/assets/og-image.png?v=2" />
+  <meta name="theme-color" content="#0a0a0a" />
 
   <script type="application/ld+json">
   {
@@ -35,233 +35,596 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
   <style>
     :root {
-      --si-bg: #0a0a0a;
-      --si-card: #111111;
-      --si-border: rgba(255,255,255,0.06);
-      --si-border-md: rgba(255,255,255,0.10);
-      --si-over-2: rgba(255,255,255,0.06);
-      --si-over-3: rgba(255,255,255,0.10);
-      --si-1: #f5f5f5;
-      --si-2: #c9c9c9;
-      --si-3: #9a9a9a;
-      --si-4: #6b6b6b;
+      --bg: #0a0a0a;
+      --card: #111111;
+      --card2: #161616;
+      --border: rgba(255,255,255,0.07);
+      --border-md: rgba(255,255,255,0.12);
+      --over2: rgba(255,255,255,0.06);
+      --over3: rgba(255,255,255,0.10);
+      --t1: #f5f5f5;
+      --t2: #c9c9c9;
+      --t3: #9a9a9a;
+      --t4: #6b6b6b;
+      --pos: #34d399;
+      --neg: #fb7185;
+      --warn: #fbbf24;
+      --app: https://app.sibanki.com.br;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
-      background: var(--si-bg);
-      color: var(--si-2);
+      background: var(--bg); color: var(--t2);
       font-family: 'Inter', system-ui, sans-serif;
-      letter-spacing: -0.01em;
-      -webkit-font-smoothing: antialiased;
-      line-height: 1.6;
+      letter-spacing: -0.01em; -webkit-font-smoothing: antialiased;
+      line-height: 1.6; overflow-x: hidden;
     }
-    .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
-    .label {
-      font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
-      text-transform: uppercase; color: var(--si-4);
-    }
+    .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--t4); }
     a { color: inherit; text-decoration: none; }
     .btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600;
-      border: 1px solid var(--si-border-md); background: var(--si-over-2);
-      color: var(--si-1); transition: background .15s ease, border-color .15s ease;
-      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+      padding: 13px 26px; border-radius: 12px; font-size: 14px; font-weight: 600;
+      border: 1px solid var(--border-md); background: var(--over2); color: var(--t1);
+      transition: all .2s ease; cursor: pointer;
     }
-    .btn:hover { background: var(--si-over-3); border-color: rgba(255,255,255,0.18); }
-    .btn-primary { background: var(--si-1); color: #0a0a0a; border-color: var(--si-1); }
-    .btn-primary:hover { background: #ffffff; border-color: #ffffff; }
+    .btn:hover { background: var(--over3); border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
+    .btn-primary { background: var(--t1); color: #0a0a0a; border-color: var(--t1); }
+    .btn-primary:hover { background: #fff; }
+    .btn .arr { transition: transform .2s ease; }
+    .btn:hover .arr { transform: translateX(3px); }
 
-    /* Header */
+    /* reveal on scroll */
+    .rv { opacity: 0; transform: translateY(28px); transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1); }
+    .rv.on { opacity: 1; transform: none; }
+    .rv-d1 { transition-delay: .1s; } .rv-d2 { transition-delay: .22s; } .rv-d3 { transition-delay: .34s; }
+
     header {
-      position: sticky; top: 0; z-index: 50;
-      background: rgba(10,10,10,0.85); backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--si-border);
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(10,10,10,0.7); backdrop-filter: blur(16px) saturate(1.4);
+      border-bottom: 1px solid transparent; transition: border-color .3s;
     }
-    .nav { display: flex; align-items: center; justify-content: space-between; height: 64px; }
-    .nav img { height: 28px; width: auto; }
-    .nav-actions { display: flex; gap: 12px; align-items: center; }
-    .nav-actions .btn { padding: 9px 18px; font-size: 13px; }
+    header.scrolled { border-bottom-color: var(--border); }
+    .nav { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+    .nav .logo svg { display: block; }
+    .nav-actions { display: flex; gap: 10px; align-items: center; }
+    .nav-actions .btn { padding: 9px 18px; font-size: 13px; border-radius: 10px; }
+    .nav-actions .ghost { border-color: transparent; background: transparent; color: var(--t2); }
+    .nav-actions .ghost:hover { color: var(--t1); background: var(--over2); }
 
-    /* Hero */
-    .hero { padding: 96px 0 72px; text-align: center; }
+    /* HERO */
+    .hero { padding: 160px 0 0; text-align: center; position: relative; }
+    .hero-glow {
+      position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 900px; height: 700px; pointer-events: none;
+      background: radial-gradient(ellipse at center, rgba(255,255,255,0.055) 0%, transparent 60%);
+    }
+    .hero .pill {
+      display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600;
+      color: var(--t3); border: 1px solid var(--border); border-radius: 999px; padding: 7px 16px;
+      background: var(--over2); margin-bottom: 28px;
+    }
+    .hero .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pos); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
     .hero h1 {
-      color: var(--si-1); font-size: clamp(34px, 5.5vw, 56px); font-weight: 800;
-      letter-spacing: -0.03em; line-height: 1.12; margin: 18px auto 20px; max-width: 760px;
+      color: var(--t1); font-size: clamp(40px, 6.4vw, 76px); font-weight: 800;
+      letter-spacing: -0.045em; line-height: 1.04; max-width: 880px; margin: 0 auto 24px;
     }
-    .hero p.sub { font-size: 18px; color: var(--si-3); max-width: 600px; margin: 0 auto 36px; }
-    .hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
-    .hero-note { margin-top: 16px; font-size: 12px; color: var(--si-4); }
+    .hero h1 .muted { color: var(--t4); }
+    .hero .sub { font-size: clamp(16px, 2vw, 19px); color: var(--t3); max-width: 640px; margin: 0 auto 40px; }
+    .hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px; }
+    .hero-note { font-size: 12.5px; color: var(--t4); margin-bottom: 70px; }
 
-    /* Sections */
-    section { padding: 72px 0; border-top: 1px solid var(--si-border); }
-    .section-head { text-align: center; margin-bottom: 48px; }
-    .section-head h2 {
-      color: var(--si-1); font-size: clamp(24px, 3.5vw, 34px); font-weight: 700;
-      letter-spacing: -0.02em; margin-top: 12px;
+    /* PRODUCT MOCKUP */
+    .stage { position: relative; max-width: 1020px; margin: 0 auto; perspective: 1400px; }
+    .window {
+      background: var(--card); border: 1px solid var(--border-md); border-radius: 18px;
+      overflow: hidden; box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02);
+      transform: rotateX(8deg) scale(.98); transform-origin: center top;
+      transition: transform 1.1s cubic-bezier(.16,1,.3,1);
     }
-    .grid { display: grid; gap: 20px; }
-    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-    .card {
-      background: var(--si-card); border: 1px solid var(--si-border);
-      border-radius: 14px; padding: 28px;
+    .stage.on .window { transform: rotateX(0deg) scale(1); }
+    .winbar { display: flex; align-items: center; gap: 8px; padding: 13px 18px; border-bottom: 1px solid var(--border); background: #0d0d0d; }
+    .winbar .wdot { width: 10px; height: 10px; border-radius: 50%; background: #2a2a2a; }
+    .winbar .url { margin-left: 14px; font-size: 11.5px; color: var(--t4); background: var(--over2); border-radius: 7px; padding: 4px 14px; }
+    .app-ui { display: grid; grid-template-columns: 200px 1fr; min-height: 470px; text-align: left; }
+    .app-side { border-right: 1px solid var(--border); padding: 18px 12px; background: #0e0e0e; }
+    .app-side .slogo { display: flex; align-items: center; gap: 8px; padding: 0 8px 16px; }
+    .app-side .sitem { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--t3); padding: 8px 10px; border-radius: 8px; margin-bottom: 2px; }
+    .app-side .sitem.act { background: var(--over2); color: var(--t1); }
+    .app-side .sitem .ic { width: 14px; height: 14px; border-radius: 4px; background: var(--over3); flex-shrink: 0; }
+    .app-main { padding: 26px 28px; }
+    .app-main .greet { font-size: 12px; color: var(--t4); margin-bottom: 4px; }
+    .app-main h3 { color: var(--t1); font-size: 19px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 20px; }
+    .ld-card {
+      background: linear-gradient(180deg, #141414 0%, #101010 100%);
+      border: 1px solid var(--border-md); border-radius: 16px; padding: 24px;
+      display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: center; margin-bottom: 16px;
     }
-    .card .metric { color: var(--si-1); font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 14px 0 6px; }
-    .card h3 { color: var(--si-1); font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-    .card p { font-size: 14px; color: var(--si-3); }
+    .ring-wrap { position: relative; width: 130px; height: 130px; }
+    .ring-wrap svg { transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: #1f1f1f; stroke-width: 9; }
+    .ring-fg { fill: none; stroke: var(--pos); stroke-width: 9; stroke-linecap: round; stroke-dasharray: 339; stroke-dashoffset: 339; transition: stroke-dashoffset 2.2s cubic-bezier(.16,1,.3,1); }
+    .ring-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .ring-num b { color: var(--t1); font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+    .ring-num span { font-size: 9.5px; color: var(--t4); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700; margin-top: 4px; }
+    .ld-meta .lm-title { font-size: 10.5px; color: var(--t4); text-transform: uppercase; letter-spacing: 0.16em; font-weight: 700; margin-bottom: 8px; }
+    .ld-meta .lm-tier { display: inline-flex; align-items: center; gap: 7px; color: var(--pos); font-size: 13px; font-weight: 600; background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.2); padding: 5px 13px; border-radius: 999px; margin-bottom: 14px; }
+    .ld-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .ld-grid .mini { background: var(--over2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+    .ld-grid .mini i { font-style: normal; display: block; font-size: 9.5px; color: var(--t4); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; margin-bottom: 3px; }
+    .ld-grid .mini b { color: var(--t1); font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em; }
+    .ld-grid .mini b.g { color: var(--pos); } .ld-grid .mini b.r { color: var(--neg); }
+    .tx-list { background: var(--card2); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .tx { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-bottom: 1px solid var(--border); opacity: 0; transform: translateX(-12px); transition: all .5s ease; }
+    .tx.show { opacity: 1; transform: none; }
+    .tx:last-child { border-bottom: none; }
+    .tx .tic { width: 30px; height: 30px; border-radius: 9px; background: var(--over2); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+    .tx .tinfo { flex: 1; min-width: 0; }
+    .tx .tinfo b { display: block; color: var(--t1); font-size: 12.5px; font-weight: 600; }
+    .tx .tinfo span { font-size: 10.5px; color: var(--t4); }
+    .tx .tval { font-size: 13px; font-weight: 700; color: var(--t2); }
+    .tx .tval.g { color: var(--pos); }
+    .tx .sv { font-size: 9px; font-weight: 800; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 6px; }
+    .sv.s1 { color: var(--pos); background: rgba(52,211,153,0.1); }
+    .sv.s2 { color: var(--warn); background: rgba(251,191,36,0.1); }
+    .sv.s3 { color: var(--neg); background: rgba(251,113,133,0.1); }
 
-    /* Feature list */
-    .feature-row { display: flex; gap: 16px; align-items: flex-start; padding: 20px 0; border-bottom: 1px solid var(--si-border); }
-    .feature-row:last-child { border-bottom: none; }
-    .feature-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--si-1); margin-top: 8px; flex-shrink: 0; }
-    .feature-row h3 { color: var(--si-1); font-size: 15px; font-weight: 600; }
-    .feature-row p { font-size: 14px; color: var(--si-3); }
+    /* floating cards */
+    .float { position: absolute; background: rgba(17,17,17,0.92); backdrop-filter: blur(14px); border: 1px solid var(--border-md); border-radius: 14px; padding: 14px 18px; box-shadow: 0 24px 60px rgba(0,0,0,0.55); z-index: 5; }
+    .float .fl-l { font-size: 9.5px; color: var(--t4); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700; margin-bottom: 4px; }
+    .float .fl-v { color: var(--t1); font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+    .float .fl-v.g { color: var(--pos); }
+    .float1 { top: 60px; left: -70px; animation: drift 7s ease-in-out infinite; }
+    .float2 { bottom: 70px; right: -64px; animation: drift 8s ease-in-out 1s infinite; }
+    @keyframes drift { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+    /* MARQUEE */
+    .marquee-sec { padding: 64px 0 30px; }
+    .marquee-sec p { text-align: center; margin-bottom: 26px; }
+    .marquee { overflow: hidden; position: relative; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+    .mtrack { display: flex; gap: 56px; width: max-content; animation: scrollx 30s linear infinite; padding: 6px 0; }
+    .mtrack span { font-size: 17px; font-weight: 700; color: #3d3d3d; letter-spacing: -0.02em; white-space: nowrap; }
+    @keyframes scrollx { to { transform: translateX(-50%); } }
+
+    /* SECTIONS */
+    section.block { padding: 110px 0; }
+    .sec-head { text-align: center; margin-bottom: 64px; }
+    .sec-head h2 { color: var(--t1); font-size: clamp(30px, 4.4vw, 48px); font-weight: 800; letter-spacing: -0.035em; line-height: 1.1; margin: 14px 0 16px; }
+    .sec-head p { color: var(--t3); font-size: 17px; max-width: 560px; margin: 0 auto; }
+
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+    .mcard { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px; position: relative; overflow: hidden; transition: border-color .3s, transform .3s; }
+    .mcard:hover { border-color: var(--border-md); transform: translateY(-4px); }
+    .mcard .tag { font-size: 10.5px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--t4); }
+    .mcard .big { color: var(--t1); font-size: 44px; font-weight: 800; letter-spacing: -0.04em; margin: 14px 0 4px; line-height: 1; }
+    .mcard .big small { font-size: 20px; color: var(--t4); font-weight: 700; }
+    .mcard h3 { color: var(--t1); font-size: 17px; font-weight: 700; margin: 14px 0 8px; letter-spacing: -0.015em; }
+    .mcard p { font-size: 14px; color: var(--t3); }
+    .mcard .viz { margin-top: 22px; height: 54px; display: flex; align-items: flex-end; gap: 5px; }
+    .mcard .viz .vb { flex: 1; background: var(--over3); border-radius: 4px 4px 0 0; transform: scaleY(0); transform-origin: bottom; transition: transform .7s cubic-bezier(.16,1,.3,1); }
+    .mcard.on .viz .vb { transform: scaleY(1); }
+    .mcard .viz .vb.hot { background: var(--pos); }
+    .sgbar { margin-top: 26px; }
+    .sgbar .row { display: flex; justify-content: space-between; font-size: 11px; color: var(--t4); margin-bottom: 6px; font-weight: 600; }
+    .sgbar .bar { height: 9px; border-radius: 6px; background: var(--over2); overflow: hidden; margin-bottom: 14px; }
+    .sgbar .fill { height: 100%; border-radius: 6px; width: 0; transition: width 1.4s cubic-bezier(.16,1,.3,1); }
+    .mcard.on .f1 { width: 72%; background: var(--pos); }
+    .mcard.on .f2 { width: 88%; background: var(--neg); }
+    .svstack { margin-top: 24px; display: flex; flex-direction: column; gap: 8px; }
+    .svrow { display: flex; align-items: center; justify-content: space-between; background: var(--over2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 14px; font-size: 12.5px; color: var(--t2); opacity: 0; transform: translateY(10px); transition: all .55s ease; }
+    .mcard.on .svrow { opacity: 1; transform: none; }
+    .mcard.on .svrow:nth-child(2) { transition-delay: .15s; } .mcard.on .svrow:nth-child(3) { transition-delay: .3s; }
+
+    /* FEATURES alternating */
+    .feat { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; padding: 70px 0; }
+    .feat.rev .fcopy { order: 2; } .feat.rev .fviz { order: 1; }
+    .fcopy .label { color: var(--t4); }
+    .fcopy h3 { color: var(--t1); font-size: clamp(26px, 3.2vw, 36px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.14; margin: 14px 0 16px; }
+    .fcopy p { color: var(--t3); font-size: 16px; margin-bottom: 22px; }
+    .fcopy ul { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .fcopy li { display: flex; gap: 11px; align-items: flex-start; font-size: 14.5px; color: var(--t2); }
+    .fcopy li::before { content: ''; width: 16px; height: 16px; flex-shrink: 0; margin-top: 3px; border-radius: 50%; background: rgba(52,211,153,0.12) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='%2334d399' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/10px no-repeat; border: 1px solid rgba(52,211,153,0.25); }
+    .fviz { position: relative; }
+
+    /* phone mockup (chat IA) */
+    .phone { width: 310px; margin: 0 auto; background: #0d0d0d; border: 1px solid var(--border-md); border-radius: 38px; padding: 12px; box-shadow: 0 36px 90px rgba(0,0,0,0.6); }
+    .phone .pscreen { background: var(--bg); border-radius: 28px; overflow: hidden; height: 540px; display: flex; flex-direction: column; }
+    .phone .pnotch { height: 26px; display: flex; align-items: center; justify-content: center; }
+    .phone .pnotch i { width: 86px; height: 17px; background: #000; border-radius: 999px; border: 1px solid var(--border); }
+    .phead { padding: 10px 18px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .phead .pava { width: 30px; height: 30px; border-radius: 10px; background: var(--over3); display: flex; align-items: center; justify-content: center; }
+    .phead b { color: var(--t1); font-size: 13px; font-weight: 700; display: block; line-height: 1.2; }
+    .phead span { font-size: 10px; color: var(--pos); }
+    .chat { flex: 1; padding: 16px 14px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+    .msg { max-width: 86%; padding: 10px 13px; border-radius: 15px; font-size: 12.3px; line-height: 1.5; opacity: 0; transform: translateY(12px); transition: all .5s cubic-bezier(.16,1,.3,1); }
+    .msg.show { opacity: 1; transform: none; }
+    .msg.user { align-self: flex-end; background: var(--t1); color: #0a0a0a; border-bottom-right-radius: 5px; font-weight: 500; }
+    .msg.ia { align-self: flex-start; background: var(--card2); border: 1px solid var(--border); color: var(--t2); border-bottom-left-radius: 5px; }
+    .msg.ia b { color: var(--t1); }
+    .msg.ia .hl { color: var(--pos); font-weight: 700; }
+    .typing { align-self: flex-start; display: none; gap: 4px; padding: 12px 14px; background: var(--card2); border: 1px solid var(--border); border-radius: 15px; border-bottom-left-radius: 5px; }
+    .typing.show { display: flex; }
+    .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--t4); animation: tp 1.2s infinite; }
+    .typing i:nth-child(2) { animation-delay: .18s; } .typing i:nth-child(3) { animation-delay: .36s; }
+    @keyframes tp { 0%,60%,100% { transform: none; opacity: .4; } 30% { transform: translateY(-4px); opacity: 1; } }
+    .pinput { margin: 10px 14px 14px; display: flex; align-items: center; gap: 8px; background: var(--card2); border: 1px solid var(--border); border-radius: 999px; padding: 9px 16px; font-size: 11.5px; color: var(--t4); }
+
+    /* credit mockup */
+    .credit-mock { background: var(--card); border: 1px solid var(--border-md); border-radius: 20px; padding: 26px; box-shadow: 0 30px 80px rgba(0,0,0,0.5); }
+    .credit-mock .cmh { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .credit-mock .cmh b { color: var(--t1); font-size: 15px; font-weight: 700; }
+    .credit-mock .cmh span { font-size: 10px; color: var(--warn); background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.22); padding: 4px 11px; border-radius: 999px; font-weight: 700; letter-spacing: 0.06em; }
+    .crow { margin-bottom: 16px; }
+    .crow .ct { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 7px; }
+    .crow .ct b { color: var(--t1); font-weight: 600; } .crow .ct span { color: var(--t4); }
+    .crow .cb { height: 8px; background: var(--over2); border-radius: 6px; overflow: hidden; }
+    .crow .cf { height: 100%; border-radius: 6px; width: 0; transition: width 1.3s cubic-bezier(.16,1,.3,1); }
+    .on .cf1 { width: 34%; background: var(--pos); } .on .cf2 { width: 61%; background: var(--warn); } .on .cf3 { width: 88%; background: var(--neg); }
+    .credit-tip { margin-top: 6px; background: var(--over2); border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; font-size: 12.5px; color: var(--t2); display: flex; gap: 10px; }
+    .credit-tip b { color: var(--t1); }
+
+    /* security */
+    .sec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .scard { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 26px 24px; }
+    .scard .si { width: 38px; height: 38px; border-radius: 11px; background: var(--over2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .scard h4 { color: var(--t1); font-size: 15px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.01em; }
+    .scard p { font-size: 13px; color: var(--t3); }
 
     /* CTA final */
-    .cta-final { text-align: center; }
-    .cta-final h2 { color: var(--si-1); font-size: clamp(26px, 4vw, 40px); font-weight: 800; letter-spacing: -0.025em; margin: 12px 0 16px; }
-    .cta-final p { color: var(--si-3); margin-bottom: 32px; max-width: 520px; margin-left: auto; margin-right: auto; }
+    .cta-end { text-align: center; padding: 130px 0 120px; position: relative; }
+    .cta-end .glow2 { position: absolute; bottom: -100px; left: 50%; transform: translateX(-50%); width: 800px; height: 500px; background: radial-gradient(ellipse at center, rgba(255,255,255,0.05) 0%, transparent 60%); pointer-events: none; }
+    .cta-end h2 { color: var(--t1); font-size: clamp(32px, 5vw, 56px); font-weight: 800; letter-spacing: -0.04em; line-height: 1.08; max-width: 700px; margin: 16px auto 18px; }
+    .cta-end p { color: var(--t3); font-size: 17px; margin-bottom: 36px; }
 
-    footer { border-top: 1px solid var(--si-border); padding: 40px 0; }
-    .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-    footer img { height: 22px; opacity: 0.7; }
-    footer .fine { font-size: 12px; color: var(--si-4); }
-    footer nav { display: flex; gap: 20px; font-size: 13px; color: var(--si-3); }
-    footer nav a:hover { color: var(--si-1); }
+    footer { border-top: 1px solid var(--border); padding: 44px 0; }
+    .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px; }
+    footer .fine { font-size: 12px; color: var(--t4); }
+    footer nav { display: flex; gap: 22px; font-size: 13px; color: var(--t3); }
+    footer nav a:hover { color: var(--t1); }
 
-    @media (max-width: 640px) {
-      .hero { padding: 64px 0 48px; }
-      section { padding: 56px 0; }
+    @media (max-width: 880px) {
+      .feat { grid-template-columns: 1fr; gap: 40px; padding: 50px 0; }
+      .feat.rev .fcopy { order: 1; } .feat.rev .fviz { order: 2; }
+      .float1 { left: -8px; top: 30px; } .float2 { right: -8px; bottom: 40px; }
+      .app-ui { grid-template-columns: 1fr; } .app-side { display: none; }
+      .hero { padding-top: 130px; }
+      section.block { padding: 70px 0; }
     }
   </style>
 </head>
 <body>
 
-  <header>
+  <header id="hdr">
     <div class="container nav">
-      <a href="/" aria-label="Sibanki"><img src="/assets/logo.png?v=2" alt="Sibanki" /></a>
+      <a href="/" class="logo" aria-label="Sibanki">
+        <svg width="132" height="30" viewBox="0 0 132 30" xmlns="http://www.w3.org/2000/svg">
+          <rect x="5.6" y="4.4" width="16" height="4.6" rx="2.3" fill="#f5f5f5"/>
+          <rect x="5" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(16 7.1 9.5)"/>
+          <rect x="17.6" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(-16 19.7 9.5)"/>
+          <text x="31" y="21.5" font-family="Inter,sans-serif" font-size="17.5" font-weight="700" fill="#f5f5f5" letter-spacing="-0.7">sibanki</text>
+        </svg>
+      </a>
       <div class="nav-actions">
-        <a class="btn" href="https://app.sibanki.com.br/login">Entrar</a>
+        <a class="btn ghost" href="https://app.sibanki.com.br/login">Entrar</a>
         <a class="btn btn-primary" href="https://app.sibanki.com.br/login?modo=cadastro">Criar conta</a>
       </div>
     </div>
   </header>
 
   <main>
-    <section class="hero" style="border-top:none">
+    <section class="hero">
+      <div class="hero-glow"></div>
       <div class="container">
-        <span class="label">Financial OS · Brasil</span>
-        <h1>Quantos dias de liberdade o seu dinheiro compra?</h1>
-        <p class="sub">
-          O Sibanki não é um app de controle de gastos. É um sistema operacional
-          financeiro que transforma seus dados em decisões soberanas — conectado
-          aos seus bancos via Open Finance.
-        </p>
-        <div class="hero-ctas">
-          <a class="btn btn-primary" href="https://app.sibanki.com.br/login?modo=cadastro">Começar grátis</a>
-          <a class="btn" href="#conceitos">Como funciona</a>
+        <div class="pill rv on"><span class="dot"></span>Open Finance regulado pelo Banco Central</div>
+        <h1 class="rv on">Quantos dias de liberdade<br /><span class="muted">o seu dinheiro compra?</span></h1>
+        <p class="sub rv on rv-d1">O Sibanki é um sistema operacional financeiro. Ele conecta seus bancos, lê sua vida financeira real e te diz — em dias — o quanto você já se banca.</p>
+        <div class="hero-ctas rv on rv-d2">
+          <a class="btn btn-primary" href="https://app.sibanki.com.br/login?modo=cadastro">Descobrir meus dias de liberdade <span class="arr">→</span></a>
+          <a class="btn" href="#produto">Ver o sistema</a>
         </div>
-        <p class="hero-note">Grátis para começar · Sem cartão de crédito · Dados protegidos pelo Open Finance regulado pelo Banco Central</p>
-      </div>
-    </section>
+        <p class="hero-note rv on rv-d3">Grátis para começar · Sem cartão de crédito · Sem compartilhar senha bancária</p>
 
-    <section id="conceitos">
-      <div class="container">
-        <div class="section-head">
-          <span class="label">Três métricas. Clareza total.</span>
-          <h2>O que nenhum banco te mostra</h2>
-        </div>
-        <div class="grid grid-3">
-          <div class="card">
-            <span class="label">Ld · Dias de Liberdade</span>
-            <div class="metric">127 dias</div>
-            <h3>Quanto tempo você vive sem renda</h3>
-            <p>Seu patrimônio líquido dividido pelo seu custo de vida real. A métrica mais honesta da sua saúde financeira — atualizada a cada lançamento.</p>
+        <div class="stage" id="stage">
+          <div class="float float1">
+            <div class="fl-l">Dinheiro esquecido · BCB</div>
+            <div class="fl-v g">+ R$ 412,90</div>
           </div>
-          <div class="card">
-            <span class="label">Sg · Spread Gap</span>
-            <div class="metric">−1,8% a.m.</div>
-            <h3>Quanto suas dívidas drenam dos investimentos</h3>
-            <p>A diferença entre o rendimento médio do que você investe e o custo médio do que você deve. Se for negativa, você está pagando para perder.</p>
+          <div class="float float2">
+            <div class="fl-l">Sentinela Geo</div>
+            <div class="fl-v">Cartão certo: Visa ∞</div>
           </div>
-          <div class="card">
-            <span class="label">Sv · Sovereignty Score</span>
-            <div class="metric">0–100</div>
-            <h3>Cada gasto avaliado em tempo real</h3>
-            <p>Cada transação recebe um score que mostra se ela aumenta ou reduz sua soberania financeira — antes que vire arrependimento.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <div class="container" style="max-width: 760px;">
-        <div class="section-head">
-          <span class="label">Tudo em um lugar</span>
-          <h2>Construído para a vida financeira brasileira</h2>
-        </div>
-        <div class="feature-row">
-          <div class="feature-dot"></div>
-          <div>
-            <h3>Open Finance integrado</h3>
-            <p>Conecte suas contas e cartões de qualquer banco. Saldos, transações e faturas sincronizados automaticamente — sem digitação manual.</p>
-          </div>
-        </div>
-        <div class="feature-row">
-          <div class="feature-dot"></div>
-          <div>
-            <h3>Consultor IA com o seu contexto completo</h3>
-            <p>Um assistente que conhece suas contas, dívidas, metas e investimentos. Análise de ações, ETFs, cripto e renda fixa com dados reais da B3 e do Banco Central.</p>
-          </div>
-        </div>
-        <div class="feature-row">
-          <div class="feature-dot"></div>
-          <div>
-            <h3>Hub de Crédito</h3>
-            <p>Cartões, faturas, empréstimos e plano de ação em um único painel — incluindo qual cartão usar em cada compra pelos benefícios.</p>
-          </div>
-        </div>
-        <div class="feature-row">
-          <div class="feature-dot"></div>
-          <div>
-            <h3>Dinheiro esquecido no Banco Central</h3>
-            <p>No cadastro, consultamos automaticamente os Valores a Receber do BCB no seu CPF. Tem gente que encontra dinheiro antes mesmo de usar o app.</p>
-          </div>
-        </div>
-        <div class="feature-row">
-          <div class="feature-dot"></div>
-          <div>
-            <h3>SibCoin — recompensas por bons hábitos</h3>
-            <p>Comportamentos financeiros saudáveis geram SibCoins, trocáveis por recompensas e descontos na loja de parceiros.</p>
+          <div class="window">
+            <div class="winbar">
+              <span class="wdot"></span><span class="wdot"></span><span class="wdot"></span>
+              <span class="url">app.sibanki.com.br/dashboard</span>
+            </div>
+            <div class="app-ui">
+              <aside class="app-side">
+                <div class="slogo">
+                  <svg width="88" height="20" viewBox="0 0 132 30"><rect x="5.6" y="4.4" width="16" height="4.6" rx="2.3" fill="#f5f5f5"/><rect x="5" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(16 7.1 9.5)"/><rect x="17.6" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(-16 19.7 9.5)"/><text x="31" y="21.5" font-family="Inter,sans-serif" font-size="17.5" font-weight="700" fill="#f5f5f5" letter-spacing="-0.7">sibanki</text></svg>
+                </div>
+                <div class="sitem act"><span class="ic"></span>Painel</div>
+                <div class="sitem"><span class="ic"></span>Lançamentos</div>
+                <div class="sitem"><span class="ic"></span>Contas</div>
+                <div class="sitem"><span class="ic"></span>Crédito</div>
+                <div class="sitem"><span class="ic"></span>Crescimento</div>
+                <div class="sitem"><span class="ic"></span>Consultor IA</div>
+                <div class="sitem"><span class="ic"></span>Planejamento</div>
+              </aside>
+              <div class="app-main">
+                <div class="greet">Boa noite, João</div>
+                <h3>Sua soberania hoje</h3>
+                <div class="ld-card">
+                  <div class="ring-wrap">
+                    <svg width="130" height="130" viewBox="0 0 130 130">
+                      <circle class="ring-bg" cx="65" cy="65" r="54"></circle>
+                      <circle class="ring-fg" id="ring" cx="65" cy="65" r="54"></circle>
+                    </svg>
+                    <div class="ring-num"><b id="ldnum">0</b><span>dias livres</span></div>
+                  </div>
+                  <div class="ld-meta">
+                    <div class="lm-title">Ld · Dias de Liberdade</div>
+                    <div class="lm-tier">● Resiliente — rumo a Soberano</div>
+                    <div class="ld-grid">
+                      <div class="mini"><i>Patrimônio</i><b>R$ 86.420</b></div>
+                      <div class="mini"><i>Burn rate/dia</i><b>R$ 612</b></div>
+                      <div class="mini"><i>Spread Gap</i><b class="g">+0,9% a.m.</b></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="tx-list" id="txs">
+                  <div class="tx"><div class="tic">🛒</div><div class="tinfo"><b>Supermercado Zona Sul</b><span>Alimentação · Nubank</span></div><span class="sv s1">SV 82</span><span class="tval">− R$ 287,40</span></div>
+                  <div class="tx"><div class="tic">💼</div><div class="tinfo"><b>Salário ACME Ltda</b><span>Receita · Itaú</span></div><span class="sv s1">SV 100</span><span class="tval g">+ R$ 9.800,00</span></div>
+                  <div class="tx"><div class="tic">📺</div><div class="tinfo"><b>Streaming anual</b><span>Assinaturas · Visa ∞</span></div><span class="sv s2">SV 54</span><span class="tval">− R$ 55,90</span></div>
+                  <div class="tx"><div class="tic">🍔</div><div class="tinfo"><b>Delivery 23h47</b><span>Impulso detectado · Crédito</span></div><span class="sv s3">SV 31</span><span class="tval">− R$ 89,90</span></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="cta-final">
+    <section class="marquee-sec">
+      <p class="label rv">Conecta com as instituições que você já usa</p>
+      <div class="marquee rv">
+        <div class="mtrack">
+          <span>Nubank</span><span>Itaú</span><span>Bradesco</span><span>Banco do Brasil</span><span>Caixa</span><span>Santander</span><span>Inter</span><span>C6 Bank</span><span>BTG Pactual</span><span>XP</span><span>PicPay</span><span>Mercado Pago</span>
+          <span>Nubank</span><span>Itaú</span><span>Bradesco</span><span>Banco do Brasil</span><span>Caixa</span><span>Santander</span><span>Inter</span><span>C6 Bank</span><span>BTG Pactual</span><span>XP</span><span>PicPay</span><span>Mercado Pago</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="conceitos">
       <div class="container">
-        <span class="label">Comece hoje</span>
-        <h2>Veja a sua realidade financeira com clareza</h2>
-        <p>Crie sua conta gratuita, conecte seus bancos em minutos e descubra seus Dias de Liberdade.</p>
-        <a class="btn btn-primary" href="https://app.sibanki.com.br/login?modo=cadastro">Criar conta grátis</a>
+        <div class="sec-head rv">
+          <span class="label">Três métricas proprietárias</span>
+          <h2>O que nenhum banco<br />tem coragem de te mostrar</h2>
+          <p>Bancos lucram com a sua confusão. O Sibanki transforma seus dados em três números que mudam como você decide.</p>
+        </div>
+        <div class="metrics">
+          <div class="mcard rv" data-anim>
+            <span class="tag">Ld · Dias de Liberdade</span>
+            <div class="big">127 <small>dias</small></div>
+            <h3>Quanto tempo você sobrevive sem renda</h3>
+            <p>Patrimônio líquido ÷ custo de vida real por dia. A métrica mais honesta da sua vida financeira, recalculada a cada lançamento.</p>
+            <div class="viz">
+              <span class="vb" style="height:28%"></span><span class="vb" style="height:38%"></span><span class="vb" style="height:34%"></span><span class="vb" style="height:52%"></span><span class="vb" style="height:60%"></span><span class="vb" style="height:55%"></span><span class="vb" style="height:72%"></span><span class="vb hot" style="height:88%"></span>
+            </div>
+          </div>
+          <div class="mcard rv rv-d1" data-anim>
+            <span class="tag">Sg · Spread Gap</span>
+            <div class="big">−1,8<small>% a.m.</small></div>
+            <h3>Quanto suas dívidas drenam do que você investe</h3>
+            <p>Rendimento médio dos investimentos menos o custo médio das dívidas. Negativo? Você está pagando para perder dinheiro.</p>
+            <div class="sgbar">
+              <div class="row"><span>Investimentos rendem</span><span>1,1% a.m.</span></div>
+              <div class="bar"><div class="fill f1"></div></div>
+              <div class="row"><span>Dívidas custam</span><span>2,9% a.m.</span></div>
+              <div class="bar"><div class="fill f2"></div></div>
+            </div>
+          </div>
+          <div class="mcard rv rv-d2" data-anim>
+            <span class="tag">Sv · Sovereignty Score</span>
+            <div class="big">0–100</div>
+            <h3>Cada gasto avaliado antes do arrependimento</h3>
+            <p>Cada transação recebe um score que diz se ela aumenta ou destrói sua soberania — categoria, timing, forma de pagamento, tudo conta.</p>
+            <div class="svstack">
+              <div class="svrow"><span>Aporte no Tesouro IPCA</span><span class="sv s1">SV 96 · Soberano</span></div>
+              <div class="svrow"><span>Jantar parcelado em 6×</span><span class="sv s2">SV 48 · Atenção</span></div>
+              <div class="svrow"><span>Compra por impulso 2h da manhã</span><span class="sv s3">SV 22 · Sabotagem</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="produto" style="padding-top: 30px;">
+      <div class="container">
+        <div class="sec-head rv">
+          <span class="label">O sistema</span>
+          <h2>Um cérebro financeiro<br />que trabalha por você</h2>
+        </div>
+
+        <div class="feat">
+          <div class="fcopy rv">
+            <span class="label">Consultor IA</span>
+            <h3>Uma IA que conhece a sua vida financeira inteira</h3>
+            <p>Não é um chatbot genérico. O consultor enxerga suas contas, dívidas, metas e investimentos — e responde com números reais da B3 e do Banco Central.</p>
+            <ul>
+              <li>Raio-X de ações, FIIs, ETFs, cripto e renda fixa com dados ao vivo</li>
+              <li>Lançamentos por voz ou foto de nota fiscal</li>
+              <li>Briefing diário com o que importa para o seu dinheiro</li>
+            </ul>
+          </div>
+          <div class="fviz rv rv-d1">
+            <div class="phone">
+              <div class="pscreen">
+                <div class="pnotch"><i></i></div>
+                <div class="phead">
+                  <div class="pava"><svg width="16" height="16" viewBox="0 0 64 64"><rect x="15" y="17" width="34" height="10" rx="5" fill="#f5f5f5"/><rect x="14" y="26" width="9" height="27" rx="4.5" fill="#f5f5f5" transform="rotate(16 18.5 28)"/><rect x="41" y="26" width="9" height="27" rx="4.5" fill="#f5f5f5" transform="rotate(-16 45.5 28)"/></svg></div>
+                  <div><b>Consultor Sibanki</b><span>● online · contexto completo</span></div>
+                </div>
+                <div class="chat" id="chat">
+                  <div class="msg user">posso parcelar uma TV de R$ 4.200 em 10x?</div>
+                  <div class="typing" id="typ"><i></i><i></i><i></i></div>
+                  <div class="msg ia">Dá para fazer melhor. Parcelado, essa TV consome <b>R$ 420/mês</b> do seu limite por 10 meses e derruba seu Ld em <b>7 dias</b>.</div>
+                  <div class="msg ia">À vista com o desconto de 8% que essa loja dá, sai <b>R$ 3.864</b> — e seu Spread Gap continua positivo. <span class="hl">Veredito: à vista, sem dó.</span></div>
+                  <div class="msg user">fechou. registra aí</div>
+                  <div class="msg ia">Registrado ✓ — Eletrônicos, R$ 3.864, conta Itaú. Seu novo Ld: <span class="hl">124 dias</span>.</div>
+                </div>
+                <div class="pinput">Pergunte qualquer coisa…  🎙️ 📷</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feat rev">
+          <div class="fcopy rv">
+            <span class="label">Hub de Crédito</span>
+            <h3>Cartões e dívidas sob comando, não sob susto</h3>
+            <p>Faturas, limites, empréstimos e plano de quitação em um único lugar — com estratégia Avalanche ou Bola de Neve calculada para o seu caso.</p>
+            <ul>
+              <li>Qual cartão usar em cada compra, pelos benefícios reais</li>
+              <li>Simulador de quitação e de amortização com FGTS</li>
+              <li>Alertas de fatura e de pressão de crédito antes do aperto</li>
+            </ul>
+          </div>
+          <div class="fviz rv rv-d1">
+            <div class="credit-mock" data-anim>
+              <div class="cmh"><b>Pressão de crédito</b><span>MODERADA</span></div>
+              <div class="crow"><div class="ct"><b>Visa Infinite</b><span>R$ 2.380 / R$ 7.000</span></div><div class="cb"><div class="cf cf1"></div></div></div>
+              <div class="crow"><div class="ct"><b>Mastercard Black</b><span>R$ 3.660 / R$ 6.000</span></div><div class="cb"><div class="cf cf2"></div></div></div>
+              <div class="crow"><div class="ct"><b>Empréstimo pessoal</b><span>14 de 24 parcelas</span></div><div class="cb"><div class="cf cf3"></div></div></div>
+              <div class="credit-tip">💡 <span>Quitar o <b>empréstimo pessoal</b> primeiro economiza <b>R$ 1.840 em juros</b> (estratégia Avalanche).</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feat">
+          <div class="fcopy rv">
+            <span class="label">Open Finance + BCB</span>
+            <h3>Seus bancos conectados.<br />Até dinheiro esquecido a gente acha.</h3>
+            <p>Conecte qualquer banco em minutos pelo Open Finance oficial. No cadastro, o Sibanki ainda consulta os Valores a Receber do Banco Central no seu CPF.</p>
+            <ul>
+              <li>Saldos, transações e faturas sincronizados sozinhos</li>
+              <li>Sem digitar senha de banco — autorização oficial BCB</li>
+              <li>R$ 8,9 bilhões esquecidos esperam donos no país</li>
+            </ul>
+          </div>
+          <div class="fviz rv rv-d1" style="display:flex;flex-direction:column;gap:14px;">
+            <div class="credit-mock" style="padding:22px 24px;">
+              <div class="cmh" style="margin-bottom:14px;"><b>Consultando Banco Central…</b><span style="color:var(--pos);background:rgba(52,211,153,0.1);border-color:rgba(52,211,153,0.22);">ENCONTRADO</span></div>
+              <div style="font-size:13px;color:var(--t3);line-height:1.7;">CPF ···.···.···-07<br /><b style="color:var(--t1);font-size:22px;letter-spacing:-0.02em;">R$ 412,90</b> em 2 instituições<br /><span style="font-size:12px;color:var(--t4);">Banco Bradesco S.A. · Caixa Consórcios</span></div>
+            </div>
+            <div class="credit-mock" style="padding:20px 24px;display:flex;align-items:center;gap:14px;">
+              <div style="display:flex;">
+                <span style="width:34px;height:34px;border-radius:50%;background:#820ad1;border:2px solid var(--card);"></span>
+                <span style="width:34px;height:34px;border-radius:50%;background:#ec7000;border:2px solid var(--card);margin-left:-10px;"></span>
+                <span style="width:34px;height:34px;border-radius:50%;background:#cc092f;border:2px solid var(--card);margin-left:-10px;"></span>
+                <span style="width:34px;height:34px;border-radius:50%;background:#fff100;border:2px solid var(--card);margin-left:-10px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#003ca6;">+9</span>
+              </div>
+              <div style="font-size:13px;color:var(--t2);"><b style="color:var(--t1);">12 contas conectadas</b><br /><span style="font-size:11.5px;color:var(--t4);">última sincronização há 12 min</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" style="padding-top:40px;">
+      <div class="container">
+        <div class="sec-head rv">
+          <span class="label">Segurança de verdade</span>
+          <h2>Seu dinheiro não passa por aqui.<br />Só a clareza sobre ele.</h2>
+        </div>
+        <div class="sec-grid">
+          <div class="scard rv"><div class="si">🏛️</div><h4>Open Finance oficial</h4><p>Conexão bancária pelo sistema regulado do Banco Central. Você autoriza no app do seu banco, sem nunca digitar senha aqui.</p></div>
+          <div class="scard rv rv-d1"><div class="si">🔒</div><h4>Criptografia ponta a ponta</h4><p>Dados criptografados em trânsito e em repouso na infraestrutura do Google Cloud, com regras de acesso por usuário.</p></div>
+          <div class="scard rv rv-d2"><div class="si">👁️</div><h4>Só leitura, nunca movimentação</h4><p>O Sibanki enxerga para te aconselhar. Não move um centavo: transferências e pagamentos continuam só no seu banco.</p></div>
+          <div class="scard rv rv-d3"><div class="si">🇧🇷</div><h4>LGPD por padrão</h4><p>Seus dados são seus. Exporte ou apague tudo quando quiser, direto nas configurações.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-end">
+      <div class="glow2"></div>
+      <div class="container rv">
+        <span class="label">si bancar · verbo</span>
+        <h2>Chegou a hora de<br />se bancar de verdade.</h2>
+        <p>Crie sua conta gratuita e descubra seus Dias de Liberdade em minutos.</p>
+        <a class="btn btn-primary" style="padding:16px 34px;font-size:15px;" href="https://app.sibanki.com.br/login?modo=cadastro">Começar agora — é grátis <span class="arr">→</span></a>
       </div>
     </section>
   </main>
 
   <footer>
     <div class="container footer-inner">
-      <img src="/assets/logo.png?v=2" alt="Sibanki" />
+      <svg width="110" height="25" viewBox="0 0 132 30" style="opacity:.75"><rect x="5.6" y="4.4" width="16" height="4.6" rx="2.3" fill="#f5f5f5"/><rect x="5" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(16 7.1 9.5)"/><rect x="17.6" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(-16 19.7 9.5)"/><text x="31" y="21.5" font-family="Inter,sans-serif" font-size="17.5" font-weight="700" fill="#f5f5f5" letter-spacing="-0.7">sibanki</text></svg>
       <nav>
         <a href="https://app.sibanki.com.br/login">Entrar no app</a>
-        <a href="#conceitos">Como funciona</a>
+        <a href="#conceitos">As métricas</a>
+        <a href="#produto">O sistema</a>
       </nav>
       <p class="fine">© 2026 Sibanki · Feito no Brasil</p>
     </div>
   </footer>
 
+  <script>
+    const hdr = document.getElementById('hdr');
+    addEventListener('scroll', () => hdr.classList.toggle('scrolled', scrollY > 10), { passive: true });
+
+    const io = new IntersectionObserver((es) => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('on');
+      io.unobserve(e.target);
+    }), { threshold: 0.18 });
+    document.querySelectorAll('.rv, [data-anim]').forEach(el => io.observe(el));
+
+    const stage = document.getElementById('stage');
+    const ring = document.getElementById('ring');
+    const ldnum = document.getElementById('ldnum');
+    const txs = document.querySelectorAll('#txs .tx');
+    const sio = new IntersectionObserver((es) => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      sio.unobserve(stage);
+      stage.classList.add('on');
+      const TARGET = 127, C = 339;
+      ring.style.strokeDashoffset = C - (C * Math.min(TARGET / 365, 1) * 1.6);
+      const t0 = performance.now();
+      (function tick(t) {
+        const p = Math.min((t - t0) / 2000, 1);
+        ldnum.textContent = Math.round(TARGET * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) requestAnimationFrame(tick);
+      })(t0);
+      txs.forEach((tx, i) => setTimeout(() => tx.classList.add('show'), 500 + i * 320));
+    }), { threshold: 0.25 });
+    sio.observe(stage);
+
+    const chat = document.getElementById('chat');
+    const typ = document.getElementById('typ');
+    const msgs = chat.querySelectorAll('.msg');
+    const cio = new IntersectionObserver((es) => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      cio.unobserve(chat);
+      let delay = 300;
+      msgs.forEach((m) => {
+        const isIa = m.classList.contains('ia');
+        if (isIa) {
+          setTimeout(() => typ.classList.add('show'), delay);
+          delay += 1100;
+          setTimeout(() => { typ.classList.remove('show'); m.classList.add('show'); }, delay);
+        } else {
+          setTimeout(() => m.classList.add('show'), delay);
+        }
+        delay += isIa ? 600 : 900;
+      });
+    }), { threshold: 0.35 });
+    cio.observe(chat);
+  </script>
 </body>
+</html>
