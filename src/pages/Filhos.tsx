@@ -16,7 +16,7 @@ const EMOJIS = ['👦', '👧', '👶', '🧒', '🧑', '👱', '🧒🏽', '�
 const FREQ_LABELS: Record<string, string> = { semanal: 'Semanal', quinzenal: 'Quinzenal', mensal: 'Mensal' };
 const TAREFA_FREQ: Record<string, string> = { diaria: 'Diária', semanal: 'Semanal', mensal: 'Mensal', unica: 'Única' };
 
-export default function FilhosPage() {
+export default function FilhosPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { user, data, loading } = useAppContext();
   const [addOpen, setAddOpen] = useState(false);
   const [tarefaOpen, setTarefaOpen] = useState<string | null>(null);
@@ -107,15 +107,22 @@ export default function FilhosPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold flex items-center gap-3">
-            <Baby className="w-8 h-8 text-pink-400" />
-            Finanças dos Filhos
-          </h2>
-          <p className="text-si-5 text-sm mt-1">
-            Ensine educação financeira com mesadas, tarefas e recompensas em SibCoin.
-          </p>
-        </div>
+        {!hideHeader ? (
+          <div>
+            <h2 className="text-3xl font-bold flex items-center gap-3">
+              <Baby className="w-8 h-8 text-pink-400" />
+              Finanças dos Filhos
+            </h2>
+            <p className="text-si-5 text-sm mt-1">
+              Ensine educação financeira com mesadas, tarefas e recompensas em SibCoin.
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Baby className="w-5 h-5 text-pink-400" />
+            <span className="text-sm font-bold text-si-1">Controle de Mesadas e Tarefas</span>
+          </div>
+        )}
         <button
           type="button"
           onClick={() => { resetForm(); setAddOpen(true); }}

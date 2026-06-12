@@ -55,7 +55,7 @@ const socialNav: NavItem[] = [
   { icon: ShoppingBag, label: 'Loja',       path: '/loja'            },
   { icon: Handshake,   label: 'Credi Amigo',path: '/credi-amigo'     },
   { icon: Users,       label: 'Consórcio',  path: '/consorcio-amigo' },
-  { icon: Heart,       label: 'Casal',      path: '/casal'           },
+  { icon: Heart,       label: 'Família',    path: '/casal'           },
 ];
 
 // ── MAIS — acesso ocasional ───────────────────────────────────────────────────

@@ -9,6 +9,7 @@ import { useUiStore } from './store/useUiStore';
 import { useTheme } from './hooks/useTheme';
 import { Sidebar, type SidebarOpenGroup } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
+import { BottomNavigation } from './components/layout/BottomNavigation';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { AppLoadingScreen } from './components/ui/AppLoadingScreen';
 import { OnboardingTour } from './components/ui/OnboardingTour';
@@ -58,7 +59,6 @@ const Sibcoin      = lazy(() => import('./pages/Sibcoin'));
 const CreditHub    = lazy(() => import('./pages/CreditHub'));
 const Filiados     = lazy(() => import('./pages/Filiados'));
 const Quarentena   = lazy(() => import('./pages/Quarentena'));
-const FilhosPage   = lazy(() => import('./pages/Filhos'));
 const CrediAmigo        = lazy(() => import('./pages/CrediAmigo'));
 const ConsorcioAmigo    = lazy(() => import('./pages/ConsorcioAmigo'));
 const AceitarEmprestimo = lazy(() => import('./pages/AceitarEmprestimo'));
@@ -208,7 +208,7 @@ function AuthenticatedShell() {
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Header onMenuClick={handleToggle} sidebarCollapsed={sidebarCollapsed} />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 lg:space-y-8">
+        <main className="flex-1 overflow-y-auto p-4 pb-20 lg:p-8 lg:pb-8 space-y-6 lg:space-y-8">
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/login" element={<Navigate to="/consultor-ia" replace />} />
@@ -251,7 +251,7 @@ function AuthenticatedShell() {
               <Route path="/filiados" element={<ErrorBoundary><Filiados /></ErrorBoundary>} />
               <Route path="/casal" element={<ErrorBoundary><Casal /></ErrorBoundary>} />
               <Route path="/quarentena" element={<ErrorBoundary><Quarentena /></ErrorBoundary>} />
-              <Route path="/filhos" element={<ErrorBoundary><FilhosPage /></ErrorBoundary>} />
+              <Route path="/filhos" element={<Navigate to="/casal?tab=filhos" replace />} />
               <Route path="/credi-amigo" element={<ErrorBoundary><CrediAmigo /></ErrorBoundary>} />
               <Route path="/consorcio-amigo" element={<ErrorBoundary><ConsorcioAmigo /></ErrorBoundary>} />
               <Route path="/assinaturas" element={<ErrorBoundary><Assinaturas /></ErrorBoundary>} />
@@ -279,6 +279,7 @@ function AuthenticatedShell() {
       />
       <SpotlightTour tourId="global" steps={GLOBAL_TOUR_STEPS} />
       <InstallPrompt uid={user?.uid} />
+      <BottomNavigation onMenuClick={handleToggle} />
     </div>
     </ConsultantSessionProvider>
   );
