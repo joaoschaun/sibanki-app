@@ -161,6 +161,10 @@ exports.cancelAsaasSubscription = functions.https.onCall(async (data, context) =
   return asaasService.cancelAsaasSubscription(data, context);
 });
 
+exports.getAsaasPixQr = functions.https.onCall(async (data, context) => {
+  return asaasService.getAsaasPixQr(data, context);
+});
+
 exports.asaasWebhook = functions.https.onRequest(async (req, res) => {
   return asaasService.handleAsaasWebhook(req, res);
 });

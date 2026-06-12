@@ -7,40 +7,44 @@
 ## 🕐 Última atualização
 
 - **Por:** Antigravity
-- **Em:** 2026-06-10T00:05:00-03:00
-- **Motivo:** Conclusão da Integração Real do Módulo "Meu CPF" com Bureaus de Crédito (BigDataCorp).
+- **Em:** 2026-06-12T01:50:00-03:00
+- **Motivo:** Entrega do Checkout Transparente Asaas (Fase 1: Pix no App).
 
 ---
 
 ## ✅ O que foi feito nesta sessão (Antigravity)
 
-### 💳 Integração Real do Módulo Meu CPF
-1. **Tipos Estritos ([userData.ts](file:///c:/Users/jscha/virtus-financeiro/src/types/userData.ts))**:
-   - Criadas as interfaces `CpfNegativacao` e `CpfConsulta`.
-   - Adicionados os campos `negativacoes` e `consultas` dentro de `CpfMonitoringSnapshot`.
-2. **Backend Callable (`syncCpfMonitoring`)**:
-   - Criada a nova Cloud Function em [cpfMonitoringController.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/market/cpfMonitoringController.js) que extrai o CPF do usuário (`cadastroCompleto.cpf`), faz a chamada HTTP REST à API da **BigDataCorp** passando a chave `BIGDATACORP_TOKEN` no cabeçalho `AccessToken`, normaliza a resposta de score/pendências e persiste no Firestore.
-   - Implementado modo Sandbox automático e seguro apenas em desenvolvimento/emulador local para evitar quebra de testes locais caso o token não esteja configurado no ambiente de dev. Em produção, opera sob regime de fail-closed se o token estiver ausente.
-   - Registrado o endpoint callable no entry point [index.js](file:///c:/Users/jscha/virtus-financeiro/functions/index.js).
-3. **Frontend Reativo ([MeuCpf.tsx](file:///c:/Users/jscha/virtus-financeiro/src/pages/MeuCpf.tsx))**:
-   - Conectado o botão "Conectar bureau" para acionar a função callable `syncCpfMonitoring` com estados de loading (`busy`) e feedback de erros (`localError`).
-   - Removidos os dados estáticos fictícios e alterada a exibição das abas de Consultas, Negativações, Alertas e Proteção para utilizar os dados reais provenientes do Firestore.
-   - Condicionado o `<ComingSoonOverlay />` para apenas ser renderizado quando `!isConnected` (ou seja, quando o monitoramento real do CPF não estiver ativo).
+### 💳 Checkout Transparente Asaas (Pix no App)
+1. **Nova Callable Backend ([asaasService.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/billing/asaasService.js))**:
+   - Implementada a callable `getAsaasPixQr` para buscar o QR Code Pix e copia-e-cola com verificação rígida de propriedade e login.
+   - Atualizada a `createAsaasCheckout` para retornar o `paymentId` da primeira cobrança criada.
+2. **Registro de Functions ([index.js](file:///c:/Users/jscha/virtus-financeiro/functions/index.js))**:
+   - Registrada a exportação `exports.getAsaasPixQr = functions.https.onCall(...)`.
+3. **Novo Componente de Modal ([AsaasPixModal.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/billing/AsaasPixModal.tsx))**:
+   - Criado modal estilo *glassmorphic* premium com imagem QR code base64, botão copia-e-cola, timer dinâmico de expiração e redirecionamento de sucesso reativo sem refresh (via `AppContext.tsx`).
+4. **Integração nas Configurações ([Settings.tsx](file:///c:/Users/jscha/virtus-financeiro/src/pages/Settings.tsx))**:
+   - Atualizado o fluxo do clique de plano para abrir o modal transparente se o provedor for Asaas.
+5. **Validação Técnica**:
+   - typecheck (`npm run typecheck`) concluído com sucesso (exit 0).
+   - Testes unitários (`npm run test:unit`) passando (127 testes).
+   - Build de produção (`npm run build`) concluído com sucesso.
 
 ---
 
-## 🔧 Pendente de Ação Humana (Deploy)
+## 🔧 Status do Deploy
 
-Para subir as alterações de backend para produção, o João precisa configurar a chave da BigDataCorp e executar o deploy:
+Todos os deploys foram executados com sucesso em ambiente de produção:
 
-1. **Configurar segredo no Firebase**:
-   ```bash
-   firebase functions:secrets:set BIGDATACORP_TOKEN="sua_chave_aqui"
-   ```
-2. **Fazer o deploy das Cloud Functions**:
-   ```bash
-   firebase deploy --only functions:syncCpfMonitoring
-   ```
+```bash
+# Regra Firestore
+# DEPLOY OK (executado pelo João)
+
+# Cloud Functions (createAsaasCheckout, getAsaasPixQr)
+# DEPLOY OK (executado via CLI com aspas protetoras)
+
+# Frontend (React SPA)
+# DEPLOY OK (executado via CLI)
+```
 
 ---
 
@@ -48,19 +52,17 @@ Para subir as alterações de backend para produção, o João precisa configura
 
 | Arquivo | O que mudou |
 |---------|-------------|
-| [userData.ts](file:///c:/Users/jscha/virtus-financeiro/src/types/userData.ts) | Modelagem estrita de CPF com interfaces de negativações e consultas integradas. |
-| [cpfMonitoringController.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/market/cpfMonitoringController.js) | Novo controller backend que conecta à API BigDataCorp de score/negativações. |
-| [index.js](file:///c:/Users/jscha/virtus-financeiro/functions/index.js) | Registro e exportação da function `syncCpfMonitoring`. |
-| [MeuCpf.tsx](file:///c:/Users/jscha/virtus-financeiro/src/pages/MeuCpf.tsx) | Substituição total de mocks, conexão ao backend, binds reativos de proteção ativa e exibição dinâmica. |
-| [task.md](file:///C:/Users/jscha/.gemini/antigravity-ide/brain/565b1eef-9737-492a-a0d1-b7a09b19a7a4/task.md) | Conclusão das Fases 1 a 4. |
-| [walkthrough.md](file:///C:/Users/jscha/.gemini/antigravity-ide/brain/565b1eef-9737-492a-a0d1-b7a09b19a7a4/walkthrough.md) | Atualizado com os detalhes técnicos e estruturais da Fase 5. |
+| [asaasService.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/billing/asaasService.js) | Novo callable `getAsaasPixQr` e retorno do `paymentId` em `createAsaasCheckout`. |
+| [index.js](file:///c:/Users/jscha/virtus-financeiro/functions/index.js) | Exportação e registro do `getAsaasPixQr`. |
+| [AsaasPixModal.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/billing/AsaasPixModal.tsx) | Novo modal premium para exibição do QR Code e copia-e-cola Pix. |
+| [Settings.tsx](file:///c:/Users/jscha/virtus-financeiro/src/pages/Settings.tsx) | Integração do modal no fluxo de upgrade de plano do Asaas. |
 
 ---
 
 ## 🔧 Pipeline — status no momento do handoff
 
 ```yaml
-status: WAITING_HUMAN
-task_id: "20260610-cpf"
+status: COMPLETED
+task_id: "20260612-checkout-pix"
 assigned_to: "João"
 ```

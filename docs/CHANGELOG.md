@@ -17,6 +17,13 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Checkout Transparente Asaas — Pix no App (12/06/2026, Antigravity)
+- **Nova Callable getAsaasPixQr**: Implementada função no backend `functions/services/billing/asaasService.js` com validações rígidas de login e posse do cliente (evita spoofing). Obtém o QR code Pix e copia-e-cola via API Asaas `/payments/{id}/pixQrCode`.
+- **Retorno do paymentId**: Atualizada a callable `createAsaasCheckout` para devolver o `paymentId` da primeira cobrança pendente.
+- **Componente AsaasPixModal**: Criado modal visualmente premium estilo *glassmorphic* com visualização de QR Code em Base64, botão copia-e-cola com feedback, regressiva do tempo de expiração e redirecionamento de sucesso instantâneo (via listener de `AppContext.tsx` que detecta atualização do plano sem recarregar a tela).
+- **Settings Integration**: Atualizado `src/pages/Settings.tsx` para interceptar a resposta do plano Asaas e abrir o modal transparente em vez de redirecionar o usuário diretamente.
+- **Qualidade**: tsc sem erros, Vitest com 127 testes aprovados e build local de produção com empacotamento correto dos chunks.
+
 ### Landing page pública + separação landing/app (11/06/2026, Claude Cowork)
 - **Causa raiz do "landing some"**: `hosting:app` serve de `dist/`, recriada do zero a cada `vite build` — qualquer landing colocada manualmente era apagada no deploy seguinte.
 - **Nova pasta `landing/`**: landing page estática (design Pierre: `#0a0a0a`, cards `#111111`, Inter, labels ALL CAPS) com hero, conceitos Ld/Sg/Sv, features (Open Finance, Consultor IA, Hub de Crédito, Valores a Receber BCB, SibCoin), CTAs para `app.sibanki.com.br`, OG tags, JSON-LD, `robots.txt` e `sitemap.xml` (corrige soft-404 do sitemap apontado na análise de 11/06).

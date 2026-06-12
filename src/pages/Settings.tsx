@@ -17,6 +17,7 @@ import { useDashboardMode } from '../hooks/useDashboardMode';
 /** Acao 18: Modo Sugestivo (insights proativos da IA) */
 import { useSuggestiveMode } from '../hooks/useSuggestiveMode';
 import { OpenFinanceConnect } from '../components/openFinance/OpenFinanceConnect';
+import { AsaasPixModal } from '../components/billing/AsaasPixModal';
 
 /**
  * Provedor de billing ativo. 'asaas' (default — conta Stripe BR travada no
@@ -45,6 +46,11 @@ export default function Settings() {
    * foi removido; o campo legado segue lido apenas para exibição.
    */
   const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [pixModalData, setPixModalData] = useState<{
+    paymentId: string;
+    invoiceUrl: string;
+    planLabel: string;
+  } | null>(null);
   const [telegramEnabled, setTelegramEnabled] = useState(false);
   const [whatsEnabled, setWhatsEnabled] = useState(false);
   const [emailWeekly, setEmailWeekly] = useState(false);
@@ -613,14 +619,21 @@ export default function Settings() {
                     setCheckoutBusy(true);
                     setError(null);
                     try {
-                      let url: string | undefined;
                       if (BILLING_PROVIDER === 'asaas') {
                         const checkoutFn = httpsCallable<
                           { plan: string; billing: string },
-                          { url?: string }
+                          { url?: string; paymentId?: string }
                         >(fnsUS, 'createAsaasCheckout');
                         const res = await checkoutFn({ plan: opt.plan, billing: opt.billing });
-                        url = res.data?.url ?? undefined;
+                        if (res.data?.paymentId) {
+                          setPixModalData({
+                            paymentId: res.data.paymentId,
+                            invoiceUrl: res.data.url ?? '',
+                            planLabel: opt.label,
+                          });
+                        } else if (res.data?.url) {
+                          window.location.assign(res.data.url);
+                        }
                       } else {
                         if (!opt.priceId) return;
                         const checkoutFn = httpsCallable<
@@ -628,9 +641,9 @@ export default function Settings() {
                           { url?: string }
                         >(fnsUS, 'createCheckout');
                         const res = await checkoutFn({ priceId: opt.priceId as string, plan: opt.plan, billing: opt.billing });
-                        url = res.data?.url ?? undefined;
+                        const url = res.data?.url ?? undefined;
+                        if (url) window.location.assign(url);
                       }
-                      if (url) window.location.assign(url);
                     } catch (err) {
                       setError(err instanceof Error ? err.message : 'Erro ao iniciar assinatura.');
                     } finally {
@@ -963,6 +976,14 @@ export default function Settings() {
           )}
         </div>
       </Modal>
+
+      <AsaasPixModal
+        open={pixModalData !== null}
+        onClose={() => setPixModalData(null)}
+        paymentId={pixModalData?.paymentId ?? ''}
+        invoiceUrl={pixModalData?.invoiceUrl ?? ''}
+        planLabel={pixModalData?.planLabel ?? ''}
+      />
     </div>
   );
 }

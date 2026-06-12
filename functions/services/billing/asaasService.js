@@ -174,6 +174,7 @@ async function createAsaasCheckout(data, context) {
 
     return {
       subscriptionId: subscription.id,
+      paymentId: (first && first.id) || null,
       url: (first && (first.invoiceUrl || first.bankSlipUrl)) || null,
     };
   } catch (e) {
@@ -293,9 +294,71 @@ async function handleAsaasWebhook(req, res) {
   }
 }
 
+/**
+ * Callable: busca as informações do Pix QR Code de um determinado pagamento.
+ * Se o paymentId não for passado, busca a cobrança pendente da assinatura ativa.
+ */
+async function getAsaasPixQr(data, context) {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login necessário.");
+  }
+  const uid = context.auth.uid;
+  let paymentId = data && data.paymentId;
+
+  try {
+    const userRef = db.doc(`users/${uid}`);
+    const userSnap = await userRef.get();
+    if (!userSnap.exists) {
+      throw new functions.https.HttpsError("not-found", "Usuário não encontrado.");
+    }
+    const userData = userSnap.data();
+    const customerId = userData.asaasCustomerId;
+    if (!customerId) {
+      throw new functions.https.HttpsError("failed-precondition", "Cadastro Asaas não encontrado.");
+    }
+
+    if (!paymentId) {
+      const subId = userData.asaasSubscriptionId;
+      if (!subId) {
+        throw new functions.https.HttpsError("not-found", "Nenhuma assinatura Asaas encontrada.");
+      }
+      // Busca cobranças PENDING da assinatura
+      const payments = await asaasFetch(`/subscriptions/${subId}/payments?limit=5`);
+      const pendingPayment = payments && payments.data && payments.data.find(p => p.status === "PENDING");
+      if (!pendingPayment) {
+        throw new functions.https.HttpsError("not-found", "Nenhuma cobrança pendente encontrada.");
+      }
+      paymentId = pendingPayment.id;
+    }
+
+    // Busca o pagamento no Asaas para checar o dono
+    const payment = await asaasFetch(`/payments/${paymentId}`);
+    if (payment.customer !== customerId) {
+      logWarn("billing", "asaas_pix_owner_mismatch", { uid, paymentId, paymentCustomer: payment.customer, userCustomer: customerId });
+      throw new functions.https.HttpsError("permission-denied", "Operação não autorizada para este pagamento.");
+    }
+
+    // Busca as informações do Pix QR Code do pagamento
+    const pixQr = await asaasFetch(`/payments/${paymentId}/pixQrCode`);
+    
+    return {
+      encodedImage: pixQr.encodedImage,
+      payload: pixQr.payload,
+      expirationDate: pixQr.expirationDate,
+      value: payment.value,
+      dueDate: payment.dueDate,
+    };
+  } catch (e) {
+    if (e instanceof functions.https.HttpsError) throw e;
+    logError("billing", "asaas_pix_qr_error", e, { uid, paymentId });
+    throw new functions.https.HttpsError("internal", e.message || "Erro ao gerar QR Code Pix.");
+  }
+}
+
 module.exports = {
   createAsaasCheckout,
   cancelAsaasSubscription,
   handleAsaasWebhook,
+  getAsaasPixQr,
   PLAN_CATALOG,
 };
