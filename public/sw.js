@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sibanki-v1';
+const CACHE_NAME = 'sibanki-v2';
 const SHELL_ASSETS = [
   '/',
   '/manifest.json',
