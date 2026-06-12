@@ -71,12 +71,12 @@
       --app: https://app.sibanki.com.br;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; overflow-x: clip; }
     body {
       background: var(--bg); color: var(--t2);
       font-family: 'Inter', system-ui, sans-serif;
       letter-spacing: -0.01em; -webkit-font-smoothing: antialiased;
-      line-height: 1.6; overflow-x: hidden;
+      line-height: 1.6; overflow-x: clip;
     }
     .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
     .label { font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--t4); }
@@ -115,7 +115,7 @@
     .hero { padding: 160px 0 0; text-align: center; position: relative; }
     .hero-glow {
       position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
-      width: 900px; height: 700px; pointer-events: none;
+      width: min(900px, 100vw); height: 700px; pointer-events: none;
       background: radial-gradient(ellipse at center, rgba(255,255,255,0.055) 0%, transparent 60%);
     }
     .hero .pill {
@@ -306,7 +306,7 @@
 
     /* CTA final */
     .cta-end { text-align: center; padding: 130px 0 120px; position: relative; }
-    .cta-end .glow2 { position: absolute; bottom: -100px; left: 50%; transform: translateX(-50%); width: 800px; height: 500px; background: radial-gradient(ellipse at center, rgba(255,255,255,0.05) 0%, transparent 60%); pointer-events: none; }
+    .cta-end .glow2 { position: absolute; bottom: -100px; left: 50%; transform: translateX(-50%); width: min(800px, 100vw); height: 500px; background: radial-gradient(ellipse at center, rgba(255,255,255,0.05) 0%, transparent 60%); pointer-events: none; }
     .cta-end h2 { color: var(--t1); font-size: clamp(32px, 5vw, 56px); font-weight: 800; letter-spacing: -0.04em; line-height: 1.08; max-width: 700px; margin: 16px auto 18px; }
     .cta-end p { color: var(--t3); font-size: 17px; margin-bottom: 36px; }
 
@@ -325,10 +325,21 @@
     @media (max-width: 880px) {
       .feat { grid-template-columns: 1fr; gap: 40px; padding: 50px 0; }
       .feat.rev .fcopy { order: 1; } .feat.rev .fviz { order: 2; }
-      .float1 { left: -8px; top: 30px; } .float2 { right: -8px; bottom: 40px; }
+      .float1 { left: 0; top: 26px; } .float2 { right: 0; bottom: 36px; }
       .app-ui { grid-template-columns: 1fr; } .app-side { display: none; }
       .hero { padding-top: 130px; }
       section.block { padding: 70px 0; }
+    }
+    @media (max-width: 640px) {
+      .ld-card { grid-template-columns: 1fr; gap: 18px; justify-items: center; text-align: center; }
+      .ld-meta .lm-title { text-align: center; }
+      .ld-grid { grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); width: 100%; }
+      .app-main { padding: 20px 16px; }
+      .phone { width: min(310px, 100%); }
+      .float { padding: 11px 14px; } .float .fl-v { font-size: 15px; }
+      .nav-actions .ghost { display: none; }
+      .footer-grid { grid-template-columns: 1fr; gap: 26px; }
+      .footer-bottom { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
