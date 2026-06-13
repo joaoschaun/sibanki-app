@@ -16,7 +16,7 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CreditCard, AlertTriangle, CheckCircle,
-  ChevronRight, Zap, BookOpen, BarChart2, Clock,
+  ChevronRight, Zap, BookOpen, Clock,
   ArrowUpRight, RefreshCw, ShieldCheck, Target,
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
@@ -79,7 +79,12 @@ const EDUCATION_CARDS = [
   { emoji: '🧮', title: 'Renegociar nem sempre ajuda', desc: 'Alongar prazo reduz parcela, mas aumenta o custo total. Calcule antes.' },
 ];
 
-const TABS = ['Visão Geral', 'Cartões', 'Empréstimos', 'Plano', 'Oportunidades', 'Educação'] as const;
+/**
+ * Consolidação 6→3 abas (13/06/2026, dossiê módulo a módulo, item nº 8):
+ * Visão Geral absorve Empréstimos + Plano de ação; Oportunidades absorve
+ * Educação. Menos navegação, mais conteúdo por tela.
+ */
+const TABS = ['Visão Geral', 'Cartões', 'Oportunidades'] as const;
 type Tab = typeof TABS[number];
 
 // ── Componente: barra de utilização ──────────────────────────────────────────
@@ -626,15 +631,13 @@ export default function CreditHub() {
         </div>
       )}
 
-      {/* ══ EMPRÉSTIMOS ══ */}
-      {activeTab === 'Empréstimos' && (
+      {/* ══ EMPRÉSTIMOS — dentro da Visão Geral (consolidação 13/06) ══ */}
+      {activeTab === 'Visão Geral' && loans.length > 0 && (
         <div className="space-y-4">
-          {loans.length === 0 ? (
-            <div className="text-center py-16 text-si-5">
-              <BarChart2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p>Nenhum empréstimo ou financiamento cadastrado.</p>
-            </div>
-          ) : loans.map((l) => {
+          <h3 className="text-[11px] font-bold tracking-[0.18em] uppercase text-si-5 pt-2">
+            Empréstimos e financiamentos
+          </h3>
+          {loans.map((l) => {
             const saldo   = l.balanceUsed ?? 0;
             const parcela = l.monthlyInstallment ?? 0;
             const juros   = l.annualInterestPct ?? 0;
@@ -684,9 +687,12 @@ export default function CreditHub() {
         </div>
       )}
 
-      {/* ══ PLANO DE AÇÃO ══ */}
-      {activeTab === 'Plano' && (
+      {/* ══ PLANO DE AÇÃO — dentro da Visão Geral (consolidação 13/06) ══ */}
+      {activeTab === 'Visão Geral' && (
         <div className="space-y-4">
+          <h3 className="text-[11px] font-bold tracking-[0.18em] uppercase text-si-5 pt-2">
+            Plano de ação
+          </h3>
           <div className={`rounded-2xl border p-5 ${pc.bg} ${pc.border}`}>
             <div className="flex items-center gap-2 mb-2">
               <Target className={`w-5 h-5 ${pc.text}`} />
@@ -1058,9 +1064,12 @@ export default function CreditHub() {
         </div>
       )}
 
-      {/* ══ EDUCAÇÃO FINANCEIRA ══ */}
-      {activeTab === 'Educação' && (
+      {/* ══ EDUCAÇÃO FINANCEIRA — dentro de Oportunidades (consolidação 13/06) ══ */}
+      {activeTab === 'Oportunidades' && (
         <div className="space-y-4">
+          <h3 className="text-[11px] font-bold tracking-[0.18em] uppercase text-si-5 pt-2">
+            Educação de crédito
+          </h3>
           {/* Carrossel */}
           <div className="bg-si-card rounded-2xl border border-si-border p-6">
             <div className="flex items-center gap-2 mb-4">
