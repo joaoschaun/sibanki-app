@@ -122,7 +122,11 @@ export function SovereigntyHero({
       {/* Tier-coloured radial glow */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: GLOW_STYLE[freedom.status] }}
+        style={{
+          background: noLdData
+            ? 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(255,255,255,0.05) 0%, transparent 70%)'
+            : GLOW_STYLE[freedom.status],
+        }}
       />
 
       <div className="relative p-6 space-y-5">

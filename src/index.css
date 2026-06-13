@@ -82,6 +82,18 @@
   filter: invert(0.92);
 }
 
+/* Primário canônico (bg-white + text-zinc-900) inverte no tema claro:
+   botão de contraste = cor oposta da superfície. Cobre CTAs e pills ativas
+   do app inteiro sem tocar componente a componente. (Auditoria light 13/06) */
+[data-theme="light"] .bg-white.text-zinc-900 {
+  background-color: #18181b !important;
+  color: #fafafa !important;
+  border-color: #18181b !important;
+}
+[data-theme="light"] .bg-white.text-zinc-900:hover {
+  background-color: #27272a !important;
+}
+
 [data-theme="light"] {
   /* Page / card surfaces */
   --si-bg:      #f0f4f8;
