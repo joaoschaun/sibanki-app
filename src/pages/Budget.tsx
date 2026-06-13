@@ -394,8 +394,8 @@ export default function Budget() {
         <div>
           <h2 className="text-3xl font-bold flex items-center gap-3">
             {mode === 'envelope'
-              ? <><Package className="w-7 h-7 text-blue-400" /> Orçamento</>
-              : <><LayoutList className="w-7 h-7 text-blue-400" /> Orçamento</>
+              ? <><Package className="w-7 h-7 text-si-3" /> Orçamento</>
+              : <><LayoutList className="w-7 h-7 text-si-3" /> Orçamento</>
             }
           </h2>
           <p className="text-si-5 text-sm mt-1">
@@ -430,7 +430,7 @@ export default function Budget() {
         </div>
       </div>
 
-      <SibcoinMissionBanner eventType="budget_created" />
+      <SibcoinMissionBanner eventType="budget_created" satisfied={Object.keys(budgets || {}).length > 0} />
 
       {/* ── Bloco de Inteligência Financeira ── */}
       {(ldDiasGanhos > 0 || (mode === 'envelope' && balanceadoraSugestao) || proactiveAlerts.length > 0) && (
@@ -531,7 +531,7 @@ export default function Budget() {
                           <button
                             type="button"
                             onClick={() => { setEditingCat(cat); setEditValue(limite != null ? String(limite) : ''); }}
-                            className="text-blue-400 hover:underline flex items-center gap-1"
+                            className="text-si-2 hover:text-si-1 hover:underline flex items-center gap-1"
                           >
                             <Plus className="w-4 h-4" /> {limite != null ? 'Alterar' : 'Definir'}
                           </button>

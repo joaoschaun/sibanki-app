@@ -23,10 +23,9 @@ import { httpsCallable } from 'firebase/functions';
 import { isTransferEntry } from '../utils/entryUtils';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
 import { ImportEntries } from '../components/import/ImportEntries';
-import { calculateSovereigntyScore } from '../utils/sovereigntyEngine';
 import { SovereigntyBadge } from '../components/ui/SovereigntyBadge';
 import { PageTransition } from '../components/ui/PageTransition';
-import { useIntelligence } from '../context/IntelligenceContext';
+import { useSovereigntyScores } from '../hooks/useSovereigntyScores';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { MerchantLogo } from '../components/transactions/MerchantLogo';
 
@@ -86,7 +85,7 @@ function filterReducer(state: FilterState, action: FilterAction): FilterState {
 
 
 export default function Transactions() {
-  const { user, data, entries, recurrents, loading, accounts: allAccounts, budgets } = useAppContext();
+  const { user, data, entries, recurrents, loading, accounts: allAccounts } = useAppContext();
   const { triggerWithToast } = useSibcoinToast();
   const { hasFeature } = useFeatureFlags();
   const navigate = useNavigate();
@@ -186,78 +185,8 @@ export default function Transactions() {
     return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a));
   }, [sorted, subTab]);
 
-  // ── Sovereignty Score base metrics (usa engine global via IntelligenceContext) ──
-  const { freedom } = useIntelligence();
-
-  const sovereigntyBase = useMemo(() => {
-    const liquidity = freedom.totalLiquidity ?? 0;
-    const dailyBurnRate = freedom.dailyBurnRate > 0 ? freedom.dailyBurnRate : 50;
-
-    // orçamento por categoria
-    const budgetMap: Record<string, number> = {};
-    if (budgets && typeof budgets === 'object') {
-      for (const [k, v] of Object.entries(budgets as Record<string, unknown>)) {
-        const n = Number(v);
-        if (!isNaN(n)) budgetMap[k] = n;
-      }
-    }
-    // gasto acumulado mês atual por categoria
-    const nowMonth = new Date().toISOString().slice(0, 7);
-    const catSpent: Record<string, number> = {};
-    for (const e of entries) {
-      if (e.type === 'despesa' && !isTransferEntry(e) && (e.date || '').startsWith(nowMonth)) {
-        const cat = e.category || 'Outros';
-        catSpent[cat] = (catSpent[cat] || 0) + (Number(e.value) || 0);
-      }
-    }
-
-    const ESSENTIAL_CATS = new Set(['Moradia', 'Saúde', 'Educação', 'Transporte', 'Alimentação', 'Utilidades', 'Serviços essenciais']);
-
-    return { liquidity, dailyBurnRate, budgetMap, catSpent, ESSENTIAL_CATS };
-  }, [freedom, entries, budgets]);
-
-  // Score por entry id (apenas despesas) — com impulseStreakCount real
-  const scoreMap = useMemo(() => {
-    const map = new Map<number, ReturnType<typeof calculateSovereigntyScore>>();
-    const { liquidity, dailyBurnRate, budgetMap, catSpent, ESSENTIAL_CATS } = sovereigntyBase;
-
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const cutoff30 = thirtyDaysAgo.toISOString().slice(0, 10);
-
-    const recentExpenses = entries.filter(
-      (e) => e.type === 'despesa' && !isTransferEntry(e) && (e.date || '') >= cutoff30
-    );
-
-    const streakMap = new Map<string, number>();
-    for (const e of recentExpenses) {
-      const key = `${e.category || 'Outros'}|${new Date(e.date || '').getDay()}`;
-      streakMap.set(key, (streakMap.get(key) || 0) + 1);
-    }
-
-    for (const e of sorted) {
-      if (e.type !== 'despesa') continue;
-      const cat = e.category || 'Outros';
-      const limit = budgetMap[cat];
-      const spent = catSpent[cat] || 0;
-      const budgetRemaining = limit != null ? limit - spent : undefined;
-      const dayOfWeek = new Date(e.date || '').getDay();
-      const streakKey = `${cat}|${dayOfWeek}`;
-      const impulseStreakCount = Math.max(0, (streakMap.get(streakKey) || 0) - 1);
-
-      map.set(e.id, calculateSovereigntyScore({
-        value: Number(e.value) || 0,
-        category: cat,
-        isEssential: ESSENTIAL_CATS.has(cat),
-        liquidity,
-        dailyBurnRate,
-        budgetRemaining,
-        impulseStreakCount,
-      }));
-    }
-    return map;
-  }, [sorted, sovereigntyBase, entries]);
+  /** Sv por lançamento — hook compartilhado (mesma implementação do Painel). */
+  const scoreMap = useSovereigntyScores();
   // ────────────────────────────────────────────────────────────────────────────
 
   const hasActiveFilter = filters.type !== '' || filters.category !== '' || filters.account !== '' ||
@@ -473,7 +402,7 @@ export default function Transactions() {
         </div>
       </div>
 
-      <SibcoinMissionBanner eventType="entry_added" />
+      <SibcoinMissionBanner eventType="entry_added" satisfied={entries.length > 0} />
 
       {/* Sub-abas */}
       <div className="bg-si-card rounded-2xl border border-si-border flex overflow-hidden">

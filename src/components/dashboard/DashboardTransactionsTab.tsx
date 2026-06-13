@@ -7,84 +7,17 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
-import { useIntelligence } from '../../context/IntelligenceContext';
 import { isTransferEntry } from '../../utils/entryUtils';
-import { calculateSovereigntyScore } from '../../utils/sovereigntyEngine';
+import { useSovereigntyScores } from '../../hooks/useSovereigntyScores';
 import { MerchantLogo } from '../transactions/MerchantLogo';
 import { SovereigntyBadge } from '../ui/SovereigntyBadge';
 
 export function DashboardTransactionsTab() {
-  const { entries, budgets } = useAppContext();
-  const { freedom } = useIntelligence();
+  const { entries } = useAppContext();
   const [txSearch, setTxSearch] = useState('');
-  const now = useMemo(() => new Date(), []);
 
-  const sovereigntyBase = useMemo(() => {
-    const liquidity = freedom.totalLiquidity ?? 0;
-    const dailyBurnRate = freedom.dailyBurnRate > 0 ? freedom.dailyBurnRate : 50;
-
-    const budgetMapLocal: Record<string, number> = {};
-    if (budgets && typeof budgets === 'object') {
-      for (const [k, v] of Object.entries(budgets as Record<string, unknown>)) {
-        const n = Number(v);
-        if (!isNaN(n)) budgetMapLocal[k] = n;
-      }
-    }
-
-    const nowMonth = now.toISOString().slice(0, 7);
-    const catSpent: Record<string, number> = {};
-    for (const e of entries) {
-      if (e.type === 'despesa' && !isTransferEntry(e) && (e.date || '').startsWith(nowMonth)) {
-        const cat = e.category || 'Outros';
-        catSpent[cat] = (catSpent[cat] || 0) + (Number(e.value) || 0);
-      }
-    }
-
-    const ESSENTIAL_CATS = new Set(['Moradia', 'Saúde', 'Educação', 'Transporte', 'Alimentação', 'Utilidades', 'Serviços essenciais']);
-
-    return { liquidity, dailyBurnRate, budgetMap: budgetMapLocal, catSpent, ESSENTIAL_CATS };
-  }, [freedom, entries, budgets, now]);
-
-  const scoreMap = useMemo(() => {
-    const map = new Map<number, ReturnType<typeof calculateSovereigntyScore>>();
-    const { liquidity, dailyBurnRate, budgetMap: localBMap, catSpent, ESSENTIAL_CATS } = sovereigntyBase;
-
-    const thirtyDaysAgo = new Date(now);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const cutoff30 = thirtyDaysAgo.toISOString().slice(0, 10);
-
-    const recentExpenses = entries.filter(
-      (e) => e.type === 'despesa' && !isTransferEntry(e) && (e.date || '') >= cutoff30
-    );
-
-    const streakMap = new Map<string, number>();
-    for (const e of recentExpenses) {
-      const key = `${e.category || 'Outros'}|${new Date(e.date || '').getDay()}`;
-      streakMap.set(key, (streakMap.get(key) || 0) + 1);
-    }
-
-    for (const e of entries) {
-      if (e.type !== 'despesa') continue;
-      const cat = e.category || 'Outros';
-      const limit = localBMap[cat];
-      const spent = catSpent[cat] || 0;
-      const budgetRemaining = limit != null ? limit - spent : undefined;
-      const dayOfWeek = new Date(e.date || '').getDay();
-      const streakKey = `${cat}|${dayOfWeek}`;
-      const impulseStreakCount = Math.max(0, (streakMap.get(streakKey) || 0) - 1);
-
-      map.set(e.id, calculateSovereigntyScore({
-        value: Number(e.value) || 0,
-        category: cat,
-        isEssential: ESSENTIAL_CATS.has(cat),
-        liquidity,
-        dailyBurnRate,
-        budgetRemaining,
-        impulseStreakCount,
-      }));
-    }
-    return map;
-  }, [entries, sovereigntyBase, now]);
+  /** Sv por lançamento — hook compartilhado com a página de Lançamentos. */
+  const scoreMap = useSovereigntyScores();
 
   const filteredTx = useMemo(() => {
     const base = entries.filter((e) => !isTransferEntry(e));

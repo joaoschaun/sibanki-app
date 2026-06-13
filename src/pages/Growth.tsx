@@ -382,7 +382,7 @@ export default function Growth() {
         </div>
       </div>
 
-      <SibcoinMissionBanner eventType="investment_added" />
+      <SibcoinMissionBanner eventType="investment_added" satisfied={investments.length > 0} />
 
       {/* Sub-navegação do cockpit */}
       <div className="flex items-center gap-2 border-b border-si-border pb-4 flex-wrap">

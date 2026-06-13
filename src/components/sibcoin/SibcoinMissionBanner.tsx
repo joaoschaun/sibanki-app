@@ -16,9 +16,16 @@ import type { SibcoinEventType } from '../../hooks/useSibcoin';
 interface Props {
   eventType: SibcoinEventType;
   className?: string;
+  /**
+   * Quando true, o estado atual do usuário JÁ cumpre a missão (ex.: missão
+   * "primeiro lançamento" com 60 lançamentos na conta) — o chip não aparece.
+   * Missões são concluídas por evento, então dados pré-existentes/importados
+   * não as marcam; isso evita exibir missões obsoletas (dossiê 13/06, achado nº 3).
+   */
+  satisfied?: boolean;
 }
 
-export function SibcoinMissionBanner({ eventType, className = '' }: Props) {
+export function SibcoinMissionBanner({ eventType, className = '', satisfied = false }: Props) {
   const { missions } = useSibcoin();
 
   // Primeira missão ativa e não concluída relevante para esta página
@@ -26,7 +33,7 @@ export function SibcoinMissionBanner({ eventType, className = '' }: Props) {
     (m) => (m as any).requiredEvent === eventType && !m.completed && m.active
   );
 
-  if (!mission) return null;
+  if (!mission || satisfied) return null;
 
   const progress = (mission as any).progress as number | undefined;
   const target   = (mission as any).target   as number | undefined;
