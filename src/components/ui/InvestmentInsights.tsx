@@ -14,6 +14,7 @@ import type { Investment, Entry, InvestorProfile } from '../../types/userData';
 import type { DataFreshness } from '../../context/AppContext';
 import { useMarketRates } from '../../hooks/useMarketRates';
 import { usePortfolioMetrics } from '../../hooks/usePortfolioMetrics';
+import { useIntelligence } from '../../context/IntelligenceContext';
 
 interface Props {
   investments: Investment[];
@@ -32,6 +33,7 @@ const fmtPct = (v: number, sign = false) =>
 
 export function InvestmentInsights({ investments, entries, investorProfile, hasOpenFinance, dataFreshness, verifiedEntries }: Props) {
   const rates   = useMarketRates();
+  const { freedom } = useIntelligence();
   const metrics = usePortfolioMetrics(investments, entries, investorProfile, rates.cdiMonthly, rates.selicAnnual);
 
   const verifiedExpenses = useMemo(() => {
@@ -51,12 +53,17 @@ export function InvestmentInsights({ investments, entries, investorProfile, hasO
     allocation,
   } = metrics;
 
-  const expenses = verifiedExpenses ?? monthlyExpenses;
-  const mesesLiberdade = expenses > 0 ? totalAtual / expenses : 0;
-  const diasLiberdade  = Math.round(mesesLiberdade * 30);
+  void verifiedExpenses; void monthlyExpenses; // mantidos no hook; exibição usa o Ld canônico
+  /**
+   * Ld canônico do IntelligenceContext — antes este card calculava uma
+   * "liberdade da carteira" própria (carteira ÷ despesas), divergindo do
+   * Painel na mesma métrica (achado nº 1 da análise de 13/06/2026).
+   */
+  const diasLiberdade  = freedom.days >= 9999 || freedom.dailyBurnRate <= 0 ? 0 : freedom.days;
+  const mesesLiberdade = freedom.coverageMonths ?? diasLiberdade / 30;
 
   const fireBarWidth = Math.max(2, Math.min(100, firePct));
-  const fireColor    = firePct >= 80 ? '#10b981' : firePct >= 40 ? '#f59e0b' : '#60a5fa';
+  const fireColor    = firePct >= 80 ? '#10b981' : firePct >= 40 ? '#f59e0b' : '#9a9a9a';
 
   // Alinhamento
   const profile    = investorProfile?.profile ?? 'moderado';
@@ -120,10 +127,10 @@ export function InvestmentInsights({ investments, entries, investorProfile, hasO
             <ShieldCheck className="w-3.5 h-3.5 text-zinc-500" />
             <span className="text-[11px] text-zinc-500 uppercase tracking-wider">Liberdade</span>
           </div>
-          {expenses > 0 ? (
+          {diasLiberdade > 0 ? (
             <>
               <p className="text-2xl font-bold text-white tabular-nums">
-                {diasLiberdade > 9999 ? '∞' : diasLiberdade.toLocaleString('pt-BR')}
+                {diasLiberdade.toLocaleString('pt-BR')}
                 <span className="text-sm font-normal text-zinc-500 ml-1">dias</span>
               </p>
               <p className="text-[11px] text-zinc-600 mt-0.5">

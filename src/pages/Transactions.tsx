@@ -55,6 +55,11 @@ type FilterAction =
   | { kind: 'clear' };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
+function monthStartStr(): string {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+}
+
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -103,10 +108,11 @@ export default function Transactions() {
   const audioChunksRef                = useRef<Blob[]>([]);
   const [recording, setRecording]     = useState(false);
   const [importOpen, setImportOpen]   = useState(false);
-  // ✅ FIX: preset padrão = 'hoje' — mostra só os registros do dia atual
+  // Preset padrão = 'mes' (13/06/2026): "hoje" vazio dava primeira impressão de
+  // app sem dados; o mês corrente mostra a vida financeira de cara.
   const [filters, dispatchFilter]     = useReducer(filterReducer, {
     type: '', category: '', account: '',
-    start: todayStr(), end: todayStr(), preset: 'hoje',
+    start: monthStartStr(), end: todayStr(), preset: 'mes',
   });
   const [filterOpen, setFilterOpen]   = useState(false);
   // ✅ FIX: mousedown + ref ao invés de click global — não conflita com outros listeners

@@ -406,7 +406,7 @@ export default function Growth() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold tracking-[0.1em] uppercase border transition-all ${
                 active
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                  ? 'bg-white text-zinc-900 border-white'
                   : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border-si-border'
               }`}
             >
