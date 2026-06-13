@@ -438,7 +438,7 @@ export default function Transactions() {
             onChange={(e) => { const f = e.target.files?.[0]; if (f) handleOcrFile(f); e.target.value = ''; }} />
           {canOcr && (
             <button type="button" onClick={() => fileInputRef.current?.click()} disabled={ocrBusy}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-300 text-sm font-medium disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-si-border-md bg-si-over-2 text-si-2 hover:bg-si-over-3 text-sm font-medium disabled:opacity-50"
               title="Lançar por foto (OCR)">
               <Camera className="w-4 h-4" /> {ocrBusy ? 'Lendo…' : 'Foto'}
             </button>
@@ -647,9 +647,9 @@ export default function Transactions() {
               <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
             </div>
           ) : groupedByDate.length === 0 ? (
-            search ? (
+            search || entries.length > 0 ? (
               <div className="bg-si-card rounded-2xl border border-si-border p-12 text-center text-si-5 text-sm">
-                Nenhum lançamento encontrado para esta busca.
+                {search ? 'Nenhum lançamento encontrado para esta busca.' : 'Nenhum lançamento neste período — ajuste o filtro acima.'}
               </div>
             ) : (
               <div className="bg-si-card rounded-2xl border border-si-border">
