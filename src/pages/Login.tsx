@@ -41,6 +41,21 @@ export default function Login() {
   const [registerDone, setRegisterDone] = useState(false);
   const [ldDemo, setLdDemo] = useState(0);
 
+  // Login é superfície de marca: sempre dark, independente do tema escolhido
+  // dentro do app. Restaura a preferência do usuário ao sair da tela.
+  useEffect(() => {
+    const prev = document.documentElement.dataset.theme;
+    document.documentElement.dataset.theme = 'dark';
+    return () => {
+      try {
+        document.documentElement.dataset.theme =
+          localStorage.getItem('sibanki-theme') || prev || 'dark';
+      } catch {
+        document.documentElement.dataset.theme = prev || 'dark';
+      }
+    };
+  }, []);
+
   // contador animado do painel de marca
   useEffect(() => {
     const target = 127;
