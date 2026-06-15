@@ -1,23 +1,23 @@
 # CLAUDE.md — Memória Permanente do Sibanki
 
-> ⚠️ **GOVERNANÇA IA — leia primeiro:**
-> 1. **`AGENTS.md`** (raiz) — fonte única de verdade para regras universais
->    de qualquer agente de IA (convenções, branches, matriz de responsabilidade,
->    limites duros). Em caso de conflito, AGENTS.md tem precedência sobre este arquivo.
-> 2. **`CLAUDE.md`** (este arquivo) — contexto pinned do produto + histórico
->    de sessão. Leia também antes de qualquer ação.
-> 3. **`docs/INVENTARIO-COMPLETO-SISTEMA.md`** (1001 linhas) — inventário detalhado.
->    Leia quando for mexer em módulo já existente.
-> 4. **`docs/TASK_QUEUE.md`** — fila de tarefas (pipeline Antigravity ↔ Cursor ↔ Cowork).
-> 5. **`docs/CHANGELOG.md`** — changelog incremental por sessão. Histórico novo
+> ⚠️ **GOVERNANÇA — leia primeiro (desenvolvimento Claude-only):**
+> 1. **`AGENTS.md`** (raiz) — fonte única de verdade para regras de engenharia
+>    (convenções, branches, deploy, limites duros). Em caso de conflito,
+>    AGENTS.md tem precedência sobre este arquivo.
+> 2. **`CLAUDE.md`** (este arquivo) — contexto pinned do produto + status atual.
+>    Leia também antes de qualquer ação.
+> 3. **`docs/INVENTARIO-COMPLETO-SISTEMA.md`** — inventário detalhado.
+>    Leia (e atualize) quando for mexer em módulo já existente.
+> 4. **`docs/CHANGELOG.md`** — changelog incremental por sessão. Histórico novo
 >    vai PARA LÁ, não acumula mais aqui.
 >
-> **REGRAS OBRIGATÓRIAS PARA O ASSISTENTE (Claude Cowork especificamente):**
+> **REGRAS OBRIGATÓRIAS:**
 > 1. Leia AGENTS.md + este arquivo + INVENTARIO antes de mexer em módulo já existente.
 > 2. Histórico de sessão: usar `docs/CHANGELOG.md`, não acumular mais neste arquivo.
 > 3. Decisões arquiteturais permanentes podem ser documentadas aqui (seção
 >    "Status atual"); detalhe operacional vai para CHANGELOG.
-> 4. O skill `sibanki` em `.claude/skills/sibanki/SKILL.md` reforça essas regras.
+> 4. Pipeline Cursor/Antigravity foi aposentado (jun/2026). Todo o desenvolvimento
+>    é feito pelo Claude. Deploys/escritas em prod só com autorização explícita do João.
 >
 > **Status atual (13/04/2026):** React SPA é a PRODUÇÃO. Cutover legado→React concluído.
 > 35/35 testes Playwright (`npm run test:react-smoke`: PWA + setup auth `storageState` + login isolado + 24 rotas). 22/22 health checks verdes. 52 Cloud Functions ativas (inclui `valoresAReceberApi`).
@@ -1187,59 +1187,12 @@ Selecionar 2-3 lojistas com API própria para o primeiro checkout nativo:
 12. **Lançamento automático pós-compra** — compras na Loja entram automaticamente em `entries`
 13. **Testes Playwright para Loja e Onboarding** — adicionar rotas `/loja` e fluxo de cadastro nos smoke tests
 - **Nota:** o TLD `.com.br` da Lomadee não obriga a região da Cloud Function; o que importa é **mesma região** entre deploy da callable e `getFunctions` no front.
-### AI Pipeline Claude↔Cursor implementado (13/04/2026)
+### Pipeline multi-agente APOSENTADO (jun/2026)
 
-#### Arquitetura
-Sistema de orquestração assíncrona entre Claude (Cowork) e Cursor para desenvolvimento paralelo com verificação automática.
-
-**Fluxo completo:**
-```
-Claude escreve tarefa → TASK_QUEUE.md (status: WAITING_CURSOR)
-  ↓ task-watcher detecta
-  ↓ Notificação Windows + Cursor abre automaticamente
-Cursor lê .cursor/rules/pipeline.mdc + executa tarefa
-  ↓ Cursor atualiza TASK_QUEUE.md (status: CURSOR_DONE)
-  ↓ task-watcher detecta → cria .pipeline/verification_needed.flag
-Cowork scheduled task (a cada 5 min) detecta flag
-  ↓ Lê tarefa + resultado do Cursor
-  ↓ Verifica implementação contra critérios de aceitação
-  ↓ Atualiza TASK_QUEUE.md: COMPLETED ou NEEDS_REVISION
-  ↓ Deleta flag
-Se NEEDS_REVISION: task-watcher notifica Cursor novamente → loop
-```
-
-**Arquivos criados:**
-- `docs/TASK_QUEUE.md` — fila de tarefas com frontmatter YAML estruturado
-- `.cursor/rules/pipeline.mdc` — regra Cursor (`alwaysApply: true`) que lê a fila automaticamente
-- `scripts/task-watcher.mjs` — watcher Node.js (sem dependências npm extras)
-- `scripts/start-pipeline.bat` — launcher one-click
-- `.pipeline/` — diretório de estado temporário (no `.gitignore`)
-- Tarefa agendada Cowork `sibanki-pipeline-verify` — roda a cada 5 minutos
-
-**Status possíveis do TASK_QUEUE.md:**
-`IDLE` → `WAITING_CURSOR` → `CURSOR_IN_PROGRESS` → `CURSOR_DONE` → `CLAUDE_REVIEWING` → `COMPLETED` (ou `NEEDS_REVISION` → volta para Cursor)
-
-**Como usar:**
-1. Rodar `scripts/start-pipeline.bat` (deixar janela aberta — o watcher fica em background)
-2. Claude escreve tarefa no `docs/TASK_QUEUE.md` (status: WAITING_CURSOR)
-3. Notificação aparece + Cursor abre automaticamente
-4. Cursor executa e marca CURSOR_DONE
-5. Em até 5 minutos, Claude verifica e fecha o loop
-
-**Como escrever uma tarefa (Claude deve fazer assim):**
-Editar o frontmatter do `docs/TASK_QUEUE.md`:
-```yaml
----
-pipeline_version: "1.0"
-status: WAITING_CURSOR
-task_id: "YYYYMMDD-NNN"
-priority: "alta|media|baixa"
-created_at: "ISO timestamp"
-updated_at: "ISO timestamp"
-assigned_to: "cursor"
----
-```
-E preencher as seções: **Descrição**, **Contexto / Arquivos relevantes**, **Critérios de aceitação**, **Notas para o Cursor**.
+O pipeline assíncrono Antigravity ↔ Cursor ↔ Cowork (TASK_QUEUE.md, `.cursor/rules/`,
+`scripts/task-watcher.mjs`, `scripts/start-pipeline.bat`, `.pipeline/`) foi
+**descontinuado**. O desenvolvimento passou a ser **inteiramente pelo Claude**.
+As regras de engenharia vivem em `AGENTS.md` (v2.0, Claude-only).
 
 ### Análise do sibanki.com.br + quick wins (11/06/2026)
 
