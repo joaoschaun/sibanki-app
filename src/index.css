@@ -236,6 +236,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Label padrão Pierre (ALL CAPS) ────────────────────────────
+   Antes: `text-[10px] font-bold tracking-[0.18em] uppercase` redigitado.
+   Use `className="si-label"` para um label consistente em todo o app. */
+.si-label {
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
 /* Custom Premium Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

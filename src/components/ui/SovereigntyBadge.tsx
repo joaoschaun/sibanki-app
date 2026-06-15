@@ -1,21 +1,11 @@
 import { useState } from 'react';
+import { getSvTier } from '../../constants/sovereigntyScale';
 
 interface SovereigntyBadgeProps {
   score: number;
   daysLost: number;
   opportunityCost10y: number;
   compact?: boolean;
-}
-
-const TIERS = [
-  { min: 80, label: 'Soberano',      bg: 'bg-emerald-500/15', text: 'text-emerald-300', border: 'border-emerald-500/30' },
-  { min: 50, label: 'Consciente',    bg: 'bg-blue-500/15',    text: 'text-blue-300',    border: 'border-blue-500/30' },
-  { min: 25, label: 'Atenção',       bg: 'bg-amber-500/15',   text: 'text-amber-300',   border: 'border-amber-500/30' },
-  { min: 0,  label: 'Auto-sabotagem',bg: 'bg-rose-500/15',    text: 'text-rose-300',    border: 'border-rose-500/30' },
-] as const;
-
-function getTier(score: number) {
-  return TIERS.find((t) => score >= t.min) ?? TIERS[TIERS.length - 1];
 }
 
 const fmtBRL = (v: number) =>
@@ -28,7 +18,7 @@ export function SovereigntyBadge({
   compact = false,
 }: SovereigntyBadgeProps) {
   const [open, setOpen] = useState(false);
-  const tier = getTier(score);
+  const tier = getSvTier(score);
 
   if (compact) {
     // Versão pill pequena (usada inline no extrato)
@@ -56,11 +46,7 @@ export function SovereigntyBadge({
               </div>
               <div className="h-1.5 w-full rounded-full bg-si-over-3 overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all ${
-                    score >= 80 ? 'bg-emerald-400' :
-                    score >= 50 ? 'bg-blue-400' :
-                    score >= 25 ? 'bg-amber-400' : 'bg-rose-400'
-                  }`}
+                  className={`h-full rounded-full transition-all ${tier.bar}`}
                   style={{ width: `${score}%` }}
                 />
               </div>
@@ -108,11 +94,7 @@ export function SovereigntyBadge({
       </div>
       <div className="h-1.5 w-full rounded-full bg-black/20 overflow-hidden">
         <div
-          className={`h-full rounded-full ${
-            score >= 80 ? 'bg-emerald-400' :
-            score >= 50 ? 'bg-blue-400' :
-            score >= 25 ? 'bg-amber-400' : 'bg-rose-400'
-          }`}
+          className={`h-full rounded-full ${tier.bar}`}
           style={{ width: `${score}%` }}
         />
       </div>

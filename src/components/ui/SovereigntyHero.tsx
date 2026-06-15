@@ -11,14 +11,10 @@
 import { useState } from 'react';
 import { ArrowUpRight, Shield, TrendingUp, TrendingDown, Zap, CheckCircle2, AlertCircle, HelpCircle, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { FREEDOM_TIERS, type FreedomStatus } from '../../constants/sovereigntyScale';
 
 // ─── Types (must stay in sync with sovereigntyEngine) ──────────────────────────
-export type FreedomStatus =
-  | 'inabalavel'
-  | 'soberano'
-  | 'resiliente'
-  | 'em-construcao'
-  | 'fragil';
+export type { FreedomStatus };
 
 export type SpreadVerdict =
   | 'alavancagem-inteligente'
@@ -42,39 +38,7 @@ export type SpreadResult = {
   verdict: SpreadVerdict;
 };
 
-// ─── Style maps ────────────────────────────────────────────────────────────────
-const STATUS_LABEL: Record<FreedomStatus, string> = {
-  inabalavel: 'Inabalável',
-  soberano: 'Soberano',
-  resiliente: 'Resiliente',
-  'em-construcao': 'Em construção',
-  fragil: 'Frágil',
-};
-
-const STATUS_NUM: Record<FreedomStatus, string> = {
-  inabalavel: 'text-violet-300',
-  soberano: 'text-emerald-300',
-  resiliente: 'text-blue-300',
-  'em-construcao': 'text-amber-300',
-  fragil: 'text-rose-300',
-};
-
-const STATUS_BADGE: Record<FreedomStatus, string> = {
-  inabalavel: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
-  soberano: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  resiliente: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-  'em-construcao': 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  fragil: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
-};
-
-// Radial glow position + colour per tier (inline style, TW can't compute dynamic values)
-const GLOW_STYLE: Record<FreedomStatus, string> = {
-  inabalavel: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(139,92,246,0.22) 0%, transparent 70%)',
-  soberano: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(16,185,129,0.18) 0%, transparent 70%)',
-  resiliente: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(59,130,246,0.16) 0%, transparent 70%)',
-  'em-construcao': 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(245,158,11,0.14) 0%, transparent 70%)',
-  fragil: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(244,63,94,0.14) 0%, transparent 70%)',
-};
+// Estilos por tier vêm de constants/sovereigntyScale (fonte única Ld/Sv).
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 export function SovereigntyHero({
@@ -125,7 +89,7 @@ export function SovereigntyHero({
         style={{
           background: noLdData
             ? 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(255,255,255,0.05) 0%, transparent 70%)'
-            : GLOW_STYLE[freedom.status],
+            : FREEDOM_TIERS[freedom.status].glow,
         }}
       />
 
@@ -178,7 +142,7 @@ export function SovereigntyHero({
           ) : (
             <>
           <div className="flex items-end gap-2 leading-none">
-            <span className={`text-[52px] sm:text-[72px] font-black tracking-tight leading-none ${STATUS_NUM[freedom.status]}`}>
+            <span className={`text-[52px] sm:text-[72px] font-black tracking-tight leading-none ${FREEDOM_TIERS[freedom.status].numClass}`}>
               {freedom.days}
             </span>
             <span className="text-si-4 text-xl sm:text-2xl mb-1.5">dias</span>
@@ -188,9 +152,9 @@ export function SovereigntyHero({
             {fmtBRL0(freedom.dailyBurnRate)}/dia
           </p>
           <span
-            className={`mt-3 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest border ${STATUS_BADGE[freedom.status]}`}
+            className={`mt-3 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest border ${FREEDOM_TIERS[freedom.status].badgeClass}`}
           >
-            {STATUS_LABEL[freedom.status]}
+            {FREEDOM_TIERS[freedom.status].label}
           </span>
             </>
           )}

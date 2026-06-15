@@ -1257,3 +1257,25 @@ E preencher as seções: **Descrição**, **Contexto / Arquivos relevantes**, **
 - **`index.html`**: OG/Twitter tags (preview WhatsApp) + splash estático pulsante dentro de `#root` (mata a tela preta de ~5s da 1ª visita; React substitui ao montar).
 - **`scripts/generate-og-image.mjs`** gera `public/og-image.png` (1200×630); `prepare-dist.mjs` copia para `dist/`. `scripts/verify-splash.mjs` valida o splash com JS bloqueado.
 - Validado: `tsc --noEmit` OK, `npm run build` OK, splash verificado por screenshot. **Sem deploy nesta sessão.**
+
+---
+
+## Design System — Primitivos Pierre (rebase sobre audit/analise-360 · 14/06/2026)
+
+### Achado critico de branch
+O `main` (25/abr) estava **obsoleto e sem buildar**: `App.tsx`/`Accounts.tsx`/`Cards.tsx` importavam 12 modulos inexistentes nele. A linha real do produto e a **`audit/analise-360`** (12/jun, 60 commits a frente). Trabalho de DS foi rebaseado sobre ela.
+
+### Entregue
+- **`src/utils/cn.ts`** — helper `cn` unico (clsx+tailwind-merge).
+- **`src/constants/sovereigntyScale.ts`** — fonte unica de cor/label Ld (`FREEDOM_TIERS`) e Sv (`SV_TIERS`/`getSvTier`); `SovereigntyHero` e `SovereigntyBadge` consomem.
+- **Primitivos** `src/components/ui/`: `Button` (+`buttonClasses`; **primary = botao branco** alinhado ao CTA da audit; secondary/ghost/danger), `Card` (+`CardHeader`), `Badge`, `Field`/`Input`/`Select`. Barrel `primitives.ts`.
+- **Telas existentes NAO migradas** (decisao 14/06): para nao desviar do design em producao, as migracoes cosmeticas (`EmptyState`/`FeedbackCallout`/`NotFound`/`ErrorBoundary` + icone do Modal) foram revertidas ao pixel exato da producao. Primitivos ficam como ferramenta para telas NOVAS (com revisao visual). `SovereigntyHero`/`Badge` refatorados para a escala central = pixel-identico. Modal mantem so focus-trap (a11y, sem efeito visual).
+- **`Modal`** — merge: prop `size` (da audit) + focus trap + icone lucide `X` + `title: ReactNode`.
+- **`.si-label`** util em `index.css`.
+- **Ratchet** `src/constants/designSystem.guard.test.ts` (vitest, gate de deploy): proibe crescer botao colorido solido. Baseline **29** (audit ja fez varredura de cor; era 164 no main morto).
+
+### Conflitos resolvidos a favor da audit
+`creditSnapshot.ts` (audit ja tinha fallback dueDay superior), `AccountCard.tsx` (cn local exportado), `Login.tsx` (brand surface redesenhada).
+
+### Verificacao pos-rebase
+`tsc --noEmit`: **0 erros**. `vitest`: **128/128**. `vite build`: **OK** (antes quebrado). Sem deploy/push nesta sessao.
