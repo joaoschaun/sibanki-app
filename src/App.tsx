@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import { AppProvider, useAppContext } from './context/AppContext';
@@ -17,6 +17,8 @@ import { RegistrationWizard } from './components/onboarding/RegistrationWizard';
 import { InstallPrompt } from './components/ui/InstallPrompt';
 import { ConsultantDrawer } from './components/consultant/ConsultantDrawer';
 import { captureRefParam, useReferral } from './hooks/useReferral';
+import { useModuleFlags } from './hooks/useModuleFlags';
+import { matchModuleByPath } from './constants/appModules';
 
 import Login from './pages/Login';
 import { useState, useEffect } from 'react';
@@ -72,6 +74,22 @@ function PageLoader() {
       <div className="w-8 h-8 border-2 border-si-border border-t-si-3 rounded-full animate-spin" />
     </div>
   );
+}
+
+/**
+ * ModuleGuard — bloqueia acesso direto (URL) a um módulo desligado pelo admin.
+ * Redireciona para o Painel. Essenciais e rotas sem módulo passam livremente.
+ */
+function ModuleGuard({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const { isModuleEnabled, loaded } = useModuleFlags();
+  if (loaded) {
+    const mod = matchModuleByPath(location.pathname);
+    if (mod && !mod.essential && !isModuleEnabled(mod.key)) {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+  return <>{children}</>;
 }
 
 function FloatingConsultantButton() {
@@ -213,6 +231,7 @@ function AuthenticatedShell() {
         <main className="flex-1 overflow-y-auto p-4 pb-20 lg:p-8 lg:pb-8">
           {/* max-width global de conteúdo (S3 — linhas longas demais em telas largas) */}
           <div className="max-w-[1180px] mx-auto w-full space-y-6 lg:space-y-8">
+          <ModuleGuard>
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/login" element={<Navigate to="/consultor-ia" replace />} />
@@ -270,6 +289,7 @@ function AuthenticatedShell() {
               <Route path="*" element={<ErrorBoundary><NotFound /></ErrorBoundary>} />
             </Routes>
           </Suspense>
+          </ModuleGuard>
           </div>
         </main>
       </div>

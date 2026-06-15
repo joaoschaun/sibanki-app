@@ -156,6 +156,10 @@ select.form-inp{cursor:pointer}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
       Feature Flags
     </div>
+    <div class="nav-item" onclick="goPage('modulos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Módulos
+    </div>
     <div class="nav-item" onclick="goPage('planos')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       Planos & Billing
@@ -287,6 +291,20 @@ select.form-inp{cursor:pointer}
           <div class="form-group" style="margin:0"><div class="form-label">Descrição</div><input id="newFlagDesc" class="form-inp" placeholder="Descrição da feature"></div>
           <button class="btn btn-primary" onclick="addCustomFlag()">+ Adicionar</button>
         </div>
+      </div>
+    </div>
+
+    <!-- ═══════ PAGE: MÓDULOS ═══════ -->
+    <div id="pgModulos" class="page">
+      <div class="page-title">Módulos do App</div>
+      <div class="page-sub">Ligue ou desligue módulos de navegação — efeito imediato no app, sem deploy (grava config/modules)</div>
+      <div class="card">
+        <div class="card-title">
+          Módulos
+          <button class="btn btn-success btn-sm" onclick="saveAllModules()">💾 Salvar tudo</button>
+        </div>
+        <div style="font-size:.72rem;color:var(--t3);margin-bottom:12px">Essenciais (Assistente, Painel, Perfil, Configurações) ficam sempre ligados para evitar travar o app.</div>
+        <div class="flag-grid" id="moduleGrid"><div class="loading-row"><div class="spin"></div></div></div>
       </div>
     </div>
 
@@ -639,7 +657,7 @@ function goPage(id) {
   document.querySelectorAll('.nav-item').forEach(n => {
     if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
   });
-  const loaders = { metricas: loadMetricas, usuarios: loadUsuarios, flags: loadFlags, planos: loadPlanos, social: loadSocial, brand: loadBrand, calendario: renderCal, feedbacks: loadFeedbacks };
+  const loaders = { metricas: loadMetricas, usuarios: loadUsuarios, flags: loadFlags, modulos: loadModules, planos: loadPlanos, social: loadSocial, brand: loadBrand, calendario: renderCal, feedbacks: loadFeedbacks };
   if (loaders[id]) loaders[id]();
 }
 
@@ -939,6 +957,81 @@ async function addCustomFlag() {
   document.getElementById('newFlagDesc').value = '';
   renderFlagGrid();
   toast('Flag adicionada! Clique em Salvar tudo.', 'info');
+}
+
+// ═══════════════════════════════════════════════
+// MÓDULOS (ligar/desligar navegação) — espelha src/constants/appModules.ts
+// Keys DEVEM bater 1:1 com APP_MODULES. Essenciais ficam fora (sempre on).
+// ═══════════════════════════════════════════════
+const MODULES_DEF = [
+  { key:'lancamentos',  label:'Lançamentos',  group:'Principal', default:true },
+  { key:'contas',       label:'Contas',       group:'Principal', default:true },
+  { key:'credito',      label:'Crédito',      group:'Principal', default:true },
+  { key:'investimentos',label:'Investimentos',group:'Principal', default:true },
+  { key:'orcamento',    label:'Orçamento',    group:'Mais',      default:true },
+  { key:'metas',        label:'Metas',        group:'Mais',      default:true },
+  { key:'recorrentes',  label:'Recorrentes',  group:'Mais',      default:true },
+  { key:'loja',         label:'Loja',         group:'Mais',      default:true },
+  { key:'familia',      label:'Família',      group:'Mais',      default:true },
+  { key:'credi_amigo',  label:'Credi Amigo',  group:'Mais',      default:true },
+  { key:'consorcio',    label:'Consórcio',    group:'Mais',      default:true },
+  { key:'relatorios',   label:'Relatórios',   group:'Mais',      default:true },
+  { key:'calendario',   label:'Calendário',   group:'Mais',      default:true },
+  { key:'educacao',     label:'Educação',     group:'Mais',      default:true },
+  { key:'ferramentas',  label:'Ferramentas',  group:'Mais',      default:true },
+  { key:'fire',         label:'FIRE',         group:'Mais',      default:true },
+  { key:'meu_cpf',      label:'Meu CPF',      group:'Mais',      default:true },
+  { key:'sibcoin',      label:'SibCoin',      group:'Mais',      default:true },
+  { key:'filiados',     label:'Filiados',     group:'Mais',      default:true },
+];
+let remoteModules = {};
+
+async function loadModules() {
+  try {
+    const doc = await db.collection('config').doc('modules').get();
+    remoteModules = doc.exists ? (doc.data() || {}) : {};
+  } catch(e) { remoteModules = {}; }
+  renderModuleGrid();
+}
+
+function renderModuleGrid() {
+  const groups = ['Principal','Mais'];
+  const html = groups.map(g => {
+    const items = MODULES_DEF.filter(m => m.group === g).map(m => {
+      const active = (m.key in remoteModules) ? !!remoteModules[m.key] : m.default;
+      return `<div class="flag-card">
+        <div class="flag-card-hd">
+          <div>
+            <div class="flag-name">${m.label}</div>
+            <div class="flag-desc">${m.key}</div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="mod_${m.key}" ${active?'checked':''} onchange="moduleChanged('${m.key}',this.checked)"><span class="tsl"></span></label>
+        </div>
+        <div style="font-size:.72rem;color:${active?'var(--green)':'var(--t3)'}">● ${active?'Visível':'Oculto'}</div>
+      </div>`;
+    }).join('');
+    return `<div style="grid-column:1/-1;color:var(--t3);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin:8px 0 2px">${g}</div>${items}`;
+  }).join('');
+  document.getElementById('moduleGrid').innerHTML = html;
+}
+
+function moduleChanged(key, val) {
+  remoteModules[key] = val;
+  const el = document.querySelector(`#mod_${key}`);
+  if (!el) return;
+  const card = el.closest('.flag-card');
+  const statusEl = card && card.querySelector('div:last-child');
+  if (statusEl) { statusEl.style.color = val ? 'var(--green)' : 'var(--t3)'; statusEl.textContent = '● ' + (val ? 'Visível' : 'Oculto'); }
+}
+
+async function saveAllModules() {
+  try {
+    // Persiste apenas chaves conhecidas (evita lixo) com booleano explícito.
+    const payload = {};
+    MODULES_DEF.forEach(m => { payload[m.key] = (m.key in remoteModules) ? !!remoteModules[m.key] : m.default; });
+    await db.collection('config').doc('modules').set(payload, { merge: true });
+    toast('Módulos salvos! O app reflete em segundos.', 'ok');
+  } catch(e) { toast('Erro ao salvar: ' + e.message, 'err'); }
 }
 
 // ═══════════════════════════════════════════════

@@ -1,6 +1,7 @@
 import { useLocation, Link } from 'react-router-dom';
 import { LayoutDashboard, Receipt, MessageCircle, Heart, Menu } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useModuleFlags } from '../../hooks/useModuleFlags';
 
 interface BottomNavigationProps {
   onMenuClick: () => void;
@@ -8,29 +9,34 @@ interface BottomNavigationProps {
 
 export function BottomNavigation({ onMenuClick }: BottomNavigationProps) {
   const location = useLocation();
+  const { isModuleEnabled } = useModuleFlags();
 
   const items = [
     {
       label: 'Painel',
       path: '/dashboard',
       icon: LayoutDashboard,
+      key: 'painel',
     },
     {
       label: 'Lançamentos',
       path: '/lancamentos',
       icon: Receipt,
+      key: 'lancamentos',
     },
     {
       label: 'Assistente',
       path: '/consultor-ia',
       icon: MessageCircle,
+      key: 'assistente',
     },
     {
       label: 'Família',
       path: '/casal',
       icon: Heart,
+      key: 'familia',
     },
-  ];
+  ].filter((i) => isModuleEnabled(i.key));
 
   const isActive = (path: string) => {
     if (path === '/dashboard') {

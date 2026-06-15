@@ -28,6 +28,13 @@ service cloud.firestore {
       return isAuthed() && request.auth.uid == userId;
     }
 
+    // Admin global do painel (public/admin) — Custom Claim setado por
+    // validateAdminAccess (server-side, coleção admins/{email}). Não confundir
+    // com isTenantAdmin (token.role == "admin" dentro de um tenant).
+    function isAdmin() {
+      return isAuthed() && request.auth.token.admin == true;
+    }
+
     function ownerInTenant(tenantId, userId) {
       return sameTenant(tenantId) && isOwner(userId);
     }
@@ -192,6 +199,16 @@ service cloud.firestore {
         (resource.data.fromUid == request.auth.uid || resource.data.emailAmigo == request.auth.token.email);
       allow create: if isAuthed();
       allow update, delete: if false;
+    }
+
+    // Config global do app React (root): feature flags + módulos on/off.
+    // Leitura: qualquer usuário autenticado (o app precisa saber o que exibir).
+    // Escrita: SOMENTE admin (Custom Claim admin:true). Documentos:
+    //   config/featureFlags  → useFeatureFlags
+    //   config/modules       → useModuleFlags (ligar/desligar módulos)
+    match /config/{docId} {
+      allow read: if isAuthed();
+      allow write: if isAdmin();
     }
 
     match /{document=**} {
