@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plus, CheckCircle } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { getAdminEnv, type AdminEnv } from '../../utils/adminEnv';
+import { AdminEnvSwitch } from '../../components/admin/AdminEnvSwitch';
 
 interface FeatureDef {
   label: string;
@@ -80,6 +82,7 @@ const DEFAULT_FLAGS: Record<string, FeatureDef> = {
 };
 
 export default function AdminFlags() {
+  const [env, setEnv] = useState<AdminEnv>(getAdminEnv());
   const [flags, setFlags] = useState<Record<string, boolean>>({});
   const [customFlags, setCustomFlags] = useState<Record<string, FeatureDef>>({});
   const [loading, setLoading] = useState(true);
@@ -97,8 +100,9 @@ export default function AdminFlags() {
       try {
         setLoading(true);
         const docSnap = await getDoc(doc(db, 'config', 'featureFlags'));
-        if (docSnap.exists() && active) {
-          const data = docSnap.data() as Record<string, boolean>;
+        const full = docSnap.exists() ? (docSnap.data() as Record<string, any>) : {};
+        const data = (full[env] || {}) as Record<string, boolean>; // fatia do ambiente
+        if (active) {
           setFlags(data);
 
           // Find custom flags that are in Firestore but not in DEFAULT_FLAGS
@@ -127,7 +131,7 @@ export default function AdminFlags() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [env]);
 
   const handleToggle = (key: string, val: boolean) => {
     setFlags((prev) => ({
@@ -139,8 +143,8 @@ export default function AdminFlags() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await setDoc(doc(db, 'config', 'featureFlags'), flags, { merge: true });
-      showToast('Configurações salvas com sucesso!');
+      await setDoc(doc(db, 'config', 'featureFlags'), { [env]: flags }, { merge: true });
+      showToast(`Flags salvas em ${env === 'prod' ? 'PRODUÇÃO' : 'Staging'}!`);
     } catch (err) {
       console.error('[AdminFlags] Save error:', err);
       showToast('Erro ao salvar as flags.');
@@ -205,6 +209,8 @@ export default function AdminFlags() {
           {saving ? 'Salvando...' : '💾 Salvar Tudo'}
         </button>
       </div>
+
+      <AdminEnvSwitch env={env} onChange={setEnv} scopeLabel="Feature Flags" />
 
       {/* Flags Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
