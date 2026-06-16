@@ -137,7 +137,34 @@ async function adminGetDataLogic(data, context) {
   };
 }
 
+// ── adminSetPlan: muda o plano de um usuário (escrita de `plan` só via Admin SDK
+// pelas rules). Protegido pela claim admin. ────────────────────────────────────
+const VALID_PLANS = new Set(["free", "gratuito", "pro", "familia"]);
+async function adminSetPlanLogic(data, context) {
+  assertAdmin(context);
+  const email = (data && data.email ? String(data.email) : "").trim().toLowerCase();
+  const plan = data && data.plan ? String(data.plan) : "";
+  if (!email) throw new functions.https.HttpsError("invalid-argument", "E-mail obrigatório.");
+  if (!VALID_PLANS.has(plan)) throw new functions.https.HttpsError("invalid-argument", "Plano inválido.");
+
+  const db = admin.firestore();
+  const snap = await db.collection("users").where("email", "==", email).limit(1).get();
+  if (snap.empty) {
+    throw new functions.https.HttpsError("not-found", "Nenhum usuário com este e-mail.");
+  }
+  const ref = snap.docs[0].ref;
+  await ref.update({
+    plan,
+    planProvider: "admin",
+    planUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    planUpdatedBy: context.auth.uid,
+  });
+  return { success: true, uid: snap.docs[0].id, plan };
+}
+
 module.exports = {
   adminGetData: functions.https.onCall(adminGetDataLogic),
+  adminSetPlan: functions.https.onCall(adminSetPlanLogic),
   adminGetDataLogic,
+  adminSetPlanLogic,
 };

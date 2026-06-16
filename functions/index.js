@@ -178,6 +178,7 @@ exports.validateAdminAccess = adminAuth.validateAdminAccess;
 exports.revokeAdminAccess = adminAuth.revokeAdminAccess;
 // Dados agregados do painel admin (Admin SDK; substitui leituras client-side bloqueadas)
 exports.adminGetData = adminData.adminGetData;
+exports.adminSetPlan = adminData.adminSetPlan;
 
 // =============================================
 // STRIPE: delega para serviço de billing

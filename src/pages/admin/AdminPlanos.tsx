@@ -2,20 +2,19 @@ import { useState, useEffect, useMemo } from 'react';
 import { 
   TrendingUp, Star, Award, CreditCard, ChevronRight, CheckCircle 
 } from 'lucide-react';
-import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { httpsCallable } from 'firebase/functions';
+import { fnsUS } from '../../firebase';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { gridStyle, axisStyle, tooltipStyle, fmtBRL, fmtAxis } from '../../components/charts/chartConfig';
 
-interface UserDoc {
-  id: string;
-  name?: string;
-  email?: string;
-  plan?: string;
+interface AdminData {
+  counts: { total: number; pro: number; familia: number; free: number };
+  mrr: number;
+  activation: { withEntries: number; withGoals: number; withInvestments: number; withOpenFinance: number };
 }
 
 export default function AdminPlanos() {
-  const [users, setUsers] = useState<UserDoc[]>([]);
+  const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
   const [emailQuery, setEmailQuery] = useState('');
   const [targetPlan, setTargetPlan] = useState('free');
@@ -24,55 +23,36 @@ export default function AdminPlanos() {
 
   useEffect(() => {
     let active = true;
-    async function fetchUsers() {
+    (async () => {
       try {
         setLoading(true);
-        const snap = await getDocs(collection(db, 'users'));
-        const list: UserDoc[] = [];
-        snap.forEach((doc) => {
-          list.push({ id: doc.id, ...doc.data() } as UserDoc);
-        });
-        if (active) {
-          setUsers(list);
-        }
+        const getData = httpsCallable<unknown, AdminData>(fnsUS, 'adminGetData');
+        const res = await getData({});
+        if (active) setData(res.data);
       } catch (err) {
         console.error('[AdminPlanos] Fetch error:', err);
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
-    }
-    fetchUsers();
+    })();
     return () => {
       active = false;
     };
   }, []);
 
   const stats = useMemo(() => {
-    const total = users.length;
-    const pro = users.filter((u) => u.plan === 'pro').length;
-    const familia = users.filter((u) => u.plan === 'familia').length;
-    const free = total - pro - familia;
-    const mrr = pro * 29.9 + familia * 39.9;
+    const c = data?.counts || { total: 0, pro: 0, familia: 0, free: 0 };
+    const mrr = data?.mrr ?? 0;
     const arr = mrr * 12;
-    const conversionRate = total > 0 ? ((pro + familia) / total) * 100 : 0;
+    const conversionRate = c.total > 0 ? ((c.pro + c.familia) / c.total) * 100 : 0;
+    return { total: c.total, pro: c.pro, familia: c.familia, free: c.free, mrr, arr, conversionRate };
+  }, [data]);
 
-    return { total, pro, familia, free, mrr, arr, conversionRate };
-  }, [users]);
-
-  // MRR history chart (simulating growth data over 6 months)
+  // Projeção simples de MRR a partir do valor atual (rótulo deixa claro: simulação).
   const mrrData = useMemo(() => {
     const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
-    // Simulation based on current MRR
     const current = stats.mrr;
-    return months.map((m, idx) => {
-      const growthFactor = (idx + 5) / 10; // Growth progression
-      return {
-        name: m,
-        mrr: Math.round(current * growthFactor),
-      };
-    });
+    return months.map((m, idx) => ({ name: m, mrr: Math.round(current * ((idx + 5) / 10)) }));
   }, [stats.mrr]);
 
   const handleUpdatePlan = async (e: React.FormEvent) => {
@@ -82,28 +62,13 @@ export default function AdminPlanos() {
 
     setUpdating(true);
     try {
-      const q = query(collection(db, 'users'), where('email', '==', cleanEmail));
-      const snap = await getDocs(q);
-      if (snap.empty) {
-        showToast('Nenhum usuário encontrado com este e-mail.');
-        return;
-      }
-
-      const userDoc = snap.docs[0];
-      await updateDoc(doc(db, 'users', userDoc.id), {
-        plan: targetPlan,
-      });
-
-      // Update local state
-      setUsers((prev) =>
-        prev.map((u) => (u.email?.toLowerCase() === cleanEmail ? { ...u, plan: targetPlan } : u))
-      );
-
+      const setPlan = httpsCallable<{ email: string; plan: string }, { success: boolean; plan: string }>(fnsUS, 'adminSetPlan');
+      await setPlan({ email: cleanEmail, plan: targetPlan });
       showToast(`Plano de ${cleanEmail} alterado para ${targetPlan}.`);
       setEmailQuery('');
-    } catch (err) {
+    } catch (err: any) {
       console.error('[AdminPlanos] Update plan error:', err);
-      showToast('Erro ao atualizar plano.');
+      showToast(err?.message || 'Erro ao atualizar plano.');
     } finally {
       setUpdating(false);
     }
@@ -215,8 +180,8 @@ export default function AdminPlanos() {
           <div className="space-y-3">
             {[
               { label: 'Cadastros Totais', value: stats.total, color: 'text-si-3 bg-zinc-800/10 border-zinc-700/20' },
-              { label: 'Sincronizaram OF (Heurística)', value: Math.round(stats.total * 0.65), color: 'text-blue-500 bg-blue-950/10 border-blue-500/20' },
-              { label: 'Engajamento Recorrente', value: Math.round(stats.total * 0.35), color: 'text-purple-500 bg-purple-950/10 border-purple-500/20' },
+              { label: 'Conectaram Open Finance', value: data?.activation.withOpenFinance ?? 0, color: 'text-blue-500 bg-blue-950/10 border-blue-500/20' },
+              { label: 'Com Lançamentos', value: data?.activation.withEntries ?? 0, color: 'text-purple-500 bg-purple-950/10 border-purple-500/20' },
               { label: 'Conversão para Pago', value: stats.pro + stats.familia, color: 'text-emerald-500 bg-emerald-950/10 border-emerald-500/20' },
             ].map((step, idx) => (
               <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border text-xs font-semibold ${step.color}`}>

@@ -22,8 +22,8 @@ export function AdminEnvSwitch({ env, onChange, scopeLabel }: AdminEnvSwitchProp
     `px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-[0.15em] uppercase transition-colors border ${
       active
         ? danger
-          ? 'bg-red-600 border-red-600 text-white'
-          : 'bg-blue-600 border-blue-600 text-white'
+          ? 'bg-red-500/15 border-red-500/40 text-red-400'
+          : 'bg-si-over-2 border-si-border-md text-si-1'
         : 'bg-transparent border-si-border text-si-3 hover:text-si-1 hover:bg-si-over-1'
     }`;
 
