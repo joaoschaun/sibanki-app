@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Sibanki Admin</title>
+  <style>
+    html, body { margin: 0; background: #0a0a0a; }
+    #admin-splash {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      background: #0a0a0a; color: #fff;
+      font-family: Inter, -apple-system, system-ui, sans-serif;
+    }
+    #admin-splash .t { font-size: 13px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.45); animation: ap 1.6s ease-in-out infinite; }
+    @keyframes ap { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div id="admin-splash"><div class="t">Sibanki · Admin</div></div>
+  </div>
+  <script type="module" src="/src/admin/main.tsx"></script>
+</body>
+</html>

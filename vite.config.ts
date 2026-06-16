@@ -33,6 +33,12 @@ export default defineConfig({
     emptyOutDir: true,
     chunkSizeWarningLimit: 1600,
     rollupOptions: {
+      // Multi-page: app do usuário (index.html) + painel admin SEPARADO (admin.html).
+      // O admin é servido em hosting:admin (sibanki-admin), nunca dentro do app.
+      input: {
+        main: resolve(process.cwd(), 'index.html'),
+        admin: resolve(process.cwd(), 'admin.html'),
+      },
       output: {
         manualChunks: {
           'vendor-react':    ['react', 'react-dom', 'react-router-dom'],
