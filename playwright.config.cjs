@@ -150,6 +150,14 @@ module.exports = defineConfig({
         baseURL: STAGING_URL,
       },
     },
+    {
+      name: 'admin-security',
+      testMatch: '**/admin-security.spec.cjs',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: BASE_URL,
+      },
+    },
   ],
   timeout: 120000,
   expect: { timeout: 10000 },

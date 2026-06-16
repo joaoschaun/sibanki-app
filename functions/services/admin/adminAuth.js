@@ -158,14 +158,13 @@ async function listAdminsLogic(data, context) {
   return { admins: adminsList };
 }
 
-exports.validateAdminAccess = functions.https.onCall(validateAdminAccessLogic);
-exports.revokeAdminAccess = functions.https.onCall(revokeAdminAccessLogic);
-exports.grantAdminAccess = functions.https.onCall(grantAdminAccessLogic);
-exports.listAdmins = functions.https.onCall(listAdminsLogic);
-
 module.exports = {
   validateAdminAccessLogic,
   revokeAdminAccessLogic,
   grantAdminAccessLogic,
   listAdminsLogic,
+  validateAdminAccess: functions.https.onCall(validateAdminAccessLogic),
+  revokeAdminAccess: functions.https.onCall(revokeAdminAccessLogic),
+  grantAdminAccess: functions.https.onCall(grantAdminAccessLogic),
+  listAdmins: functions.https.onCall(listAdminsLogic),
 };

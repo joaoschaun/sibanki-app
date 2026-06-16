@@ -291,6 +291,10 @@ export interface UserData {
   // ─── Arredondamento de Troco (Round-up) ────────────────────────────────────
   roundUpConfig?: RoundUpConfig;
 
+  // ─── Guardião Financeiro ──────────────────────────────────────────────────
+  /** Configuração do Guardião Financeiro (F0 — alertas de orçamento ao abrir o app). */
+  guardianConfig?: GuardianConfig;
+
   // ─── Quarentena de Compras ────────────────────────────────────────────────
   quarentena?: QuarentenaItem[];
 
@@ -720,6 +724,36 @@ export interface RoundUpEntry {
   roundedValue: number;
   diff: number;
   date: string;
+}
+
+// ─── Guardião Financeiro (F0) ────────────────────────────────────────────────
+
+/**
+ * Regra de alerta do Guardião.
+ * Dispara quando o gasto na `category` atinge `thresholdPct`% do orçamento mensal.
+ * Cooldown via localStorage para evitar fadiga de alertas.
+ */
+export interface GuardianRule {
+  id: string;
+  /** Categoria do orçamento (deve bater com `budgets` key). */
+  category: string;
+  /** Label amigável para exibição (pode ser diferente da key do budget). */
+  label?: string;
+  /** Porcentagem do orçamento que dispara o alerta (ex: 80 = 80%). */
+  thresholdPct: number;
+  /** Horas de cooldown entre disparos do mesmo alerta (ex: 12 = 12h). */
+  cooldownHours: number;
+  /** Mensagem personalizada opcional. */
+  customMessage?: string;
+  enabled: boolean;
+}
+
+export interface GuardianConfig {
+  /** O Guardião está ativo? */
+  enabled: boolean;
+  rules: GuardianRule[];
+  /** Quando o usuário configurou o Guardião (ISO). */
+  configuredAt?: string;
 }
 
 // ─── Quarentena de Compras ───────────────────────────────────────────────────

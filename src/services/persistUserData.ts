@@ -35,6 +35,7 @@ import type {
   Filho,
   FilhoTarefa,
   FilhoTransacao,
+  GuardianConfig,
 } from '../types/userData';
 
 /** Erro lançado quando dados falham na validação antes de persistir. */
@@ -765,6 +766,16 @@ export async function updateCard(
 export async function deleteCard(uid: string, currentCards: Card[], cardId: number): Promise<void> {
   const cards = currentCards.filter((c) => c.id !== cardId);
   await updateUserDoc(uid, { cards });
+}
+
+// ─── Guardião Financeiro ──────────────────────────────────────────────────────
+
+/**
+ * Persiste a configuração do Guardião Financeiro no Firestore.
+ * Salva em `users/{uid}.guardianConfig`.
+ */
+export async function updateGuardianConfig(uid: string, config: GuardianConfig): Promise<void> {
+  await updateUserDoc(uid, { guardianConfig: config });
 }
 
 /**

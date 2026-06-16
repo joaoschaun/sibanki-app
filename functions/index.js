@@ -119,6 +119,47 @@ app.get("/health", async (_req, res) => {
 app.use("/api/v1/tenants", tenantRoutes);
 
 exports.api = functions.https.onRequest(app);
+
+// ──────────────────────────────────────────────
+// Lista de espera — captura de e-mail (landing)
+// ──────────────────────────────────────────────
+exports.captureWaitlistEmail = functions.https.onRequest(async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "https://www.sibanki.com.br");
+  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") return res.status(204).send("");
+  if (req.method !== "POST") return res.status(405).json({ ok: false, error: "method not allowed" });
+
+  const { email } = req.body || {};
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ ok: false, error: "email inválido" });
+  }
+
+  const BREVO_KEY = process.env.BREVO_API_KEY;
+  const LIST_ID = parseInt(process.env.BREVO_WAITLIST_LIST_ID || "2", 10);
+
+  if (!BREVO_KEY) {
+    logWarn("captureWaitlistEmail", "BREVO_API_KEY não configurada");
+    return res.status(500).json({ ok: false, error: "serviço não configurado" });
+  }
+
+  try {
+    const r = await fetch("https://api.brevo.com/v3/contacts", {
+      method: "POST",
+      headers: { "api-key": BREVO_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ email, listIds: [LIST_ID], updateEnabled: true }),
+    });
+    if (r.status === 204 || r.ok) return res.json({ ok: true });
+    const body = await r.json().catch(() => ({}));
+    if (body.code === "duplicate_parameter") return res.json({ ok: true });
+    logWarn("captureWaitlistEmail", `Brevo error: ${body.message}`);
+    return res.status(500).json({ ok: false, error: "erro ao salvar" });
+  } catch (e) {
+    logError("captureWaitlistEmail", e);
+    return res.status(500).json({ ok: false, error: "erro interno" });
+  }
+});
+
 exports.onUserCreated = functions.auth.user().onCreate(async (user) => {
   // Inicializa usuário no Firestore
   await onUserCreated(user);

@@ -4,11 +4,13 @@ import {
   FileBarChart, Calendar, User, Settings, MoreHorizontal, ChevronDown,
   Handshake, Users, Heart, MessageCircle, LayoutDashboard, ShoppingBag,
   Coins, BookOpen, Wrench, Flame, ShieldCheck, Zap, RefreshCw,
+  ShieldAlert,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTenant } from '../../hooks/useTenant';
 import { cn } from '../../utils/cn';
+import { useAppContext } from '../../context/AppContext';
 
 export type SidebarOpenGroup = 'mais' | null;
 
@@ -82,6 +84,7 @@ export function Sidebar({
 }: SidebarProps) {
   const { branding } = useTenant();
   const location = useLocation();
+  const { isAdmin } = useAppContext();
 
   const routeInMais = maisNav.some((i) => location.pathname.startsWith(i.path));
 
@@ -240,6 +243,16 @@ export function Sidebar({
 
       {/* ── Rodapé ─────────────────────────────────────────────────────────── */}
       <div className="border-t border-si-border shrink-0 py-2 px-2 space-y-[1px]">
+        {isAdmin && (
+          <Link
+            to="/admin"
+            title={collapsed ? "Painel Admin" : undefined}
+            className={collapsed ? rowCollapsed(isActive('/admin')) : row(isActive('/admin'))}
+          >
+            <ShieldAlert className={iconCls(isActive('/admin'))} />
+            {!collapsed && "Painel Admin"}
+          </Link>
+        )}
         {bottomNav.map((item) => {
           const active = isActive(item.path);
           return (

@@ -126,12 +126,15 @@ export interface AppContextValue {
   syncOpenFinance: () => Promise<{ ok: boolean; message?: string }>;
   /** true enquanto o sync está em andamento. */
   isSyncing: boolean;
+  /** Indica se o usuário autenticado possui direitos de administrador. */
+  isAdmin: boolean;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
   const financial = useFinancialData(user?.uid);
 
   // ── Sync state ────────────────────────────────────────────────────────────
@@ -200,6 +203,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const fns = fnsBR;
     httpsCallable(fns, 'triggerSibcoinEvent')({ eventType: 'login_streak' }).catch(() => {});
   }, [user?.uid]);
+
+  // ── Admin claims check ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    let active = true;
+    user.getIdTokenResult().then((idTokenResult) => {
+      if (active) {
+        setIsAdmin(!!idTokenResult.claims.admin);
+      }
+    }).catch(() => {
+      if (active) {
+        setIsAdmin(false);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   // ── Funil de ativação (Ação #3 — Análise 360) ────────────────────────────
   // Marcos D0: Open Finance conectado e primeiro lançamento. Dedup por uid em
@@ -288,10 +312,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         manualEntries,
         syncOpenFinance,
         isSyncing,
+        isAdmin,
       };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, authLoading, financial, syncOpenFinance, isSyncing],
+    [user, authLoading, financial, syncOpenFinance, isSyncing, isAdmin],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
