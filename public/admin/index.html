@@ -554,6 +554,16 @@ const fns = firebase.functions();
 let currentUser = null;
 let allUsers = [];
 let remoteFlags = {};
+// Fase 2: dados agregados via Cloud Function (Admin SDK) — substitui leituras
+// client-side de `users` (bloqueadas pelas rules) e os gráficos simulados.
+let ADMIN_DATA = null;
+async function fetchAdminData(force) {
+  if (ADMIN_DATA && !force) return ADMIN_DATA;
+  const r = await fns.httpsCallable('adminGetData')({});
+  ADMIN_DATA = r.data || {};
+  allUsers = ADMIN_DATA.users || [];
+  return ADMIN_DATA;
+}
 let socialPosts = { rascunhos:[], agendados:[], publicados:[] };
 let calMonth = new Date().getMonth();
 let calYear = new Date().getFullYear();
@@ -690,19 +700,15 @@ async function initAdmin() {
 // ═══════════════════════════════════════════════
 async function loadDashboard() {
   try {
-    const snap = await db.collection('users').get();
-    const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    allUsers = users;
+    const d = await fetchAdminData();
+    const users = allUsers;
+    const total = d.counts.total;
+    const pro = d.counts.pro, familia = d.counts.familia, free = d.counts.free;
+    const mrr = (d.mrr || 0).toFixed(2);
 
-    const total = users.length;
-    const pro = users.filter(u => u.plan === 'pro').length;
-    const familia = users.filter(u => u.plan === 'familia').length;
-    const free = total - pro - familia;
-    const mrr = (pro * 29.9 + familia * 39.9).toFixed(2);
-
-    const now = new Date();
-    const thisMonth = now.toISOString().substring(0,7);
-    const newThisMonth = users.filter(u => u.updated && u.updated.substring(0,7) === thisMonth).length;
+    const thisMonth = new Date().toISOString().substring(0,7);
+    const newThisMonth = (d.series || []).filter(s => s.date.substring(0,7) === thisMonth)
+      .reduce((sum, s) => sum + (s.registrations || 0), 0);
 
     document.getElementById('dashKpis').innerHTML = `
       <div class="stat-card"><div class="stat-label">Total Usuários</div><div class="stat-val">${total}</div><div class="stat-delta up">+${newThisMonth} este mês</div></div>
@@ -723,15 +729,12 @@ async function loadDashboard() {
   }
 }
 
-function renderCadastrosChart(users) {
-  const days = 30, labels = [], data = [];
-  for (let i = days-1; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate()-i);
-    const k = d.toISOString().substring(0,10);
-    labels.push(d.getDate()+'/'+(d.getMonth()+1));
-    data.push(users.filter(u => u.updated && u.updated.startsWith(k)).length);
-  }
-  new Chart(document.getElementById('chartCadastros'), {
+function renderCadastrosChart() {
+  const series = (ADMIN_DATA && ADMIN_DATA.series) || [];
+  const labels = series.map(s => { const [y,m,dd] = s.date.split('-'); return dd+'/'+m; });
+  const data = series.map(s => s.registrations || 0);
+  if (window._cadChart) window._cadChart.destroy();
+  window._cadChart = new Chart(document.getElementById('chartCadastros'), {
     type:'line', data:{ labels, datasets:[{ label:'Cadastros', data, borderColor:'#4C7BF4', backgroundColor:'rgba(76,123,244,.1)', tension:.4, fill:true, pointRadius:2 }] },
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#5a5a7a',font:{size:10}}}, y:{ticks:{color:'#5a5a7a',font:{size:10}},beginAtZero:true} } }
   });
@@ -773,11 +776,11 @@ function renderAtividade(users) {
 // MÉTRICAS
 // ═══════════════════════════════════════════════
 async function loadMetricas() {
-  if (allUsers.length === 0) await loadDashboard();
-  const total = allUsers.length;
-  const comEntradas = allUsers.filter(u => u.entries && u.entries.length > 0).length;
-  const comMetas = allUsers.filter(u => u.goals && u.goals.length > 0).length;
-  const comInvest = allUsers.filter(u => u.investments && u.investments.length > 0).length;
+  const d = await fetchAdminData();
+  const total = d.counts.total;
+  const comEntradas = d.activation.withEntries;
+  const comMetas = d.activation.withGoals;
+  const comInvest = d.activation.withInvestments;
 
   document.getElementById('metKpis').innerHTML = `
     <div class="stat-card"><div class="stat-label">Usuários ativos</div><div class="stat-val">${comEntradas}</div><div class="stat-delta">${total>0?Math.round(comEntradas/total*100):0}% do total</div></div>
@@ -791,58 +794,35 @@ async function loadMetricas() {
 }
 
 function renderDAUChart() {
-  const labels = [], data = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate()-i);
-    labels.push(d.getDate()+'/'+(d.getMonth()+1));
-    data.push(Math.floor(Math.random()*15)+2);
-  }
+  const series = (ADMIN_DATA && ADMIN_DATA.series) || [];
+  const labels = series.map(s => { const p = s.date.split('-'); return p[2]+'/'+p[1]; });
+  const data = series.map(s => s.dau || 0);
   if (window._dauChart) window._dauChart.destroy();
   window._dauChart = new Chart(document.getElementById('chartDAU'), {
-    type:'bar', data:{ labels, datasets:[{ label:'Sessões', data, backgroundColor:'rgba(76,123,244,.5)', borderColor:'#4C7BF4', borderWidth:1 }] },
+    type:'bar', data:{ labels, datasets:[{ label:'Usuários ativos/dia', data, backgroundColor:'rgba(76,123,244,.5)', borderColor:'#4C7BF4', borderWidth:1 }] },
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#5a5a7a',font:{size:9}}}, y:{ticks:{color:'#5a5a7a',font:{size:10}},beginAtZero:true} } }
   });
 }
 
+const MODULE_LABELS = {
+  assistente:'Assistente', painel:'Painel', lancamentos:'Lançamentos', contas:'Contas',
+  credito:'Crédito', investimentos:'Investimentos', orcamento:'Orçamento', metas:'Metas',
+  recorrentes:'Recorrentes', loja:'Loja', familia:'Família', credi_amigo:'Credi Amigo',
+  consorcio:'Consórcio', relatorios:'Relatórios', calendario:'Calendário', educacao:'Educação',
+  ferramentas:'Ferramentas', fire:'FIRE', meu_cpf:'Meu CPF', sibcoin:'SibCoin',
+  filiados:'Filiados', perfil:'Perfil', configuracoes:'Configurações'
+};
 function renderModulosChart() {
-  // ⚠️ Atualizar sempre que adicionar módulo no app
-  // Módulos do Sibanki v4 — sessão 4 (2026-03-10)
-  const labels = [
-    'Dashboard','Lançamentos','Cartões','Contas',
-    'Orçamento','Metas','Calendário',
-    'Investimentos','Consultor IA','Educação',
-    'Família','Comunidade',
-    'Relatórios','Conquistas','Configurações'
-  ];
-  const colors = [
-    '#4C7BF4','#10b981','#f59e0b','#06b6d4',
-    '#ec4899','#eab308','#3b82f6',
-    '#8b5cf6','#a855f7','#22c55e',
-    '#f97316','#14b8a6',
-    '#6366f1','#fbbf24','#94a3b8'
-  ];
-  const data = allUsers.reduce((acc, u) => {
-    acc[0]  += 10;
-    acc[1]  += Math.min((u.entries||[]).length, 20);
-    acc[2]  += (u.cards||[]).length * 2;
-    acc[3]  += (u.accounts||[]).length * 2;
-    acc[4]  += Object.keys(u.budgets||{}).length;
-    acc[5]  += (u.goals||[]).length * 2;
-    acc[6]  += (u.calendarEvents||[]).length;
-    acc[7]  += (u.investments||[]).length * 2;
-    acc[8]  += u.iaChats ? 4 : 0;
-    acc[9]  += 0;
-    acc[10] += u.coupleId ? 5 : 0;
-    acc[11] += 0;
-    acc[12] += u.relatorios ? 3 : 0;
-    acc[13] += (u.conquistas||[]).length;
-    acc[14] += u.configUpdated ? 2 : 0;
-    return acc;
-  }, new Array(15).fill(0));
+  // Uso REAL por módulo — eventos module_viewed agregados (últimos 30d).
+  const usage = (ADMIN_DATA && ADMIN_DATA.moduleUsage) || [];
+  const labels = usage.map(m => MODULE_LABELS[m.key] || m.key);
+  const data = usage.map(m => m.count);
+  const palette = ['#4C7BF4','#10b981','#f59e0b','#06b6d4','#ec4899','#eab308','#3b82f6','#8b5cf6','#a855f7','#22c55e','#f97316','#14b8a6','#6366f1','#fbbf24','#94a3b8'];
+  const colors = labels.map((_, i) => palette[i % palette.length]);
   if (window._modChart) window._modChart.destroy();
   window._modChart = new Chart(document.getElementById('chartModulos'), {
     type:'bar',
-    data:{ labels, datasets:[{ label:'Uso estimado', data, backgroundColor: colors, borderColor:'transparent' }] },
+    data:{ labels, datasets:[{ label:'Aberturas (30d)', data, backgroundColor: colors, borderColor:'transparent' }] },
     options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
       plugins:{legend:{display:false}},
       scales:{ x:{ticks:{color:'#5a5a7a',font:{size:10}}}, y:{ticks:{color:'#9090b0',font:{size:10}}} } }

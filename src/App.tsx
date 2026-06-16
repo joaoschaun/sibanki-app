@@ -19,11 +19,15 @@ import { ConsultantDrawer } from './components/consultant/ConsultantDrawer';
 import { captureRefParam, useReferral } from './hooks/useReferral';
 import { useModuleFlags } from './hooks/useModuleFlags';
 import { matchModuleByPath } from './constants/appModules';
+import { trackPlatformEvent } from './services/platformEvents';
 
 import Login from './pages/Login';
 import { useState, useEffect } from 'react';
 
 captureRefParam();
+
+// Dedupe de telemetria module_viewed: 1 evento por módulo por sessão (carga da página).
+const sentModuleViews = new Set<string>();
 
 // ── Lazy-loaded pages (code splitting — cada rota vira chunk separado) ──────
 const Dashboard   = lazy(() => import('./pages/Dashboard'));
@@ -123,6 +127,16 @@ function AuthenticatedShell() {
   useEffect(() => {
     syncRoute(location.pathname);
   }, [location.pathname, syncRoute]);
+
+  // Telemetria de navegação: uso real por módulo (1x por módulo por sessão —
+  // alimenta as métricas do admin via platform_events; baixo custo).
+  useEffect(() => {
+    if (!user) return;
+    const mod = matchModuleByPath(location.pathname);
+    if (!mod || sentModuleViews.has(mod.key)) return;
+    sentModuleViews.add(mod.key);
+    trackPlatformEvent('module_viewed', { module: mod.key });
+  }, [location.pathname, user]);
   const [sidebarOpenGroup, setSidebarOpenGroup] = useState<SidebarOpenGroup>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const showWizard = user && !authLoading && !(data as any)?.cadastroCompleto;
