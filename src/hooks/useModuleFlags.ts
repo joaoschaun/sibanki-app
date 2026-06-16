@@ -2,7 +2,9 @@
  * useModuleFlags — estado de ligado/desligado dos módulos de navegação.
  *
  * Fonte: documento `config/modules` no Firestore (gravado pelo painel admin).
- * Shape: { [moduleKey]: boolean }. Chaves ausentes herdam o default do módulo.
+ * Shape ESCOPADO POR AMBIENTE: { prod: {moduleKey: bool}, staging: {...} }.
+ * O app lê a fatia do seu ambiente (getAppEnv pelo hostname) — assim toggles no
+ * staging não afetam produção. Chaves ausentes herdam o default do módulo.
  *
  * - UM listener compartilhado (singleton) para todos os consumidores — respeita
  *   a convenção do projeto de minimizar listeners Firestore (Sidebar +
@@ -15,8 +17,10 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { doc, onSnapshot, type Unsubscribe } from 'firebase/firestore';
 import { db } from '../firebase';
 import { MODULE_BY_KEY, defaultModuleFlags } from '../constants/appModules';
+import { getAppEnv } from '../utils/environment';
 
 type Flags = Record<string, boolean>;
+const ENV = getAppEnv();
 
 // ── Store singleton: 1 onSnapshot para N consumidores ─────────────────────────
 let current: Flags = {};
@@ -36,7 +40,9 @@ function ensureSubscription() {
   unsub = onSnapshot(
     ref,
     (snap) => {
-      current = snap.exists() ? (snap.data() as Flags) : {};
+      // Documento escopado por ambiente: lê só a fatia { [ENV]: {...} }.
+      const data = snap.exists() ? (snap.data() as Record<string, Flags>) : {};
+      current = (data && data[ENV]) || {};
       isLoaded = true;
       notify();
     },

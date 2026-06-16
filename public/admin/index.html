@@ -138,6 +138,15 @@ select.form-inp{cursor:pointer}
       <div class="sb-logo-text">Sibanki</div>
       <div class="sb-logo-sub">ADMIN PANEL</div>
     </div>
+    <!-- ENV SWITCH — escopo de config (modules + flags) por ambiente -->
+    <div style="padding:10px 14px;border-bottom:1px solid var(--brd)">
+      <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:6px">Editando ambiente</div>
+      <div style="display:flex;gap:6px">
+        <button id="envBtnStaging" onclick="setAdminEnv('staging')" style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--brd);background:transparent;color:var(--t2);cursor:pointer;font-size:.72rem;font-weight:600">Staging</button>
+        <button id="envBtnProd" onclick="setAdminEnv('prod')" style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--brd);background:transparent;color:var(--t2);cursor:pointer;font-size:.72rem;font-weight:600">Produção</button>
+      </div>
+      <div id="envWarn" style="display:none;margin-top:8px;padding:6px 8px;border-radius:6px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:.66rem;line-height:1.3">⚠️ Editando <b>PRODUÇÃO</b> — Módulos e Feature Flags afetam usuários reais.</div>
+    </div>
     <div class="nav-sep">Principal</div>
     <div class="nav-item active" onclick="goPage('dashboard')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -671,6 +680,7 @@ function toast(msg, type='ok') {
 // INIT ADMIN
 // ═══════════════════════════════════════════════
 async function initAdmin() {
+  applyEnvUI();
   await loadDashboard();
   loadFlags();
 }
@@ -907,7 +917,8 @@ const FLAGS_DEF = {
 async function loadFlags() {
   try {
     const doc = await db.collection('config').doc('featureFlags').get();
-    remoteFlags = doc.exists ? doc.data() : {};
+    const data = doc.exists ? (doc.data() || {}) : {};
+    remoteFlags = data[ADMIN_ENV] || {}; // escopado por ambiente
     renderFlagGrid();
   } catch(e) { renderFlagGrid(); }
 }
@@ -942,8 +953,8 @@ function flagChanged(key, val) {
 
 async function saveAllFlags() {
   try {
-    await db.collection('config').doc('featureFlags').set(remoteFlags, { merge: true });
-    toast('Feature flags salvas!', 'ok');
+    await db.collection('config').doc('featureFlags').set({ [ADMIN_ENV]: remoteFlags }, { merge: true });
+    toast('Feature flags salvas em ' + (ADMIN_ENV==='prod'?'PRODUÇÃO':'Staging') + '!', ADMIN_ENV==='prod'?'err':'ok');
   } catch(e) { toast('Erro ao salvar: ' + e.message, 'err'); }
 }
 
@@ -986,10 +997,30 @@ const MODULES_DEF = [
 ];
 let remoteModules = {};
 
+// ── Ambiente (Staging | Produção) — escopa config/modules e config/featureFlags ──
+let ADMIN_ENV = (function(){ try { return localStorage.getItem('admin_env') === 'prod' ? 'prod' : 'staging'; } catch(_) { return 'staging'; } })();
+function applyEnvUI() {
+  const s = document.getElementById('envBtnStaging');
+  const p = document.getElementById('envBtnProd');
+  const w = document.getElementById('envWarn');
+  const off = 'flex:1;padding:6px;border-radius:6px;border:1px solid var(--brd);background:transparent;color:var(--t2);cursor:pointer;font-size:.72rem;font-weight:600';
+  if (s) s.style.cssText = ADMIN_ENV==='staging' ? 'flex:1;padding:6px;border-radius:6px;border:1px solid var(--blue);background:var(--blue);color:#fff;cursor:pointer;font-size:.72rem;font-weight:600' : off;
+  if (p) p.style.cssText = ADMIN_ENV==='prod' ? 'flex:1;padding:6px;border-radius:6px;border:1px solid var(--red);background:var(--red);color:#fff;cursor:pointer;font-size:.72rem;font-weight:600' : off;
+  if (w) w.style.display = ADMIN_ENV==='prod' ? 'block' : 'none';
+}
+function setAdminEnv(env) {
+  ADMIN_ENV = env === 'prod' ? 'prod' : 'staging';
+  try { localStorage.setItem('admin_env', ADMIN_ENV); } catch(_) {}
+  applyEnvUI();
+  loadFlags(); loadModules(); // recarrega telas escopadas por ambiente
+  toast('Ambiente: ' + (ADMIN_ENV==='prod' ? 'PRODUÇÃO' : 'Staging'), ADMIN_ENV==='prod' ? 'err' : 'ok');
+}
+
 async function loadModules() {
   try {
     const doc = await db.collection('config').doc('modules').get();
-    remoteModules = doc.exists ? (doc.data() || {}) : {};
+    const data = doc.exists ? (doc.data() || {}) : {};
+    remoteModules = data[ADMIN_ENV] || {}; // escopado por ambiente
   } catch(e) { remoteModules = {}; }
   renderModuleGrid();
 }
@@ -1029,8 +1060,8 @@ async function saveAllModules() {
     // Persiste apenas chaves conhecidas (evita lixo) com booleano explícito.
     const payload = {};
     MODULES_DEF.forEach(m => { payload[m.key] = (m.key in remoteModules) ? !!remoteModules[m.key] : m.default; });
-    await db.collection('config').doc('modules').set(payload, { merge: true });
-    toast('Módulos salvos! O app reflete em segundos.', 'ok');
+    await db.collection('config').doc('modules').set({ [ADMIN_ENV]: payload }, { merge: true });
+    toast('Módulos salvos em ' + (ADMIN_ENV==='prod'?'PRODUÇÃO':'Staging') + '! O app reflete em segundos.', ADMIN_ENV==='prod'?'err':'ok');
   } catch(e) { toast('Erro ao salvar: ' + e.message, 'err'); }
 }
 

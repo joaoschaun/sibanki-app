@@ -12,6 +12,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAppContext } from '../context/AppContext';
+import { getAppEnv } from '../utils/environment';
 
 export type UserPlan = 'free' | 'pro' | 'familia';
 
@@ -126,7 +127,9 @@ export function useFeatureFlags() {
       try {
         const snap = await getDoc(doc(db, 'config', 'featureFlags'));
         if (!cancelled && snap.exists()) {
-          setRemoteFlags(snap.data() as Record<string, boolean>);
+          // Documento escopado por ambiente: { prod: {...}, staging: {...} }.
+          const docData = snap.data() as Record<string, Record<string, boolean>>;
+          setRemoteFlags(docData[getAppEnv()] || {});
         }
       } catch { /* silent */ }
       if (!cancelled) setLoaded(true);
