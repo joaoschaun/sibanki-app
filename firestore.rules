@@ -211,6 +211,19 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Feedbacks: usuário cria; admin lê e atualiza status (painel admin React).
+    match /feedbacks/{docId} {
+      allow read: if isAdmin();
+      allow create: if isAuthed();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // Posts de marketing/social gerados no admin (AdminSocial/AdminCalendario).
+    match /admin_posts/{docId} {
+      allow read, write: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

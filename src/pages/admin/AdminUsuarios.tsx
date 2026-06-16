@@ -2,23 +2,22 @@ import { useState, useEffect, useMemo } from 'react';
 import { 
   Search, X, Wallet, CreditCard, TrendingUp, Target, Mail
 } from 'lucide-react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { httpsCallable } from 'firebase/functions';
+import { fnsUS } from '../../firebase';
 
 interface UserDoc {
   id: string;
   name?: string;
   email?: string;
   plan?: string;
-  updated?: string;
-  entries?: any[];
-  accounts?: any[];
-  cards?: any[];
-  goals?: any[];
-  investments?: any[];
-  budgets?: Record<string, any>;
+  updated?: string | null;
+  createdAt?: string | null;
+  entriesCount?: number;
+  accountsCount?: number;
+  cardsCount?: number;
+  goalsCount?: number;
+  investmentsCount?: number;
   openFinanceStatus?: string;
-  openFinanceSyncedAt?: string;
   sibcoinBalance?: number;
 }
 
@@ -34,11 +33,9 @@ export default function AdminUsuarios() {
     async function fetchUsers() {
       try {
         setLoading(true);
-        const usersSnap = await getDocs(collection(db, 'users'));
-        const usersList: UserDoc[] = [];
-        usersSnap.forEach((doc) => {
-          usersList.push({ id: doc.id, ...doc.data() } as UserDoc);
-        });
+        const getData = httpsCallable<unknown, { users?: UserDoc[] }>(fnsUS, 'adminGetData');
+        const res = await getData({});
+        const usersList = (res.data?.users || []) as UserDoc[];
         if (active) {
           setUsers(usersList);
         }
@@ -131,7 +128,7 @@ export default function AdminUsuarios() {
                   const regDate = u.updated
                     ? new Date(u.updated).toLocaleDateString('pt-BR')
                     : '—';
-                  const entriesCount = u.entries?.length ?? 0;
+                  const entriesCount = u.entriesCount ?? 0;
 
                   return (
                     <tr key={u.id} className="hover:bg-si-over-1/50 transition-colors">
@@ -235,25 +232,25 @@ export default function AdminUsuarios() {
                   <span className="flex items-center gap-2 text-si-3">
                     <Wallet className="w-3.5 h-3.5 text-si-4" /> Contas Bancárias
                   </span>
-                  <span className="font-mono font-bold text-si-1">{(selectedUser.accounts || []).length}</span>
+                  <span className="font-mono font-bold text-si-1">{selectedUser.accountsCount ?? 0}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs border-b border-si-border/50 pb-2">
                   <span className="flex items-center gap-2 text-si-3">
                     <CreditCard className="w-3.5 h-3.5 text-si-4" /> Cartões de Crédito
                   </span>
-                  <span className="font-mono font-bold text-si-1">{(selectedUser.cards || []).length}</span>
+                  <span className="font-mono font-bold text-si-1">{selectedUser.cardsCount ?? 0}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs border-b border-si-border/50 pb-2">
                   <span className="flex items-center gap-2 text-si-3">
                     <TrendingUp className="w-3.5 h-3.5 text-si-4" /> Investimentos
                   </span>
-                  <span className="font-mono font-bold text-si-1">{(selectedUser.investments || []).length}</span>
+                  <span className="font-mono font-bold text-si-1">{selectedUser.investmentsCount ?? 0}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs border-b border-si-border/50 pb-2">
                   <span className="flex items-center gap-2 text-si-3">
                     <Target className="w-3.5 h-3.5 text-si-4" /> Metas de Poupança
                   </span>
-                  <span className="font-mono font-bold text-si-1">{(selectedUser.goals || []).length}</span>
+                  <span className="font-mono font-bold text-si-1">{selectedUser.goalsCount ?? 0}</span>
                 </div>
               </div>
             </div>

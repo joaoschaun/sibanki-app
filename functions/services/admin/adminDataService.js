@@ -76,6 +76,12 @@ async function adminGetDataLogic(data, context) {
       createdAt: created ? created.toISOString() : null,
       updated: updatedDate,
       entriesCount,
+      accountsCount: Array.isArray(u.accounts) ? u.accounts.length : 0,
+      cardsCount: Array.isArray(u.cards) ? u.cards.length : 0,
+      goalsCount: Array.isArray(u.goals) ? u.goals.length : 0,
+      investmentsCount: Array.isArray(u.investments) ? u.investments.length : 0,
+      sibcoinBalance: typeof u.sibcoinBalance === "number" ? u.sibcoinBalance : 0,
+      openFinanceStatus: u.openFinanceStatus || (hasOpenFinance ? "ativo" : "inativo"),
       hasGoals, hasInvestments, hasOpenFinance,
     });
   });
