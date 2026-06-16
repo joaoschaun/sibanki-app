@@ -4,25 +4,32 @@ import {
   Users, TrendingUp, ShieldAlert, Award, Star, Activity, 
   CheckCircle2, AlertTriangle
 } from 'lucide-react';
+import { httpsCallable } from 'firebase/functions';
 import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
-import { db } from '../../firebase';
-import { 
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, 
-  Tooltip, PieChart, Pie, Cell 
+import { db, fnsUS } from '../../firebase';
+import {
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, PieChart, Pie, Cell
 } from 'recharts';
-import { 
-  gridStyle, axisStyle, tooltipStyle, fmtBRL 
+import {
+  gridStyle, axisStyle, tooltipStyle, fmtBRL
 } from '../../components/charts/chartConfig';
 
-interface UserDoc {
+interface AdminUser {
   id: string;
-  name?: string;
   email?: string;
+  name?: string;
   plan?: string;
-  updated?: string;
-  entries?: any[];
-  goals?: any[];
+  updated?: string | null;
+  entriesCount?: number;
   openFinanceStatus?: string;
+}
+
+interface AdminData {
+  counts: { total: number; pro: number; familia: number; free: number };
+  mrr: number;
+  series: { date: string; registrations: number; dau: number }[];
+  users: AdminUser[];
 }
 
 interface FeedbackDoc {
@@ -36,7 +43,7 @@ interface FeedbackDoc {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [users, setUsers] = useState<UserDoc[]>([]);
+  const [data, setData] = useState<AdminData | null>(null);
   const [feedbacks, setFeedbacks] = useState<FeedbackDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,14 +53,11 @@ export default function AdminDashboard() {
     async function fetchData() {
       try {
         setLoading(true);
-        // 1. Fetch Users
-        const usersSnap = await getDocs(collection(db, 'users'));
-        const usersList: UserDoc[] = [];
-        usersSnap.forEach((doc) => {
-          usersList.push({ id: doc.id, ...doc.data() } as UserDoc);
-        });
+        // 1. Dados agregados de usuários (Admin SDK — ignora as rules)
+        const getData = httpsCallable<unknown, AdminData>(fnsUS, 'adminGetData');
+        const res = await getData({});
 
-        // 2. Fetch recent feedbacks
+        // 2. Feedbacks recentes (rule permite leitura por admin)
         const fbQuery = query(collection(db, 'feedbacks'), orderBy('createdAt', 'desc'), limit(5));
         const fbSnap = await getDocs(fbQuery);
         const fbList: FeedbackDoc[] = [];
@@ -62,7 +66,7 @@ export default function AdminDashboard() {
         });
 
         if (active) {
-          setUsers(usersList);
+          setData(res.data);
           setFeedbacks(fbList);
           setError(null);
         }
@@ -83,39 +87,23 @@ export default function AdminDashboard() {
     };
   }, []);
 
-  // KPIs
+  // KPIs (dados reais via adminGetData)
   const kpis = useMemo(() => {
-    const total = users.length;
-    const pro = users.filter((u) => u.plan === 'pro').length;
-    const familia = users.filter((u) => u.plan === 'familia').length;
-    const free = total - pro - familia;
-    const mrr = pro * 29.9 + familia * 39.9;
+    const c = data?.counts || { total: 0, pro: 0, familia: 0, free: 0 };
+    const thisMonthStr = new Date().toISOString().substring(0, 7); // "YYYY-MM"
+    const newThisMonth = (data?.series || [])
+      .filter((s) => s.date.substring(0, 7) === thisMonthStr)
+      .reduce((sum, s) => sum + (s.registrations || 0), 0);
+    return { total: c.total, pro: c.pro, familia: c.familia, free: c.free, mrr: data?.mrr ?? 0, newThisMonth };
+  }, [data]);
 
-    const now = new Date();
-    const thisMonthStr = now.toISOString().substring(0, 7); // "YYYY-MM"
-    const newThisMonth = users.filter(
-      (u) => u.updated && u.updated.substring(0, 7) === thisMonthStr
-    ).length;
-
-    return { total, pro, familia, free, mrr, newThisMonth };
-  }, [users]);
-
-  // Signup trend (last 15 days)
+  // Cadastros — série real dos últimos 15 dias
   const signupData = useMemo(() => {
-    const dataPoints = [];
-    const days = 15;
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const k = d.toISOString().substring(0, 10);
-      const count = users.filter((u) => u.updated && u.updated.startsWith(k)).length;
-      dataPoints.push({
-        label: `${d.getDate()}/${d.getMonth() + 1}`,
-        cadastros: count,
-      });
-    }
-    return dataPoints;
-  }, [users]);
+    return (data?.series || []).slice(-15).map((s) => {
+      const p = s.date.split('-');
+      return { label: `${p[2]}/${p[1]}`, cadastros: s.registrations };
+    });
+  }, [data]);
 
   // Plan distribution for Pie Chart
   const planPieData = useMemo(() => {
@@ -126,10 +114,11 @@ export default function AdminDashboard() {
     ].filter((p) => p.value > 0);
   }, [kpis]);
 
-  // System alerts
+  // System alerts (a partir dos usuários reais retornados)
   const alerts = useMemo(() => {
     const list = [];
-    const proNoOf = users.filter(
+    const us = data?.users || [];
+    const proNoOf = us.filter(
       (u) => (u.plan === 'pro' || u.plan === 'familia') && u.openFinanceStatus !== 'ativo'
     );
     if (proNoOf.length > 0) {
@@ -140,7 +129,7 @@ export default function AdminDashboard() {
       });
     }
 
-    const noEntries = users.filter((u) => !u.entries || u.entries.length === 0);
+    const noEntries = us.filter((u) => (u.entriesCount ?? 0) === 0);
     if (noEntries.length > 0) {
       list.push({
         id: 'no-entries',
@@ -150,7 +139,7 @@ export default function AdminDashboard() {
     }
 
     return list;
-  }, [users]);
+  }, [data]);
 
   if (loading) {
     return (

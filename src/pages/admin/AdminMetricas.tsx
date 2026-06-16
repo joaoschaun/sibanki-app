@@ -1,112 +1,64 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Activity, Calendar, BarChart2 } from 'lucide-react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
-import { 
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell 
+import { httpsCallable } from 'firebase/functions';
+import { fnsUS } from '../../firebase';
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell
 } from 'recharts';
 import { gridStyle, axisStyle, tooltipStyle } from '../../components/charts/chartConfig';
 
-interface UserDoc {
-  id: string;
-  name?: string;
-  email?: string;
-  plan?: string;
-  updated?: string;
-  entries?: any[];
-  goals?: any[];
-  budgets?: Record<string, any>;
-  investments?: any[];
-  accounts?: any[];
-  iaChats?: number;
-  relatorios?: number;
-  conquistas?: any[];
-  coupleId?: string;
-  configUpdated?: boolean;
+interface AdminData {
+  counts: { total: number; pro: number; familia: number; free: number };
+  series: { date: string; registrations: number; dau: number }[];
+  moduleUsage: { key: string; count: number }[];
 }
 
+const MODULE_LABELS: Record<string, string> = {
+  assistente: 'Assistente', painel: 'Painel', lancamentos: 'Lançamentos', contas: 'Contas',
+  credito: 'Crédito', investimentos: 'Investimentos', orcamento: 'Orçamento', metas: 'Metas',
+  recorrentes: 'Recorrentes', loja: 'Loja', familia: 'Família', credi_amigo: 'Credi Amigo',
+  consorcio: 'Consórcio', relatorios: 'Relatórios', calendario: 'Calendário', educacao: 'Educação',
+  ferramentas: 'Ferramentas', fire: 'FIRE', meu_cpf: 'Meu CPF', sibcoin: 'SibCoin',
+  filiados: 'Filiados', perfil: 'Perfil', configuracoes: 'Configurações',
+};
+
 export default function AdminMetricas() {
-  const [users, setUsers] = useState<UserDoc[]>([]);
+  const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    async function fetchUsers() {
+    (async () => {
       try {
-        const usersSnap = await getDocs(collection(db, 'users'));
-        const usersList: UserDoc[] = [];
-        usersSnap.forEach((doc) => {
-          usersList.push({ id: doc.id, ...doc.data() } as UserDoc);
-        });
-        if (active) {
-          setUsers(usersList);
-        }
+        const getData = httpsCallable<unknown, AdminData>(fnsUS, 'adminGetData');
+        const res = await getData({});
+        if (active) setData(res.data);
       } catch (err) {
-        console.error('[AdminMetricas] Error fetching users:', err);
+        console.error('[AdminMetricas] Error:', err);
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
-    }
-    fetchUsers();
-    return () => {
-      active = false;
-    };
+    })();
+    return () => { active = false; };
   }, []);
 
-  // Heuristic estimation of module usage (same as legacy public/admin/index.html)
+  // Uso REAL por módulo — eventos module_viewed agregados (últimos 30d).
   const moduleUsageData = useMemo(() => {
-    const counts = {
-      'Consultor IA': 0,
-      'Lançamentos': 0,
-      'Contas': 0,
-      'Investimentos': 0,
-      'Metas': 0,
-      'Orçamentos': 0,
-      'Relatórios': 0,
-      'Família': 0,
-      'Conquistas': 0,
-    };
+    return (data?.moduleUsage || []).map((m) => ({
+      name: MODULE_LABELS[m.key] || m.key,
+      value: m.count,
+    }));
+  }, [data]);
 
-    users.forEach((u) => {
-      counts['Consultor IA'] += u.iaChats ? u.iaChats * 2 : (u.goals && u.goals.length > 0 ? 3 : 1);
-      counts['Lançamentos'] += (u.entries || []).length * 1.5;
-      counts['Contas'] += (u.accounts || []).length * 2 + 3;
-      counts['Investimentos'] += (u.investments || []).length * 3;
-      counts['Metas'] += (u.goals || []).length * 2.5;
-      counts['Orçamentos'] += Object.keys(u.budgets || {}).length * 4;
-      counts['Relatórios'] += u.relatorios ? u.relatorios * 3 : 2;
-      counts['Família'] += u.coupleId ? 10 : 0;
-      counts['Conquistas'] += (u.conquistas || []).length * 2;
-    });
-
-    return Object.entries(counts)
-      .map(([name, value]) => ({
-        name,
-        value: Math.round(value),
-      }))
-      .sort((a, b) => b.value - a.value);
-  }, [users]);
-
-  // DAU estimation (simulated active users trend)
+  // DAU REAL — usuários distintos por dia em platform_events (últimos 30d).
   const dauData = useMemo(() => {
-    const days = 7;
-    const points = [];
-    const base = users.length;
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      // Heuristic fluctuation
-      const rand = Math.sin(i) * 0.15 + 0.55; // 40% to 70% active rate
-      const activeCount = Math.max(1, Math.round(base * rand));
-      points.push({
-        label: d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''),
-        usuarios: activeCount,
-      });
-    }
-    return points;
-  }, [users]);
+    return (data?.series || []).map((s) => {
+      const p = s.date.split('-');
+      return { label: `${p[2]}/${p[1]}`, usuarios: s.dau };
+    });
+  }, [data]);
+
+  const totalUsers = data?.counts.total ?? 0;
 
   if (loading) {
     return (
@@ -204,22 +156,10 @@ export default function AdminMetricas() {
             <tbody className="divide-y divide-si-border/50 text-si-3">
               <tr className="hover:bg-si-over-1">
                 <td className="py-3 px-4 font-bold text-si-1">Junho 2026</td>
-                <td className="py-3 px-4 font-mono">{users.length}</td>
-                <td className="py-3 px-4">
-                  <span className="px-2 py-0.5 rounded bg-emerald-950/30 text-emerald-500 border border-emerald-500/10 font-bold font-mono">
-                    84.2%
-                  </span>
-                </td>
-                <td className="py-3 px-4">
-                  <span className="px-2 py-0.5 rounded bg-blue-950/30 text-blue-500 border border-blue-500/10 font-bold font-mono">
-                    42.1%
-                  </span>
-                </td>
-                <td className="py-3 px-4">
-                  <span className="px-2 py-0.5 rounded bg-amber-950/30 text-amber-500 border border-amber-500/10 font-bold font-mono">
-                    18.5%
-                  </span>
-                </td>
+                <td className="py-3 px-4 font-mono">{totalUsers}</td>
+                <td className="py-3 px-4 text-si-4 font-mono">—</td>
+                <td className="py-3 px-4 text-si-4 font-mono">—</td>
+                <td className="py-3 px-4 text-si-4 font-mono">—</td>
                 <td className="py-3 px-4">
                   <span className="px-2 py-0.5 rounded bg-si-over-2 text-si-3 font-semibold uppercase text-[9px] tracking-wider">
                     Ativo
