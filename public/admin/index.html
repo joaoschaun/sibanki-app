@@ -138,6 +138,15 @@ select.form-inp{cursor:pointer}
       <div class="sb-logo-text">Sibanki</div>
       <div class="sb-logo-sub">ADMIN PANEL</div>
     </div>
+    <!-- ENV SWITCH — escopo de config (modules + flags) por ambiente -->
+    <div style="padding:10px 14px;border-bottom:1px solid var(--brd)">
+      <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:6px">Editando ambiente</div>
+      <div style="display:flex;gap:6px">
+        <button id="envBtnStaging" onclick="setAdminEnv('staging')" style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--brd);background:transparent;color:var(--t2);cursor:pointer;font-size:.72rem;font-weight:600">Staging</button>
+        <button id="envBtnProd" onclick="setAdminEnv('prod')" style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--brd);background:transparent;color:var(--t2);cursor:pointer;font-size:.72rem;font-weight:600">Produção</button>
+      </div>
+      <div id="envWarn" style="display:none;margin-top:8px;padding:6px 8px;border-radius:6px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:.66rem;line-height:1.3">⚠️ Editando <b>PRODUÇÃO</b> — Módulos e Feature Flags afetam usuários reais.</div>
+    </div>
     <div class="nav-sep">Principal</div>
     <div class="nav-item active" onclick="goPage('dashboard')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -155,6 +164,10 @@ select.form-inp{cursor:pointer}
     <div class="nav-item" onclick="goPage('flags')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
       Feature Flags
+    </div>
+    <div class="nav-item" onclick="goPage('modulos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Módulos
     </div>
     <div class="nav-item" onclick="goPage('planos')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -287,6 +300,20 @@ select.form-inp{cursor:pointer}
           <div class="form-group" style="margin:0"><div class="form-label">Descrição</div><input id="newFlagDesc" class="form-inp" placeholder="Descrição da feature"></div>
           <button class="btn btn-primary" onclick="addCustomFlag()">+ Adicionar</button>
         </div>
+      </div>
+    </div>
+
+    <!-- ═══════ PAGE: MÓDULOS ═══════ -->
+    <div id="pgModulos" class="page">
+      <div class="page-title">Módulos do App</div>
+      <div class="page-sub">Ligue ou desligue módulos de navegação — efeito imediato no app, sem deploy (grava config/modules)</div>
+      <div class="card">
+        <div class="card-title">
+          Módulos
+          <button class="btn btn-success btn-sm" onclick="saveAllModules()">💾 Salvar tudo</button>
+        </div>
+        <div style="font-size:.72rem;color:var(--t3);margin-bottom:12px">Essenciais (Assistente, Painel, Perfil, Configurações) ficam sempre ligados para evitar travar o app.</div>
+        <div class="flag-grid" id="moduleGrid"><div class="loading-row"><div class="spin"></div></div></div>
       </div>
     </div>
 
@@ -527,6 +554,16 @@ const fns = firebase.functions();
 let currentUser = null;
 let allUsers = [];
 let remoteFlags = {};
+// Fase 2: dados agregados via Cloud Function (Admin SDK) — substitui leituras
+// client-side de `users` (bloqueadas pelas rules) e os gráficos simulados.
+let ADMIN_DATA = null;
+async function fetchAdminData(force) {
+  if (ADMIN_DATA && !force) return ADMIN_DATA;
+  const r = await fns.httpsCallable('adminGetData')({});
+  ADMIN_DATA = r.data || {};
+  allUsers = ADMIN_DATA.users || [];
+  return ADMIN_DATA;
+}
 let socialPosts = { rascunhos:[], agendados:[], publicados:[] };
 let calMonth = new Date().getMonth();
 let calYear = new Date().getFullYear();
@@ -639,7 +676,7 @@ function goPage(id) {
   document.querySelectorAll('.nav-item').forEach(n => {
     if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
   });
-  const loaders = { metricas: loadMetricas, usuarios: loadUsuarios, flags: loadFlags, planos: loadPlanos, social: loadSocial, brand: loadBrand, calendario: renderCal, feedbacks: loadFeedbacks };
+  const loaders = { metricas: loadMetricas, usuarios: loadUsuarios, flags: loadFlags, modulos: loadModules, planos: loadPlanos, social: loadSocial, brand: loadBrand, calendario: renderCal, feedbacks: loadFeedbacks };
   if (loaders[id]) loaders[id]();
 }
 
@@ -653,6 +690,7 @@ function toast(msg, type='ok') {
 // INIT ADMIN
 // ═══════════════════════════════════════════════
 async function initAdmin() {
+  applyEnvUI();
   await loadDashboard();
   loadFlags();
 }
@@ -662,19 +700,15 @@ async function initAdmin() {
 // ═══════════════════════════════════════════════
 async function loadDashboard() {
   try {
-    const snap = await db.collection('users').get();
-    const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    allUsers = users;
+    const d = await fetchAdminData();
+    const users = allUsers;
+    const total = d.counts.total;
+    const pro = d.counts.pro, familia = d.counts.familia, free = d.counts.free;
+    const mrr = (d.mrr || 0).toFixed(2);
 
-    const total = users.length;
-    const pro = users.filter(u => u.plan === 'pro').length;
-    const familia = users.filter(u => u.plan === 'familia').length;
-    const free = total - pro - familia;
-    const mrr = (pro * 29.9 + familia * 39.9).toFixed(2);
-
-    const now = new Date();
-    const thisMonth = now.toISOString().substring(0,7);
-    const newThisMonth = users.filter(u => u.updated && u.updated.substring(0,7) === thisMonth).length;
+    const thisMonth = new Date().toISOString().substring(0,7);
+    const newThisMonth = (d.series || []).filter(s => s.date.substring(0,7) === thisMonth)
+      .reduce((sum, s) => sum + (s.registrations || 0), 0);
 
     document.getElementById('dashKpis').innerHTML = `
       <div class="stat-card"><div class="stat-label">Total Usuários</div><div class="stat-val">${total}</div><div class="stat-delta up">+${newThisMonth} este mês</div></div>
@@ -695,15 +729,12 @@ async function loadDashboard() {
   }
 }
 
-function renderCadastrosChart(users) {
-  const days = 30, labels = [], data = [];
-  for (let i = days-1; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate()-i);
-    const k = d.toISOString().substring(0,10);
-    labels.push(d.getDate()+'/'+(d.getMonth()+1));
-    data.push(users.filter(u => u.updated && u.updated.startsWith(k)).length);
-  }
-  new Chart(document.getElementById('chartCadastros'), {
+function renderCadastrosChart() {
+  const series = (ADMIN_DATA && ADMIN_DATA.series) || [];
+  const labels = series.map(s => { const [y,m,dd] = s.date.split('-'); return dd+'/'+m; });
+  const data = series.map(s => s.registrations || 0);
+  if (window._cadChart) window._cadChart.destroy();
+  window._cadChart = new Chart(document.getElementById('chartCadastros'), {
     type:'line', data:{ labels, datasets:[{ label:'Cadastros', data, borderColor:'#4C7BF4', backgroundColor:'rgba(76,123,244,.1)', tension:.4, fill:true, pointRadius:2 }] },
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#5a5a7a',font:{size:10}}}, y:{ticks:{color:'#5a5a7a',font:{size:10}},beginAtZero:true} } }
   });
@@ -745,11 +776,11 @@ function renderAtividade(users) {
 // MÉTRICAS
 // ═══════════════════════════════════════════════
 async function loadMetricas() {
-  if (allUsers.length === 0) await loadDashboard();
-  const total = allUsers.length;
-  const comEntradas = allUsers.filter(u => u.entries && u.entries.length > 0).length;
-  const comMetas = allUsers.filter(u => u.goals && u.goals.length > 0).length;
-  const comInvest = allUsers.filter(u => u.investments && u.investments.length > 0).length;
+  const d = await fetchAdminData();
+  const total = d.counts.total;
+  const comEntradas = d.activation.withEntries;
+  const comMetas = d.activation.withGoals;
+  const comInvest = d.activation.withInvestments;
 
   document.getElementById('metKpis').innerHTML = `
     <div class="stat-card"><div class="stat-label">Usuários ativos</div><div class="stat-val">${comEntradas}</div><div class="stat-delta">${total>0?Math.round(comEntradas/total*100):0}% do total</div></div>
@@ -763,58 +794,35 @@ async function loadMetricas() {
 }
 
 function renderDAUChart() {
-  const labels = [], data = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate()-i);
-    labels.push(d.getDate()+'/'+(d.getMonth()+1));
-    data.push(Math.floor(Math.random()*15)+2);
-  }
+  const series = (ADMIN_DATA && ADMIN_DATA.series) || [];
+  const labels = series.map(s => { const p = s.date.split('-'); return p[2]+'/'+p[1]; });
+  const data = series.map(s => s.dau || 0);
   if (window._dauChart) window._dauChart.destroy();
   window._dauChart = new Chart(document.getElementById('chartDAU'), {
-    type:'bar', data:{ labels, datasets:[{ label:'Sessões', data, backgroundColor:'rgba(76,123,244,.5)', borderColor:'#4C7BF4', borderWidth:1 }] },
+    type:'bar', data:{ labels, datasets:[{ label:'Usuários ativos/dia', data, backgroundColor:'rgba(76,123,244,.5)', borderColor:'#4C7BF4', borderWidth:1 }] },
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#5a5a7a',font:{size:9}}}, y:{ticks:{color:'#5a5a7a',font:{size:10}},beginAtZero:true} } }
   });
 }
 
+const MODULE_LABELS = {
+  assistente:'Assistente', painel:'Painel', lancamentos:'Lançamentos', contas:'Contas',
+  credito:'Crédito', investimentos:'Investimentos', orcamento:'Orçamento', metas:'Metas',
+  recorrentes:'Recorrentes', loja:'Loja', familia:'Família', credi_amigo:'Credi Amigo',
+  consorcio:'Consórcio', relatorios:'Relatórios', calendario:'Calendário', educacao:'Educação',
+  ferramentas:'Ferramentas', fire:'FIRE', meu_cpf:'Meu CPF', sibcoin:'SibCoin',
+  filiados:'Filiados', perfil:'Perfil', configuracoes:'Configurações'
+};
 function renderModulosChart() {
-  // ⚠️ Atualizar sempre que adicionar módulo no app
-  // Módulos do Sibanki v4 — sessão 4 (2026-03-10)
-  const labels = [
-    'Dashboard','Lançamentos','Cartões','Contas',
-    'Orçamento','Metas','Calendário',
-    'Investimentos','Consultor IA','Educação',
-    'Família','Comunidade',
-    'Relatórios','Conquistas','Configurações'
-  ];
-  const colors = [
-    '#4C7BF4','#10b981','#f59e0b','#06b6d4',
-    '#ec4899','#eab308','#3b82f6',
-    '#8b5cf6','#a855f7','#22c55e',
-    '#f97316','#14b8a6',
-    '#6366f1','#fbbf24','#94a3b8'
-  ];
-  const data = allUsers.reduce((acc, u) => {
-    acc[0]  += 10;
-    acc[1]  += Math.min((u.entries||[]).length, 20);
-    acc[2]  += (u.cards||[]).length * 2;
-    acc[3]  += (u.accounts||[]).length * 2;
-    acc[4]  += Object.keys(u.budgets||{}).length;
-    acc[5]  += (u.goals||[]).length * 2;
-    acc[6]  += (u.calendarEvents||[]).length;
-    acc[7]  += (u.investments||[]).length * 2;
-    acc[8]  += u.iaChats ? 4 : 0;
-    acc[9]  += 0;
-    acc[10] += u.coupleId ? 5 : 0;
-    acc[11] += 0;
-    acc[12] += u.relatorios ? 3 : 0;
-    acc[13] += (u.conquistas||[]).length;
-    acc[14] += u.configUpdated ? 2 : 0;
-    return acc;
-  }, new Array(15).fill(0));
+  // Uso REAL por módulo — eventos module_viewed agregados (últimos 30d).
+  const usage = (ADMIN_DATA && ADMIN_DATA.moduleUsage) || [];
+  const labels = usage.map(m => MODULE_LABELS[m.key] || m.key);
+  const data = usage.map(m => m.count);
+  const palette = ['#4C7BF4','#10b981','#f59e0b','#06b6d4','#ec4899','#eab308','#3b82f6','#8b5cf6','#a855f7','#22c55e','#f97316','#14b8a6','#6366f1','#fbbf24','#94a3b8'];
+  const colors = labels.map((_, i) => palette[i % palette.length]);
   if (window._modChart) window._modChart.destroy();
   window._modChart = new Chart(document.getElementById('chartModulos'), {
     type:'bar',
-    data:{ labels, datasets:[{ label:'Uso estimado', data, backgroundColor: colors, borderColor:'transparent' }] },
+    data:{ labels, datasets:[{ label:'Aberturas (30d)', data, backgroundColor: colors, borderColor:'transparent' }] },
     options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
       plugins:{legend:{display:false}},
       scales:{ x:{ticks:{color:'#5a5a7a',font:{size:10}}}, y:{ticks:{color:'#9090b0',font:{size:10}}} } }
@@ -889,7 +897,8 @@ const FLAGS_DEF = {
 async function loadFlags() {
   try {
     const doc = await db.collection('config').doc('featureFlags').get();
-    remoteFlags = doc.exists ? doc.data() : {};
+    const data = doc.exists ? (doc.data() || {}) : {};
+    remoteFlags = data[ADMIN_ENV] || {}; // escopado por ambiente
     renderFlagGrid();
   } catch(e) { renderFlagGrid(); }
 }
@@ -924,8 +933,8 @@ function flagChanged(key, val) {
 
 async function saveAllFlags() {
   try {
-    await db.collection('config').doc('featureFlags').set(remoteFlags, { merge: true });
-    toast('Feature flags salvas!', 'ok');
+    await db.collection('config').doc('featureFlags').set({ [ADMIN_ENV]: remoteFlags }, { merge: true });
+    toast('Feature flags salvas em ' + (ADMIN_ENV==='prod'?'PRODUÇÃO':'Staging') + '!', ADMIN_ENV==='prod'?'err':'ok');
   } catch(e) { toast('Erro ao salvar: ' + e.message, 'err'); }
 }
 
@@ -939,6 +948,101 @@ async function addCustomFlag() {
   document.getElementById('newFlagDesc').value = '';
   renderFlagGrid();
   toast('Flag adicionada! Clique em Salvar tudo.', 'info');
+}
+
+// ═══════════════════════════════════════════════
+// MÓDULOS (ligar/desligar navegação) — espelha src/constants/appModules.ts
+// Keys DEVEM bater 1:1 com APP_MODULES. Essenciais ficam fora (sempre on).
+// ═══════════════════════════════════════════════
+const MODULES_DEF = [
+  { key:'lancamentos',  label:'Lançamentos',  group:'Principal', default:true },
+  { key:'contas',       label:'Contas',       group:'Principal', default:true },
+  { key:'credito',      label:'Crédito',      group:'Principal', default:true },
+  { key:'investimentos',label:'Investimentos',group:'Principal', default:true },
+  { key:'orcamento',    label:'Orçamento',    group:'Mais',      default:true },
+  { key:'metas',        label:'Metas',        group:'Mais',      default:true },
+  { key:'recorrentes',  label:'Recorrentes',  group:'Mais',      default:true },
+  { key:'loja',         label:'Loja',         group:'Mais',      default:true },
+  { key:'familia',      label:'Família',      group:'Mais',      default:true },
+  { key:'credi_amigo',  label:'Credi Amigo',  group:'Mais',      default:true },
+  { key:'consorcio',    label:'Consórcio',    group:'Mais',      default:true },
+  { key:'relatorios',   label:'Relatórios',   group:'Mais',      default:true },
+  { key:'calendario',   label:'Calendário',   group:'Mais',      default:true },
+  { key:'educacao',     label:'Educação',     group:'Mais',      default:true },
+  { key:'ferramentas',  label:'Ferramentas',  group:'Mais',      default:true },
+  { key:'fire',         label:'FIRE',         group:'Mais',      default:true },
+  { key:'meu_cpf',      label:'Meu CPF',      group:'Mais',      default:true },
+  { key:'sibcoin',      label:'SibCoin',      group:'Mais',      default:true },
+  { key:'filiados',     label:'Filiados',     group:'Mais',      default:true },
+];
+let remoteModules = {};
+
+// ── Ambiente (Staging | Produção) — escopa config/modules e config/featureFlags ──
+let ADMIN_ENV = (function(){ try { return localStorage.getItem('admin_env') === 'prod' ? 'prod' : 'staging'; } catch(_) { return 'staging'; } })();
+function applyEnvUI() {
+  const s = document.getElementById('envBtnStaging');
+  const p = document.getElementById('envBtnProd');
+  const w = document.getElementById('envWarn');
+  const off = 'flex:1;padding:6px;border-radius:6px;border:1px solid var(--brd);background:transparent;color:var(--t2);cursor:pointer;font-size:.72rem;font-weight:600';
+  if (s) s.style.cssText = ADMIN_ENV==='staging' ? 'flex:1;padding:6px;border-radius:6px;border:1px solid var(--blue);background:var(--blue);color:#fff;cursor:pointer;font-size:.72rem;font-weight:600' : off;
+  if (p) p.style.cssText = ADMIN_ENV==='prod' ? 'flex:1;padding:6px;border-radius:6px;border:1px solid var(--red);background:var(--red);color:#fff;cursor:pointer;font-size:.72rem;font-weight:600' : off;
+  if (w) w.style.display = ADMIN_ENV==='prod' ? 'block' : 'none';
+}
+function setAdminEnv(env) {
+  ADMIN_ENV = env === 'prod' ? 'prod' : 'staging';
+  try { localStorage.setItem('admin_env', ADMIN_ENV); } catch(_) {}
+  applyEnvUI();
+  loadFlags(); loadModules(); // recarrega telas escopadas por ambiente
+  toast('Ambiente: ' + (ADMIN_ENV==='prod' ? 'PRODUÇÃO' : 'Staging'), ADMIN_ENV==='prod' ? 'err' : 'ok');
+}
+
+async function loadModules() {
+  try {
+    const doc = await db.collection('config').doc('modules').get();
+    const data = doc.exists ? (doc.data() || {}) : {};
+    remoteModules = data[ADMIN_ENV] || {}; // escopado por ambiente
+  } catch(e) { remoteModules = {}; }
+  renderModuleGrid();
+}
+
+function renderModuleGrid() {
+  const groups = ['Principal','Mais'];
+  const html = groups.map(g => {
+    const items = MODULES_DEF.filter(m => m.group === g).map(m => {
+      const active = (m.key in remoteModules) ? !!remoteModules[m.key] : m.default;
+      return `<div class="flag-card">
+        <div class="flag-card-hd">
+          <div>
+            <div class="flag-name">${m.label}</div>
+            <div class="flag-desc">${m.key}</div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="mod_${m.key}" ${active?'checked':''} onchange="moduleChanged('${m.key}',this.checked)"><span class="tsl"></span></label>
+        </div>
+        <div style="font-size:.72rem;color:${active?'var(--green)':'var(--t3)'}">● ${active?'Visível':'Oculto'}</div>
+      </div>`;
+    }).join('');
+    return `<div style="grid-column:1/-1;color:var(--t3);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin:8px 0 2px">${g}</div>${items}`;
+  }).join('');
+  document.getElementById('moduleGrid').innerHTML = html;
+}
+
+function moduleChanged(key, val) {
+  remoteModules[key] = val;
+  const el = document.querySelector(`#mod_${key}`);
+  if (!el) return;
+  const card = el.closest('.flag-card');
+  const statusEl = card && card.querySelector('div:last-child');
+  if (statusEl) { statusEl.style.color = val ? 'var(--green)' : 'var(--t3)'; statusEl.textContent = '● ' + (val ? 'Visível' : 'Oculto'); }
+}
+
+async function saveAllModules() {
+  try {
+    // Persiste apenas chaves conhecidas (evita lixo) com booleano explícito.
+    const payload = {};
+    MODULES_DEF.forEach(m => { payload[m.key] = (m.key in remoteModules) ? !!remoteModules[m.key] : m.default; });
+    await db.collection('config').doc('modules').set({ [ADMIN_ENV]: payload }, { merge: true });
+    toast('Módulos salvos em ' + (ADMIN_ENV==='prod'?'PRODUÇÃO':'Staging') + '! O app reflete em segundos.', ADMIN_ENV==='prod'?'err':'ok');
+  } catch(e) { toast('Erro ao salvar: ' + e.message, 'err'); }
 }
 
 // ═══════════════════════════════════════════════

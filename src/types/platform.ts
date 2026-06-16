@@ -23,7 +23,9 @@ export type PlatformEventName =
   | 'activation_signup_completed'
   | 'activation_of_connected'
   | 'activation_first_entry'
-  | 'activation_ld_computed';
+  | 'activation_ld_computed'
+  // Navegação — uso real por módulo (métricas admin)
+  | 'module_viewed';
 
 export interface FinancialProfileInput {
   entries: Entry[];

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTenant } from '../../hooks/useTenant';
+import { useModuleFlags } from '../../hooks/useModuleFlags';
 import { cn } from '../../utils/cn';
 import { useAppContext } from '../../context/AppContext';
 
@@ -28,6 +29,8 @@ interface NavItem {
   icon: LucideIcon;
   label: string;
   path: string;
+  /** Chave do módulo em appModules — gating de ligar/desligar via admin. */
+  key: string;
   tour?: string;
 }
 
@@ -41,38 +44,39 @@ interface NavItem {
  */
 
 // ── Core — sempre visível ─────────────────────────────────────────────────────
+// `key` casa com APP_MODULES (src/constants/appModules.ts) p/ gating de módulos.
 const coreNav: NavItem[] = [
-  { icon: MessageCircle,   label: 'Assistente',    path: '/consultor-ia', tour: 'consultor' },
-  { icon: LayoutDashboard, label: 'Painel',         path: '/dashboard',    tour: 'dashboard' },
-  { icon: Receipt,         label: 'Lançamentos',   path: '/lancamentos',  tour: 'lancamentos' },
-  { icon: Wallet,          label: 'Contas',         path: '/contas' },
-  { icon: CreditCard,      label: 'Crédito',        path: '/credito' },
-  { icon: TrendingUp,      label: 'Investimentos',  path: '/crescimento' },
+  { icon: MessageCircle,   label: 'Assistente',    path: '/consultor-ia', key: 'assistente',    tour: 'consultor' },
+  { icon: LayoutDashboard, label: 'Painel',         path: '/dashboard',    key: 'painel',        tour: 'dashboard' },
+  { icon: Receipt,         label: 'Lançamentos',   path: '/lancamentos',  key: 'lancamentos',   tour: 'lancamentos' },
+  { icon: Wallet,          label: 'Contas',         path: '/contas',       key: 'contas' },
+  { icon: CreditCard,      label: 'Crédito',        path: '/credito',      key: 'credito' },
+  { icon: TrendingUp,      label: 'Investimentos',  path: '/crescimento',  key: 'investimentos' },
 ];
 
 // ── Mais — todo o resto, colapsável ───────────────────────────────────────────
 const maisNav: NavItem[] = [
-  { icon: PieChart,     label: 'Orçamento',   path: '/orcamento'       },
-  { icon: Target,       label: 'Metas',       path: '/planejamento'    },
-  { icon: RefreshCw,    label: 'Recorrentes', path: '/recorrentes'     },
-  { icon: ShoppingBag,  label: 'Loja',        path: '/loja'            },
-  { icon: Heart,        label: 'Família',     path: '/casal'           },
-  { icon: Handshake,    label: 'Credi Amigo', path: '/credi-amigo'     },
-  { icon: Users,        label: 'Consórcio',   path: '/consorcio-amigo' },
-  { icon: FileBarChart, label: 'Relatórios',  path: '/relatorios'      },
-  { icon: Calendar,     label: 'Calendário',  path: '/calendario'      },
-  { icon: BookOpen,     label: 'Educação',    path: '/educacao'        },
-  { icon: Wrench,       label: 'Ferramentas', path: '/ferramentas'     },
-  { icon: Flame,        label: 'FIRE',        path: '/fire'            },
-  { icon: ShieldCheck,  label: 'Meu CPF',     path: '/meu-cpf'         },
-  { icon: Coins,        label: 'SibCoin',     path: '/sibcoin'         },
-  { icon: Zap,          label: 'Filiados',    path: '/filiados'        },
+  { icon: PieChart,     label: 'Orçamento',   path: '/orcamento',       key: 'orcamento'   },
+  { icon: Target,       label: 'Metas',       path: '/planejamento',    key: 'metas'       },
+  { icon: RefreshCw,    label: 'Recorrentes', path: '/recorrentes',     key: 'recorrentes' },
+  { icon: ShoppingBag,  label: 'Loja',        path: '/loja',            key: 'loja'        },
+  { icon: Heart,        label: 'Família',     path: '/casal',           key: 'familia'     },
+  { icon: Handshake,    label: 'Credi Amigo', path: '/credi-amigo',     key: 'credi_amigo' },
+  { icon: Users,        label: 'Consórcio',   path: '/consorcio-amigo', key: 'consorcio'   },
+  { icon: FileBarChart, label: 'Relatórios',  path: '/relatorios',      key: 'relatorios'  },
+  { icon: Calendar,     label: 'Calendário',  path: '/calendario',      key: 'calendario'  },
+  { icon: BookOpen,     label: 'Educação',    path: '/educacao',        key: 'educacao'    },
+  { icon: Wrench,       label: 'Ferramentas', path: '/ferramentas',     key: 'ferramentas' },
+  { icon: Flame,        label: 'FIRE',        path: '/fire',            key: 'fire'        },
+  { icon: ShieldCheck,  label: 'Meu CPF',     path: '/meu-cpf',         key: 'meu_cpf'     },
+  { icon: Coins,        label: 'SibCoin',     path: '/sibcoin',         key: 'sibcoin'     },
+  { icon: Zap,          label: 'Filiados',    path: '/filiados',        key: 'filiados'    },
 ];
 
 // ── Rodapé ────────────────────────────────────────────────────────────────────
 const bottomNav: NavItem[] = [
-  { icon: User,     label: 'Perfil',        path: '/perfil', tour: 'perfil' },
-  { icon: Settings, label: 'Configurações', path: '/configuracoes' },
+  { icon: User,     label: 'Perfil',        path: '/perfil',        key: 'perfil', tour: 'perfil' },
+  { icon: Settings, label: 'Configurações', path: '/configuracoes', key: 'configuracoes' },
 ];
 
 const MAIS_OPEN_KEY = 'sib_sidebar_mais_aberto';
@@ -85,8 +89,14 @@ export function Sidebar({
   const { branding } = useTenant();
   const location = useLocation();
   const { isAdmin } = useAppContext();
+  const { isModuleEnabled } = useModuleFlags();
 
-  const routeInMais = maisNav.some((i) => location.pathname.startsWith(i.path));
+  // Gating de módulos: esconde itens desligados pelo admin (essenciais sempre on).
+  const coreItems = coreNav.filter((i) => isModuleEnabled(i.key));
+  const maisItems = maisNav.filter((i) => isModuleEnabled(i.key));
+  const bottomItems = bottomNav.filter((i) => isModuleEnabled(i.key));
+
+  const routeInMais = maisItems.some((i) => location.pathname.startsWith(i.path));
 
   // Estado do "Mais": persistido; abre no primeiro mount se a rota atual está
   // dentro dele (deep link). Depois disso, só o usuário muda — nunca a navegação.
@@ -176,15 +186,16 @@ export function Sidebar({
 
         {/* Core — sem rótulos de seção, hierarquia pela ordem */}
         <div className="space-y-[1px]">
-          {coreNav.map((item) => <NavLink key={item.path} item={item} />)}
+          {coreItems.map((item) => <NavLink key={item.path} item={item} />)}
         </div>
 
-        {/* Mais — colapsável, nunca muda sozinho */}
+        {/* Mais — colapsável, nunca muda sozinho. Oculto se todos os módulos "Mais" desligados. */}
+        {maisItems.length > 0 && (
         <div className="mt-4">
           {collapsed ? (
             <>
               <div className="h-px bg-si-border my-2 mx-1" />
-              <Link to={maisNav[0].path} title="Mais" className={rowCollapsed(routeInMais)}>
+              <Link to={maisItems[0].path} title="Mais" className={rowCollapsed(routeInMais)}>
                 <MoreHorizontal className={cn('w-3.5 h-3.5', routeInMais ? 'text-si-1' : 'text-si-5')} />
               </Link>
             </>
@@ -215,7 +226,7 @@ export function Sidebar({
                 maisOpen ? 'max-h-[520px] opacity-100 mt-1' : 'max-h-0 opacity-0 pointer-events-none'
               )}>
                 <div className="space-y-[1px]">
-                  {maisNav.map((item) => {
+                  {maisItems.map((item) => {
                     const active = isActive(item.path);
                     return (
                       <Link
@@ -239,6 +250,7 @@ export function Sidebar({
             </>
           )}
         </div>
+        )}
       </nav>
 
       {/* ── Rodapé ─────────────────────────────────────────────────────────── */}
@@ -253,7 +265,7 @@ export function Sidebar({
             {!collapsed && "Painel Admin"}
           </Link>
         )}
-        {bottomNav.map((item) => {
+        {bottomItems.map((item) => {
           const active = isActive(item.path);
           return (
             <Link

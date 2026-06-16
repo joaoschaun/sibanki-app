@@ -54,6 +54,7 @@ const {
 const { runSentinelaGeo } = require("./services/sentinel/sentinelaGeoService");
 const { checkAndIncrementAiUsage } = require("./services/user/usageLimitService");
 const adminAuth = require("./services/admin/adminAuth");
+const adminData = require("./services/admin/adminDataService");
 const { runSentinelaWeekly } = require("./services/sentinel/sentinelaWeeklyService");
 const tenantRoutes = require("./services/tenant/tenantRoutes");
 const { onUserCreated } = require("./services/user/userService");
@@ -175,6 +176,8 @@ exports.onUserCreated = functions.auth.user().onCreate(async (user) => {
 // =============================================
 exports.validateAdminAccess = adminAuth.validateAdminAccess;
 exports.revokeAdminAccess = adminAuth.revokeAdminAccess;
+// Dados agregados do painel admin (Admin SDK; substitui leituras client-side bloqueadas)
+exports.adminGetData = adminData.adminGetData;
 
 // =============================================
 // STRIPE: delega para serviço de billing
@@ -690,6 +693,8 @@ const PLATFORM_EVENT_ALLOWLIST = new Set([
   "activation_of_connected",
   "activation_first_entry",
   "activation_ld_computed",
+  // Navegação — uso real por módulo (Fase 2 admin: métricas reais)
+  "module_viewed",
 ]);
 
 function sanitizePlatformPayload(value, depth = 0) {
