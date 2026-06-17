@@ -17,6 +17,46 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Admin completo + separação + governança Claude-only (16/06/2026, Claude)
+
+**Módulos ligar/desligar (Phase 1)**
+- `src/constants/appModules.ts`: registro único dos 22 módulos de navegação (4 essenciais não-desligáveis). `src/hooks/useModuleFlags.ts`: lê `config/modules` (listener singleton). `Sidebar`/`BottomNavigation` escondem módulos desligados; `ModuleGuard` (App.tsx) redireciona acesso direto por URL a módulo off.
+
+**Config escopada por ambiente (env switch)**
+- `config/modules` e `config/featureFlags` passam a guardar `{ prod: {...}, staging: {...} }`. `src/utils/environment.ts` (`getAppEnv` pelo hostname) faz o app ler a fatia do seu ambiente; switch Staging|Produção no admin escolhe qual editar. Permite testar toggles no staging sem afetar prod (mesmo Firebase project compartilhado).
+
+**Métricas reais (Phase 2)**
+- `functions/services/admin/adminDataService.js`: CF `adminGetData` (Admin SDK, claim admin) agrega `users` + `platform_events` → counts/MRR/ativação/série(cadastros+DAU)/uso-por-módulo. Substitui leituras client-side bloqueadas pelas rules e os gráficos `Math.random()`. Telemetria `module_viewed` no app (1x/módulo/sessão). CF `adminSetPlan` (muda plano via Admin SDK).
+
+**Firestore rules**
+- `isAdmin()` (claim `admin`) + regra top-level `config/{doc}` (lê: autenticado; escreve: admin) — **conserta as feature flags, que nunca funcionaram em prod** (config era negado pelo catch-all). Regras p/ `/feedbacks` (admin lê/atualiza) e `/admin_posts` (admin read+write).
+
+**Acesso admin**
+- Coleção `admins` estava vazia (ninguém tinha acesso). Registrado `admins/joaoschaun@gmail.com` + claim `admin:true` (conta era só-Google → reset de senha p/ login e-mail/senha).
+
+**Admin React SEPARADO do app**
+- Admin migrado do painel vanilla para React, depois **extraído para deploy próprio** (`admin.html` + `src/admin/main.tsx` + `AdminLogin` + `AdminLayout` com nav própria) servido em `sibanki-admin.web.app`. Vite multi-page; `firebase.json` aponta `hosting:admin` p/ o build (app/staging ignoram `admin.html`). **Rotas `/admin/*` e botão "Painel Admin" REMOVIDOS do app do usuário.** Vanilla aposentado.
+
+**Waitlist**
+- CF `captureWaitlistEmail` (Brevo) + formulário no `landing/index.html`.
+
+**Deploys**: app em produção (`hosting:app`), admin (`hosting:admin`), landing (`hosting:landing`), functions (`adminGetData`, `adminSetPlan`, `captureWaitlistEmail`, `trackPlatformEvent`), `firestore:rules`. `main` alinhada com produção (merge + push `origin/main` `fac84c9..83f552c`).
+
+### Changed — Governança IA (16/06/2026, Claude)
+- **Pipeline multi-agente Cursor/Antigravity APOSENTADO.** Desenvolvimento passa a ser 100% Claude. `AGENTS.md` reescrito para **v2.0 Claude-only** (mantém regra de ouro, convenções, deploy, limites; absorve o útil das `.cursor/rules`; remove matriz multi-agente e pipeline). `CLAUDE.md`: header de governança e seção do pipeline atualizados.
+- **Removidos:** `.cursor/` (9 regras `.mdc`), `.cursorrules`, `scripts/task-watcher.mjs`, `.pipeline/`, `docs/TASK_QUEUE.md`, `docs/FALLBACK_PROMPT.md`, `scratch/update_queue.js`.
+
+### Limpeza e Atualização de Assets de Imagem (16/06/2026, Antigravity)
+- **Remoção de logos obsoletas**: Exclusão de arquivos de imagem antigos do repositório (`public/assets/img/sibanki-original.png`, `public/assets/img/sibanki-favicon-badge.png`, e `public/assets/img/sibanki-favicon-clean.png`) sob aprovação do usuário para evitar bagunça. Apenas a logo atual (`sibanki-logo-clean.png`) foi mantida.
+- **Novos Banners do LinkedIn (Empresa e Pessoal)**:
+  - Adicionado o banner da LinkedIn Page da empresa ([sibanki-linkedin-banner-mono.png](file:///c:/Users/jscha/virtus-financeiro/public/assets/img/sibanki-linkedin-banner-mono.png)) com proporção 1128x191px e espaçador de segurança à esquerda para o logo.
+  - Adicionado o banner do perfil pessoal de Fundador ([sibanki-linkedin-banner-pessoal.png](file:///c:/Users/jscha/virtus-financeiro/public/assets/img/sibanki-linkedin-banner-pessoal.png)) com proporção 1584x396px, rótulo "Founder & Lead Engineer" e espaçamento superior para evitar sobreposição do avatar circular no canto inferior esquerdo.
+  - Ambos os banners respeitam as diretrizes de design do sistema *Pierre Finance* (monocromáticos, sem cores desnecessárias, fontes Inter limpas, grids geométricos de wireframe e mockup real da tela do assistente).
+- **Campanha de Financiamento Coletivo Recorrente (Benfeitoria)**:
+  - Criado o documento de copy completo em [docs/CAMPANHA-BENFEITORIA.md](file:///c:/Users/jscha/virtus-financeiro/docs/CAMPANHA-BENFEITORIA.md) focado no modelo de **Financiamento Recorrente Mensal**.
+  - Aprofundamento conceitual e filosófico do Sibanki ("Quem somos e no que acreditamos"): desconstrução do controle financeiro por culpa, explicação aprofundada de *Dias de Liberdade* (Ld) como métrica de tempo, *Spread Gap* (Sg) como vazamento de juros, *Sovereignty Score* (Sv) como voto de autonomia, e o manifesto estético do design monocromático *Pierre Finance*.
+  - Configuração de metas recorrentes (Meta 2 de R$ 6.000/mês para dedicação integral e servidores em escala) e tabela de recompensas mensais baseadas em assinaturas do app (Pro, Casal/Família, Conselheiro, Membro Honorário e Patrocinador).
+
 ### Checkout Transparente Asaas — Pix no App (12/06/2026, Antigravity)
 - **Nova Callable getAsaasPixQr**: Implementada função no backend `functions/services/billing/asaasService.js` com validações rígidas de login e posse do cliente (evita spoofing). Obtém o QR code Pix e copia-e-cola via API Asaas `/payments/{id}/pixQrCode`.
 - **Retorno do paymentId**: Atualizada a callable `createAsaasCheckout` para devolver o `paymentId` da primeira cobrança pendente.
