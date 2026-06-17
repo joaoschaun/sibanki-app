@@ -1,0 +1,28 @@
+# Normalização de fim de linha (EOL) — Sibanki / virtus-financeiro
+# Texto: normaliza para LF no repositório; checkout em LF.
+* text=auto eol=lf
+
+# Scripts específicos de Windows mantêm CRLF
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+*.ps1  text eol=crlf
+
+# Binários — nunca normalizar
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.woff  binary
+*.woff2 binary
+*.ttf  binary
+*.eot  binary
+*.otf  binary
+*.pdf  binary
+*.zip  binary
+*.gz   binary
+*.mp4  binary
+*.mp3  binary
+*.mov  binary
+*.jar  binary
