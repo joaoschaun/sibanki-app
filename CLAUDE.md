@@ -19,6 +19,33 @@
 > 4. Pipeline Cursor/Antigravity foi aposentado (jun/2026). Todo o desenvolvimento
 >    é feito pelo Claude. Deploys/escritas em prod só com autorização explícita do João.
 >
+> ---
+>
+> ## 🗺️ MAPA DE VERSÕES — LEIA ANTES DE EDITAR (atualizado 17/06/2026)
+>
+> **O código vive em `C:\Users\jscha\virtus-financeiro`.** A pasta
+> `OneDrive\Documentos\Claude\Projects\sibanki` é só conhecimento (`.docx`/análises),
+> **NÃO** contém código — nunca procure código lá.
+>
+> **✅ VERSÃO ATUAL (produção / o que editar):**
+> - App: `src/` → build `dist/` → `firebase deploy --only hosting:app` → **`sibanki.com.br`**
+> - Cloud Functions: **`functions/index.js`** (+ `functions/services/`)
+> - Landing: `landing/` (`hosting:landing`) · Admin: `src/admin/` + `admin.html` (`hosting:admin`)
+> - Entrada do app: `index.html` → `src/main.tsx` → `src/App.tsx`
+>
+> **🚫 IGNORAR (legado / NÃO ler como verdade, NÃO editar):**
+> - **`.claude/worktrees/`** — clones de branches abandonados (duplicam o repo inteiro).
+>   Buscas (grep/glob) podem trazer arquivos daqui por engano. **Sempre ignorar.**
+> - **`public/`** — alvo de deploy `hosting:legado` (fallback/rollback). Build React
+>   **congelado**. Não é a produção. Ver `public/LEIA-LEGADO.md`.
+> - **`index.js` na raiz** (se ainda existir) — monólito de Cloud Functions **antigo**,
+>   substituído por `functions/index.js`. Movido para `_legacy/` na limpeza de 17/06.
+> - Artefatos obsoletos: `firebase.json.bak`, `tsc_errors*.txt`, `index.html`/`*.bak` soltos.
+> - **`docs/` é arquivo histórico** de ~70 análises; a fonte VIVA é `docs/CHANGELOG.md` +
+>   `docs/INVENTARIO-COMPLETO-SISTEMA.md`. Demais `docs/ANALISE-*` são pontuais/datados.
+>
+> ---
+>
 > **Status atual (13/04/2026):** React SPA é a PRODUÇÃO. Cutover legado→React concluído.
 > 35/35 testes Playwright (`npm run test:react-smoke`: PWA + setup auth `storageState` + login isolado + 24 rotas). 22/22 health checks verdes. 52 Cloud Functions ativas (inclui `valoresAReceberApi`).
 > **Feature flags:** Todas liberadas para todos os planos (fase de construção).
@@ -133,9 +160,9 @@ virtus-financeiro/
 │   │   ├── user/               Ciclo de vida do usuário
 │   │   ├── whatsapp/           Meta Cloud API
 │   │   └── entryWizard.js      Wizard multi-turn WhatsApp
-├── public/                     App legado (fallback/rollback)
-│   ├── app/                    App legado JS/HTML
-│   ├── admin/index.html        Admin panel (vanilla JS + Firebase compat)
+├── public/                     ⚠ LEGADO — alvo `hosting:legado` (fallback). Build React
+│   │                           congelado; NÃO é produção. Ver public/LEIA-LEGADO.md
+│   ├── admin/index.html        (legado) painel admin vanilla — substituído por src/admin/
 │   ├── manifest.json           PWA manifest
 │   ├── firebase-messaging-sw.js FCM background notifications
 │   ├── sw.js                   Service Worker (cache offline)
@@ -643,12 +670,9 @@ Vanilla HTML/JS com Firebase compat SDK v9.23.0. Design: dark theme com CSS vari
 # 1. Build React
 npm run build                        # → dist/
 
-# 2. Copiar para public/ (preserva admin/, docs/, etc.)
-Copy-Item dist\assets\* public\assets\ -Recurse -Force
-Copy-Item dist\index.html public\index.html -Force
-
-# 3. Deploy produção (React SPA)
-npm run deploy:app       # build + prepare-dist + hosting:app → dist/
+# 2. Deploy produção (React SPA) — NÃO copie nada para public/.
+#    `deploy:app` roda test:unit + build + prepare-dist.mjs e publica de dist/.
+npm run deploy:app       # build + prepare-dist + hosting:app → dist/ → sibanki.com.br
 
 # 4. Deploy legado (fallback/rollback)
 npm run deploy:legado    # syntax-check + hosting:legado → public/
@@ -1216,19 +1240,4 @@ As regras de engenharia vivem em `AGENTS.md` (v2.0, Claude-only).
 ## Design System — Primitivos Pierre (rebase sobre audit/analise-360 · 14/06/2026)
 
 ### Achado critico de branch
-O `main` (25/abr) estava **obsoleto e sem buildar**: `App.tsx`/`Accounts.tsx`/`Cards.tsx` importavam 12 modulos inexistentes nele. A linha real do produto e a **`audit/analise-360`** (12/jun, 60 commits a frente). Trabalho de DS foi rebaseado sobre ela.
-
-### Entregue
-- **`src/utils/cn.ts`** — helper `cn` unico (clsx+tailwind-merge).
-- **`src/constants/sovereigntyScale.ts`** — fonte unica de cor/label Ld (`FREEDOM_TIERS`) e Sv (`SV_TIERS`/`getSvTier`); `SovereigntyHero` e `SovereigntyBadge` consomem.
-- **Primitivos** `src/components/ui/`: `Button` (+`buttonClasses`; **primary = botao branco** alinhado ao CTA da audit; secondary/ghost/danger), `Card` (+`CardHeader`), `Badge`, `Field`/`Input`/`Select`. Barrel `primitives.ts`.
-- **Telas existentes NAO migradas** (decisao 14/06): para nao desviar do design em producao, as migracoes cosmeticas (`EmptyState`/`FeedbackCallout`/`NotFound`/`ErrorBoundary` + icone do Modal) foram revertidas ao pixel exato da producao. Primitivos ficam como ferramenta para telas NOVAS (com revisao visual). `SovereigntyHero`/`Badge` refatorados para a escala central = pixel-identico. Modal mantem so focus-trap (a11y, sem efeito visual).
-- **`Modal`** — merge: prop `size` (da audit) + focus trap + icone lucide `X` + `title: ReactNode`.
-- **`.si-label`** util em `index.css`.
-- **Ratchet** `src/constants/designSystem.guard.test.ts` (vitest, gate de deploy): proibe crescer botao colorido solido. Baseline **29** (audit ja fez varredura de cor; era 164 no main morto).
-
-### Conflitos resolvidos a favor da audit
-`creditSnapshot.ts` (audit ja tinha fallback dueDay superior), `AccountCard.tsx` (cn local exportado), `Login.tsx` (brand surface redesenhada).
-
-### Verificacao pos-rebase
-`tsc --noEmit`: **0 erros**. `vitest`: **128/128**. `vite build`: **OK** (antes quebrado). Sem deploy/push nesta sessao.
+O `main` (25/abr) estava **obsoleto e sem buildar**: `App.tsx`/`Accounts.tsx`/`Cards.tsx` importavam 12 modulos inexistentes nele. A linha real do produto e a **`audit/analise-360`** (12/jun, 60 commits a frente). Trabalho 
