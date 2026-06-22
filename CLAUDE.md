@@ -94,7 +94,10 @@ virtus-financeiro/
 │   ├── index.css               Design tokens (CSS vars: --si-bg, --si-card, etc.)
 │   ├── main.tsx                Entry point React
 │   ├── context/
-│   │   ├── AppContext.tsx       ÚNICO listener Firestore — dados + auth
+│   │   ├── AuthContext.tsx       Gerencia sessão Firebase Auth + Claims admin
+│   │   ├── FinancialDataContext.tsx Listener Firestore (dados + entriesOverflow) + Sync OF
+│   │   ├── SibcoinContext.tsx    Gatilhos em background do SibCoin (streak, login)
+│   │   ├── AppContext.tsx        Fachada unificada retrocompatível de dados + auth
 │   │   ├── IntelligenceContext.tsx  Cálculos Ld/Sg/Sv/financialProfile
 │   │   └── ConsultantSessionContext.tsx  Sessão do chat do Assistente (drawer + /consultor-ia)
 │   ├── hooks/
@@ -240,12 +243,32 @@ virtus-financeiro/
 
 ## 🧠 CONTEXTS (A ARQUITETURA DE DADOS)
 
-### AppContext (`src/context/AppContext.tsx`)
-**Responsabilidade:** "O que o usuário TEM" — única fonte de verdade para dados e auth.
+- O Sibanki divide o gerenciamento de estado e dados em subcontextos especializados, coordenados por uma fachada unificada para otimizar re-renderizações e facilitar a manutenção.
+
+---
+
+### AuthContext (`src/context/AuthContext.tsx`)
+**Responsabilidade:** Gerenciar a sessão ativa do usuário no Firebase Auth (`onAuthStateChanged`) e calcular claims administrativas (`isAdmin`).
+*   Componentes que utilizam apenas dados de auth e status de carregamento devem chamar `useAuthContext()` diretamente de `src/hooks/useAuthContext.ts` para não sofrer re-renderizações quando os saldos ou transações no Firestore forem atualizados.
+
+---
+
+### FinancialDataContext (`src/context/FinancialDataContext.tsx`)
+**Responsabilidade:** "O que o usuário TEM" — única fonte de verdade para os dados financeiros e sincronização do Open Finance.
 
 **Abre 2 listeners Firestore (e só 2):**
 1. `onSnapshot(doc(db, 'users', uid))` → dados principais do usuário
-2. `onSnapshot(collection(db, 'users', uid, 'entriesOverflow'))` → lançamentos arquivados
+2. `onSnapshot(collection(db, 'users', uid, 'entriesOverflow'))` → lançamentos arquivados (limite de 1000)
+
+---
+
+### SibcoinContext (`src/context/SibcoinContext.tsx`)
+**Responsabilidade:** Processar em segundo plano as missões e streaks de login do SibCoin sem bloquear a renderização dos componentes de UI.
+
+---
+
+### AppContext (`src/context/AppContext.tsx`)
+**Responsabilidade:** Fachada retrocompatível unificada que combina e expõe os valores unificados de `AuthContext` e `FinancialDataContext` por meio de `useAppContext()` para garantir retrocompatibilidade com as páginas e componentes existentes do SPA.
 
 **O que expõe:**
 ```typescript
@@ -1240,4 +1263,19 @@ As regras de engenharia vivem em `AGENTS.md` (v2.0, Claude-only).
 ## Design System — Primitivos Pierre (rebase sobre audit/analise-360 · 14/06/2026)
 
 ### Achado critico de branch
-O `main` (25/abr) estava **obsoleto e sem buildar**: `App.tsx`/`Accounts.tsx`/`Cards.tsx` importavam 12 modulos inexistentes nele. A linha real do produto e a **`audit/analise-360`** (12/jun, 60 commits a frente). Trabalho 
+O `main` (25/abr) estava **obsoleto e sem buildar**: `App.tsx`/`Accounts.tsx`/`Cards.tsx` importavam 12 modulos inexistentes nele. A linha real do produto e a **`audit/analise-360`** (12/jun, 60 commits a frente). Trabalho de DS foi rebaseado sobre ela.
+
+### Entregue
+- **`src/utils/cn.ts`** — helper `cn` unico (clsx+tailwind-merge).
+- **`src/constants/sovereigntyScale.ts`** — fonte unica de cor/label Ld (`FREEDOM_TIERS`) e Sv (`SV_TIERS`/`getSvTier`); `SovereigntyHero` e `SovereigntyBadge` consomem.
+- **Primitivos** `src/components/ui/`: `Button` (+`buttonClasses`; **primary = botao branco** alinhado ao CTA da audit; secondary/ghost/danger), `Card` (+`CardHeader`), `Badge`, `Field`/`Input`/`Select`. Barrel `primitives.ts`.
+- **Telas existentes NAO migradas** (decisao 14/06): para nao desviar do design em producao, as migracoes cosmeticas (`EmptyState`/`FeedbackCallout`/`NotFound`/`ErrorBoundary` + icone do Modal) foram revertidas ao pixel exato da producao. Primitivos ficam como ferramenta para telas NOVAS (com revisao visual). `SovereigntyHero`/`Badge` refatorados para a escala central = pixel-identico. Modal mantem so focus-trap (a11y, sem efeito visual).
+- **`Modal`** — merge: prop `size` (da audit) + focus trap + icone lucide `X` + `title: ReactNode`.
+- **`.si-label`** util em `index.css`.
+- **Ratchet** `src/constants/designSystem.guard.test.ts` (vitest, gate de deploy): proibe crescer botao colorido solido. Baseline **29** (audit ja fez varredura de cor; era 164 no main morto).
+
+### Conflitos resolvidos a favor da audit
+`creditSnapshot.ts` (audit ja tinha fallback dueDay superior), `AccountCard.tsx` (cn local exportado), `Login.tsx` (brand surface redesenhada).
+
+### Verificacao pos-rebase
+`tsc --noEmit`: **0 erros**. `vitest`: **128/128**. `vite build`: **OK** (antes quebrado). Sem deploy/push nesta sessao.

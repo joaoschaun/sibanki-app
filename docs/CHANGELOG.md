@@ -17,6 +17,82 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Desacoplamento de Contextos (Deus Context) do Sibanki (22/06/2026, Antigravity)
+
+- **Separação de Responsabilidades (Subcontextos)**:
+  - Criado o [AuthContext.tsx](file:///c:/Users/jscha/virtus-financeiro/src/context/AuthContext.tsx) para gerenciar o estado da sessão de autenticação do Firebase (`onAuthStateChanged`) e calcular claims administrativas (`isAdmin`).
+  - Criado o [FinancialDataContext.tsx](file:///c:/Users/jscha/virtus-financeiro/src/context/FinancialDataContext.tsx) para gerenciar o carregamento de dados do Firestore em tempo real (2 listeners singleton: dados do usuário e `entriesOverflow`), syncs do Open Finance (manual e auto-sync) e telemetria do funil de ativação de marketing.
+  - Criado o [SibcoinContext.tsx](file:///c:/Users/jscha/virtus-financeiro/src/context/SibcoinContext.tsx) para processar passivamente em segundo plano os triggers de SibCoin (streak de login e conexão de Open Finance).
+- **Fachada Retrocompatível**:
+  - Reestruturado o [AppContext.tsx](file:///c:/Users/jscha/virtus-financeiro/src/context/AppContext.tsx) para atuar como fachada integradora. Ele aninha os Providers especializados e monta um selector unificado para garantir compatibilidade total sem quebrar nenhum dos 43 consumidores que utilizam `useAppContext()`.
+- **Isolamento de Renderizações (useAuthContext.ts)**:
+  - O hook [useAuthContext.ts](file:///c:/Users/jscha/virtus-financeiro/src/hooks/useAuthContext.ts) foi desacoplado de `useAppContext` e agora consome diretamente do `AuthContext` real. Componentes focados apenas em autenticação não re-renderizam mais quando dados financeiros mudam no Firestore.
+- **Validação & Garantia de Qualidade**:
+  - Executado build de produção com sucesso (`npm run build`).
+  - Executados os testes de unidade com sucesso (`npm run test:unit`), obtendo 100% de aproveitamento (**128/128 testes passando**).
+- **Deploy**:
+  - Deploy efetuado em produção (`npm run deploy:app`) na URL https://virtus-financeiro-cd7bd.web.app sob autorização explícita.
+
+### Melhoria Estética na Landing Page — Logos de Bancos e Marcas nas Transações (19/06/2026, Antigravity)
+
+- **Substituição de Círculos Genéricos por Logos**: Na seção Open Finance da landing page (`landing/index.html`), os círculos puramente coloridos que representavam os bancos mockados foram substituídos por versões com seus respectivos logotipos SVG inline (Nubank, Itaú, Bradesco, Banco do Brasil e um indicador neutro e elegante de "+8" contas).
+- **Substituição de Emojis de Transações por Logos de Marcas**: Os emojis genéricos da lista de transações simulada no mock da landing page foram substituídos por logotipos SVG de alta definição das respectivas marcas:
+  - `Supermercado Zona Sul` (Alimentação) → `Pão de Açúcar` (logotipo oficial em verde/limão).
+  - `Streaming anual` (Assinatura) → `Netflix` (logotipo do "N" em fita vermelha tridimensional).
+  - `Delivery 23h47` (Gasto por impulso) → `McDonald's` (logotipo dos arcos dourados sobre fundo vermelho).
+  - `Salário ACME Ltda` (Receita) → Ícone vetorial limpo de maleta de trabalho (substituindo o emoji de pasta).
+- **Aprimoramento Visual**: Ambas as mudanças trazem maior realismo, profissionalismo e sofisticação estética alinhada com as diretrizes do design system Pierre Finance do Sibanki.
+
+### Port Health Check + SibCoin para o admin REACT + correção de deploy (16/06/2026, Claude)
+
+Correção: o admin operacional do João é o **React** (`src/admin/`, servido em
+`sibanki-admin.web.app` via target `admin`), não o vanilla `public/admin/index.html`.
+As duas primeiras versões (entradas abaixo) foram feitas no admin vanilla por engano.
+
+- **Novas páginas React:** `src/pages/admin/AdminHealth.tsx` (lê `/api/health`, KPIs +
+  tabela por serviço com bolinhas verde/âmbar/vermelho + botão Atualizar) e
+  `src/pages/admin/AdminSibcoin.tsx` (form e-mail+quantidade+motivo; resolve email→uid
+  pela lista do `adminGetData` e chama `adminCreditSibcoin` via `fnsBR`).
+- **Wiring:** rotas `health` e `sibcoin` em `src/admin/main.tsx`; itens de nav (ícones
+  `Activity`/`Coins`) em `src/admin/AdminLayout.tsx`.
+- Seguem o padrão de `AdminPlanos.tsx` (tokens `si-*`, `fnsUS`/`fnsBR`, toast por estado).
+  Validação: `tsc` isolado das 2 páginas → 0 erros (só o falso-positivo de `import.meta.env`
+  do firebase.ts, esperado fora do tsconfig do projeto).
+- **Deploy correto:** `npm run deploy:app` (o admin React é buildado pelo Vite via
+  `admin.html` e publicado nos targets `app`/`admin` a partir de `dist/`). O
+  `deploy:legado` sugerido antes estava errado (publica `public/` em outro domínio).
+- Edições no admin vanilla (`public/admin/index.html`) foram mantidas (inofensivas;
+  também sobem via `dist/admin/` no `deploy:app`), mas o canônico é o React.
+
+### UI de SibCoin (crédito manual) no admin (16/06/2026, Claude)
+
+Segundo item do `docs/ROADMAP-GESTAO-AUTONOMA.md` (Bloco B, item 7).
+
+- `public/admin/index.html`: nova seção **SibCoin** (grupo "Operação") com formulário
+  e-mail + quantidade + motivo. `creditSibcoin()` resolve e-mail→uid via
+  `users.where('email','==',…)` (mesmo padrão de `setUserPlan`) e chama a callable
+  `adminCreditSibcoin` na região correta (`firebase.app().functions('southamerica-east1')`).
+- Não grava saldo direto: delega à Function, que faz transação atômica + tier +
+  histórico (slice 50). Atualiza `allUsers` localmente no sucesso; trata erros com badge.
+- Sem alterações de backend. Sem deploy nesta sessão.
+
+### Painel Health Check no admin (16/06/2026, Claude)
+
+Primeiro item executado do `docs/ROADMAP-GESTAO-AUTONOMA.md` (Bloco B, item 6).
+
+- `public/admin/index.html`: nova seção **Health Check** (grupo de navegação "Operação")
+  que consome o endpoint `GET /api/health` da função `api` (CORS `origin:true`) e
+  renderiza: status geral (OPERACIONAL/DEGRADADO + latência), contadores
+  (saudáveis / não configurados / com erro) e tabela por serviço (Firestore, Auth,
+  DeepSeek, Gemini, Stripe, Resend, WhatsApp, Pluggy, Lomadee, Monetizze, Motor de
+  Cashback) com badge verde/amarelo/vermelho. Botão "Atualizar" + timestamp.
+- `loadHealth()` classifica cada serviço: `ok`/`configured`→verde, `missing`→amarelo,
+  `error`/`invalid`→vermelho. Trata API offline (sem resposta) com card OFFLINE.
+- Sem alterações de backend (o `/health` já existia). Sem deploy nesta sessão.
+- **Nota operacional:** durante a edição, o mount Linux do sandbox travou numa cópia
+  truncada do arquivo; o arquivo real (validado via Read no Windows) está íntegro e o
+  snippet JS passou em `node --check`. Não houve corrupção do arquivo do projeto.
+
 ### Admin completo + separação + governança Claude-only (16/06/2026, Claude)
 
 **Módulos ligar/desligar (Phase 1)**
