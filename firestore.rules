@@ -178,11 +178,24 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Coleção de convites família (legado root)
+    // Coleção de convites família/casal (legado root) — doc: { from, fromName,
+    // fromEmail, toEmail, status, ... } (ver src/pages/Casal.tsx).
+    // SEC (health-check 23/06): antes `allow read: if isAuthed()` expunha o
+    // e-mail de TODOS os convites a qualquer usuário logado (vazamento de PII).
+    // Agora só o remetente (from == uid) ou o destinatário (toEmail == e-mail do
+    // token) leem/atualizam — alinhado às queries de Casal.tsx e ao padrão de
+    // consorcio_invites/crediamigo_invites. `update` passou a incluir o
+    // destinatário (aceitar/recusar convite), que antes ficava bloqueado.
     match /invites/{inviteId} {
-      allow read: if isAuthed();
-      allow create: if isAuthed();
-      allow update: if isAuthed() && resource.data.from == request.auth.uid;
+      allow read: if isAuthed() && (
+        resource.data.from == request.auth.uid ||
+        resource.data.toEmail == request.auth.token.email
+      );
+      allow create: if isAuthed() && request.resource.data.from == request.auth.uid;
+      allow update: if isAuthed() && (
+        resource.data.from == request.auth.uid ||
+        resource.data.toEmail == request.auth.token.email
+      );
       allow delete: if false;
     }
 

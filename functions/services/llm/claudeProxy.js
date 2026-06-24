@@ -8,7 +8,7 @@
  *  - Este proxy valida autenticação antes de repassar ao Claude
  *  - Rate limiting e logging ficam centralizados aqui
  */
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const { CLAUDE_KEY } = require("../../config");
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";

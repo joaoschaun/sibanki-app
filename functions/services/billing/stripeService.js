@@ -1,4 +1,4 @@
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { getStripe, STRIPE_WEBHOOK_SECRET } = require("../../config");
 const { logEvent, logError } = require("../../logger");
@@ -111,7 +111,6 @@ async function createCheckout(data, context) {
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      payment_method_types: ["card"],
       mode: "subscription",
       allow_promotion_codes: true,
       subscription_data: {

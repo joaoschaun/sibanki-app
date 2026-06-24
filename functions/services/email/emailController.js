@@ -14,7 +14,7 @@
  *   emailRateLimit(uid, action, max, windowMs) → lança HttpsError se excedido
  */
 
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const admin     = require("firebase-admin");
 const { logError, logEvent } = require("../../logger");
 const { RESEND_FROM }        = require("../../config");

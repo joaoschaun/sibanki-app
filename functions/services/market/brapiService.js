@@ -1,4 +1,4 @@
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const { BRAPI_TOKEN, BRAPI_BASE } = require("../../config");
 const { fetchJson } = require("../../httpClient");
 const { logEvent, logError } = require("../../logger");

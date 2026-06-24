@@ -8,7 +8,7 @@
  * Protegido pela Custom Claim `admin:true` (setada por validateAdminAccess).
  * Região: default (us-central1) — alinha com `firebase.functions()` no admin.
  */
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 
 function assertAdmin(context) {
