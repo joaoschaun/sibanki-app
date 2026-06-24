@@ -30,7 +30,8 @@
     "deploy:app": "npm run test:unit && npm run build && node scripts/prepare-dist.mjs && firebase deploy --only hosting:app",
     "deploy:legado": "npm run syntax-check && firebase deploy --only hosting:legado",
     "deploy:doc-investidor": "firebase deploy --only hosting:doc-investidor",
-    "deploy:landing": "firebase deploy --only hosting:landing"
+    "deploy:landing": "firebase deploy --only hosting:landing",
+    "generate:splash": "node scripts/generate-splash.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
