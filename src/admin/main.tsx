@@ -13,6 +13,8 @@ import { AdminLayout } from './AdminLayout';
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard'));
 const AdminMetricas = lazy(() => import('../pages/admin/AdminMetricas'));
 const AdminUsuarios = lazy(() => import('../pages/admin/AdminUsuarios'));
+const AdminHealth = lazy(() => import('../pages/admin/AdminHealth'));
+const AdminSibcoin = lazy(() => import('../pages/admin/AdminSibcoin'));
 const AdminFlags = lazy(() => import('../pages/admin/AdminFlags'));
 const AdminModulos = lazy(() => import('../pages/admin/AdminModulos'));
 const AdminPlanos = lazy(() => import('../pages/admin/AdminPlanos'));
@@ -44,6 +46,8 @@ function AdminApp() {
               <Route path="dashboard" element={<ErrorBoundary><AdminDashboard /></ErrorBoundary>} />
               <Route path="metricas" element={<ErrorBoundary><AdminMetricas /></ErrorBoundary>} />
               <Route path="usuarios" element={<ErrorBoundary><AdminUsuarios /></ErrorBoundary>} />
+              <Route path="health" element={<ErrorBoundary><AdminHealth /></ErrorBoundary>} />
+              <Route path="sibcoin" element={<ErrorBoundary><AdminSibcoin /></ErrorBoundary>} />
               <Route path="flags" element={<ErrorBoundary><AdminFlags /></ErrorBoundary>} />
               <Route path="modulos" element={<ErrorBoundary><AdminModulos /></ErrorBoundary>} />
               <Route path="planos" element={<ErrorBoundary><AdminPlanos /></ErrorBoundary>} />

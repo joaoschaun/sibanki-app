@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   LayoutGrid, BarChart3, Users, Flag, ToggleRight, CreditCard,
-  MessageSquare, Share2, Calendar, Sparkles, LogOut,
+  MessageSquare, Share2, Calendar, Sparkles, LogOut, Activity, Coins,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -10,6 +10,8 @@ const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
   { to: '/metricas', label: 'Métricas', icon: BarChart3 },
   { to: '/usuarios', label: 'Usuários', icon: Users },
+  { to: '/health', label: 'Health Check', icon: Activity },
+  { to: '/sibcoin', label: 'SibCoin', icon: Coins },
   { to: '/flags', label: 'Feature Flags', icon: Flag },
   { to: '/modulos', label: 'Módulos', icon: ToggleRight },
   { to: '/planos', label: 'Planos', icon: CreditCard },

@@ -160,6 +160,15 @@ select.form-inp{cursor:pointer}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Usuários
     </div>
+    <div class="nav-sep">Operação</div>
+    <div class="nav-item" onclick="goPage('health')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Health Check
+    </div>
+    <div class="nav-item" onclick="goPage('sibcoin')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2.5 0 0 0-5 0c0 3 5 1.5 5 4.5a2.5 2.5 0 0 1-5 0"/><line x1="12" y1="6.5" x2="12" y2="17.5"/></svg>
+      SibCoin
+    </div>
     <div class="nav-sep">Produto</div>
     <div class="nav-item" onclick="goPage('flags')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
@@ -283,6 +292,37 @@ select.form-inp{cursor:pointer}
     </div>
 
     <!-- ═══════ PAGE: FEATURE FLAGS ═══════ -->
+    <!-- ═══════ PAGE: HEALTH CHECK ═══════ -->
+    <div id="pgHealth" class="page">
+      <div class="page-title">Health Check</div>
+      <div class="page-sub">Status em tempo real das Cloud Functions e integrações — lê o endpoint <code>/api/health</code></div>
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-bottom:16px">
+        <span id="healthTime" style="font-size:.72rem;color:var(--t3)"></span>
+        <button class="btn btn-primary" onclick="loadHealth()">↻ Atualizar</button>
+      </div>
+      <div class="cards-grid" id="healthSummary"></div>
+      <div class="card">
+        <div class="card-title">Serviços &amp; Integrações</div>
+        <div id="healthServices"></div>
+      </div>
+    </div>
+
+    <!-- ═══════ PAGE: SIBCOIN ═══════ -->
+    <div id="pgSibcoin" class="page">
+      <div class="page-title">SibCoin — Crédito Manual</div>
+      <div class="page-sub">Credite SibCoins na conta de um usuário. Chama a Cloud Function <code>adminCreditSibcoin</code> (transação atômica + histórico + auditoria), nunca grava saldo direto.</div>
+      <div class="card">
+        <div class="card-title">Creditar SibCoins</div>
+        <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:12px;align-items:end">
+          <div class="form-group" style="margin:0"><div class="form-label">E-mail do usuário</div><input id="scEmail" class="form-inp" placeholder="usuario@email.com"></div>
+          <div class="form-group" style="margin:0"><div class="form-label">Quantidade (SC)</div><input id="scAmount" type="number" min="1" step="1" class="form-inp" placeholder="500"></div>
+          <button class="btn btn-primary" id="scBtn" onclick="creditSibcoin()">Creditar</button>
+        </div>
+        <div class="form-group" style="margin:12px 0 0"><div class="form-label">Motivo (aparece no histórico do usuário)</div><input id="scDesc" class="form-inp" placeholder="Bônus de apoiador, correção, campanha…"></div>
+        <div id="scResult" style="margin-top:14px"></div>
+      </div>
+    </div>
+
     <div id="pgFlags" class="page">
       <div class="page-title">Feature Flags</div>
       <div class="page-sub">Ative ou desative funcionalidades em tempo real — sem deploy</div>
@@ -667,6 +707,112 @@ function renderFeaturesStatus() {
 }
 
 // ═══════════════════════════════════════════════
+// HEALTH CHECK — lê /api/health (CORS origin:true)
+// ═══════════════════════════════════════════════
+const HEALTH_URL = 'https://us-central1-virtus-financeiro-cd7bd.cloudfunctions.net/api/health';
+const HEALTH_LABELS = {
+  firestore:'Firestore', auth:'Authentication', deepseek:'DeepSeek (LLM)',
+  gemini:'Gemini (LLM)', stripe:'Stripe (billing)', resend:'Resend (e-mail)',
+  whatsapp:'WhatsApp', pluggy:'Pluggy (Open Finance)', lomadee:'Lomadee (afiliados)',
+  monetizze:'Monetizze (afiliados)', monetizzeToken:'Monetizze Token',
+  cashbackEngine:'Motor de Cashback'
+};
+function healthClassify(v) {
+  const s = String(v || '').toLowerCase();
+  if (s.startsWith('error') || s === 'invalid') return 'error';
+  if (s === 'missing') return 'warn';
+  return 'ok'; // ok, ok (empty), configured
+}
+async function loadHealth() {
+  const elSummary = document.getElementById('healthSummary');
+  const elGrid = document.getElementById('healthServices');
+  const elTime = document.getElementById('healthTime');
+  if (!elSummary || !elGrid) return;
+  elSummary.innerHTML = '<div class="loading-row"><div class="spin"></div> Consultando /api/health…</div>';
+  elGrid.innerHTML = '';
+  const t0 = performance.now();
+  let data = null, netError = null;
+  try {
+    const r = await fetch(HEALTH_URL, { method:'GET', cache:'no-store' });
+    try { data = await r.json(); } catch(_) {}
+  } catch (e) { netError = (e && e.message) || 'falha de rede'; }
+  const latency = Math.round(performance.now() - t0);
+
+  if (!data) {
+    elSummary.innerHTML = `<div class="stat-card"><div class="stat-label">API</div><div class="stat-val" style="color:var(--red)">OFFLINE</div><div class="stat-delta">${netError || 'sem resposta'}</div></div>`;
+    elGrid.innerHTML = `<div style="color:var(--t2);font-size:.85rem;line-height:1.5">Não foi possível acessar <code>${HEALTH_URL}</code>.<br>A função <b>api</b> pode estar fora do ar ou bloqueando a origem.</div>`;
+    if (elTime) elTime.textContent = 'Falha em ' + new Date().toLocaleTimeString('pt-BR');
+    return;
+  }
+
+  const services = data.services || {};
+  const keys = Object.keys(services);
+  let nOk = 0, nWarn = 0, nErr = 0;
+  const rows = keys.map(k => {
+    const cls = healthClassify(services[k]);
+    if (cls === 'ok') nOk++; else if (cls === 'warn') nWarn++; else nErr++;
+    const badge = cls === 'ok' ? 'green' : (cls === 'warn' ? 'yellow' : 'red');
+    const label = HEALTH_LABELS[k] || k;
+    return `<tr>
+      <td style="padding:9px 8px;border-bottom:1px solid var(--brd)">${label}</td>
+      <td style="padding:9px 8px;border-bottom:1px solid var(--brd);text-align:right"><span class="badge ${badge}">${services[k]}</span></td>
+    </tr>`;
+  }).join('');
+
+  const overall = String(data.status || '').toLowerCase();
+  const overallColor = overall === 'ok' ? 'var(--green)' : 'var(--red)';
+  const overallTxt = overall === 'ok' ? 'OPERACIONAL' : 'DEGRADADO';
+
+  elSummary.innerHTML = `
+    <div class="stat-card"><div class="stat-label">Status Geral</div><div class="stat-val" style="color:${overallColor}">${overallTxt}</div><div class="stat-delta">latência ${latency}ms</div></div>
+    <div class="stat-card"><div class="stat-label">Saudáveis</div><div class="stat-val" style="color:var(--green)">${nOk}</div><div class="stat-delta">de ${keys.length} serviços</div></div>
+    <div class="stat-card"><div class="stat-label">Não configurados</div><div class="stat-val" style="color:var(--yellow)">${nWarn}</div><div class="stat-delta">missing</div></div>
+    <div class="stat-card"><div class="stat-label">Com erro</div><div class="stat-val" style="color:var(--red)">${nErr}</div><div class="stat-delta">falhas ativas</div></div>
+  `;
+  elGrid.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.85rem"><tbody>${rows}</tbody></table>`;
+  if (elTime) elTime.textContent = 'Atualizado ' + new Date(data.timestamp || Date.now()).toLocaleString('pt-BR');
+}
+
+// ═══════════════════════════════════════════════
+// SIBCOIN — crédito manual (admin) → adminCreditSibcoin (southamerica-east1)
+// ═══════════════════════════════════════════════
+async function creditSibcoin() {
+  const email = document.getElementById('scEmail').value.trim();
+  const amount = parseInt(document.getElementById('scAmount').value, 10);
+  const description = document.getElementById('scDesc').value.trim() || 'Crédito administrativo';
+  const btn = document.getElementById('scBtn');
+  const result = document.getElementById('scResult');
+  if (!email) { toast('Digite o e-mail', 'err'); return; }
+  if (!amount || amount <= 0) { toast('Quantidade deve ser um número positivo', 'err'); return; }
+  const oldLabel = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Creditando…';
+  result.innerHTML = '';
+  try {
+    const snap = await db.collection('users').where('email', '==', email).get();
+    if (snap.empty) { toast('Usuário não encontrado', 'err'); return; }
+    const targetUid = snap.docs[0].id;
+    const fnsBR = firebase.app().functions('southamerica-east1');
+    const r = await fnsBR.httpsCallable('adminCreditSibcoin')({ targetUid, amount, description });
+    if (r && r.data && r.data.success) {
+      toast(`+${amount} SibCoins creditados para ${email}`, 'ok');
+      result.innerHTML = `<span class="badge green">✓ ${amount} SC creditados</span> <span style="font-size:.8rem;color:var(--t2)">${escHtml(email)} · ${escHtml(description)}</span>`;
+      const idx = allUsers.findIndex(u => u.email === email);
+      if (idx >= 0) allUsers[idx].sibcoinBalance = (allUsers[idx].sibcoinBalance || 0) + amount;
+      document.getElementById('scAmount').value = '';
+      document.getElementById('scDesc').value = '';
+    } else {
+      toast('Resposta inesperada da função', 'err');
+    }
+  } catch (e) {
+    const msg = (e && e.message) || 'falha ao creditar';
+    toast('Erro: ' + msg, 'err');
+    result.innerHTML = `<span class="badge red">Erro</span> <span style="font-size:.8rem;color:var(--t2)">${escHtml(msg)}</span>`;
+  } finally {
+    btn.disabled = false; btn.textContent = oldLabel;
+  }
+}
+
+// ═══════════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════════
 function goPage(id) {
@@ -676,7 +822,7 @@ function goPage(id) {
   document.querySelectorAll('.nav-item').forEach(n => {
     if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
   });
-  const loaders = { metricas: loadMetricas, usuarios: loadUsuarios, flags: loadFlags, modulos: loadModules, planos: loadPlanos, social: loadSocial, brand: loadBrand, calendario: renderCal, feedbacks: loadFeedbacks };
+  const loaders = { metricas: loadMetricas, usuarios: loadUsuarios, health: loadHealth, flags: loadFlags, modulos: loadModules, planos: loadPlanos, social: loadSocial, brand: loadBrand, calendario: renderCal, feedbacks: loadFeedbacks };
   if (loaders[id]) loaders[id]();
 }
 
