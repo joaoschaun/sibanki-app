@@ -13,7 +13,7 @@
  *   6. Educação financeira — carrossel contextual
  */
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   CreditCard, AlertTriangle, CheckCircle,
   ChevronRight, Zap, BookOpen, Clock,
@@ -100,6 +100,7 @@ function UtilBar({ pct, warn = 70 }: { pct: number; warn?: number }) {
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function CreditHub() {
   const { data, financialProfile } = useAppContext();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('Visão Geral');
   const [eduIdx, setEduIdx] = useState(0);
 
@@ -370,7 +371,7 @@ export default function CreditHub() {
             title="Seu crédito ainda não tem dados"
             description="Adicione um cartão manualmente ou conecte seu banco via Open Finance para ver limites, faturas e seu nível de pressão de crédito aqui."
             actionLabel="Adicionar cartão"
-            actionTo="/credito/cartoes"
+            onAction={() => navigate('/credito/cartoes', { state: { autoOpenAdd: true } })}
           />
           <div className="flex items-center justify-center gap-4 pb-6 text-xs">
             <Link to="/configuracoes#open-finance" className="text-si-4 underline underline-offset-2 hover:text-si-2">
