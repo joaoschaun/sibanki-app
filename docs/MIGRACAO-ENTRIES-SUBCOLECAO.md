@@ -133,11 +133,24 @@ antes de retomar:
   "força re-check") — desperdício leve, inofensivo (idempotente). Otimização futura: `continue`.
 - ⚠️ Requer `GOOGLE_APPLICATION_CREDENTIALS` (service account) ou ADC — credencial de Admin.
 
-**👉 Próximo passo concreto (menor risco, destrava o resto):**
-1. Deploy da regra nova (`firestore:rules`) — já editada.
-2. Rodar o script em **`--dry-run` num uid de teste** (`node scripts/migrate-entries-to-subcollection.js <uid> --dry-run`)
-   e conferir a contagem de "would migrate" vs. lançamentos reais daquele usuário.
-3. Migrar **1 usuário de teste real** (sem `--dry-run`, com uid) → conferir na UI que tudo
-   aparece (merge/dedup) e que `entriesMigratedAt` foi setado.
-4. Só então decidir trigger do backfill em massa e, por último, o cutover de escrita (Fase 4),
-   com observação entre as fases.
+## 8. Execução validada — usuário piloto (25/06/2026)
+
+- **Fix:** o script era CommonJS (`require`) mas o projeto é ESM (`"type":"module"`) →
+  **nunca tinha rodado**. Renomeado `.js` → **`.cjs`**. Rodar com
+  `NODE_PATH=...\functions\node_modules` (firebase-admin vive lá), ADC para credencial.
+- **Regra `firestore:rules` deployada** (subcoleção `entries` liberada p/ o owner).
+- **Dry-run** no uid do João (`FZtBmb…tu5o1`): `would migrate 35 (0 já, 0 inválidas)`.
+- **Migração real** (1 usuário): `migrated=35`. Verificação pós:
+  `entriesMigratedAt` setado · subcoleção = **35 docs** · inline = **35 intactos**
+  (não apagado → rollback = remover `entriesMigratedAt`).
+- ⏳ **PENDENTE antes do bulk:** João abrir o app e confirmar visualmente que os 35
+  lançamentos aparecem certos (merge/dedup das 3 fontes). Só então rodar o backfill
+  de TODOS os usuários (`node scripts/migrate-entries-to-subcollection.cjs` sem uid).
+
+**👉 Próximo passo concreto:**
+1. ✅ Deploy da regra (`firestore:rules`).
+2. ✅ Dry-run + migração do usuário piloto (João) — validados.
+3. ⏳ **João confere o app** (UI ok com os 35 lançamentos).
+4. Backfill em massa (todos os uids) — sob OK do João, fora de pico.
+5. Depois (fases separadas, com observação): cutover de escrita (Fase 4 — parar de
+   gravar inline) e, por último, encolher `entries[]` inline.
