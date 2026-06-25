@@ -15,7 +15,7 @@ import type { Entry } from '../types/userData';
 import { Modal } from '../components/ui/Modal';
 import { EntryForm } from '../components/transactions/EntryForm';
 import { TransferForm } from '../components/transactions/TransferForm';
-import { Search, Filter, X, FileText, Camera, Mic, Upload, Receipt } from 'lucide-react';
+import { Search, Filter, X, FileText, Camera, Mic, Upload, Receipt, Plus, ArrowLeftRight, Pin, Pencil, Trash2 } from 'lucide-react';
 import { EmptyState } from '../components/ui/EmptyState';
 import { functions } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
@@ -407,19 +407,20 @@ export default function Transactions() {
       {/* Sub-abas */}
       <div className="bg-si-card rounded-2xl border border-si-border flex overflow-hidden">
         {[
-          { id: 'lancar', label: '✏️ Lançar' },
-          { id: 'transf', label: '↔ Transferir' },
-          { id: 'fixos',  label: '📌 Fixos' },
+          { id: 'lancar', label: 'Lançar', icon: Plus },
+          { id: 'transf', label: 'Transferir', icon: ArrowLeftRight },
+          { id: 'fixos',  label: 'Fixos', icon: Pin },
         ].map((tab) => (
           <button key={tab.id} type="button"
             onClick={() => {
               if (tab.id === 'lancar' && subTab === 'lancar') { setAddOpen(true); return; }
               setSubTab(tab.id as 'lancar' | 'transf' | 'fixos');
             }}
-            className={`flex-1 py-4 text-sm font-bold transition-colors ${
+            className={`flex-1 py-4 text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
               subTab === tab.id ? 'bg-si-over-2 text-si-1 border-b-2 border-si-1' : 'text-si-4 hover:bg-si-over-2'
             }`}
           >
+            <tab.icon className="w-4.5 h-4.5" />
             {tab.label}
           </button>
         ))}
@@ -646,12 +647,12 @@ export default function Transactions() {
                         {/* Ações (hover) */}
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                           <button type="button" onClick={() => setEditing(e)}
-                            className="p-1.5 rounded-lg hover:bg-si-over-3 text-si-5 hover:text-si-1 text-xs" title="Editar">
-                            ✏️
+                            className="p-1.5 rounded-lg hover:bg-si-over-3 text-si-5 hover:text-si-1" title="Editar">
+                            <Pencil className="w-3.5 h-3.5" />
                           </button>
                           <button type="button" onClick={() => setDeletingId(e.id)}
-                            className="p-1.5 rounded-lg hover:bg-rose-500/20 text-si-5 hover:text-rose-400 text-xs" title="Excluir">
-                            🗑️
+                            className="p-1.5 rounded-lg hover:bg-rose-500/20 text-si-5 hover:text-rose-400" title="Excluir">
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>

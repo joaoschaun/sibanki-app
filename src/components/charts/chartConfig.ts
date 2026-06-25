@@ -19,10 +19,16 @@ export function fmtBRL(value: number): string {
   return `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-/** Formatador compacto (k/M) para eixos */
+/** Formatador compacto (k/M) para eixos. Evita ticks duplicados usando precisão significativa e limpando finais ".0" */
 export function fmtAxis(value: number): string {
-  if (value >= 1_000_000) return `R$${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000)     return `R$${(value / 1_000).toFixed(0)}k`;
+  if (value >= 1_000_000) {
+    const formatted = (value / 1_000_000).toFixed(1);
+    return `R$${formatted.endsWith('.0') ? formatted.slice(0, -2) : formatted}M`;
+  }
+  if (value >= 1_000) {
+    const formatted = (value / 1_000).toFixed(1);
+    return `R$${formatted.endsWith('.0') ? formatted.slice(0, -2) : formatted}k`;
+  }
   return `R$${value.toFixed(0)}`;
 }
 

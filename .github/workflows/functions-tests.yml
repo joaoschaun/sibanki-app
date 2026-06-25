@@ -34,6 +34,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # R10 (health-check): impede regressão de dependência vulnerável.
+      # Falha só em high/critical; moderate (ex.: uuid transitivo preso atrás de
+      # firebase-admin@14) passa — risco residual já documentado.
+      - name: Security audit (fail on high/critical)
+        run: npm audit --audit-level=high
+
       - name: Run tests
         run: npm test
 

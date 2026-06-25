@@ -1,4 +1,4 @@
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const fetch = require("node-fetch");
 const {
@@ -383,8 +383,8 @@ async function handleResumo(chatId) {
   var emoji = saldo >= 0 ? "\u2705" : "\u{1F534}";
 
   var msg = "\u{1F4C5} <b>Resumo de " + meses[now.getMonth()] + "/" + now.getFullYear() + "</b>\n\n";
-  msg += "\u{1F49A} Receitas: <b>" + fmt(receita) + "</b>\n";
-  msg += "\u2764\uFE0F Despesas: <b>" + fmt(despesa) + "</b>\n";
+  msg += "📈 Receitas: <b>" + fmt(receita) + "</b>\n";
+  msg += "📉 Despesas: <b>" + fmt(despesa) + "</b>\n";
   msg += emoji + " Saldo: <b>" + fmt(saldo) + "</b>\n\n";
 
   if (Object.keys(cats).length) {
@@ -570,7 +570,7 @@ async function handleLancar(chatId, args) {
   entries.push(entry);
   await db.collection("users").doc(user.uid).update({ entries: entries });
 
-  var emoji = type === "receita" ? "\u{1F49A}" : "\u2764\uFE0F";
+  var emoji = type === "receita" ? "📈" : "📉";
   var label = type === "receita" ? "Receita" : "Despesa";
 
   return sendMessage(chatId,
@@ -644,7 +644,7 @@ async function tryLancamentoNatural(chatId, text, user) {
     };
     entries.push(newEntry);
     return db.collection("users").doc(user.uid).update({ entries: entries }).then(function() {
-      var emoji = type === "receita" ? "\u{1F49A}" : "\u2764\uFE0F";
+      var emoji = type === "receita" ? "📈" : "📉";
       var label = type === "receita" ? "Receita" : "Despesa";
       return sendMessage(chatId,
         emoji + " <b>" + label + " registrada!</b>\n\n" +
@@ -985,8 +985,8 @@ exports.weeklyReport = functions.pubsub
       investments.forEach(function(inv) { totalInv += (inv.currentValue || inv.atual || inv.valor || 0); });
 
       var msg = "\u{1F4CA} <b>Resumo Semanal — Sibanki</b>\n\n";
-      msg += "\u{1F49A} Receitas: " + fmt(recSem) + "\n";
-      msg += "\u2764\uFE0F Despesas: " + fmt(desSem) + "\n";
+      msg += "📈 Receitas: " + fmt(recSem) + "\n";
+      msg += "📉 Despesas: " + fmt(desSem) + "\n";
       msg += (recSem - desSem >= 0 ? "\u2705" : "\u{1F534}") + " Saldo: " + fmt(recSem - desSem) + "\n";
       if (totalInv > 0) msg += "\u{1F4BC} Carteira: " + fmt(totalInv) + "\n";
       msg += "\nBoa semana! \u{1F680}";

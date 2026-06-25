@@ -9,6 +9,8 @@ import { CreditCard, Navigation, AlertTriangle, X } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { useIntelligence } from '../../context/IntelligenceContext';
 import { useSentinelaGeo, SCENARIO_LABELS } from '../../hooks/useSentinelaGeo';
+import { CreditCardVisual } from '../banks/CreditCardVisual';
+import type { Card } from '../../types/userData';
 
 interface Props {
   catTotals: Record<string, number>;
@@ -45,42 +47,36 @@ export function DashboardCartoesTab({ catTotals, budgetMap }: Props) {
         {cards.length === 0 ? (
           <p className="text-si-5 text-sm py-8 text-center">Nenhum cartão cadastrado no momento.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {cards.map((card) => {
               const limit = card.limit ?? 0;
               const bill = card.currentBill ?? 0;
-              const utilization = limit > 0 ? Math.min(100, Math.round((bill / limit) * 100)) : 0;
+              const bankHint = (card as Card & { bank?: string }).bank;
               return (
-                <div key={card.id} className="p-4 rounded-xl bg-si-over-1 border border-si-border space-y-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm font-bold text-si-1">{card.name}</p>
-                      <p className="text-xs text-si-5 mt-0.5">Bandeira: {card.flag || '—'}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-si-1">R$ {bill.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                      <p className="text-xs text-si-5 mt-0.5">Limite: R$ {limit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-si-5">
-                      <span>Uso de limite</span>
-                      <span>{utilization}%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-si-over-3 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          utilization >= 80 ? 'bg-rose-500' : utilization >= 50 ? 'bg-amber-400' : 'bg-emerald-500'
-                        }`}
-                        style={{ width: `${utilization}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center text-xs text-si-5 pt-1 border-t border-white/5">
-                    <span>Fechamento: dia {card.closeDay}</span>
-                    <span>Vencimento: dia {card.dueDay}</span>
+                <div key={card.id} className="flex flex-col gap-2">
+                  <CreditCardVisual
+                    name={card.name || 'Cartão'}
+                    limit={limit}
+                    flag={card.flag ?? 'Visa'}
+                    color={card.color}
+                    currentBill={bill}
+                    bankName={bankHint}
+                    size="md"
+                    className="w-full"
+                  />
+                  <div className="flex justify-between items-center text-xs text-si-5 px-1">
+                    <span>
+                      Fatura:{' '}
+                      <span className="text-si-2 font-medium">
+                        R$ {bill.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                      {limit > 0 && (
+                        <span className="text-si-5">
+                          {' '}/ R$ {limit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      )}
+                    </span>
+                    <span>Fecha {card.closeDay} · Vence {card.dueDay}</span>
                   </div>
                 </div>
               );

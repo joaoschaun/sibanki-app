@@ -13,7 +13,7 @@
  * Benefício: mesmo que alguém manipule o JS do cliente, a claim
  * só existe se o servidor a concedeu — não pode ser forjada.
  */
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 
 // SEG-01 (auditoria 26/04/2026, decisão sênior): Acesso Admin migrado para

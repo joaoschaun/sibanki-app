@@ -324,3 +324,49 @@ body {
 .tab-animate {
   animation: tabFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* ── Native Touch Resets (Capacitor) ── */
+* {
+  /* Remove o flash de clique cinza/azul nos navegadores mobile/WebViews */
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  /* Evita o comportamento de scroll elástico de recarga no topo em navegadores móveis/WebViews */
+  overscroll-behavior-y: contain;
+}
+
+/* Previne seleção de texto em botões, links, SVGs e elementos de menu */
+button,
+a,
+input[type="button"],
+input[type="submit"],
+svg,
+[role="button"],
+.select-none-native {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Feedback de clique nativo (:active) */
+.active-press:active {
+  opacity: 0.75;
+  transform: scale(0.98);
+  transition: transform 0.05s ease, opacity 0.05s ease;
+}
+
+/* Acessibilidade: Aumenta a área de toque física para 44px sem alterar o layout visual */
+.min-touch-target {
+  position: relative;
+}
+.min-touch-target::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 44px;
+  min-height: 44px;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+

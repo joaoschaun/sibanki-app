@@ -1,4 +1,4 @@
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors")({origin: true});
@@ -1523,7 +1523,12 @@ exports.sentinelaWeekly = functions.pubsub
 // =============================================
 // OCR — FOTO → LANÇAMENTO FINANCEIRO
 // =============================================
-exports.ocrToEntry = functions.runWith({ timeoutSeconds: 30, memory: "512MB" }).https.onCall(async (data, context) => {
+const ocrToEntryOptions = {
+  timeoutSeconds: 30,
+  memory: "512MB",
+  ...(enforceAppCheck ? { enforceAppCheck: true } : {}),
+};
+exports.ocrToEntry = functions.runWith(ocrToEntryOptions).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Faça login.");
   }
@@ -1553,7 +1558,12 @@ exports.ocrToEntry = functions.runWith({ timeoutSeconds: 30, memory: "512MB" }).
 // =============================================
 // STT — VOZ → LANÇAMENTO FINANCEIRO
 // =============================================
-exports.sttToEntry = functions.runWith({ timeoutSeconds: 30, memory: "512MB" }).https.onCall(async (data, context) => {
+const sttToEntryOptions = {
+  timeoutSeconds: 30,
+  memory: "512MB",
+  ...(enforceAppCheck ? { enforceAppCheck: true } : {}),
+};
+exports.sttToEntry = functions.runWith(sttToEntryOptions).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Faça login.");
   }

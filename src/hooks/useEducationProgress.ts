@@ -11,7 +11,8 @@
 import { useMemo, useCallback, useState } from 'react';
 import { TRAILS, ALL_LESSONS, TOTAL_XP, type Trail } from '../constants/educationContent';
 import { useAppContext } from '../context/AppContext';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
+import { fnsBR } from '../firebase';
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
@@ -80,9 +81,8 @@ export function useEducationProgress() {
       // Bonus SibCoin na primeira conclusão
       if (!progress[lessonId] && user?.uid) {
         try {
-          const fns = getFunctions(undefined, 'southamerica-east1');
           const trigger = httpsCallable<{ event: string; metadata?: object }, unknown>(
-            fns,
+            fnsBR,
             'triggerSibcoinEvent',
           );
           await trigger({ event: 'consultor_usado', metadata: { lessonId, quizScore } });

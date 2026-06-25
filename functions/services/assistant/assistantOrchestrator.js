@@ -9,7 +9,7 @@ const { logEvent, logError } = require("../../logger");
 const brapiService = require("../market/brapiService");
 const fixedIncomeService = require("../market/fixedIncomeService");
 const marketDataHub = require("../market/marketDataHub");
-const { calculateGrahamIntrinsicValue, calculateBazinPriceCeiling, buildSolidezChecklist } = require("../market/valuationEngine");
+const { registry } = require("../ai");
 const { detectMarketIntent } = require("../llm/marketIntentService");
 const { retrieveRelevantChunks } = require("../llm/brazilianFinanceKnowledge");
 const { buildConsultantPrompt } = require("../llm/sovereignSystemPrompt");
@@ -79,16 +79,14 @@ async function buildAssistantPrompt(message, contextStr, loggerTag) {
             const analysis = await marketDataHub.getAssetAnalysis(resolvedTicker);
             if (analysis.fundamentals) {
               const f = analysis.fundamentals;
-              const graham = calculateGrahamIntrinsicValue(
-                analysis.quote?.price || 0, f.lpa, f.vpa
-              );
-              const bazin  = calculateBazinPriceCeiling(
-                analysis.quote?.price || 0, f.dy
-              );
-              const solidez = buildSolidezChecklist({
-                roe: f.roe, margin: f.operatingMargin,
-                debtToEquity: f.debtToEquity, currentRatio: f.currentRatio,
-                pvp: f.pbRatio, pe: f.peRatio, dy: f.dy,
+              // Passo 2: valuation via registry de tools (delega ao mesmo valuationEngine
+              // determinístico — saída idêntica, comportamento preservado).
+              const { graham, bazin, solidez } = await registry.run("valuation.equity", {
+                price: analysis.quote?.price || 0,
+                lpa: f.lpa,
+                vpa: f.vpa,
+                dy: f.dy,
+                fundamentals: f,
               });
               payloadResponse.fundamentals    = f;
               payloadResponse.grahamResult    = graham;

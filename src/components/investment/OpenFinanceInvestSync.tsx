@@ -23,7 +23,8 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
+import { fnsBR } from '../../firebase';
 import {
   Link2, RefreshCw, Loader2, CheckCircle2, AlertTriangle,
   TrendingUp, Clock, ExternalLink,
@@ -64,8 +65,7 @@ export function OpenFinanceInvestSync() {
     setSyncMsg('');
     setSyncError('');
     try {
-      const fns = getFunctions(undefined, 'southamerica-east1');
-      const fn  = httpsCallable<{ uid: string }, any>(fns, 'pluggySyncInvestments');
+      const fn  = httpsCallable<{ uid: string }, any>(fnsBR, 'pluggySyncInvestments');
       const { data: result } = await fn({ uid: user.uid });
       setSyncMsg(
         result?.count

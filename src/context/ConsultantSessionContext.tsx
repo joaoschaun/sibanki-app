@@ -19,8 +19,25 @@ import { buildFinancialContextString } from '../utils/consultantContext';
 import { analyzeInstallmentDecision } from '../utils/decisionEngine';
 import { suggestBestCardForPurchase, type CardPurchaseSuggestion } from '../utils/suggestBestCardForPurchase';
 import { trackPlatformEvent } from '../services/platformEvents';
+import { matchModuleByPath } from '../constants/appModules';
 
 import type { Card, Entry } from '../types/userData';
+
+/**
+ * Contexto de tela: informa à CECI o que o usuário está vendo agora, para que
+ * ela possa responder dúvidas sobre aquele conteúdo (substitui o antigo FAB
+ * contextual por enriquecimento do payload, sem botão flutuante em toda tela).
+ */
+function buildScreenContext(): string {
+  try {
+    const path = window.location.pathname;
+    const mod = matchModuleByPath(path);
+    const tela = mod ? mod.label : 'Outra';
+    return `Tela atual do usuário: ${tela} (${path}). Se a pergunta for vaga, assuma que é sobre esta tela.`;
+  } catch {
+    return '';
+  }
+}
 
 export interface ConsultantChatMessage {
   role: 'user' | 'ai';
@@ -345,7 +362,7 @@ export function ConsultantSessionProvider({ children }: { children: ReactNode })
 
         const reqBody = {
           message: `${historyPrompt}${txt}`,
-          context: `${contextStr}\nPerfil consolidado:\n${advisorSnapshot}`
+          context: `${contextStr}\nPerfil consolidado:\n${advisorSnapshot}\n${buildScreenContext()}`
         };
 
         const fetchRes = await fetch(functionUrl, {

@@ -23,11 +23,12 @@ interface BankLogoProps {
 /** Bancos com logo oficial disponível em /public/banks/{slug}.svg */
 const HAS_REAL_LOGO = new Set([
   'nubank', 'itau', 'bradesco', 'santander', 'bb', 'caixa',
-  'inter', 'c6', 'pagbank', 'mercadopago', 'btg', 'xp',
+  'inter', 'c6', 'picpay', 'pagbank', 'neon', 'mercadopago',
+  'next', 'agi', 'btg', 'xp',
   'sicoob', 'sicredi', 'banrisul', 'original',
   'stone', 'safra', 'brb', 'bs2', 'sofisa',
   'cresol', 'credisis', 'unicred', 'uniprime', 'ailos',
-  'banestes', 'bnb',
+  'banestes', 'bnb', 'will',
 ]);
 
 export function BankLogo({ bank, size = 28, className = '', backgroundHex }: BankLogoProps) {

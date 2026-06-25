@@ -151,6 +151,14 @@ module.exports = defineConfig({
       },
     },
     {
+      name: 'mobile-viewport',
+      testMatch: '**/mobile-viewport.spec.cjs',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: STAGING_URL,
+      },
+    },
+    {
       name: 'admin-security',
       testMatch: '**/admin-security.spec.cjs',
       use: {

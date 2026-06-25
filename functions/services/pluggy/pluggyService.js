@@ -3,7 +3,7 @@
  * Credenciais: PLUGGY_CLIENT_ID / PLUGGY_CLIENT_SECRET no .env (dev) ou env vars do Firebase (prod)
  */
 const { PluggyClient } = require('pluggy-sdk');
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 
 function getPluggyCredentials() {
   const clientId = String(process.env.PLUGGY_CLIENT_ID || '').trim();

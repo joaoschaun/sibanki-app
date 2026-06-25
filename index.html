@@ -23,32 +23,80 @@
   <meta name="twitter:image" content="https://sibanki.com.br/og-image.png" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" type="image/svg+xml" href="/icon-192.svg" />
-  <link rel="apple-touch-icon" href="/icon-192.svg" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <!-- iOS PWA splash screens (portrait) — evita que o iOS use screenshot da última sessão -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)"   href="/splash/750x1334.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)"   href="/splash/828x1792.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width:360px) and (device-height:780px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)"   href="/splash/1080x2340.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:812px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)"   href="/splash/1125x2436.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width:390px) and (device-height:844px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)"   href="/splash/1170x2532.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width:393px) and (device-height:852px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)"   href="/splash/1179x2556.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)"   href="/splash/1242x2688.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width:428px) and (device-height:926px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)"   href="/splash/1284x2778.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)"   href="/splash/1290x2796.png">
+
   <title>Sibanki - Controle Financeiro</title>
   <style>
-    /* Splash pré-React: evita tela branca/preta vazia enquanto o bundle carrega */
     html, body { margin: 0; background: #0a0a0a; }
+
+    /* ── Splash pré-React ─────────────────────────────────────────────────────
+       Design idêntico ao AppLoadingScreen React — elimina o "pop" visual
+       quando o bundle JS assume o controle. Animações em CSS puro (sem JS).
+       ──────────────────────────────────────────────────────────────────────── */
     #sib-splash {
-      position: fixed; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 12px;
-      background: #0a0a0a; color: #fff;
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px;
+      background: #0a0a0a;
       font-family: Inter, -apple-system, system-ui, sans-serif;
     }
-    #sib-splash .sib-logo { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; animation: sib-pulse 1.6s ease-in-out infinite; }
-    #sib-splash .sib-tag { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.45); }
-    @keyframes sib-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+    #sib-icon-wrap {
+      position: relative; width: 96px; height: 96px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #sib-ring {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      animation: sib-spin 1.6s cubic-bezier(.6,.15,.4,.85) infinite;
+    }
+    #sib-bench {
+      position: relative; z-index: 1;
+      animation: sib-pulse 2s ease-in-out infinite;
+    }
+    #sib-text { text-align: center; }
+    .sib-wordmark {
+      font-size: 13px; font-weight: 700; letter-spacing: 0.25em;
+      text-transform: uppercase; color: #fff; margin-bottom: 10px;
+    }
+    .sib-subtitle {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
+      text-transform: uppercase; color: rgba(255,255,255,0.45);
+      animation: sib-pulse 2s ease-in-out infinite;
+    }
+    @keyframes sib-spin  { to { transform: rotate(360deg); } }
+    @keyframes sib-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
   </style>
 </head>
 <body>
   <div id="root">
     <div id="sib-splash">
-      <svg class="sib-logo" width="148" height="34" viewBox="0 0 132 30" xmlns="http://www.w3.org/2000/svg" style="display:block">
-        <rect x="5.6" y="4.4" width="16" height="4.6" rx="2.3" fill="#f5f5f5"/>
-        <rect x="5" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(16 7.1 9.5)"/>
-        <rect x="17.6" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(-16 19.7 9.5)"/>
-        <text x="31" y="21.5" font-family="Inter, sans-serif" font-size="17.5" font-weight="700" fill="#f5f5f5" letter-spacing="-0.7">sibanki</text>
-      </svg>
-      <div class="sib-tag">Seu sistema operacional financeiro</div>
+      <div id="sib-icon-wrap">
+        <!-- Anel girando -->
+        <svg id="sib-ring" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2.5"/>
+          <circle cx="50" cy="50" r="44" fill="none" stroke="#f5f5f5" stroke-width="2.5"
+                  stroke-dasharray="52 224" stroke-linecap="round"/>
+        </svg>
+        <!-- Ícone banquinho (pulsando) -->
+        <svg id="sib-bench" width="36" height="36" viewBox="0 0 64 64" aria-hidden="true">
+          <rect x="15" y="17" width="34" height="10" rx="5" fill="#f5f5f5"/>
+          <rect x="14" y="26" width="9"  height="27" rx="4.5" fill="#f5f5f5" transform="rotate(16 18.5 28)"/>
+          <rect x="41" y="26" width="9"  height="27" rx="4.5" fill="#f5f5f5" transform="rotate(-16 45.5 28)"/>
+        </svg>
+      </div>
+      <div id="sib-text">
+        <div class="sib-wordmark">sibanki</div>
+        <div class="sib-subtitle">Calculando a sua soberania</div>
+      </div>
     </div>
   </div>
   <script type="module" src="/src/main.tsx"></script>

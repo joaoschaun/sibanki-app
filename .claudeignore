@@ -1,0 +1,27 @@
+# Caminhos LEGADO / gerados — ignorar em buscas e leitura (não são fonte de verdade).
+# Criado na limpeza de 17/06/2026. Ver bloco "MAPA DE VERSÕES" no topo do CLAUDE.md.
+
+# Clones de worktrees de branches abandonados (duplicam o repo inteiro)
+.claude/worktrees/
+
+# Alvo de deploy legado (fallback) — build React congelado, NÃO é produção
+public/
+
+# Código legado arquivado
+_legacy/
+
+# Saída de build (gerada por `vite build`)
+dist/
+
+# Artefatos / dumps obsoletos
+firebase.json.bak
+tsc_errors.txt
+tsc_errors_new.txt
+
+# Dependências e relatórios de teste
+node_modules/
+functions/node_modules/
+playwright-report/
+test-results/
+coverage/
+functions/coverage/

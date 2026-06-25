@@ -357,8 +357,27 @@ exports.getSibcoinMissions = onCall(
     const { auth } = request;
     if (!auth) throw new HttpsError('unauthenticated', 'Autenticação necessária');
 
-    const userSnap = await admin.firestore().collection('users').doc(auth.uid).get();
-    const userData = userSnap.exists ? userSnap.data() : {};
+    let userSnap = await admin.firestore().collection('users').doc(auth.uid).get();
+    let userData = userSnap.exists ? userSnap.data() : {};
+
+    let dataChanged = false;
+
+    // Verificar se há missões "once" pendentes que já podem ser concluídas de acordo com o estado do usuário
+    for (const m of MISSIONS) {
+      if (m.active && m.frequency === 'once' && !isMissionCompleted(m, userData)) {
+        if (isEventStateValid(m.requiredEvent, userData)) {
+          // Processa o evento para conceder a recompensa
+          await processEvent(auth.uid, m.requiredEvent);
+          dataChanged = true;
+        }
+      }
+    }
+
+    // Se houve alteração de dados, reler o documento do usuário
+    if (dataChanged) {
+      userSnap = await admin.firestore().collection('users').doc(auth.uid).get();
+      userData = userSnap.exists ? userSnap.data() : {};
+    }
 
     const userProgress = (userSnap.exists ? userSnap.data()?.sibcoinProgress : {}) || {};
 

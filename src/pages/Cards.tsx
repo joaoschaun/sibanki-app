@@ -1,5 +1,6 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { CardsSkeleton } from '../components/ui/PageSkeleton';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -47,6 +48,8 @@ function getDiasParaFecha(card: Card): number {
 
 export default function Cards() {
   const { user, cards, entries, categories, loading } = useAppContext();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [name, setName] = useState('');
   const [limit, setLimit] = useState('');
@@ -176,6 +179,18 @@ export default function Cards() {
   const selectedCatalogPreview = resolvedBenefitsCatalogId
     ? getCatalogEntry(resolvedBenefitsCatalogId)
     : undefined;
+
+  // Quando o CreditHub navega com { state: { autoOpenAdd: true } }, abre o modal
+  // automaticamente na chegada. O state é limpo para não reabrir em re-renders.
+  useEffect(() => {
+    if ((location.state as { autoOpenAdd?: boolean } | null)?.autoOpenAdd) {
+      setAddBenefitsManual(false);
+      setAddPendingBenefits(null);
+      setAddBenefitsBadge(false);
+      setModalOpen(true);
+      navigate('/credito/cartoes', { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
 
   const touchManualBenefits = () => setBenefitsFromCatalog(false);
 

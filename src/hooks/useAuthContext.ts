@@ -13,15 +13,9 @@
  * atualizar todos os 43 consumidores do AppContext).
  */
 
-import { useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAuthContext as useRealAuthContext } from '../context/AuthContext';
 
 export function useAuthContext() {
-  const { user, authLoading, avatarURL } = useAppContext();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(() => ({ user, authLoading, avatarURL }), [
-    user?.uid,
-    authLoading,
-    avatarURL,
-  ]);
+  return useRealAuthContext();
 }
+

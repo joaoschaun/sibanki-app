@@ -17,13 +17,6 @@ service cloud.firestore {
       return sameTenant(tenantId) && request.auth.token.role == "admin";
     }
 
-    function isTenantUser(tenantId) {
-      return sameTenant(tenantId) && (
-        request.auth.token.role == "user" ||
-        request.auth.token.role == "admin"
-      );
-    }
-
     function isOwner(userId) {
       return isAuthed() && request.auth.uid == userId;
     }
@@ -134,6 +127,14 @@ service cloud.firestore {
       allow read, create, update, delete: if isAuthed() && request.auth.uid == userId;
     }
 
+    // Subcoleção de lançamentos (migração entries[] inline → subcoleção paginada —
+    // ver docs/MIGRACAO-ENTRIES-SUBCOLECAO.md). Pré-requisito Fase 0: sem esta regra
+    // o cliente cai no default-deny e o dual-write/leitura nova são bloqueados.
+    // Mesmo dono do uid (o backfill via Admin SDK ignora rules).
+    match /users/{userId}/entries/{docId} {
+      allow read, create, update, delete: if isAuthed() && request.auth.uid == userId;
+    }
+
     // Uso de IA (contadores de limite por plano) — escrito SÓ pelo Admin SDK
     // (services/user/usageLimitService). Cliente apenas lê para exibir saldo restante.
     match /users/{userId}/usage/{docId} {
@@ -178,11 +179,24 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Coleção de convites família (legado root)
+    // Coleção de convites família/casal (legado root) — doc: { from, fromName,
+    // fromEmail, toEmail, status, ... } (ver src/pages/Casal.tsx).
+    // SEC (health-check 23/06): antes `allow read: if isAuthed()` expunha o
+    // e-mail de TODOS os convites a qualquer usuário logado (vazamento de PII).
+    // Agora só o remetente (from == uid) ou o destinatário (toEmail == e-mail do
+    // token) leem/atualizam — alinhado às queries de Casal.tsx e ao padrão de
+    // consorcio_invites/crediamigo_invites. `update` passou a incluir o
+    // destinatário (aceitar/recusar convite), que antes ficava bloqueado.
     match /invites/{inviteId} {
-      allow read: if isAuthed();
-      allow create: if isAuthed();
-      allow update: if isAuthed() && resource.data.from == request.auth.uid;
+      allow read: if isAuthed() && (
+        resource.data.from == request.auth.uid ||
+        resource.data.toEmail == request.auth.token.email
+      );
+      allow create: if isAuthed() && request.resource.data.from == request.auth.uid;
+      allow update: if isAuthed() && (
+        resource.data.from == request.auth.uid ||
+        resource.data.toEmail == request.auth.token.email
+      );
       allow delete: if false;
     }
 

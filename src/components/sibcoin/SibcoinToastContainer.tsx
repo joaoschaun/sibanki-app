@@ -32,7 +32,7 @@ export function SibcoinToastContainer() {
     <>
       <style>{KEYFRAMES}</style>
       <div
-        className="fixed bottom-4 right-4 left-4 z-[9999] flex flex-col items-stretch sm:items-end sm:left-auto gap-3 pointer-events-none max-w-[min(calc(100vw-2rem),360px)] sm:max-w-none sm:mr-0 ml-auto sm:bottom-6 sm:right-6"
+        className="fixed bottom-20 right-4 left-4 z-[9999] flex flex-col items-stretch lg:items-end lg:left-auto gap-3 pointer-events-none max-w-[min(calc(100vw-2rem),360px)] lg:max-w-none lg:mr-0 ml-auto lg:bottom-6 lg:right-6"
         aria-live="polite"
         aria-label="SibCoin notifications"
       >

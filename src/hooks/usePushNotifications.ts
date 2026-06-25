@@ -20,10 +20,36 @@ export function usePushNotifications(uid: string | undefined) {
   });
 
   useEffect(() => {
-    if ('Notification' in window) {
-      setState((s) => ({ ...s, permission: Notification.permission }));
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    
+    const currentPermission = Notification.permission;
+    setState((s) => ({ ...s, permission: currentPermission }));
+
+    if (currentPermission === 'granted' && uid) {
+      let isMounted = true;
+      const fetchToken = async () => {
+        try {
+          const { getMessaging, getToken } = await import('firebase/messaging');
+          const { default: app } = await import('../firebase');
+          const messaging = getMessaging(app);
+
+          const token = await getToken(messaging, {
+            vapidKey: import.meta.env.VITE_VAPID_KEY || '',
+          });
+
+          if (token && isMounted) {
+            setState((s) => ({ ...s, token }));
+          }
+        } catch (err) {
+          console.warn('Erro ao recuperar token FCM no mount:', err);
+        }
+      };
+      fetchToken();
+      return () => {
+        isMounted = false;
+      };
     }
-  }, []);
+  }, [uid]);
 
   const requestPermission = useCallback(async () => {
     if (!state.supported || !uid) return;
@@ -52,6 +78,19 @@ export function usePushNotifications(uid: string | undefined) {
           notificacoesPush: true,
         });
         setState((s) => ({ ...s, token, loading: false }));
+
+        // Dispara uma notificação local imediata de confirmação
+        if ('Notification' in window && Notification.permission === 'granted') {
+          try {
+            new Notification("Notificações Ativas! 📈", {
+              body: "Você receberá alertas de orçamento e insights financeiros diretamente aqui.",
+              icon: "/icon-192.svg",
+              badge: "/icon-192.svg"
+            });
+          } catch (e) {
+            console.warn('Erro ao disparar notificação local:', e);
+          }
+        }
       } else {
         setState((s) => ({ ...s, loading: false, error: 'Token não gerado. Verifique as permissões do navegador.' }));
       }

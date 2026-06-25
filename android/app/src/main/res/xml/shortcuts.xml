@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Capability for Custom Intent integration with Google Assistant -->
+    <capability android:name="custom.actions.intent.ADD_TO_SIBANKI">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.sibanki.app"
+            android:targetClass="com.sibanki.app.MainActivity"
+            android:data="https://virtus-financeiro-cd7bd.web.app/app/?voice={voice}">
+            <parameter
+                android:name="phrase"
+                android:key="voice"/>
+        </intent>
+    </capability>
+
+    <!-- Static App Shortcut for launcher icon long press -->
+    <shortcut
+        android:shortcutId="quick_launch"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_quick_launch_short"
+        android:shortcutLongLabel="@string/shortcut_quick_launch_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.sibanki.app"
+            android:targetClass="com.sibanki.app.MainActivity"
+            android:data="https://virtus-financeiro-cd7bd.web.app/app/?open=consultant" />
+    </shortcut>
+</shortcuts>

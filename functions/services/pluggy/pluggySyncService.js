@@ -3,7 +3,7 @@
  * Contas, transações, cartões, investimentos, empréstimos, identidade, faturas de cartão (bills), consentimentos;
  * recalcula creditSnapshot e finScore. Catálogo de recursos: openFinanceResourceCatalog.js
  */
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 const { getPluggyClientOrThrow } = require('./pluggyService');
 const { buildCreditSnapshot } = require('../../utils/creditSnapshot');
 const { calculateFinScore } = require('../../utils/calculateFinScore');

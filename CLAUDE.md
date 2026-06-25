@@ -19,6 +19,33 @@
 > 4. Pipeline Cursor/Antigravity foi aposentado (jun/2026). Todo o desenvolvimento
 >    é feito pelo Claude. Deploys/escritas em prod só com autorização explícita do João.
 >
+> ---
+>
+> ## 🗺️ MAPA DE VERSÕES — LEIA ANTES DE EDITAR (atualizado 17/06/2026)
+>
+> **O código vive em `C:\Users\jscha\virtus-financeiro`.** A pasta
+> `OneDrive\Documentos\Claude\Projects\sibanki` é só conhecimento (`.docx`/análises),
+> **NÃO** contém código — nunca procure código lá.
+>
+> **✅ VERSÃO ATUAL (produção / o que editar):**
+> - App: `src/` → build `dist/` → `firebase deploy --only hosting:app` → **`sibanki.com.br`**
+> - Cloud Functions: **`functions/index.js`** (+ `functions/services/`)
+> - Landing: `landing/` (`hosting:landing`) · Admin: `src/admin/` + `admin.html` (`hosting:admin`)
+> - Entrada do app: `index.html` → `src/main.tsx` → `src/App.tsx`
+>
+> **🚫 IGNORAR (legado / NÃO ler como verdade, NÃO editar):**
+> - **`.claude/worktrees/`** — clones de branches abandonados (duplicam o repo inteiro).
+>   Buscas (grep/glob) podem trazer arquivos daqui por engano. **Sempre ignorar.**
+> - **`public/`** — alvo de deploy `hosting:legado` (fallback/rollback). Build React
+>   **congelado**. Não é a produção. Ver `public/LEIA-LEGADO.md`.
+> - **`index.js` na raiz** (se ainda existir) — monólito de Cloud Functions **antigo**,
+>   substituído por `functions/index.js`. Movido para `_legacy/` na limpeza de 17/06.
+> - Artefatos obsoletos: `firebase.json.bak`, `tsc_errors*.txt`, `index.html`/`*.bak` soltos.
+> - **`docs/` é arquivo histórico** de ~70 análises; a fonte VIVA é `docs/CHANGELOG.md` +
+>   `docs/INVENTARIO-COMPLETO-SISTEMA.md`. Demais `docs/ANALISE-*` são pontuais/datados.
+>
+> ---
+>
 > **Status atual (13/04/2026):** React SPA é a PRODUÇÃO. Cutover legado→React concluído.
 > 35/35 testes Playwright (`npm run test:react-smoke`: PWA + setup auth `storageState` + login isolado + 24 rotas). 22/22 health checks verdes. 52 Cloud Functions ativas (inclui `valoresAReceberApi`).
 > **Feature flags:** Todas liberadas para todos os planos (fase de construção).
@@ -67,7 +94,10 @@ virtus-financeiro/
 │   ├── index.css               Design tokens (CSS vars: --si-bg, --si-card, etc.)
 │   ├── main.tsx                Entry point React
 │   ├── context/
-│   │   ├── AppContext.tsx       ÚNICO listener Firestore — dados + auth
+│   │   ├── AuthContext.tsx       Gerencia sessão Firebase Auth + Claims admin
+│   │   ├── FinancialDataContext.tsx Listener Firestore (dados + entriesOverflow) + Sync OF
+│   │   ├── SibcoinContext.tsx    Gatilhos em background do SibCoin (streak, login)
+│   │   ├── AppContext.tsx        Fachada unificada retrocompatível de dados + auth
 │   │   ├── IntelligenceContext.tsx  Cálculos Ld/Sg/Sv/financialProfile
 │   │   └── ConsultantSessionContext.tsx  Sessão do chat do Assistente (drawer + /consultor-ia)
 │   ├── hooks/
@@ -133,9 +163,9 @@ virtus-financeiro/
 │   │   ├── user/               Ciclo de vida do usuário
 │   │   ├── whatsapp/           Meta Cloud API
 │   │   └── entryWizard.js      Wizard multi-turn WhatsApp
-├── public/                     App legado (fallback/rollback)
-│   ├── app/                    App legado JS/HTML
-│   ├── admin/index.html        Admin panel (vanilla JS + Firebase compat)
+├── public/                     ⚠ LEGADO — alvo `hosting:legado` (fallback). Build React
+│   │                           congelado; NÃO é produção. Ver public/LEIA-LEGADO.md
+│   ├── admin/index.html        (legado) painel admin vanilla — substituído por src/admin/
 │   ├── manifest.json           PWA manifest
 │   ├── firebase-messaging-sw.js FCM background notifications
 │   ├── sw.js                   Service Worker (cache offline)
@@ -213,12 +243,32 @@ virtus-financeiro/
 
 ## 🧠 CONTEXTS (A ARQUITETURA DE DADOS)
 
-### AppContext (`src/context/AppContext.tsx`)
-**Responsabilidade:** "O que o usuário TEM" — única fonte de verdade para dados e auth.
+- O Sibanki divide o gerenciamento de estado e dados em subcontextos especializados, coordenados por uma fachada unificada para otimizar re-renderizações e facilitar a manutenção.
+
+---
+
+### AuthContext (`src/context/AuthContext.tsx`)
+**Responsabilidade:** Gerenciar a sessão ativa do usuário no Firebase Auth (`onAuthStateChanged`) e calcular claims administrativas (`isAdmin`).
+*   Componentes que utilizam apenas dados de auth e status de carregamento devem chamar `useAuthContext()` diretamente de `src/hooks/useAuthContext.ts` para não sofrer re-renderizações quando os saldos ou transações no Firestore forem atualizados.
+
+---
+
+### FinancialDataContext (`src/context/FinancialDataContext.tsx`)
+**Responsabilidade:** "O que o usuário TEM" — única fonte de verdade para os dados financeiros e sincronização do Open Finance.
 
 **Abre 2 listeners Firestore (e só 2):**
 1. `onSnapshot(doc(db, 'users', uid))` → dados principais do usuário
-2. `onSnapshot(collection(db, 'users', uid, 'entriesOverflow'))` → lançamentos arquivados
+2. `onSnapshot(collection(db, 'users', uid, 'entriesOverflow'))` → lançamentos arquivados (limite de 1000)
+
+---
+
+### SibcoinContext (`src/context/SibcoinContext.tsx`)
+**Responsabilidade:** Processar em segundo plano as missões e streaks de login do SibCoin sem bloquear a renderização dos componentes de UI.
+
+---
+
+### AppContext (`src/context/AppContext.tsx`)
+**Responsabilidade:** Fachada retrocompatível unificada que combina e expõe os valores unificados de `AuthContext` e `FinancialDataContext` por meio de `useAppContext()` para garantir retrocompatibilidade com as páginas e componentes existentes do SPA.
 
 **O que expõe:**
 ```typescript
@@ -643,12 +693,9 @@ Vanilla HTML/JS com Firebase compat SDK v9.23.0. Design: dark theme com CSS vari
 # 1. Build React
 npm run build                        # → dist/
 
-# 2. Copiar para public/ (preserva admin/, docs/, etc.)
-Copy-Item dist\assets\* public\assets\ -Recurse -Force
-Copy-Item dist\index.html public\index.html -Force
-
-# 3. Deploy produção (React SPA)
-npm run deploy:app       # build + prepare-dist + hosting:app → dist/
+# 2. Deploy produção (React SPA) — NÃO copie nada para public/.
+#    `deploy:app` roda test:unit + build + prepare-dist.mjs e publica de dist/.
+npm run deploy:app       # build + prepare-dist + hosting:app → dist/ → sibanki.com.br
 
 # 4. Deploy legado (fallback/rollback)
 npm run deploy:legado    # syntax-check + hosting:legado → public/

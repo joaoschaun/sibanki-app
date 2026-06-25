@@ -75,15 +75,53 @@ function createFirestoreMock(initialDocs = {}) {
     };
   }
 
+  function parseDotNotation(data) {
+    const result = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (key.includes(".")) {
+        const parts = key.split(".");
+        let current = result;
+        for (let i = 0; i < parts.length - 1; i++) {
+          const part = parts[i];
+          if (!current[part]) current[part] = {};
+          current = current[part];
+        }
+        current[parts[parts.length - 1]] = value;
+      } else {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
+
+  function deepMerge(target, source) {
+    for (const [key, value] of Object.entries(source)) {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        if (!target[key]) target[key] = {};
+        deepMerge(target[key], value);
+      } else {
+        target[key] = value;
+      }
+    }
+  }
+
   function makeDocRef(path) {
     return {
+      path,
       id: path.split("/").pop(),
       async get() {
         return getDocSnapshot(path);
       },
       async set(data, options = {}) {
+        const parsedData = parseDotNotation(data);
         const current = docs.get(path) || {};
-        const next = options.merge ? { ...current, ...data } : data;
+        let next;
+        if (options.merge) {
+          next = { ...current };
+          deepMerge(next, parsedData);
+        } else {
+          next = parsedData;
+        }
         docs.set(path, next);
         operations.sets.push({ path, data: next, options });
       },
@@ -110,6 +148,9 @@ function createFirestoreMock(initialDocs = {}) {
         },
         set(ref, data, options) {
           return ref.set(data, options);
+        },
+        update(ref, data) {
+          return ref.set(data, { merge: true });
         },
       };
       return cb(tx);

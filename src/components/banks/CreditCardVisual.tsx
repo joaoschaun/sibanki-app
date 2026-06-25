@@ -11,7 +11,7 @@
  * Proporção padrão de cartão: 85.6mm × 54mm = 1.586:1
  */
 import { BankLogo } from './BankLogo';
-import { identifyBank } from './bankData';
+import { identifyBank, BANKS } from './bankData';
 
 // ── Bandeiras SVG inline ───────────────────────────────────────────────────────
 
@@ -115,6 +115,12 @@ interface CreditCardVisualProps {
   size?: 'full' | 'md' | 'sm';
   /** Fatura atual */
   currentBill?: number;
+  /**
+   * Slug ou nome do banco salvo no cadastro (ex: "Inter", "inter").
+   * Usado como fallback quando `name` não contém o nome do banco
+   * (ex: card.name = "Black", card.bank = "Inter").
+   */
+  bankName?: string;
 }
 
 export function CreditCardVisual({
@@ -126,8 +132,13 @@ export function CreditCardVisual({
   className = '',
   size = 'full',
   currentBill,
+  bankName,
 }: CreditCardVisualProps) {
-  const bank = identifyBank(name);
+  const bank =
+    identifyBank(name) ??
+    (bankName
+      ? (BANKS.find((b) => b.slug === bankName.toLowerCase()) ?? identifyBank(bankName))
+      : null);
 
   const primary   = color ?? bank?.primary   ?? '#1e3a5f';
   const secondary = color

@@ -143,13 +143,8 @@ export function calculateDaysOfFreedom(params: {
   }, 0);
 
   // 2. Investimentos líquidos (D+0 a D+30)
-  // SOV-3-liquidez (auditoria 26/04/2026, decisão produto): lista restrita aos
-  // tipos comprovadamente líquidos D+30. "renda fixa", "lci", "lca" e "cdb"
-  // genérico saíram — Tesouro IPCA+ longo, CDB de prazo fixo, LCI/LCA
-  // emparelhadas com vencimento podem dar prejuízo na venda antecipada.
-  // Quando Investment ganhar campo `vencimento`, retornar essa lógica para
-  // classificação dinâmica baseada na data.
-  const liquidTypeKeys = [
+  // Classificação Pierre: Renda Fixa Líquida tem peso 1.0; Renda Variável tem peso 0.7; outros têm peso 0.0.
+  const liquidRFTypeKeys = [
     'tesouro selic',
     'cdb liquidez diária',
     'cdb liquidez diaria',
@@ -158,14 +153,37 @@ export function calculateDaysOfFreedom(params: {
     'poupança',
     'poupanca',
   ];
-  const liquidInvestments = investments
-    .filter((inv) => {
-      const tipo = (inv.tipo || '').toLowerCase();
-      return liquidTypeKeys.some((t) => tipo.includes(t));
-    })
-    .reduce((sum, inv) => sum + (Number(inv.atual ?? inv.valor) || 0), 0);
+  const liquidRVTypeKeys = [
+    'ações',
+    'açoes',
+    'acoes',
+    'fiis',
+    'fii',
+    'etf',
+    'cripto',
+    'criptomoedas',
+    'bitcoin',
+    'ethereum',
+    'renda variável',
+    'renda variavel',
+  ];
 
-  const realLiquidity = accountLiquidity + liquidInvestments;
+  let liquidRFValue = 0;
+  let liquidRVValue = 0;
+
+  investments.forEach((inv) => {
+    const tipo = (inv.tipo || '').toLowerCase();
+    const valor = Number(inv.atual ?? inv.valor) || 0;
+
+    if (liquidRFTypeKeys.some((t) => tipo.includes(t))) {
+      liquidRFValue += valor;
+    } else if (liquidRVTypeKeys.some((t) => tipo.includes(t))) {
+      liquidRVValue += valor;
+    }
+  });
+
+  const weightedInvestments = (liquidRFValue * 1.0) + (liquidRVValue * 0.7);
+  const realLiquidity = accountLiquidity + weightedInvestments;
 
   // Aplicação da lógica de fallback de liquidez
   let totalLiquidity = realLiquidity;
@@ -239,11 +257,12 @@ export function calculateDaysOfFreedom(params: {
   }
 
   // 4. Renda passiva mensal:
-  //    - Rendimento estimado dos investimentos líquidos (juros mensais)
+  //    - Rendimento estimado dos investimentos líquidos (juros mensais) — apenas Renda Fixa Líquida
   //    - + Soma dos proventos declarados (dividendos de FIIs, JCP de ações, etc.)
   //    SOV-7 (auditoria 26/04/2026): dividendos antes não contavam — sub-estimava
   //    renda passiva especialmente para usuários com FIIs (target Sibanki).
-  const yieldFromLiquid = (isLiquidityEstimated ? 0 : liquidInvestments) * investmentYieldMonthly;
+  //    Excluímos Renda Variável da base de juros presumidos para evitar dupla contagem com os proventos declarados.
+  const yieldFromLiquid = (isLiquidityEstimated ? 0 : liquidRFValue) * investmentYieldMonthly;
   const declaredProventos = investments.reduce((s, inv) => {
     const p = Number(inv.proventosMensais) || 0;
     return p > 0 ? s + p : s;
