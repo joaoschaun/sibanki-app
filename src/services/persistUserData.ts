@@ -6,6 +6,8 @@ import {
 import { mergeInlineAndOverflowEntries } from '../utils/entryUtils';
 import type { CardPurchaseNew } from '../utils/cardCycleUtils';
 import { calculateFinScore } from '../utils/calculateScore';
+import { collectPersistIssues } from './persistValidators';
+import { logClientWarn } from './logging';
 
 import {
   validateEntry,
@@ -181,6 +183,21 @@ export async function updateUserDoc(
   payload: Partial<UserData>,
   writeId: string = generateWriteId(),
 ): Promise<void> {
+  // Backstop de runtime (NÃO-bloqueante): observa writes estruturalmente
+  // malformados (ex.: cartão sem id, value NaN vindo do sync Pluggy) sem impedir
+  // a gravação. Ver persistValidators.ts (item #8 do health-check).
+  try {
+    const issues = collectPersistIssues(payload);
+    if (issues.length) {
+      logClientWarn(
+        'persistUserData.updateUserDoc',
+        `payload com ${issues.length} item(ns) estruturalmente inválido(s)`,
+        uid,
+        { issues: issues.slice(0, 10) },
+      );
+    }
+  } catch { /* observabilidade nunca quebra a escrita */ }
+
   const now = Date.now();
   const currentSig = payloadSignature(payload);
   const state = getDebounce(uid);
@@ -302,6 +319,24 @@ export interface UserDocModification {
 }
 
 export async function modifyUserDoc(uid: string, mod: UserDocModification): Promise<void> {
+  // Backstop de runtime (NÃO-bloqueante): valida cartões do patch + entries anexadas.
+  try {
+    const toCheck: { cards?: unknown; entries?: unknown } = {};
+    if (mod.patch && 'cards' in mod.patch) toCheck.cards = (mod.patch as { cards?: unknown }).cards;
+    if (mod.entries?.append) {
+      toCheck.entries = Array.isArray(mod.entries.append) ? mod.entries.append : [mod.entries.append];
+    }
+    const issues = collectPersistIssues(toCheck);
+    if (issues.length) {
+      logClientWarn(
+        'persistUserData.modifyUserDoc',
+        `entrada com ${issues.length} item(ns) estruturalmente inválido(s)`,
+        uid,
+        { issues: issues.slice(0, 10) },
+      );
+    }
+  } catch { /* observabilidade nunca quebra a escrita */ }
+
   const ref = doc(db, 'users', uid);
   const now = new Date().toISOString();
 
