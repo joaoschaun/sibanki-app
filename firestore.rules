@@ -127,6 +127,14 @@ service cloud.firestore {
       allow read, create, update, delete: if isAuthed() && request.auth.uid == userId;
     }
 
+    // Subcoleção de lançamentos (migração entries[] inline → subcoleção paginada —
+    // ver docs/MIGRACAO-ENTRIES-SUBCOLECAO.md). Pré-requisito Fase 0: sem esta regra
+    // o cliente cai no default-deny e o dual-write/leitura nova são bloqueados.
+    // Mesmo dono do uid (o backfill via Admin SDK ignora rules).
+    match /users/{userId}/entries/{docId} {
+      allow read, create, update, delete: if isAuthed() && request.auth.uid == userId;
+    }
+
     // Uso de IA (contadores de limite por plano) — escrito SÓ pelo Admin SDK
     // (services/user/usageLimitService). Cliente apenas lê para exibir saldo restante.
     match /users/{userId}/usage/{docId} {
