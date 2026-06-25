@@ -80,7 +80,7 @@ function getCard(uid: string, cardId: number) {
   return (store[uid].cards as any[]).find((c) => c.id === cardId);
 }
 function purchase(id: string, cycleKey: string, value: number, extra: Record<string, unknown> = {}) {
-  return { id, cycleKey, value, ...extra };
+  return { id, cycleKey, value, desc: id, date: `${cycleKey}-01`, ...extra };
 }
 
 beforeEach(() => {

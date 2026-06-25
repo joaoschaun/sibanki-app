@@ -212,8 +212,8 @@ describe('lançamentos', () => {
     const entries = entriesOf(uid);
     expect(entries).toHaveLength(2);
     expect(entries.every((e: any) => e.isTransfer === true)).toBe(true);
-    expect(entries.find((e: any) => e.type === 'despesa').account).toBe('Conta A');
-    expect(entries.find((e: any) => e.type === 'receita').account).toBe('Conta B');
+    expect(entries.find((e: any) => e.type === 'despesa')!.account).toBe('Conta A');
+    expect(entries.find((e: any) => e.type === 'receita')!.account).toBe('Conta B');
   });
 
   it('addTransfer é no-op quando origem == destino', async () => {

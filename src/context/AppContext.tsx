@@ -23,6 +23,7 @@ import type {
 } from '../types/openFinance';
 import type { ConsolidatedFinancialProfile } from '../types/platform';
 import type { DataFreshness } from './FinancialDataContext';
+export type { DataFreshness } from './FinancialDataContext';
 
 export interface AppContextValue {
   // ── Auth ──────────────────────────────────────────────────────────────────
