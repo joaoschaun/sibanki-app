@@ -26,6 +26,8 @@ import {
   gridStyle as CHART_GRID,
   axisStyle as CHART_AXIS,
   fmtAxis as fmtBRLAxis,
+  ROSE,
+  BLUE,
 } from '../components/charts/chartConfig';
 import {
   Plus, Package, AlertTriangle, CheckCircle,
@@ -599,8 +601,8 @@ export default function Budget() {
                 <YAxis tickFormatter={fmtBRLAxis} {...CHART_AXIS} width={56} />
                 <Tooltip formatter={(v: unknown) => [`R$ ${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, '']} contentStyle={CHART_TOOLTIP_STYLE} />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={CHART_LEGEND_STYLE} />
-                <Bar dataKey="Gasto"  fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                <Bar dataKey="Orçado" fill="#4F8CFF" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="Gasto"  fill={ROSE} fillOpacity={0.85} radius={[4, 4, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="Orçado" fill={BLUE} fillOpacity={0.85} radius={[4, 4, 0, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
           </section>

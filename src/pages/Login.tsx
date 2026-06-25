@@ -142,12 +142,16 @@ export default function Login() {
     <div className="min-h-screen bg-si-bg grid lg:grid-cols-[1.1fr_1fr]">
       {/* ── Painel de marca (desktop) ─────────────────────────────── */}
       <aside className="hidden lg:flex flex-col justify-between relative overflow-hidden border-r border-si-border p-12 xl:p-16">
+        <div 
+          className="absolute inset-0 pointer-events-none opacity-20 bg-cover bg-center mix-blend-luminosity"
+          style={{ backgroundImage: "url('/assets/mascote-guardiao.png')" }}
+        />
         <div
           className="absolute -top-40 -left-32 w-[640px] h-[640px] pointer-events-none"
           style={{ background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.05) 0%, transparent 62%)' }}
         />
         <a href="https://www.sibanki.com.br" className="text-si-1 relative z-10 w-fit">
-          <BrandLogo height={32} />
+          <BrandLogo height={40} />
         </a>
 
         <div className="relative z-10 max-w-md">
@@ -203,7 +207,7 @@ export default function Login() {
       <main className="flex items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-[400px]">
           <div className="lg:hidden text-si-1 mb-10 flex justify-center">
-            <BrandLogo height={30} />
+            <BrandLogo height={36} />
           </div>
 
           <h2 className="text-si-1 text-[26px] font-extrabold tracking-[-0.02em] mb-1.5">
@@ -224,7 +228,7 @@ export default function Login() {
           )}
 
           {forgotMode ? (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
               {forgotSent ? (
                 <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm text-center">
                   Link de redefinição enviado. Verifique seu e-mail (e a pasta de spam).
@@ -265,7 +269,7 @@ export default function Login() {
               </button>
             </div>
           ) : registerMode ? (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
               {registerDone ? (
                 <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm text-center">
                   Conta criada! Enviamos um e-mail de verificação. Confirme o endereço antes de entrar.
@@ -315,7 +319,7 @@ export default function Login() {
               </button>
             </div>
           ) : (
-            <form onSubmit={handleEmailLogin} className="space-y-4">
+            <form onSubmit={handleEmailLogin} className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
               <div>
                 <label className="block text-[10px] font-bold tracking-[0.18em] uppercase text-si-5 mb-2">
                   E-mail
