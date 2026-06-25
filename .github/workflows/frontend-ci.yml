@@ -94,3 +94,19 @@ jobs:
             echo "::error::Bundle gerado em $SIZE_KB KB, acima de 8 MB."
             exit 1
           fi
+
+  security-audit:
+    name: npm audit (fail on high/critical)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install (npm ci)
+        run: npm ci
+      # R10 (health-check): impede regressão de dependência vulnerável no front.
+      # Falha em high/critical; moderate passa (risco residual documentado).
+      - name: npm audit
+        run: npm audit --audit-level=high
