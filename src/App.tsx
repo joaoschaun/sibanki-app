@@ -1,6 +1,5 @@
-import { lazy, Suspense, type ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { MessageCircle } from 'lucide-react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { IntelligenceProvider } from './context/IntelligenceContext';
 import { ConsultantSessionProvider } from './context/ConsultantSessionContext';
@@ -22,6 +21,7 @@ import { captureRefParam, useReferral } from './hooks/useReferral';
 import { useModuleFlags } from './hooks/useModuleFlags';
 import { matchModuleByPath } from './constants/appModules';
 import { trackPlatformEvent } from './services/platformEvents';
+import { lazyWithReload } from './utils/lazyWithReload';
 
 import Login from './pages/Login';
 import { useState, useEffect } from 'react';
@@ -32,46 +32,46 @@ captureRefParam();
 const sentModuleViews = new Set<string>();
 
 // ── Lazy-loaded pages (code splitting — cada rota vira chunk separado) ──────
-const Dashboard   = lazy(() => import('./pages/Dashboard'));
-const Transactions= lazy(() => import('./pages/Transactions'));
-const Recurring   = lazy(() => import('./pages/Recurring'));
-const Accounts    = lazy(() => import('./pages/Accounts'));
-const Cards       = lazy(() => import('./pages/Cards'));
-const Planning    = lazy(() => import('./pages/Planning'));
-const Budget      = lazy(() => import('./pages/Budget'));
-const Growth      = lazy(() => import('./pages/Growth'));
-const Tools       = lazy(() => import('./pages/Tools'));
-const Social      = lazy(() => import('./pages/Social'));
-const Consultant  = lazy(() => import('./pages/Consultant'));
-const Education   = lazy(() => import('./pages/Education'));
-const Profile     = lazy(() => import('./pages/Profile'));
-const Settings    = lazy(() => import('./pages/Settings'));
-const Reports     = lazy(() => import('./pages/Reports'));
-const Calendar    = lazy(() => import('./pages/Calendar'));
-const Achievements= lazy(() => import('./pages/Achievements'));
-const NotFound    = lazy(() => import('./pages/NotFound'));
-const SolucaoCredito = lazy(() => import('./pages/solutions/SolucaoCredito'));
-const SolucaoConsorcio = lazy(() => import('./pages/solutions/SolucaoConsorcio'));
-const SolucaoSeguro = lazy(() => import('./pages/solutions/SolucaoSeguro'));
-const SolucaoInvestimentosParceiros = lazy(() => import('./pages/solutions/SolucaoInvestimentosParceiros'));
+const Dashboard   = lazyWithReload(() => import('./pages/Dashboard'));
+const Transactions= lazyWithReload(() => import('./pages/Transactions'));
+const Recurring   = lazyWithReload(() => import('./pages/Recurring'));
+const Accounts    = lazyWithReload(() => import('./pages/Accounts'));
+const Cards       = lazyWithReload(() => import('./pages/Cards'));
+const Planning    = lazyWithReload(() => import('./pages/Planning'));
+const Budget      = lazyWithReload(() => import('./pages/Budget'));
+const Growth      = lazyWithReload(() => import('./pages/Growth'));
+const Tools       = lazyWithReload(() => import('./pages/Tools'));
+const Social      = lazyWithReload(() => import('./pages/Social'));
+const Consultant  = lazyWithReload(() => import('./pages/Consultant'));
+const Education   = lazyWithReload(() => import('./pages/Education'));
+const Profile     = lazyWithReload(() => import('./pages/Profile'));
+const Settings    = lazyWithReload(() => import('./pages/Settings'));
+const Reports     = lazyWithReload(() => import('./pages/Reports'));
+const Calendar    = lazyWithReload(() => import('./pages/Calendar'));
+const Achievements= lazyWithReload(() => import('./pages/Achievements'));
+const NotFound    = lazyWithReload(() => import('./pages/NotFound'));
+const SolucaoCredito = lazyWithReload(() => import('./pages/solutions/SolucaoCredito'));
+const SolucaoConsorcio = lazyWithReload(() => import('./pages/solutions/SolucaoConsorcio'));
+const SolucaoSeguro = lazyWithReload(() => import('./pages/solutions/SolucaoSeguro'));
+const SolucaoInvestimentosParceiros = lazyWithReload(() => import('./pages/solutions/SolucaoInvestimentosParceiros'));
 // ── Novos módulos de expansão ────────────────────────────────────────────────
-const Home         = lazy(() => import('./pages/Home'));
-const Casal        = lazy(() => import('./pages/Casal'));
-const Loja         = lazy(() => import('./pages/Loja'));
-const MeuCpf       = lazy(() => import('./pages/MeuCpf'));
-const MeusBoletos  = lazy(() => import('./pages/MeusBoletos'));
-const Sibcoin      = lazy(() => import('./pages/Sibcoin'));
+const Home         = lazyWithReload(() => import('./pages/Home'));
+const Casal        = lazyWithReload(() => import('./pages/Casal'));
+const Loja         = lazyWithReload(() => import('./pages/Loja'));
+const MeuCpf       = lazyWithReload(() => import('./pages/MeuCpf'));
+const MeusBoletos  = lazyWithReload(() => import('./pages/MeusBoletos'));
+const Sibcoin      = lazyWithReload(() => import('./pages/Sibcoin'));
 // Acao 12 (29/03/2026): Hub de Credito — visao consolidada do passivo financeiro
-const CreditHub    = lazy(() => import('./pages/CreditHub'));
-const Filiados     = lazy(() => import('./pages/Filiados'));
-const Quarentena   = lazy(() => import('./pages/Quarentena'));
-const CrediAmigo        = lazy(() => import('./pages/CrediAmigo'));
-const ConsorcioAmigo    = lazy(() => import('./pages/ConsorcioAmigo'));
-const AceitarEmprestimo = lazy(() => import('./pages/AceitarEmprestimo'));
-const AceitarGrupo      = lazy(() => import('./pages/AceitarGrupo'));
-const Assinaturas       = lazy(() => import('./pages/Assinaturas'));
-const Fire              = lazy(() => import('./pages/Fire'));
-const RelatorioIR       = lazy(() => import('./pages/RelatorioIR'));
+const CreditHub    = lazyWithReload(() => import('./pages/CreditHub'));
+const Filiados     = lazyWithReload(() => import('./pages/Filiados'));
+const Quarentena   = lazyWithReload(() => import('./pages/Quarentena'));
+const CrediAmigo        = lazyWithReload(() => import('./pages/CrediAmigo'));
+const ConsorcioAmigo    = lazyWithReload(() => import('./pages/ConsorcioAmigo'));
+const AceitarEmprestimo = lazyWithReload(() => import('./pages/AceitarEmprestimo'));
+const AceitarGrupo      = lazyWithReload(() => import('./pages/AceitarGrupo'));
+const Assinaturas       = lazyWithReload(() => import('./pages/Assinaturas'));
+const Fire              = lazyWithReload(() => import('./pages/Fire'));
+const RelatorioIR       = lazyWithReload(() => import('./pages/RelatorioIR'));
 
 // Admin tem deploy SEPARADO (src/admin/main.tsx → hosting:admin). Não fica no app.
 
@@ -98,28 +98,6 @@ function ModuleGuard({ children }: { children: ReactNode }) {
     }
   }
   return <>{children}</>;
-}
-
-function FloatingConsultantButton() {
-  const location = useLocation();
-  const openDrawer = useUiStore((s) => s.openConsultantDrawer);
-  const drawerOpen = useUiStore((s) => s.consultantDrawerOpen);
-
-  if (drawerOpen) return null;
-  /** Na página do Assistente o painel já está na sidebar e no toggle do header — sem FAB duplicado. */
-  if (location.pathname === '/consultor-ia') return null;
-
-  return (
-    <button
-      type="button"
-      onClick={openDrawer}
-      title="Falar com o Assistente"
-      className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-12 h-12 rounded-full bg-si-card border border-si-border-md text-si-1 shadow-lg hover:bg-si-over-2 transition-all duration-200 hover:scale-105"
-      aria-label="Abrir o Assistente"
-    >
-      <MessageCircle className="w-5 h-5 text-si-2 shrink-0" aria-hidden />
-    </button>
-  );
 }
 
 // ── Shell autenticado (usa AppContext — sem chamadas extras de hook) ──────────
@@ -315,8 +293,7 @@ function AuthenticatedShell() {
           </div>
         </main>
       </div>
-      {/* ── Botão flutuante + drawer do Assistente ───────────────────── */}
-      <FloatingConsultantButton />
+      {/* ── Drawer do Assistente (entrada: aba Assistente no bottom nav + toggle do header) ── */}
       <ConsultantDrawer />
       <SibcoinToastContainer />
       <RegistrationWizard
