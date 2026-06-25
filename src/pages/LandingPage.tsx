@@ -211,7 +211,7 @@ export default function LandingPage() {
           setIsTyping(false);
           setChatMessages(prev => [...prev, { 
             sender: 'bot', 
-            text: '✅ Registrado! Despesa de R$ 75,00 categorizada como Transporte no cartão Nu.',
+            text: '📉 Despesa registrada! R$ 75,00 categorizada como Transporte no cartão Nu.',
             sub: 'Sovereignty Score: 42/100 (Atenção - Uso de crédito para consumo não programado). Recompensa: +1 SibCoin.'
           }]);
         }, 1000);
@@ -225,7 +225,7 @@ export default function LandingPage() {
           setIsTyping(false);
           setChatMessages(prev => [...prev, { 
             sender: 'bot', 
-            text: '📈 Investimento capturado! 10 ativos de Renda Variável (MXRF11) a R$ 9,80. Total: R$ 98,00.',
+            text: '💰 Investimento capturado! 10 ativos de Renda Variável (MXRF11) a R$ 9,80. Total: R$ 98,00.',
             sub: 'Sovereignty Score: 98/100 (Soberano - Aporte gerador de renda passiva). Recompensa: +15 SibCoins!'
           }]);
         }, 1000);
@@ -243,7 +243,7 @@ export default function LandingPage() {
             setIsTyping(false);
             setChatMessages(prev => [...prev, { 
               sender: 'bot', 
-              text: '🍔 Lançamento por Voz Reconciliado! Despesa de R$ 82,00 categorizada como Alimentação na conta Itaú.',
+              text: '📉 Despesa registrada! R$ 82,00 categorizada como Alimentação na conta Itaú.',
               sub: 'Sovereignty Score: 78/100 (Saudável - Compra à vista dentro da cota diária de alimentação).'
             }]);
           }, 1000);

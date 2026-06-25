@@ -17,6 +17,39 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Alinhamento de Emojis, Melhorias Nativas (Capacitor) e App Check (25/06/2026, Antigravity)
+
+- **Padronização de Emojis e Iconografia**:
+  - Unificado o uso de emojis para transações financeiras: `📈` para Receitas, `📉` para Despesas e `💰` para Investimentos.
+  - Atualizado o mock chat da Landing Page (`LandingPage.tsx`), resumo mensal do bot de WhatsApp (`whatsappCommandHandler.js`), mensagens/confirmações e resumos do bot do Telegram (`telegramBot.js`).
+  - Substituído o uso de emojis brutos nas subabas de lançamento e botões de ação na listagem de transações (`Transactions.tsx`) por ícones vetoriais de alta fidelidade da biblioteca Lucide.
+- **Melhorias de Layout Móvel e Acessibilidade**:
+  - Inserido um botão central proeminente com ícone de `Mic` (Lançar) no `BottomNavigation.tsx` que abre o painel da CECI (IA) globalmente.
+  - Ajustado padding-top e padding-bottom em elementos fixos (Header, Sidebar, BottomNavigation, ConsultantDrawer) para respeitar as safe areas (`env(safe-area-inset-top)` e `env(safe-area-inset-bottom)`) do Capacitor.
+  - Implementado resets táteis nativos em `index.css` (remover highlight de toque, prevenir scroll de recarga elástica e seleção de texto em botões).
+- **Google App Actions e Shortcuts Nativos**:
+  - Criado `android/app/src/main/res/xml/shortcuts.xml` definindo a capacidade `custom.actions.intent.ADD_TO_SIBANKI` integrada com Google Assistant e atalho rápido tátil para o launcher do Android.
+  - Registrado o arquivo de shortcuts e string labels no `AndroidManifest.xml` e `strings.xml`.
+- **Firebase App Check Backend**:
+  - Atualizado as funções callables críticas `ocrToEntry` e `sttToEntry` em `functions/index.js` (e `assistantController.js`) para suportarem verificação do token App Check quando a flag `ENFORCE_APP_CHECK` estiver ativa.
+- **Testes & Garantia de Qualidade**:
+  - Criado o arquivo de teste `tests/mobile-viewport.spec.cjs` testando o layout e safe areas em iPhone SE e Pixel 5 simulados no Playwright (2/2 testes passando).
+  - Executados os testes de unidade frontend (170/170 passando) e de backend das Cloud Functions (293/293 passando).
+  - Efetuado deploy em produção do frontend (`npm run deploy:app`) e das funções modificadas (`ocrToEntry`, `sttToEntry`).
+
+### Conclusão Retroativa de Missões do SibCoin (22/06/2026, Antigravity)
+
+- **Conclusão e Crédito Retroativo**:
+  - Atualizado o callable `getSibcoinMissions` em [rewardEngine.js](file:///c:/Users/jscha/virtus-financeiro/functions/services/sibcoin/rewardEngine.js) para processar de forma retroativa e automática missões do tipo `once` cujos critérios estáticos já estejam preenchidos no documento do usuário (como lançamentos, objetivos e investimentos existentes).
+- **Testes Unitários do Backend**:
+  - Criado o arquivo de teste [rewardEngine.test.js](file:///c:/Users/jscha/virtus-financeiro/functions/tests/rewardEngine.test.js) validando o fluxo de missões retroativas com mock de Firestore.
+- **Melhorias no Mock do Firestore**:
+  - Modificado [firestoreMock.js](file:///c:/Users/jscha/virtus-financeiro/functions/tests/helpers/firestoreMock.js) para aceitar atualizações de chaves em dot-notation (aninhamento), suporte a deep merge recursivo de objetos e transações parciais por `update`.
+- **Validação**:
+  - Executados os testes de backend (`npm run test` na pasta `functions/`) $\rightarrow$ **293/293 testes passando**.
+  - Executados os testes do frontend (`npm run test:unit` na raiz) $\rightarrow$ **130/130 testes passando**.
+  - Executado build de produção do SPA (`npm run build`) $\rightarrow$ Compilado com sucesso absoluto.
+
 ### Desacoplamento de Contextos (Deus Context) do Sibanki (22/06/2026, Antigravity)
 
 - **Separação de Responsabilidades (Subcontextos)**:

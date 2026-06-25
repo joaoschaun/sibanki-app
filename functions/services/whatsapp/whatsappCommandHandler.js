@@ -87,7 +87,7 @@ function handleResumo(userData, reply) {
     .map(([c, v]) => `  • ${c}: ${fmtBRL(v)}`).join("\n");
   return reply(
     `📊 *Resumo de ${mesNome}*\n\n` +
-    `💚 Receitas: ${fmtBRL(rec)}\n🔴 Despesas: ${fmtBRL(desp)}\n${emoji} Saldo: *${fmtBRL(saldo)}*\n` +
+    `📈 Receitas: ${fmtBRL(rec)}\n📉 Despesas: ${fmtBRL(desp)}\n${emoji} Saldo: *${fmtBRL(saldo)}*\n` +
     `📈 Uso da renda: ${pct}%\n\n🏷 *Maiores gastos:*\n${topCats || "  Nenhum lançamento"}\n\n` +
     `📝 ${mesEntries.length} lançamentos no mês`
   );

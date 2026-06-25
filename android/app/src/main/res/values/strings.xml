@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sibanki</string>
+    <string name="title_activity_main">Sibanki</string>
+    <string name="package_name">com.sibanki.app</string>
+    <string name="custom_url_scheme">com.sibanki.app</string>
+    <string name="shortcut_quick_launch_short">Lançar por Voz</string>
+    <string name="shortcut_quick_launch_long">Falar com a CECI / Lançamento Rápido</string>
+</resources>

@@ -260,7 +260,12 @@ exports.proactiveInsightApi = functions.runWith(chatApiOptions).https.onCall(asy
   }
 });
 
-exports.ocrToEntry = functions.runWith({ timeoutSeconds: 30, memory: "512MB" }).https.onCall(async (data, context) => {
+const ocrToEntryOptions = {
+  timeoutSeconds: 30,
+  memory: "512MB",
+  ...(enforceAppCheck ? { enforceAppCheck: true } : {}),
+};
+exports.ocrToEntry = functions.runWith(ocrToEntryOptions).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Faça login.");
   }
@@ -287,7 +292,12 @@ exports.ocrToEntry = functions.runWith({ timeoutSeconds: 30, memory: "512MB" }).
   }
 });
 
-exports.sttToEntry = functions.runWith({ timeoutSeconds: 30, memory: "512MB" }).https.onCall(async (data, context) => {
+const sttToEntryOptions = {
+  timeoutSeconds: 30,
+  memory: "512MB",
+  ...(enforceAppCheck ? { enforceAppCheck: true } : {}),
+};
+exports.sttToEntry = functions.runWith(sttToEntryOptions).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Faça login.");
   }
