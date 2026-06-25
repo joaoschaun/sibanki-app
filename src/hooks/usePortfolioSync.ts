@@ -7,7 +7,8 @@
  * Retorna: { syncing, progress, syncedAt, lastError, syncPortfolio }
  */
 import { useState, useCallback } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
+import { fnsUS } from '../firebase';
 import { updateInvestment } from '../services/persistUserData';
 import type { Investment } from '../types/userData';
 
@@ -58,9 +59,8 @@ export function usePortfolioSync(): PortfolioSyncState {
     setUpdatedCount(0);
 
     try {
-      const fns = getFunctions(undefined, 'us-central1');
       const brapiMulti = httpsCallable<{ tickers: string[] }, { results?: SyncResult[] }>(
-        fns, 'brapiMulti'
+        fnsUS, 'brapiMulti'
       );
 
       const tickers = [...new Set(b3Assets.map((inv) => extractTicker(inv.nome)).filter(Boolean))];

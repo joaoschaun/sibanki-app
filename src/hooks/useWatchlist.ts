@@ -18,7 +18,8 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
+import { fnsBR } from '../firebase';
 import { useAppContext } from '../context/AppContext';
 import { updateUserDoc } from '../services/persistUserData';
 import type { WatchlistItem } from '../types/userData';
@@ -72,8 +73,7 @@ export function useWatchlist(): UseWatchlistReturn {
    */
   const fetchAnalysis = useCallback(async (ticker: string): Promise<Partial<WatchlistItem>> => {
     try {
-      const fns = getFunctions(undefined, 'southamerica-east1');
-      const fn  = httpsCallable<{ ticker: string }, any>(fns, 'marketAssetAnalysis');
+      const fn  = httpsCallable<{ ticker: string }, any>(fnsBR, 'marketAssetAnalysis');
       const { data: result } = await fn({ ticker: ticker.toUpperCase() });
 
       const snapshot: Partial<WatchlistItem> = {};

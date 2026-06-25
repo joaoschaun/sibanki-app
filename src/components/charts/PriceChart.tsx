@@ -4,7 +4,8 @@
  * Usa dynamic import — só carrega a lib quando o componente é montado.
  */
 import { useEffect, useRef, useState } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
+import { fnsUS } from '../../firebase';
 
 interface OhlcBar {
   date: string;
@@ -39,9 +40,8 @@ export function PriceChart({ ticker, height = 260 }: PriceChartProps) {
         setError(null);
 
         // Busca dados históricos via Cloud Function (Market Data Hub)
-        const fns = getFunctions(undefined, 'us-central1');
         const marketHistorical = httpsCallable<{ ticker: string; days: number }, OhlcBar[]>(
-          fns,
+          fnsUS,
           'marketHistorical'
         );
         const result = await marketHistorical({ ticker, days: 120 });

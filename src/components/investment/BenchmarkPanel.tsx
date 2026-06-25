@@ -6,7 +6,8 @@
  */
 import { useEffect, useState } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
+import { fnsUS } from '../../firebase';
 
 interface Props {
   rentabAnualizadaPct: number;
@@ -56,9 +57,8 @@ export function BenchmarkPanel({ rentabAnualizadaPct, cdiAnualPct, selicAnualPct
     } catch { /* ok */ }
 
     // Busca via brapiQuote (Cloud Function)
-    const fns = getFunctions(undefined, 'us-central1');
     const brapiQuote = httpsCallable<{ ticker: string }, { results?: Array<{ regularMarketChangePercent?: number }> }>(
-      fns, 'brapiQuote'
+      fnsUS, 'brapiQuote'
     );
     brapiQuote({ ticker: '^BVSP' })
       .then((r) => {
