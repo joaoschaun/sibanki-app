@@ -103,11 +103,11 @@ antes de retomar:
   (Admin SDK). **Falta validar** (dry-run + amostragem) e confirmar idempotência.
 
 **⚠️ Divergências / lacunas encontradas:**
-1. **Flag mudou de nome.** O plano fala em `entriesMigration` ('dual-write' /
-   'backfilled' / 'done'). O **código real usa `entriesMigratedAt`** (timestamp,
-   booleano efetivo). Decisão: **padronizar em `entriesMigratedAt`** e atualizar este
-   plano — OU o script seta os dois. Conferir o que `migrate-entries-to-subcollection.js`
-   grava hoje.
+1. **Flag — RESOLVIDO (auditado 24/06).** O plano falava em `entriesMigration`
+   (estados), mas isso **nunca foi implementado**. Tanto o código (`useFinancialData`,
+   `persistUserData.isEntriesMigrated`) quanto o script `migrate-entries-to-subcollection.js`
+   (linha 103: `set({ entriesMigratedAt: <ISO> }, {merge:true})`) **concordam em
+   `entriesMigratedAt`**. Não há divergência real — o plano é que estava desatualizado.
 2. **🔴 Regra Firestore da subcoleção `entries` estava AUSENTE** (Fase 0 incompleta).
    Sem ela, o cliente caía no `default-deny` e o dual-write/leitura nova eram
    bloqueados silenciosamente. **CORRIGIDO em 24/06** — adicionada
@@ -119,8 +119,25 @@ antes de retomar:
 4. **Quem dispara o backfill?** O plano previa script manual do João. Não há trigger
    lazy por-usuário no boot. Decidir: script bulk (Admin SDK, manual) vs. lazy no app.
 
+**Auditoria do script `migrate-entries-to-subcollection.js` (24/06) — APROVADO p/ dry-run:**
+- ✅ **Idempotente:** lê os ids já existentes na subcoleção (`subColRef.select().get()`) e
+  pula os já migrados → re-rodar não duplica.
+- ✅ **Em lotes:** `WRITE_BATCH=450` (sob o limite de 500); usuários paginados de 100.
+- ✅ **Não-destrutivo:** não apaga o `entries[]` inline (rollback trivial); seta
+  `entriesMigratedAt` + `entriesSubcollectionCount` só no fim.
+- ✅ **`--dry-run`** funcional (preview sem escrita); aceita uid único ou todos.
+- ⚠️ **Só migra `entries[]` inline, NÃO `entriesOverflow`** (Pluggy arquivado). Aceitável:
+  a leitura do app já faz merge das 3 fontes, então nada some. Consolidar o overflow é
+  etapa opcional posterior.
+- ⚠️ No modo bulk, usuários já migrados são **re-processados** (bloco vazio na linha 152-154,
+  "força re-check") — desperdício leve, inofensivo (idempotente). Otimização futura: `continue`.
+- ⚠️ Requer `GOOGLE_APPLICATION_CREDENTIALS` (service account) ou ADC — credencial de Admin.
+
 **👉 Próximo passo concreto (menor risco, destrava o resto):**
 1. Deploy da regra nova (`firestore:rules`) — já editada.
-2. Ler e validar `scripts/migrate-entries-to-subcollection.js`: confirmar idempotência,
-   qual flag grava (`entriesMigratedAt`?), e rodar **`--dry-run`** num usuário de teste.
-3. Só então decidir trigger do backfill e, por último, o cutover (Fase 4) com observação.
+2. Rodar o script em **`--dry-run` num uid de teste** (`node scripts/migrate-entries-to-subcollection.js <uid> --dry-run`)
+   e conferir a contagem de "would migrate" vs. lançamentos reais daquele usuário.
+3. Migrar **1 usuário de teste real** (sem `--dry-run`, com uid) → conferir na UI que tudo
+   aparece (merge/dedup) e que `entriesMigratedAt` foi setado.
+4. Só então decidir trigger do backfill em massa e, por último, o cutover de escrita (Fase 4),
+   com observação entre as fases.
