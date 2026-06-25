@@ -215,6 +215,37 @@ describe('calculateDaysOfFreedom', () => {
     expect(result.dailyBurnRate).toBeCloseTo(166.66, 1);
     expect(result.isEstimated).toBe(false);
   });
+
+  it('aplica pesos corretos de liquidez: RF líquida (1.0), RV (0.7) e RF ilíquida (0.0)', () => {
+    const result = calculateDaysOfFreedom({
+      accountBalances: { 'Conta': 1_000 },
+      investments: [
+        investment({ tipo: 'Tesouro Selic', atual: 10_000 }), // peso 1.0 -> 10.000
+        investment({ tipo: 'Ações PETR4', atual: 5_000 }),   // peso 0.7 -> 3.500
+        investment({ tipo: 'LCI Banco do Brasil', atual: 8_000 }), // peso 0.0 -> 0
+      ],
+      entries: [expense(1000, 5), expense(1000, 35)],
+    });
+    // totalLiquidity = 1000 + 10000*1.0 + 5000*0.7 + 0 = 14.500
+    expect(result.totalLiquidity).toBe(14_500);
+  });
+
+  it('calcula juros presumidos apenas sobre RF líquida e exclui RV', () => {
+    const result = calculateDaysOfFreedom({
+      accountBalances: { 'Conta': 1_000 },
+      investments: [
+        investment({ tipo: 'CDB Liquidez Diária', atual: 10_000 }),
+        investment({ tipo: 'FII HGLG11', atual: 20_000 }), // exclui de juros presumidos
+      ],
+      entries: [expense(1000, 5), expense(1000, 35)],
+      investmentYieldMonthly: 0.01,
+    });
+    // RF líquida = 10.000. Juros presumidos (1% a.m.) = 100.
+    // RV = 20.000. Juros presumidos = 0.
+    // declaredProventos = 0.
+    // monthlyPassiveIncome = 100
+    expect(result.monthlyPassiveIncome).toBe(100);
+  });
 });
 
 // ─── 2. calculateSpreadGap ────────────────────────────────────────────────────
