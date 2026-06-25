@@ -31,9 +31,18 @@
     "deploy:legado": "npm run syntax-check && firebase deploy --only hosting:legado",
     "deploy:doc-investidor": "firebase deploy --only hosting:doc-investidor",
     "deploy:landing": "firebase deploy --only hosting:landing",
-    "generate:splash": "node scripts/generate-splash.mjs"
+    "generate:splash": "node scripts/generate-splash.mjs",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/ios": "^8.4.1",
+    "@capacitor/keyboard": "^8.0.5",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "clsx": "^2.1.1",
     "firebase": "^11.6.0",
     "jspdf": "^4.2.0",
@@ -50,6 +59,7 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.4.1",
     "@eslint/js": "^9.16.0",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/vite": "^4.0.0",

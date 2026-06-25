@@ -97,8 +97,27 @@
       transition: all .2s ease; cursor: pointer;
     }
     .btn:hover { background: var(--over3); border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
-    .btn-primary { background: var(--t1); color: #0a0a0a; border-color: var(--t1); }
+    .btn-primary { position: relative; overflow: hidden; background: var(--t1); color: #0a0a0a; border-color: var(--t1); }
     .btn-primary:hover { background: #fff; }
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -150%;
+      width: 50%; height: 100%;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.75) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: skewX(-20deg);
+      animation: shimmer 4.5s infinite ease-in-out;
+    }
+    @keyframes shimmer {
+      0% { left: -150%; }
+      30% { left: 150%; }
+      100% { left: 150%; }
+    }
     .btn .arr { transition: transform .2s ease; }
     .btn:hover .arr { transform: translateX(3px); }
 
@@ -119,9 +138,13 @@
     .nav-actions .btn { padding: 9px 18px; font-size: 13px; border-radius: 10px; }
     .nav-actions .ghost { border-color: transparent; background: transparent; color: var(--t2); }
     .nav-actions .ghost:hover { color: var(--t1); background: var(--over2); }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-link { font-size: 13px; font-weight: 500; color: var(--t3); letter-spacing: 0.01em; transition: color .2s ease; cursor: pointer; }
+    .nav-link:hover { color: var(--t1); }
+
 
     /* HERO */
-    .hero { padding: 160px 0 0; text-align: center; position: relative; }
+    .hero { padding: 200px 0 0; text-align: center; position: relative; }
     .hero-glow {
       position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
       width: min(900px, 100vw); height: 700px; pointer-events: none;
@@ -216,7 +239,7 @@
     @keyframes scrollx { to { transform: translateX(-50%); } }
 
     /* SECTIONS */
-    section.block { padding: 110px 0; }
+    section.block { padding: 150px 0; }
     .sec-head { text-align: center; margin-bottom: 64px; }
     .sec-head h2 { color: var(--t1); font-size: clamp(30px, 4.4vw, 48px); font-weight: 800; letter-spacing: -0.035em; line-height: 1.1; margin: 14px 0 16px; }
     .sec-head p { color: var(--t3); font-size: 17px; max-width: 560px; margin: 0 auto; }
@@ -294,14 +317,16 @@
 
     /* security */
     .sec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
-    .scard { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 26px 24px; }
+    .scard { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 26px 24px; transition: border-color .3s, box-shadow .3s, transform .3s; }
+    .scard:hover { border-color: rgba(52, 211, 153, 0.28); box-shadow: 0 12px 30px rgba(0,0,0,0.45), 0 0 15px rgba(52, 211, 153, 0.05); transform: translateY(-2px); }
     .scard .si { width: 38px; height: 38px; border-radius: 11px; background: var(--over2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
     .scard h4 { color: var(--t1); font-size: 15px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.01em; }
     .scard p { font-size: 13px; color: var(--t3); }
 
     /* FAQ */
     .faq-list { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
-    .faq-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: border-color .25s; }
+    .faq-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: border-color .25s, background-color .25s; }
+    .faq-item:hover { border-color: rgba(255,255,255,0.15); background: var(--card2); }
     .faq-item[open] { border-color: var(--border-md); }
     .faq-item summary {
       list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
@@ -311,7 +336,54 @@
     .faq-item summary .fx { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--over2); border: 1px solid var(--border-md); display: flex; align-items: center; justify-content: center; color: var(--t3); font-size: 14px; font-weight: 500; transition: transform .25s; }
     .faq-item[open] summary .fx { transform: rotate(45deg); }
     .faq-item .fa { padding: 0 24px 20px; font-size: 14.5px; color: var(--t3); line-height: 1.7; }
+    .faq-item[open] .fa { animation: faqSlideDown 0.28s ease-out forwards; overflow: hidden; }
     .faq-item .fa a { color: var(--t1); text-decoration: underline; text-underline-offset: 3px; }
+    @keyframes faqSlideDown {
+      0% { opacity: 0; max-height: 0; transform: translateY(-6px); }
+      100% { opacity: 1; max-height: 300px; transform: translateY(0); }
+    }
+    /* Calculadora Soberana */
+    .calc-container {
+      display: grid; grid-template-columns: 1.2fr 1fr; gap: 36px;
+      background: var(--card); border: 1px solid var(--border-md);
+      border-radius: 24px; padding: 40px; margin-bottom: 56px;
+      box-shadow: 0 40px 120px rgba(0,0,0,0.55); position: relative;
+      text-align: left;
+    }
+    @media (max-width: 880px) {
+      .calc-container { grid-template-columns: 1fr; gap: 28px; padding: 24px; margin-bottom: 36px; }
+      .calc-container > div:last-child { border-left: none !important; padding-left: 0 !important; border-top: 1px solid var(--border) !important; padding-top: 28px !important; }
+    }
+    .calc-title-mini { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--t4); margin-bottom: 12px; }
+    .calc-row-align { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 14px; flex-wrap: wrap; }
+    .calc-number-input { background: var(--over2); border: 1px solid var(--border-md); border-radius: 8px; padding: 8px 12px; color: var(--t1); font-family: Inter, sans-serif; font-size: 13.5px; outline: none; transition: border-color 0.15s; }
+    .calc-number-input:focus { border-color: rgba(255,255,255,0.22); }
+    .calc-despesa-item { display: flex; justify-content: space-between; align-items: center; background: var(--over2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; gap: 12px; transition: border-color 0.2s; }
+    .calc-despesa-item:hover { border-color: rgba(255,255,255,0.15); }
+    .calc-range-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 99px; background: rgba(255,255,255,0.08); outline: none; }
+    .calc-range-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--pos); cursor: pointer; border: 2px solid var(--card); transition: transform 0.1s; }
+    .calc-range-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    /* Caixa de Adicionar Despesas responsiva */
+    .calc-add-box {
+      display: flex; gap: 8px; background: rgba(255,255,255,0.02);
+      border: 1px dashed var(--border); border-radius: 12px; padding: 12px;
+      align-items: center;
+    }
+    .calc-add-box input[type="text"] {
+      flex: 1; min-width: 120px;
+    }
+    .calc-add-inputs {
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+
+    @media (max-width: 480px) {
+      .calc-add-box { flex-direction: column; align-items: stretch; gap: 10px; }
+      .calc-add-inputs { justify-content: space-between; width: 100%; }
+      .calc-add-inputs button { flex: 1; text-align: center; }
+      .calc-despesa-item { flex-direction: column; align-items: stretch; gap: 8px; }
+      .calc-despesa-item > div { width: 100%; justify-content: flex-end; }
+    }
 
     /* CTA final */
     .cta-end { text-align: center; padding: 130px 0 120px; position: relative; }
@@ -343,21 +415,26 @@
     @media (max-width: 880px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
 
     @media (max-width: 880px) {
+      .nav-links { display: none; }
       .feat { grid-template-columns: 1fr; gap: 40px; padding: 50px 0; }
       .feat.rev .fcopy { order: 1; } .feat.rev .fviz { order: 2; }
       .float1 { left: 0; top: 26px; } .float2 { right: 0; bottom: 36px; }
       .app-ui { grid-template-columns: 1fr; } .app-side { display: none; }
-      .hero { padding-top: 130px; }
-      section.block { padding: 70px 0; }
+      .hero { padding-top: 160px; }
+      section.block { padding: 90px 0; }
     }
     @media (max-width: 640px) {
+      .nav { height: 64px; }
+      .nav .logo svg { width: 116px; }
+      .nav-actions { gap: 6px; }
+      .nav-actions .btn { padding: 8px 12px; font-size: 12px; border-radius: 8px; }
+      .nav-actions .ghost { display: inline-flex; }
       .ld-card { grid-template-columns: 1fr; gap: 18px; justify-items: center; text-align: center; }
       .ld-meta .lm-title { text-align: center; }
       .ld-grid { grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); width: 100%; }
       .app-main { padding: 20px 16px; }
       .phone { width: min(310px, 100%); }
       .float { padding: 11px 14px; } .float .fl-v { font-size: 15px; }
-      .nav-actions .ghost { display: none; }
       .footer-grid { grid-template-columns: 1fr; gap: 26px; }
       .footer-bottom { flex-direction: column; align-items: flex-start; }
     }
@@ -376,6 +453,7 @@
   </script>
 </head>
 <body>
+  <div id="scroll-progress" style="position:fixed;top:0;left:0;height:3px;background:var(--pos);z-index:9999;width:0%;transition:width 0.1s ease;"></div>
 
   <header id="hdr">
     <div class="container nav">
@@ -387,6 +465,12 @@
           <text x="31" y="21.5" font-family="Inter,sans-serif" font-size="17.5" font-weight="700" fill="#f5f5f5" letter-spacing="-0.7">sibanki</text>
         </svg>
       </a>
+      <div class="nav-links">
+        <a href="#conceitos" class="nav-link">Para Você</a>
+        <a href="#casal-familia" class="nav-link">Para Casais & Famílias</a>
+        <a href="#seguranca" class="nav-link">Segurança</a>
+        <a href="#faq" class="nav-link">FAQ</a>
+      </div>
       <div class="nav-actions">
         <a class="btn ghost" href="https://app.sibanki.com.br/login">Entrar</a>
         <a class="btn btn-primary" href="https://app.sibanki.com.br/login?modo=cadastro">Criar conta</a>
@@ -456,10 +540,50 @@
                   </div>
                 </div>
                 <div class="tx-list" id="txs">
-                  <div class="tx"><div class="tic">🛒</div><div class="tinfo"><b>Supermercado Zona Sul</b><span>Alimentação · Nubank</span></div><span class="sv s1">SV 82</span><span class="tval">− R$ 287,40</span></div>
-                  <div class="tx"><div class="tic">💼</div><div class="tinfo"><b>Salário ACME Ltda</b><span>Receita · Itaú</span></div><span class="sv s1">SV 100</span><span class="tval g">+ R$ 9.800,00</span></div>
-                  <div class="tx"><div class="tic">📺</div><div class="tinfo"><b>Streaming anual</b><span>Assinaturas · Visa ∞</span></div><span class="sv s2">SV 54</span><span class="tval">− R$ 55,90</span></div>
-                  <div class="tx"><div class="tic">🍔</div><div class="tinfo"><b>Delivery 23h47</b><span>Impulso detectado · Crédito</span></div><span class="sv s3">SV 31</span><span class="tval">− R$ 89,90</span></div>
+                  <div class="tx">
+                    <div class="tic" style="background:#005e38;">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 3 C6 9 6 18 12 21 C18 18 18 9 12 3 Z" fill="#008542" />
+                        <path d="M12 3 C9 9 9 18 12 21 Z" fill="#8dc63f" />
+                      </svg>
+                    </div>
+                    <div class="tinfo"><b>Pão de Açúcar</b><span>Alimentação · Nubank</span></div>
+                    <span class="sv s1">SV 82</span>
+                    <span class="tval">− R$ 287,40</span>
+                  </div>
+                  <div class="tx">
+                    <div class="tic">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--t3);">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                      </svg>
+                    </div>
+                    <div class="tinfo"><b>Salário ACME Ltda</b><span>Receita · Itaú</span></div>
+                    <span class="sv s1">SV 100</span>
+                    <span class="tval g">+ R$ 9.800,00</span>
+                  </div>
+                  <div class="tx">
+                    <div class="tic" style="background:#000;">
+                      <svg width="12" height="15" viewBox="0 0 24 28" fill="none">
+                        <path d="M4 0H9V28H4Z" fill="#B81D24" />
+                        <path d="M15 0H20V28H15Z" fill="#B81D24" />
+                        <path d="M4 0L15 28H20L9 0Z" fill="#E50914" />
+                      </svg>
+                    </div>
+                    <div class="tinfo"><b>Netflix</b><span>Assinaturas · Visa ∞</span></div>
+                    <span class="sv s2">SV 54</span>
+                    <span class="tval">− R$ 55,90</span>
+                  </div>
+                  <div class="tx">
+                    <div class="tic" style="background:#DA291C;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFC72C">
+                        <path d="M2 21 C 2 13.5, 4.5 9, 8 9 C 10.5 9, 11.5 13.5, 12 16 C 12.5 13.5, 13.5 9, 16 9 C 19.5 9, 22 13.5, 22 21 H 19.5 C 19.5 15, 18 11.5, 16 11.5 C 14 11.5, 13 15, 13 21 H 11 C 11 15, 10 11.5, 8 11.5 C 6 11.5, 4.5 15, 4.5 21 H 2 Z" />
+                      </svg>
+                    </div>
+                    <div class="tinfo"><b>McDonald's</b><span>Impulso detectado · Crédito</span></div>
+                    <span class="sv s3">SV 31</span>
+                    <span class="tval">− R$ 89,90</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -485,6 +609,120 @@
           <h2>O que nenhum banco<br />tem coragem de te mostrar</h2>
           <p>Bancos lucram com a sua confusão. O Sibanki transforma seus dados em três números que mudam como você decide.</p>
         </div>
+        <!-- Calculadora de Soberania Avançada -->
+        <div class="calc-container rv" style="margin-bottom: 70px;">
+          <!-- Coluna Esquerda: Entradas de Dados e Gestão de Despesas -->
+          <div>
+            <h3 style="color:var(--t1);font-size:22px;font-weight:800;letter-spacing:-0.02em;margin-bottom:6px;">Calculadora de Soberania</h3>
+            <p style="font-size:13.5px;color:var(--t3);margin-bottom:28px;">Simule seu perfil financeiro real adicionando seus custos mensais.</p>
+
+            <!-- Slider de Patrimonio -->
+            <div style="margin-bottom:28px;">
+              <div class="calc-row-align">
+                <span class="calc-title-mini" style="margin-bottom:0;">Patrimônio Líquido</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span style="font-size:12px;color:var(--t4);">R$</span>
+                  <input type="number" id="calc-patrimonio-val" value="85000" class="calc-number-input" style="width:110px;padding:6px 10px;text-align:right;">
+                </div>
+              </div>
+              <input type="range" id="calc-patrimonio-slider" min="0" max="1000000" step="5000" value="85000" class="calc-range-slider">
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t4);margin-top:6px;font-weight:600;">
+                <span>R$ 0</span>
+                <span>R$ 500k</span>
+                <span>R$ 1M+</span>
+              </div>
+            </div>
+
+            <!-- Gestor de Despesas Fixas -->
+            <div style="margin-bottom:20px;">
+              <span class="calc-title-mini">Despesas Mensais Detalhadas</span>
+              <div id="calc-despesas-list" style="max-height: 250px; overflow-y: auto; padding-right: 4px; margin-bottom:16px;">
+                <div class="calc-despesa-item" data-id="habitacao">
+                  <span style="font-size:13px;color:var(--t2);font-weight:500;">🏠 Habitação / Aluguel</span>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:11px;color:var(--t4);">R$</span>
+                    <input type="number" class="calc-despesa-val calc-number-input" value="1800" style="width:80px;padding:4px 8px;text-align:right;font-size:12.5px;">
+                    <button class="calc-despesa-del" style="background:transparent;border:none;color:var(--neg);cursor:pointer;font-size:13px;padding:2px 6px;">✕</button>
+                  </div>
+                </div>
+                <div class="calc-despesa-item" data-id="alimentacao">
+                  <span style="font-size:13px;color:var(--t2);font-weight:500;">🍔 Alimentação</span>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:11px;color:var(--t4);">R$</span>
+                    <input type="number" class="calc-despesa-val calc-number-input" value="1200" style="width:80px;padding:4px 8px;text-align:right;font-size:12.5px;">
+                    <button class="calc-despesa-del" style="background:transparent;border:none;color:var(--neg);cursor:pointer;font-size:13px;padding:2px 6px;">✕</button>
+                  </div>
+                </div>
+                <div class="calc-despesa-item" data-id="transporte">
+                  <span style="font-size:13px;color:var(--t2);font-weight:500;">🚗 Transporte / Combustível</span>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:11px;color:var(--t4);">R$</span>
+                    <input type="number" class="calc-despesa-val calc-number-input" value="600" style="width:80px;padding:4px 8px;text-align:right;font-size:12.5px;">
+                    <button class="calc-despesa-del" style="background:transparent;border:none;color:var(--neg);cursor:pointer;font-size:13px;padding:2px 6px;">✕</button>
+                  </div>
+                </div>
+                <div class="calc-despesa-item" data-id="lazer">
+                  <span style="font-size:13px;color:var(--t2);font-weight:500;">🎉 Lazer / Assinaturas</span>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:11px;color:var(--t4);">R$</span>
+                    <input type="number" class="calc-despesa-val calc-number-input" value="400" style="width:80px;padding:4px 8px;text-align:right;font-size:12.5px;">
+                    <button class="calc-despesa-del" style="background:transparent;border:none;color:var(--neg);cursor:pointer;font-size:13px;padding:2px 6px;">✕</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Adicionar Despesa Extra -->
+              <div class="calc-add-box">
+                <input type="text" id="calc-new-name" placeholder="Nova despesa (ex: Saúde)..." style="background:var(--over2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--t1);font-size:12.5px;outline:none;">
+                <div class="calc-add-inputs">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span style="font-size:11px;color:var(--t4);">R$</span>
+                    <input type="number" id="calc-new-val" placeholder="0" style="width:70px;background:var(--over2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--t1);text-align:right;font-size:12.5px;outline:none;">
+                  </div>
+                  <button id="calc-btn-add" style="background:var(--t1);color:#0a0a0a;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">Adicionar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coluna Direita: Painel de Resultados & Diagnósticos -->
+          <div style="border-left: 1px solid var(--border); padding-left: 36px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <span class="calc-title-mini" style="display:block;text-align:center;margin-bottom:20px;">Diagnóstico de Soberania</span>
+              
+              <!-- Anel de Ld Reativo -->
+              <div style="position:relative;width:140px;height:140px;margin:0 auto 24px;">
+                <svg width="140" height="140" viewBox="0 0 140 140" style="transform:rotate(-90deg); display:block; margin:0 auto;">
+                  <circle cx="70" cy="70" r="58" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8"></circle>
+                  <circle id="calc-ring" cx="70" cy="70" r="58" fill="none" stroke="var(--pos)" stroke-width="8" stroke-linecap="round" stroke-dasharray="364" stroke-dashoffset="364" style="transition:stroke-dashoffset 0.6s cubic-bezier(.16,1,.3,1), stroke 0.4s;"></circle>
+                </svg>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+                  <span id="calc-ld-val" style="font-size:36px;font-weight:900;color:var(--t1);letter-spacing:-0.03em;line-height:1;">0</span>
+                  <span style="font-size:9px;color:var(--t4);text-transform:uppercase;letter-spacing:0.14em;font-weight:700;margin-top:2px;">dias livres</span>
+                </div>
+              </div>
+
+              <!-- Faixa & Parecer -->
+              <div style="text-align:center;margin-bottom:20px;">
+                <span id="calc-faixa-label" style="display:inline-block;padding:5px 14px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px;">Carregando...</span>
+                <p id="calc-diagnostico-text" style="font-size:13px;color:var(--t3);line-height:1.6;text-align:center;max-width:320px;margin:0 auto;">Calculando diagnóstico com base nas suas informações financeiras...</p>
+              </div>
+            </div>
+
+            <!-- Projeção / Meta -->
+            <div style="border-top:1px solid var(--border);padding-top:20px;margin-top:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+                <span style="font-size:12.5px;color:var(--t3);font-weight:500;">Se poupar/investir por mês:</span>
+                <div style="display:flex;align-items:center;gap:4px;">
+                  <span style="font-size:11.5px;color:var(--t4);">R$</span>
+                  <input type="number" id="calc-aporte-val" value="500" class="calc-number-input" style="width:75px;padding:4px 8px;text-align:right;font-size:12.5px;">
+                </div>
+              </div>
+              <p style="font-size:12px;color:var(--t4);line-height:1.5;margin:0;">Seu Ld subirá em <strong id="calc-meta-ganho" style="color:var(--pos);font-weight:700;">+0 dias</strong> após 1 ano.</p>
+            </div>
+          </div>
+        </div>
+
         <div class="metrics">
           <div class="mcard rv" data-anim>
             <span class="tag">Ld · Dias de Liberdade</span>
@@ -539,6 +777,10 @@
               <li>Lançamentos por voz ou foto de nota fiscal</li>
               <li>Briefing diário com o que importa para o seu dinheiro</li>
             </ul>
+            <div class="pwa-note" style="margin-top:24px;display:flex;align-items:center;gap:12px;background:var(--over2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;">
+              <span style="font-size:20px;line-height:1;">📱</span>
+              <span style="font-size:12px;color:var(--t3);line-height:1.5;"><strong style="color:var(--t1);">Instale como um App:</strong> Adicione o Sibanki à tela inicial do seu celular (iOS ou Android) para carregar instantaneamente, com suporte offline e notificações de segurança, sem downloads pesados.</span>
+            </div>
           </div>
           <div class="fviz rv rv-d1">
             <div class="phone">
@@ -601,11 +843,37 @@
               <div style="font-size:13px;color:var(--t3);line-height:1.7;">CPF ···.···.···-07<br /><b style="color:var(--t1);font-size:22px;letter-spacing:-0.02em;">R$ 412,90</b> em 2 instituições<br /><span style="font-size:12px;color:var(--t4);">Banco Bradesco S.A. · Caixa Consórcios</span></div>
             </div>
             <div class="credit-mock" style="padding:20px 24px;display:flex;align-items:center;gap:14px;">
-              <div style="display:flex;">
-                <span style="width:34px;height:34px;border-radius:50%;background:#820ad1;border:2px solid var(--card);"></span>
-                <span style="width:34px;height:34px;border-radius:50%;background:#ec7000;border:2px solid var(--card);margin-left:-10px;"></span>
-                <span style="width:34px;height:34px;border-radius:50%;background:#cc092f;border:2px solid var(--card);margin-left:-10px;"></span>
-                <span style="width:34px;height:34px;border-radius:50%;background:#fff100;border:2px solid var(--card);margin-left:-10px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#003ca6;">+9</span>
+              <div style="display:flex;align-items:center;">
+                <!-- Nubank -->
+                <span style="width:34px;height:34px;border-radius:50%;background:#820ad1;border:2px solid var(--card);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="22" height="22" viewBox="0 0 40 40" fill="none">
+                    <text x="50%" y="54%" dominant-baseline="central" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="300" font-size="20" fill="white" letter-spacing="-1">nu</text>
+                  </svg>
+                </span>
+                <!-- Itaú -->
+                <span style="width:34px;height:34px;border-radius:50%;background:#ec7000;border:2px solid var(--card);margin-left:-10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="22" height="22" viewBox="0 0 40 40" fill="none">
+                    <text x="50%" y="54%" dominant-baseline="central" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="14" fill="white" letter-spacing="-0.5">itaú</text>
+                  </svg>
+                </span>
+                <!-- Bradesco -->
+                <span style="width:34px;height:34px;border-radius:50%;background:#cc092f;border:2px solid var(--card);margin-left:-10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 19L10 8" />
+                    <path d="M18 19L14 8" />
+                    <path d="M5 6c3-2 11-2 14 0" stroke-width="2.8" />
+                  </svg>
+                </span>
+                <!-- Banco do Brasil -->
+                <span style="width:34px;height:34px;border-radius:50%;background:#fff100;border:2px solid var(--card);margin-left:-10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="22" height="22" viewBox="0 0 40 40" fill="none">
+                    <text x="50%" y="54%" dominant-baseline="central" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="900" font-size="15" fill="#003ca6" letter-spacing="0.5">BB</text>
+                  </svg>
+                </span>
+                <!-- +8 contas -->
+                <span style="width:34px;height:34px;border-radius:50%;background:#222;border:2px solid var(--card);margin-left:-10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:800;color:var(--t2);font-family:-apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">
+                  +8
+                </span>
               </div>
               <div style="font-size:13px;color:var(--t2);"><b style="color:var(--t1);">12 contas conectadas</b><br /><span style="font-size:11.5px;color:var(--t4);">última sincronização há 12 min</span></div>
             </div>
@@ -614,7 +882,71 @@
       </div>
     </section>
 
-    <section class="block" style="padding-top:40px;">
+    <section class="block" id="casal-familia" style="border-top: 1px solid var(--border); padding-top:80px;">
+      <div class="container">
+        <div class="sec-head rv">
+          <span class="label">Para Casais & Famílias</span>
+          <h2>Harmonia financeira para toda a casa</h2>
+          <p>Conecte as finanças da sua família sem perder a privacidade individual. Eduque seus filhos e gerencie tudo em um único lugar.</p>
+        </div>
+
+        <div class="feat">
+          <div class="fcopy rv">
+            <span class="label">Espaço Casal</span>
+            <h3>Saldos combinados e metas conjuntas, sem DRs</h3>
+            <p>Monitore o patrimônio líquido da família de forma transparente. Com o Modo Casal ativo, as movimentações marcadas como conjuntas alimentam os Dias de Liberdade (Ld) combinados do casal automaticamente.</p>
+            <ul>
+              <li>Visualização compartilhada de contas e limites sem expor detalhes pessoais</li>
+              <li>Orçamento colaborativo para grandes sonhos (casa, viagens, reserva)</li>
+              <li>Divisão inteligente de despesas proporcional à renda</li>
+            </ul>
+          </div>
+          <div class="fviz rv rv-d1">
+            <div class="credit-mock" style="padding: 24px;">
+              <div class="cmh" style="margin-bottom:16px;"><b>Ld do Casal · Dias de Liberdade</b><span style="color:var(--pos);background:rgba(52,211,153,0.1);border-color:rgba(52,211,153,0.22);font-weight:700;font-size:10px;padding:3px 8px;border-radius:4px;">CONJUNTO</span></div>
+              <div style="text-align:center;padding:14px 0;">
+                <b style="color:var(--t1);font-size:38px;letter-spacing:-0.03em;line-height:1;">248 <span style="font-size:16px;color:var(--t4);font-weight:600;text-transform:uppercase;">dias</span></b>
+                <p style="font-size:11.5px;color:var(--pos);font-weight:600;margin-top:4px;">● Cobertura familiar resiliente</p>
+              </div>
+              <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center;">
+                <div><span style="font-size:9.5px;color:var(--t4);text-transform:uppercase;font-weight:700;display:block;">Patrimônio João</span><b style="color:var(--t1);font-size:14px;">R$ 86.420</b></div>
+                <div><span style="font-size:9.5px;color:var(--t4);text-transform:uppercase;font-weight:700;display:block;">Patrimônio Maria</span><b style="color:var(--t1);font-size:14px;">R$ 65.180</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feat rev">
+          <div class="fcopy rv">
+            <span class="label">Educação Financeira Infantil</span>
+            <h3>Ensine seus filhos a se bancarem desde cedo</h3>
+            <p>Crie missões e tarefas cotidianas para seus filhos. Eles ganham recompensas em SibCoins reais ou mesadas fictícias diretamente no painel parental controlado por você.</p>
+            <ul>
+              <li>Painel de controle com limites de gastos e aprovações parental</li>
+              <li>Gamificação com metas de poupança divertidas e conquistas</li>
+              <li>Missões educativas sobre valor do dinheiro e investimentos</li>
+            </ul>
+          </div>
+          <div class="fviz rv rv-d1">
+            <div class="credit-mock" style="padding: 24px;">
+              <div class="cmh" style="margin-bottom:14px;"><b>Missões de Pedro (12 anos)</b></div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;background:var(--over2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12.5px;">
+                  <div style="flex:1;"><b style="color:var(--t1);display:block;">Organizar os brinquedos</b><span style="color:var(--t4);font-size:11px;">Recompensa: 10 SibCoins</span></div>
+                  <span style="color:var(--pos);font-weight:700;">✓ Concluída</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;background:var(--over2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12.5px;">
+                  <div style="flex:1;"><b style="color:var(--t1);display:block;">Ler livro de finanças</b><span style="color:var(--t4);font-size:11px;">Recompensa: 25 SibCoins</span></div>
+                  <span style="color:var(--warn);font-weight:700;">Pendente</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="seguranca" style="border-top: 1px solid var(--border); padding-top:80px;">
       <div class="container">
         <div class="sec-head rv">
           <span class="label">Segurança de verdade</span>
@@ -624,12 +956,14 @@
           <div class="scard rv"><div class="si">🏛️</div><h4>Open Finance oficial</h4><p>Conexão bancária pelo sistema regulado do Banco Central. Você autoriza no app do seu banco, sem nunca digitar senha aqui.</p></div>
           <div class="scard rv rv-d1"><div class="si">🔒</div><h4>Criptografia ponta a ponta</h4><p>Dados criptografados em trânsito e em repouso na infraestrutura do Google Cloud, com regras de acesso por usuário.</p></div>
           <div class="scard rv rv-d2"><div class="si">👁️</div><h4>Só leitura, nunca movimentação</h4><p>O Sibanki enxerga para te aconselhar. Não move um centavo: transferências e pagamentos continuam só no seu banco.</p></div>
-          <div class="scard rv rv-d3"><div class="si">🇧🇷</div><h4>LGPD por padrão</h4><p>Seus dados são seus. Exporte ou apague tudo quando quiser, direto nas configurações.</p></div>
+        </div>
+        <div class="credit-tip rv rv-d3" style="margin-top:28px;background:rgba(52,211,153,0.03);border-color:rgba(52,211,153,0.15);padding:18px 20px;border-radius:14px;justify-content:center;text-align:center;display:flex;gap:10px;align-items:center;">
+          <span style="font-size:13.5px;color:var(--t2);line-height:1.6;"><strong style="color:var(--pos);">🛡️ Certificado de Acesso Restrito:</strong> O Sibanki utiliza conexão estritamente de leitura (read-only). É matematicamente impossível efetuar transferências, pagamentos ou qualquer movimentação financeira na sua conta.</span>
         </div>
       </div>
     </section>
 
-    <section class="block" id="faq" style="padding-top:40px;">
+    <section class="block" id="faq" style="padding-top:80px;">
       <div class="container">
         <div class="sec-head rv">
           <span class="label">Perguntas frequentes</span>
@@ -828,6 +1162,158 @@
         });
       });
     });
+    // Scroll Progress Bar logic
+    window.addEventListener('scroll', function() {
+      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
+      document.getElementById('scroll-progress').style.width = scrolled + '%';
+    });
+
+    // --- Calculadora de Soberania Avançada ---
+    (function() {
+      const patSlider = document.getElementById('calc-patrimonio-slider');
+      const patVal = document.getElementById('calc-patrimonio-val');
+      const despesasContainer = document.getElementById('calc-despesas-list');
+      const btnAdd = document.getElementById('calc-btn-add');
+      const newName = document.getElementById('calc-new-name');
+      const newVal = document.getElementById('calc-new-val');
+      const ldValText = document.getElementById('calc-ld-val');
+      const ring = document.getElementById('calc-ring');
+      const labelFaixa = document.getElementById('calc-faixa-label');
+      const diagnosticoText = document.getElementById('calc-diagnostico-text');
+      const aporteVal = document.getElementById('calc-aporte-val');
+      const metaGanhoText = document.getElementById('calc-meta-ganho');
+
+      const ringC = 364; // 2 * Math.PI * r (r=58)
+
+      function calculate() {
+        const patrimonio = Number(patVal.value) || 0;
+        
+        // Somar despesas
+        let custoVidaTotal = 0;
+        const despeaInputs = despesasContainer.querySelectorAll('.calc-despesa-val');
+        despeaInputs.forEach(input => {
+          custoVidaTotal += Number(input.value) || 0;
+        });
+
+        // Evitar divisão por zero
+        const custoDiario = custoVidaTotal > 0 ? (custoVidaTotal / 30) : 0;
+        const ld = custoDiario > 0 ? Math.round(patrimonio / custoDiario) : 9999;
+
+        // Limitar exibição de Ld muito grande
+        const displayLd = ld > 9999 ? 9999 : ld;
+        ldValText.textContent = displayLd;
+
+        // Calcular Anel SVG (Limite gráfico em 365 dias livres)
+        const percentRing = Math.min(ld / 365, 1);
+        const offset = ringC - (ringC * percentRing);
+        ring.style.strokeDashoffset = offset;
+
+        // Diagnóstico e Cores
+        let faixa = "";
+        let classColor = "";
+        let colorHex = "";
+        let textoDiag = "";
+
+        if (ld < 30) {
+          faixa = "Frágil";
+          colorHex = "#fb7185"; // --neg
+          classColor = "rgba(251, 113, 133, 0.1)";
+          textoDiag = "Seu patrimônio cobre menos de um mês de custos. Qualquer imprevisto exigirá crédito caro. Foco total em reduzir o Spread Gap e eliminar despesas desnecessárias.";
+        } else if (ld < 90) {
+          faixa = "Em Construção";
+          colorHex = "#fbbf24"; // --warn
+          classColor = "rgba(251, 191, 36, 0.1)";
+          textoDiag = "Você já possui uma pequena margem de segurança, mas ainda está muito exposto. Sua meta imediata deve ser construir uma reserva equivalente a 180 dias livres.";
+        } else if (ld < 180) {
+          faixa = "Resiliente";
+          colorHex = "#60a5fa"; // azul
+          classColor = "rgba(96, 165, 250, 0.1)";
+          textoDiag = "Excelente base. Você suporta imprevistos moderados sem alterar seu padrão de vida. O próximo passo é otimizar cartões de crédito para reverter o Spread Gap.";
+        } else if (ld < 365) {
+          faixa = "Soberano";
+          colorHex = "#34d399"; // --pos
+          classColor = "rgba(52, 211, 153, 0.1)";
+          textoDiag = "Você atingiu a Soberania Financeira. Suas decisões profissionais não são pressionadas por obrigações de curto prazo. Você tem poder de negociação ativa no mercado.";
+        } else {
+          faixa = "Inabalável";
+          colorHex = "#a78bfa"; // violeta
+          classColor = "rgba(167, 139, 250, 0.1)";
+          textoDiag = "Mais de um ano de liberdade absoluta! Suas finanças trabalham integralmente por você. Foco em alavancagem de investimentos e patrimônio gerador de renda passiva.";
+        }
+
+        ring.style.stroke = colorHex;
+        labelFaixa.style.background = classColor;
+        labelFaixa.style.color = colorHex;
+        labelFaixa.style.borderColor = colorHex + '33';
+        labelFaixa.textContent = faixa;
+        diagnosticoText.textContent = textoDiag;
+
+        // Projeção de Metas
+        const aporteMensal = Number(aporteVal.value) || 0;
+        const ganhoLdAnual = custoDiario > 0 ? Math.round((aporteMensal * 12) / custoDiario) : 0;
+        metaGanhoText.textContent = "+" + ganhoLdAnual + " dias";
+      }
+
+      // Sincronizar Slider & Input do Patrimonio
+      patSlider.addEventListener('input', function() {
+        patVal.value = patSlider.value;
+        calculate();
+      });
+
+      patVal.addEventListener('input', function() {
+        patSlider.value = patVal.value;
+        calculate();
+      });
+
+      // Alteração nos valores de despesa existentes
+      despesasContainer.addEventListener('input', function(e) {
+        if (e.target.classList.contains('calc-despesa-val')) {
+          calculate();
+        }
+      });
+
+      // Exclusão de despesas
+      despesasContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('calc-despesa-del')) {
+          const row = e.target.closest('.calc-despesa-item');
+          if (row) {
+            row.remove();
+            calculate();
+          }
+        }
+      });
+
+      // Adição de nova despesa
+      btnAdd.addEventListener('click', function() {
+        const name = newName.value.trim();
+        const val = Number(newVal.value) || 0;
+        if (!name || val <= 0) return;
+
+        const id = 'custom-' + Date.now();
+        const row = document.createElement('div');
+        row.className = 'calc-despesa-item';
+        row.dataset.id = id;
+        row.innerHTML = `
+          <span style="font-size:13px;color:var(--t2);font-weight:500;">🏷️ ${name}</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;color:var(--t4);">R$</span>
+            <input type="number" class="calc-despesa-val calc-number-input" value="${val}" style="width:80px;padding:4px 8px;text-align:right;font-size:12.5px;">
+            <button class="calc-despesa-del" style="background:transparent;border:none;color:var(--neg);cursor:pointer;font-size:13px;padding:2px 6px;">✕</button>
+          </div>
+        `;
+        despesasContainer.appendChild(row);
+        newName.value = '';
+        newVal.value = '';
+        calculate();
+      });
+
+      aporteVal.addEventListener('input', calculate);
+
+      // Executa cálculo inicial
+      calculate();
+    })();
   </script>
 </body>
 </html>
