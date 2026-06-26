@@ -17,7 +17,31 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Otimização de Layout e Limpeza de Onboarding no Dashboard (26/06/2026, Antigravity)
+
+- **Layout Grid de Duas Colunas**:
+  - Reorganizado o layout principal do Dashboard (`Dashboard.tsx`) em duas colunas (`lg:grid-cols-3`): coluna esquerda (2/3) com métricas e análises principais; coluna direita (1/3) com widgets secundários e insights.
+- **Card de Gráficos Unificado**:
+  - Consolidado os três gráficos de análise visual (Categorias, Evolução e Saldo Acumulado) em um único contêiner tabulado reativo para reduzir a altura em 66%.
+- **Limpeza de Redundâncias de Onboarding**:
+  - Removido o checklist duplicado de `"Primeiros Passos"` local e seu estado de ativação no `WidgetConfig`.
+  - Adicionado suporte a exibição condicional: quando o usuário está no estado completamente vazio (zero contas e zero lançamentos), os quadros de `"Modo Coach"` e `"Próximas Ações"` são ocultados para manter o foco exclusivo no banner de boas-vindas do Sibanki.
+
+### Correção de Notificações Push e CORS do Chat Stream (26/06/2026, Antigravity)
+
+- **Correção da Chave VAPID**:
+  - Identificada e corrigida a capitalização da chave VAPID/Messaging (`VITE_VAPID_KEY`) nos arquivos `.env` e `.env.production`. A chave continha caracteres incorretos (ex: `z` vs `Z`, `I` vs `l`), o que causava o erro de assinatura `messaging/token-subscribe-failed` e impedia a geração do token do dispositivo.
+- **Correção de CORS no Chat Stream**:
+  - Separadas as opções de execução da callable `chatStreamApi` no `functions/index.js`, definindo `chatStreamOptions` sem `enforceAppCheck`. Isso liberou o preflight OPTIONS (que por padrão não envia o token de App Check) evitando erros de CORS no console do front-end.
+- **Suporte ao App Check Debugger**:
+  - Configurado suporte automático para App Check Debugger em localhost e ambientes staging (`staging-13a0b.web.app`) em `src/firebase.ts` para evitar que chaves de reCAPTCHA restritas a produção travem a inicialização do banco em testes locais.
+- **Telemetria de Notificações**:
+  - Injetado log detalhado passo a passo (`[PushTelemetry]`) no hook `usePushNotifications.ts` para mapear todas as etapas de inicialização, registro do Service Worker e gravação no Firestore.
+- **Validação e Deploys**:
+  - Realizado deploy de staging e de produção com sucesso (`npm run deploy:staging`, `firebase deploy --only functions:chatStreamApi` e `npm run deploy:app`). O fluxo de ativação foi testado e validado como funcional, registrando os tokens no Firestore com badge de Push Notifications marcado como **🟢 Ativo**.
+
 ### Alinhamento de Emojis, Melhorias Nativas (Capacitor) e App Check (25/06/2026, Antigravity)
+
 
 - **Padronização de Emojis e Iconografia**:
   - Unificado o uso de emojis para transações financeiras: `📈` para Receitas, `📉` para Despesas e `💰` para Investimentos.
