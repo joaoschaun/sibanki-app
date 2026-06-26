@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 import { getStorage } from 'firebase/storage';
 
@@ -26,18 +26,32 @@ const app = initializeApp(firebaseConfig);
  */
 const appCheckSiteKey = import.meta.env.VITE_APPCHECK_SITE_KEY as string | undefined;
 if (appCheckSiteKey) {
-  import('firebase/app-check')
-    .then(({ initializeAppCheck, ReCaptchaV3Provider }) => {
-      initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider(appCheckSiteKey),
-        isTokenAutoRefreshEnabled: true,
-      });
-    })
-    .catch(() => { /* App Check é proteção adicional — nunca bloqueia o boot */ });
+  let isLocalOrStaging = false;
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    isLocalOrStaging = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('staging') || hostname.includes('staging-13a0b');
+  }
+
+  if (!isLocalOrStaging) {
+    import('firebase/app-check')
+      .then(({ initializeAppCheck, ReCaptchaV3Provider }) => {
+        initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider(appCheckSiteKey),
+          isTokenAutoRefreshEnabled: true,
+        });
+      })
+      .catch(() => { /* App Check é proteção adicional — nunca bloqueia o boot */ });
+  } else {
+    console.log('[AppCheck] Ignorado em localhost/staging para não bloquear as consultas de teste.');
+  }
 }
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
+});
 export const storage = getStorage(app);
 
 /**
