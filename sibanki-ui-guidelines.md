@@ -95,3 +95,14 @@ Colors MUST ONLY represent financial states:
 2.  **Financial Contexts**: Always consume financial profile data via `AppContext` (or `useAppContext()`) and intelligence calculations via `IntelligenceContext` (or `useIntelligence()`). Never create ad-hoc `onSnapshot` queries directly inside page routes.
 3.  **No Arbitrary CSS Files**: Write styles exclusively inside `.tsx` components using Tailwind classes. Do not use CSS Modules, styled-components, or inject custom raw CSS files.
 4.  **Tailwind CSS**: Adhere to Tailwind v4 syntax. Use CSS variables directly mapped inside Tailwind configs where possible.
+
+---
+
+## 6. Animation & Micro-interactions (Framer Motion)
+To create a premium feel, Framer Motion is available. However, because Sibanki is bundled inside Capacitor (running on mobile WebViews), strict performance rules apply:
+
+*   **Exit Animations & Modals**: Use `<AnimatePresence>` to handle sliding or fading drawers and modals out of the DOM on unmount.
+*   **Active Tab Indicators (Shared Layout)**: Use `layoutId` on a `<motion.span>` active background element (pill) inside a relative button container so it slides smoothly between tab choices.
+*   **Simple Page Transitions**: Page loaders or wrappers should use `<PageTransition>` and `<StaggerItem>` from `src/components/ui/PageTransition.tsx`. Do not write custom `<motion.div>` animations on every page.
+*   **Capacitor Performance Guideline**: Avoid large-scale layout animations (animating widths/heights of large lists or complex elements) on mobile screens to prevent layout thrashing and keep 60fps scrolling. Use transforms (scale, y, opacity) instead.
+

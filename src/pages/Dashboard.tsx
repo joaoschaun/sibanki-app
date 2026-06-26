@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import { DashboardSkeleton } from '../components/ui/PageSkeleton';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
@@ -301,14 +302,24 @@ export default function Dashboard() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveSubTab(tab.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-full text-[11px] font-bold tracking-[0.1em] uppercase border transition-all ${
+                className={`relative flex items-center gap-2 px-3 py-2 rounded-full text-[11px] font-bold tracking-[0.1em] uppercase border transition-all ${
                   active
-                    ? 'bg-white text-zinc-900 border-white'
+                    ? 'text-zinc-900 border-white'
                     : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border-si-border'
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{tab.label}</span>
+                {active && (
+                  <motion.span
+                    layoutId="activeCockpitSubTabPill"
+                    className="absolute inset-0 bg-white rounded-full"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    style={{ zIndex: 0 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-2">
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                </span>
               </button>
             );
           })}
@@ -430,20 +441,31 @@ export default function Dashboard() {
                         { id: 'evolucao', label: 'Evolução (6m)' },
                         { id: 'saldo', label: 'Saldo Acumulado' },
                       ] as const
-                    ).map((tab) => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setActiveChartTab(tab.id)}
-                        className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors ${
-                          activeChartTab === tab.id
-                            ? 'bg-white text-zinc-900 border border-white'
-                            : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border-si-border'
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
+                    ).map((tab) => {
+                      const active = activeChartTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setActiveChartTab(tab.id)}
+                          className={`relative px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                            active
+                              ? 'text-zinc-900'
+                              : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border border-transparent hover:border-si-border'
+                          }`}
+                        >
+                          {active && (
+                            <motion.span
+                              layoutId="activeChartTabPill"
+                              className="absolute inset-0 bg-white rounded-md"
+                              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                              style={{ zIndex: 0 }}
+                            />
+                          )}
+                          <span className="relative z-10">{tab.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 

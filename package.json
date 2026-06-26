@@ -45,6 +45,7 @@
     "@capacitor/status-bar": "^8.0.2",
     "clsx": "^2.1.1",
     "firebase": "^11.6.0",
+    "framer-motion": "^12.42.0",
     "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",
     "lightweight-charts": "^5.2.0",
