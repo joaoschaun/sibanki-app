@@ -17,6 +17,14 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Autenticação Biométrica Nativa via Capacitor (26/06/2026, Antigravity)
+
+- **Autenticação Biométrica Nativa (Mobile)**:
+  - Instaladas dependências `@capgo/capacitor-native-biometric` e `@capacitor/app`.
+  - Criado o componente [BiometricGuard.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/ui/BiometricGuard.tsx) para controlar o bloqueio do app com overlay seguro e solicitação de biometria nativa (digital/Face ID).
+  - Integrado o `BiometricGuard` em [App.tsx](file:///c:/Users/jscha/virtus-financeiro/src/App.tsx) encapsulando o `AuthenticatedShell`.
+  - Adicionado toggle para ativação/desativação da autenticação biométrica em [Settings.tsx](file:///c:/Users/jscha/virtus-financeiro/src/pages/Settings.tsx) com detecção nativa (habilita apenas no mobile e mostra indisponível no navegador/web).
+
 ### Otimização de Layout e Limpeza de Onboarding no Dashboard (26/06/2026, Antigravity)
 
 - **Layout Grid de Duas Colunas**:

@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { GenericPageSkeleton } from '../components/ui/PageSkeleton';
 import { useAppContext } from '../context/AppContext';
 import { resetUserData, updateUserDoc, updateGuardianConfig } from '../services/persistUserData';
@@ -71,6 +72,30 @@ export default function Settings() {
   const push = usePushNotifications(user?.uid);
   /** Acao 18 */
   const { suggestiveMode, toggleSuggestiveMode } = useSuggestiveMode();
+
+  const [biometricsSupported, setBiometricsSupported] = useState(false);
+  const [biometricsEnabled, setBiometricsEnabled] = useState(() => {
+    try {
+      return localStorage.getItem('sibanki_biometrics_enabled') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const checkBiometrics = async () => {
+      if (!Capacitor.isNativePlatform()) return;
+      try {
+        const { NativeBiometric } = await import('@capgo/capacitor-native-biometric');
+        const result = await NativeBiometric.isAvailable();
+        setBiometricsSupported(result.isAvailable);
+      } catch (err) {
+        console.error('[Biometrics] Erro ao checar suporte:', err);
+      }
+    };
+    checkBiometrics();
+  }, []);
+
   const quickActions = [
     { label: 'Novo lançamento', hint: 'Ir para Lançamentos', to: '/lancamentos' },
     { label: 'Cadastrar conta', hint: 'Ir para Contas', to: '/contas' },
@@ -808,6 +833,41 @@ export default function Settings() {
           )}
         </div>
         {push.error && <p className="text-xs text-rose-400">{push.error}</p>}
+
+        {/* Biometria (Face ID / Digital) */}
+        {Capacitor.isNativePlatform() && biometricsSupported ? (
+          <label className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md">
+            <span className="text-sm text-si-3">Desbloqueio por biometria (Face ID / Digital)</span>
+            <input
+              type="checkbox"
+              checked={biometricsEnabled}
+              onChange={(e) => {
+                const val = e.target.checked;
+                setBiometricsEnabled(val);
+                try {
+                  localStorage.setItem('sibanki_biometrics_enabled', String(val));
+                } catch (err) {
+                  console.error('Erro ao salvar biometria:', err);
+                }
+              }}
+              className="rounded border-si-border-xl bg-si-bg"
+            />
+          </label>
+        ) : (
+          <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-si-bg border border-si-border-md opacity-60">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm text-si-4">Desbloqueio por biometria</span>
+              <span className="text-[11px] text-si-5">Disponível apenas no aplicativo mobile.</span>
+            </div>
+            <input
+              type="checkbox"
+              disabled
+              checked={false}
+              className="rounded border-si-border-xl bg-si-bg opacity-40 cursor-not-allowed"
+            />
+          </div>
+        )}
+
         <RoundUpToggle />
         <button
           type="button"

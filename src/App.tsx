@@ -17,6 +17,7 @@ import { InstallPrompt } from './components/ui/InstallPrompt';
 import { ConsultantDrawer } from './components/consultant/ConsultantDrawer';
 import { useGuardian } from './hooks/useGuardian';
 import { GuardianAlertModal } from './components/guardian/GuardianAlertModal';
+import { BiometricGuard } from './components/ui/BiometricGuard';
 import { captureRefParam, useReferral } from './hooks/useReferral';
 import { useModuleFlags } from './hooks/useModuleFlags';
 import { matchModuleByPath } from './constants/appModules';
@@ -181,6 +182,7 @@ function AuthenticatedShell() {
   const rootBg = theme === 'light' ? 'bg-zinc-50 text-zinc-950' : 'bg-si-bg text-si-1';
 
   return (
+    <BiometricGuard>
     <ConsultantSessionProvider>
     <div className={`min-h-screen ${rootBg} font-sans flex overflow-hidden`}>
 
@@ -308,6 +310,7 @@ function AuthenticatedShell() {
       <BottomNavigation onMenuClick={handleToggle} />
     </div>
     </ConsultantSessionProvider>
+    </BiometricGuard>
   );
 }
 
