@@ -760,6 +760,10 @@ const chatApiOptions = {
   memory: '512MB',
   ...(enforceAppCheck ? { enforceAppCheck: true } : {}),
 };
+const chatStreamOptions = {
+  timeoutSeconds: 300,
+  memory: '512MB',
+};
 
 exports.chatApi = functions.runWith(chatApiOptions).https.onCall(async (data, context) => {
   if (!context.auth) {
@@ -792,7 +796,7 @@ exports.chatApi = functions.runWith(chatApiOptions).https.onCall(async (data, co
 });
 
 /** Conversa com Consultor usando SSE (Server-Sent Events) para Efeito Máquina de Escrever */
-exports.chatStreamApi = functions.runWith(chatApiOptions).https.onRequest((req, res) => {
+exports.chatStreamApi = functions.runWith(chatStreamOptions).https.onRequest((req, res) => {
   return cors(req, res, async () => {
     // Apenas POST é permitido
     if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');

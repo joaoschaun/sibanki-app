@@ -238,25 +238,32 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
               </div>
 
               {/* Push Status Section */}
-              <div className="p-3 bg-si-over-2 border-t border-si-border flex items-center justify-between gap-2 text-xs">
-                <span className="text-[10px] text-si-4 font-semibold uppercase tracking-wider">Push Notifications</span>
-                {push.isEnabled ? (
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo
-                  </span>
-                ) : push.supported ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      push.requestPermission();
-                    }}
-                    disabled={push.loading}
-                    className="px-2 py-1 rounded bg-white hover:bg-zinc-100 text-zinc-950 text-[10px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50"
-                  >
-                    {push.loading ? 'Ativando...' : 'Ativar'}
-                  </button>
-                ) : (
-                  <span className="text-[10px] text-si-5 font-semibold">Indisponível</span>
+              <div className="p-3 bg-si-over-2 border-t border-si-border flex flex-col gap-1.5">
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span className="text-[10px] text-si-4 font-semibold uppercase tracking-wider">Push Notifications</span>
+                  {push.isEnabled ? (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo
+                    </span>
+                  ) : push.supported ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        push.requestPermission();
+                      }}
+                      disabled={push.loading}
+                      className="px-2 py-1 rounded bg-white hover:bg-zinc-100 text-zinc-950 text-[10px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50"
+                    >
+                      {push.loading ? 'Ativando...' : 'Ativar'}
+                    </button>
+                  ) : (
+                    <span className="text-[10px] text-si-5 font-semibold">Indisponível</span>
+                  )}
+                </div>
+                {push.error && (
+                  <p className="text-[9px] text-rose-400 leading-normal border-t border-si-border pt-1.5">
+                    Erro: {push.error}
+                  </p>
                 )}
               </div>
             </div>

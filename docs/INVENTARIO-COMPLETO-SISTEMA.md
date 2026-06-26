@@ -160,7 +160,7 @@
 
 ---
 
-## 3. Hooks Customizados (10)
+## 3. Hooks Customizados (11)
 
 | Hook | Estado | Efeitos | Callbacks | O que faz |
 |---|---|---|---|---|
@@ -174,6 +174,8 @@
 | `useSibcoin` | 4 (loading, missionsLoading, missions, lastEvent) | 1 auto-fetch | 2 (triggerEvent, fetchMissions) | Gamificação: saldo, tier, missões, eventos |
 | `useSibcoinToast` | 0 (store singleton) | 0 | 1 (triggerWithToast) | Toasts de missão completa (4s auto-dismiss) |
 | `useCommunityFeed` | 3 (posts, loading, error) | 1 snapshot | 0 | Feed comunidade real-time (50 posts) |
+| `usePushNotifications` | 4 (permission, token, loading, error) | 1 SW registration | 1 requestPermission | Notificações Push: registro de sw, geração de token FCM e gravação no Firestore |
+
 
 ---
 
@@ -309,7 +311,7 @@ Todas as operações CRUD do Firestore:
 
 ---
 
-## 8. Cloud Functions — Backend Completo (47 funções)
+## 8. Cloud Functions — Backend Completo (48 funções)
 
 ### Callable (33)
 
@@ -341,17 +343,19 @@ Todas as operações CRUD do Firestore:
 | `sentinelaGeoCheck` | Sentinela | GPS → cenário → alerta → WhatsApp |
 | `validateAdminAccess/revokeAdminAccess` | Admin | Custom Claims |
 
-### HTTP/Webhooks (6)
+### HTTP/Webhooks (7)
 
 | Função | Descrição |
 |---|---|
 | `api` (Express) | REST Multi-Tenant: 7 rotas em /api/v1/tenants |
+| `chatStreamApi` | Chat consultor com streaming (Gemini) — CORS sem App Check |
 | `whatsappWebhook` | Bot completo: vinculação, saldo, resumo, metas, wizard, IA |
 | `stripeWebhook` | Eventos de pagamento |
 | `telegramWebhook` | Bot: cotação, saldo, lançar, IA, alertas, notícias |
 | `getNews` | Notícias agregadas (GNews/NewsData/RSS) |
 | `getDailyBriefing` | Briefing diário mercado |
 | `webhookParceiro` | Webhook externo (secret header) |
+
 
 ### Scheduled (6)
 

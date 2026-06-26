@@ -6,6 +6,14 @@
  */
 import { create } from 'zustand';
 
+interface PushState {
+  supported: boolean;
+  permission: NotificationPermission | 'default';
+  token: string | null;
+  loading: boolean;
+  error: string | null;
+}
+
 interface UiState {
   sidebarCollapsed: boolean;
   activeSection: string;
@@ -18,6 +26,8 @@ interface UiState {
   syncRoute: (pathname: string) => void;
   openConsultantDrawer: () => void;
   closeConsultantDrawer: () => void;
+  pushState: PushState;
+  setPushState: (state: Partial<PushState>) => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -35,4 +45,15 @@ export const useUiStore = create<UiState>((set) => ({
   },
   openConsultantDrawer: () => set({ consultantDrawerOpen: true }),
   closeConsultantDrawer: () => set({ consultantDrawerOpen: false }),
+  pushState: {
+    supported: typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator,
+    permission: typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default',
+    token: null,
+    loading: false,
+    error: null,
+  },
+  setPushState: (updated) =>
+    set((state) => ({
+      pushState: { ...state.pushState, ...updated },
+    })),
 }));
