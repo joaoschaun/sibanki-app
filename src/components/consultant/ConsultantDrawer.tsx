@@ -1,35 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
-import { useAppContext } from '../../context/AppContext';
+import { useRef, useEffect } from 'react';
 import { useUiStore } from '../../store/useUiStore';
-import { functions } from '../../firebase';
-import { httpsCallable } from 'firebase/functions';
-import { buildFinancialContextString } from '../../utils/consultantContext';
 import { MessageCircle, Send, AlertTriangle, Lock, X } from 'lucide-react';
-import { trackPlatformEvent } from '../../services/platformEvents';
 import { useFeatureFlags } from '../../hooks/useFeatureFlags';
-
-interface ChatMessage {
-  role: 'user' | 'ai';
-  content: string;
-  time: number;
-}
-
-
-
-function formatReply(raw: string): string {
-  let s = raw.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-  return s;
-}
-
-const WELCOME = `**Consultor Financeiro Sibanki**
-
-Seu assistente para controle financeiro. Você pode:
-• **Lançar** receitas e despesas (ex: "almoço 45", "recebi 3000 salário")
-• **Tirar dúvidas** sobre finanças e sobre o uso do app
-• **Pedir análises** com base nos seus dados
-
-Digite sua mensagem abaixo.`;
+import { useConsultantSession } from '../../context/ConsultantSessionContext';
+import { GenerativeUiContainer } from './GenerativeUiContainer';
 
 const PILLS = [
   'Quanto gastei no mês?',
@@ -37,90 +11,27 @@ const PILLS = [
 ];
 
 export function ConsultantDrawer() {
-  const {
-    user, entries, accounts, accountBalances, accountMeta, cards, goals, investments,
-    budgets, recurrents, investorProfile, creditSnapshot, creditObligations, financialProfile,
-    loading: dataLoading,
-  } = useAppContext();
-
   const { requireFeature } = useFeatureFlags();
   const { allowed: consultorAllowed, upsellInfo } = requireFeature('ia_consultor');
 
   const { consultantDrawerOpen, closeConsultantDrawer } = useUiStore();
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const historyRef = useRef<HTMLDivElement>(null);
-  const openedTrackedRef = useRef(false);
+  const {
+    messages,
+    input,
+    setInput,
+    sending,
+    error,
+    handleSend,
+  } = useConsultantSession();
 
-  useEffect(() => {
-    if (messages.length === 0 && !dataLoading && consultantDrawerOpen) {
-      setMessages([{ role: 'ai', content: formatReply(WELCOME), time: Date.now() }]);
-    }
-  }, [dataLoading, consultantDrawerOpen, messages.length]);
+  const historyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (consultantDrawerOpen) {
       historyRef.current?.scrollTo({ top: historyRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, [messages, consultantDrawerOpen]);
-
-
-  useEffect(() => {
-    if (!user || dataLoading || !consultantDrawerOpen || openedTrackedRef.current) return;
-    openedTrackedRef.current = true;
-    void trackPlatformEvent('advisor_opened', {
-      source: 'react_consultant_drawer',
-      journeyStage: financialProfile.advisor.journeyStage,
-      healthLevel: financialProfile.advisor.healthLevel,
-    });
-  }, [user, dataLoading, consultantDrawerOpen, financialProfile]);
-
-  const handleSend = async (overrideText?: string) => {
-    const txt = (overrideText !== undefined ? overrideText : input).trim();
-    if (!txt || sending) return;
-    if (!user) {
-      setError('Faça login para usar o consultor.');
-      return;
-    }
-
-    setInput('');
-    setError(null);
-    setMessages((prev) => [...prev, { role: 'user', content: txt, time: Date.now() }]);
-    setSending(true);
-
-    try {
-      const contextStr = buildFinancialContextString({
-        entries, goals, investments, budgets: budgets as Record<string, unknown>, accounts,
-        accountBalances, accountMeta, cards, recurrents, investorProfile: investorProfile ?? null,
-        creditSnapshot, creditObligations, currentCdiMonthly: 0.0107,
-      });
-      const advisorSnapshot = [
-        `Saúde financeira: ${financialProfile.advisor.healthLevel}`,
-        `Poupança mensal: ${financialProfile.cashflow.savingsRatePct}%`,
-      ].join('\n');
-      
-      const chatApi = httpsCallable<{ message: string; context: string }, { reply?: string }>(functions, 'chatApi');
-      const res = await chatApi({ message: txt, context: `${contextStr}\nPerfil consolidado:\n${advisorSnapshot}` });
-      const rawReply = (res?.data?.reply ?? '').trim() || 'Sem resposta.';
-      const reply = formatReply(rawReply);
-      setMessages((prev) => [...prev, { role: 'ai', content: reply, time: Date.now() }]);
-    } catch (err: unknown) {
-      const msg = (err as { message?: string })?.message ?? 'Erro ao conectar. Tente novamente.';
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'ai',
-          content: `<span class="inline-flex items-center gap-1.5 text-amber-400"><span aria-hidden="true">⚠️</span> ${msg}</span>`,
-          time: Date.now(),
-        },
-      ]);
-    } finally {
-      setSending(false);
-    }
-  };
 
   if (!consultantDrawerOpen) return null;
 
@@ -169,7 +80,10 @@ export function ConsultantDrawer() {
                     {m.role === 'user' ? (
                       <span className="whitespace-pre-wrap">{m.content}</span>
                     ) : (
-                      <div className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-ul:my-2" dangerouslySetInnerHTML={{ __html: m.content }} />
+                      <>
+                        <div className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-ul:my-2" dangerouslySetInnerHTML={{ __html: m.content }} />
+                        {m.uiPayload && <GenerativeUiContainer uiPayload={m.uiPayload} />}
+                      </>
                     )}
                   </div>
                 </div>

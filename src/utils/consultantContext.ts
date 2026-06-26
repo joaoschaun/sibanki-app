@@ -239,6 +239,20 @@ export function buildFinancialContextString(input: FinancialContextInput): strin
   ctx += `Orçamentos: ${orcInfo}\n`;
   ctx += `${cartoesInfo}\n`;
 
+  // Transações recentes (Últimos lançamentos para Generative UI)
+  const recentEntries = entries
+    .filter((e) => !isTransferEntry(e))
+    .slice()
+    .sort((a, b) => new Date(b.date || "").getTime() - new Date(a.date || "").getTime())
+    .slice(0, 10);
+
+  if (recentEntries.length > 0) {
+    const txsStr = recentEntries
+      .map((e) => `- ${e.date || "S/D"}: ${e.desc || "Sem descrição"} (${e.category || "Outros"}): ${e.type === "receita" ? "+" : "-"} R$ ${Number(e.value).toFixed(2)}`)
+      .join("\n");
+    ctx += `Transações recentes:\n${txsStr}\n`;
+  }
+
   // Recorrentes
   if (recurrents.length > 0) {
     const recStr = (recurrents as { desc?: string; value?: number; type?: string; day?: number }[])

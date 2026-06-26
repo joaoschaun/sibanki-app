@@ -1,30 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect } from 'react';
 import { GenericPageSkeleton } from '../components/ui/PageSkeleton';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
-import { functions } from '../firebase';
-import { httpsCallable } from 'firebase/functions';
-import { buildFinancialContextString } from '../utils/consultantContext';
-import { analyzeInstallmentDecision } from '../utils/decisionEngine';
 import { useIntelligence } from '../context/IntelligenceContext';
+import { useConsultantSession } from '../context/ConsultantSessionContext';
+import { GenerativeUiContainer } from '../components/consultant/GenerativeUiContainer';
 import { Send, AlertTriangle, Scale, Lock, Receipt, TrendingUp, Target, type LucideIcon } from 'lucide-react';
-import { trackPlatformEvent } from '../services/platformEvents';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
-
-interface ChatMessage {
-  role: 'user' | 'ai';
-  content: string;
-  time: number;
-}
-
-const CONSULTOR_DAILY_COUNT_KEY = 'sibanki_consultor_daily_count';
-
-/** Converte resposta da IA (markdown simples) para HTML seguro para exibição. */
-function formatReply(raw: string): string {
-  let s = raw.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-  return s;
-}
 
 /** Cards de sugestão do estado vazio (Chat 2.0 — S2 da auditoria visual). */
 const SUGGESTIONS: Array<{ icon: LucideIcon; title: string; prompt?: string; tool?: 'decision' }> = [
@@ -56,221 +38,40 @@ export default function Consultant() {
   const navigate = useNavigate();
   const {
     user,
-    entries,
-    accounts,
-    accountBalances,
-    accountMeta,
-    cards,
-    goals,
-    investments,
-    budgets,
-    recurrents,
-    investorProfile,
-    creditSnapshot,
-    creditObligations,
-    financialProfile,
     loading: dataLoading,
   } = useAppContext();
 
   const { requireFeature } = useFeatureFlags();
   const { allowed: consultorAllowed, upsellInfo } = requireFeature('ia_consultor');
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [dailyCount, setDailyCount] = useState(0);
-  const [showDecisionForm, setShowDecisionForm] = useState(false);
-  const [decisionValues, setDecisionValues] = useState({ totalValue: '', installments: '', cashDiscount: '' });
-  const historyRef = useRef<HTMLDivElement>(null);
-  const openedTrackedRef = useRef(false);
-  /** Mensagem vinda da Início (Arquiteto); enviada após dados carregarem. */
-  const pendingFromHomeRef = useRef<string | null>(null);
+  const {
+    messages,
+    input,
+    setInput,
+    sending,
+    error,
+    dailyCount,
+    showDecisionForm,
+    setShowDecisionForm,
+    decisionValues,
+    setDecisionValues,
+    historyRef,
+    handleSend,
+    handleDecisionAnalyze,
+    queuePendingMessage,
+  } = useConsultantSession();
 
   const { freedom } = useIntelligence();
 
   useEffect(() => {
     const raw = (location.state as { initialMessage?: string } | null)?.initialMessage;
     if (typeof raw === 'string' && raw.trim()) {
-      pendingFromHomeRef.current = raw.trim();
+      queuePendingMessage(raw.trim());
       navigate(location.pathname, { replace: true, state: null });
     }
     // Somente estado da navegação inicial ao abrir a página
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    historyRef.current?.scrollTo({ top: historyRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages]);
-
-  useEffect(() => {
-    try {
-      const today = new Date().toISOString().slice(0, 10);
-      const raw = localStorage.getItem(CONSULTOR_DAILY_COUNT_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as { date?: string; count?: number };
-      if (parsed?.date === today && typeof parsed.count === 'number') {
-        setDailyCount(parsed.count);
-      }
-    } catch {
-      // ignora erro de leitura local
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!user || dataLoading || openedTrackedRef.current) return;
-    openedTrackedRef.current = true;
-    void trackPlatformEvent('advisor_opened', {
-      source: 'react_consultant_page',
-      journeyStage: financialProfile.advisor.journeyStage,
-      healthLevel: financialProfile.advisor.healthLevel,
-      hasOpenFinance: financialProfile.products.hasOpenFinance,
-      plan: financialProfile.products.plan,
-    });
-  }, [user, dataLoading, financialProfile]);
-
-  const handleDecisionAnalyze = () => {
-    const total = parseFloat(decisionValues.totalValue.replace(',', '.'));
-    const inst = parseInt(decisionValues.installments, 10);
-    if (!total || !inst || inst < 2) {
-      setError('Preencha o valor total e o número de parcelas (mínimo 2).');
-      return;
-    }
-    const discount = parseFloat(decisionValues.cashDiscount.replace(',', '.') || '0') / 100;
-    const totalLiquidityRaw = Object.values(accountBalances).reduce((s, v) => s + (v > 0 ? v : 0), 0);
-
-    const result = analyzeInstallmentDecision({
-      totalValue: total,
-      installments: inst,
-      cashDiscount: discount || undefined,
-      investmentMonthlyRate: 0.0107,
-      creditPressureLevel: financialProfile.credit.pressureLevel as 'controlado' | 'atencao' | 'elevado' | 'critico',
-      debtCommitmentPct: financialProfile.credit.cardUtilizationPct,
-      emergencyReserveMonths: totalLiquidityRaw > 0
-        ? totalLiquidityRaw / Math.max(1, Math.abs(financialProfile.cashflow.balance) || financialProfile.cashflow.expenses / 12)
-        : 0,
-      hasCashAvailable: totalLiquidityRaw >= total,
-    });
-
-    const userMsg = `⚖️ Análise: À Vista vs Parcelado\nValor: R$ ${total.toFixed(2)} | ${inst}x${discount ? ` | Desconto à vista: ${(discount * 100).toFixed(0)}%` : ''}`;
-    const aiMsg = formatReply(result.narrativa);
-    setMessages((prev) => [
-      ...prev,
-      { role: 'user', content: userMsg, time: Date.now() },
-      { role: 'ai', content: aiMsg, time: Date.now() + 1 },
-    ]);
-    setShowDecisionForm(false);
-    setDecisionValues({ totalValue: '', installments: '', cashDiscount: '' });
-    setError(null);
-  };
-
-  const handleSend = async (overrideText?: string) => {
-    const txt = (overrideText !== undefined ? overrideText : input).trim();
-    if (!txt || sending) return;
-    if (!user) {
-      setError('Faça login para usar o consultor.');
-      return;
-    }
-
-    setInput('');
-    setError(null);
-    setMessages((prev) => [...prev, { role: 'user', content: txt, time: Date.now() }]);
-    setSending(true);
-    const startedAt = Date.now();
-
-    try {
-      const contextStr = buildFinancialContextString({
-        entries,
-        goals,
-        investments,
-        budgets: budgets as Record<string, unknown>,
-        accounts,
-        accountBalances,
-        accountMeta,
-        cards,
-        recurrents,
-        investorProfile: investorProfile ?? null,
-        creditSnapshot,
-        creditObligations,
-        currentCdiMonthly: 0.0107, // ~CDI mensal vigente; substituir por BRAPI quando disponível
-      });
-      const advisorSnapshot = [
-        `Saúde financeira: ${financialProfile.advisor.healthLevel}`,
-        `Estágio da jornada: ${financialProfile.advisor.journeyStage}`,
-        `Poupança mensal: ${financialProfile.cashflow.savingsRatePct}%`,
-        `Uso estimado do limite: ${financialProfile.credit.cardUtilizationPct}%`,
-        `Pressão de crédito: ${financialProfile.credit.pressureLevel}`,
-        `Faturas em 7 dias: R$ ${financialProfile.credit.dueSoonAmount.toFixed(2)}`,
-        `Compromisso mensal com dívidas: R$ ${financialProfile.credit.monthlyDebtCommitment.toFixed(2)}`,
-        `Open Finance ativo: ${financialProfile.products.hasOpenFinance ? 'sim' : 'não'}`,
-        `Próximas ações sugeridas: ${financialProfile.advisor.nextBestActions.join(', ') || 'nenhuma'}`,
-      ].join('\n');
-      void trackPlatformEvent('advisor_message_sent', {
-        source: 'react_consultant_page',
-        messageLength: txt.length,
-        journeyStage: financialProfile.advisor.journeyStage,
-        healthLevel: financialProfile.advisor.healthLevel,
-        topSignals: financialProfile.advisor.topSignals,
-        nextBestActions: financialProfile.advisor.nextBestActions,
-      });
-      const chatApi = httpsCallable<{ message: string; context: string }, { reply?: string }>(functions, 'chatApi');
-      const res = await chatApi({ message: txt, context: `${contextStr}\nPerfil consolidado:\n${advisorSnapshot}` });
-      const dataRes = res?.data;
-      const rawReply = (dataRes?.reply ?? '').trim() || 'Sem resposta.';
-      const reply = formatReply(rawReply);
-      setMessages((prev) => [...prev, { role: 'ai', content: reply, time: Date.now() }]);
-      void trackPlatformEvent('advisor_reply_received', {
-        source: 'react_consultant_page',
-        latencyMs: Date.now() - startedAt,
-        replyLength: rawReply.length,
-        journeyStage: financialProfile.advisor.journeyStage,
-      });
-      setDailyCount((c) => {
-        const next = c + 1;
-        try {
-          const today = new Date().toISOString().slice(0, 10);
-          localStorage.setItem(CONSULTOR_DAILY_COUNT_KEY, JSON.stringify({ date: today, count: next }));
-        } catch {
-          // ignora erro de persistência local
-        }
-        return next;
-      });
-    } catch (err: unknown) {
-      const code = (err as { code?: string })?.code ?? '';
-      const msg = (err as { message?: string })?.message ?? 'Erro ao conectar. Tente novamente.';
-      const friendly =
-        code === 'functions/resource-exhausted' || /quota|limite|rate limit/i.test(msg)
-          ? 'Limite de uso do consultor por hoje atingido. Tente em alguns minutos ou amanhã.'
-          : msg;
-      void trackPlatformEvent('advisor_reply_failed', {
-        source: 'react_consultant_page',
-        code,
-        messageLength: txt.length,
-        journeyStage: financialProfile.advisor.journeyStage,
-      });
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'ai',
-          content: `<span class="inline-flex items-center gap-1.5 text-amber-400"><span aria-hidden="true">⚠️</span> ${friendly}</span>`,
-          time: Date.now(),
-        },
-      ]);
-    } finally {
-      setSending(false);
-    }
-  };
-
-  useEffect(() => {
-    if (dataLoading || !user || !pendingFromHomeRef.current) return;
-    const msg = pendingFromHomeRef.current;
-    pendingFromHomeRef.current = null;
-    const t = window.setTimeout(() => {
-      void handleSend(msg);
-    }, 0);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- envio único ao receber mensagem da Início
-  }, [dataLoading, user]);
 
   if (!consultorAllowed && upsellInfo) {
     return (
@@ -339,14 +140,21 @@ export default function Consultant() {
                 </div>
               </div>
             ) : (
-              <div key={i} className="flex gap-3.5">
-                <div className="w-7 h-7 rounded-lg bg-si-over-2 border border-si-border flex items-center justify-center text-si-2 shrink-0 mt-1">
-                  <BrandMark className="w-3.5 h-3.5" />
+              <div key={i} className="flex gap-3.5 flex-col">
+                <div className="flex gap-3.5">
+                  <div className="w-7 h-7 rounded-lg bg-si-over-2 border border-si-border flex items-center justify-center text-si-2 shrink-0 mt-1">
+                    <BrandMark className="w-3.5 h-3.5" />
+                  </div>
+                  <div
+                    className="flex-1 min-w-0 text-si-2 text-[15px] leading-relaxed pt-0.5 [&_strong]:text-si-1 [&_strong]:font-semibold"
+                    dangerouslySetInnerHTML={{ __html: m.content }}
+                  />
                 </div>
-                <div
-                  className="flex-1 min-w-0 text-si-2 text-[15px] leading-relaxed pt-0.5 [&_strong]:text-si-1 [&_strong]:font-semibold"
-                  dangerouslySetInnerHTML={{ __html: m.content }}
-                />
+                {m.uiPayload && (
+                  <div className="pl-10">
+                    <GenerativeUiContainer uiPayload={m.uiPayload} />
+                  </div>
+                )}
               </div>
             )
           )

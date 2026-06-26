@@ -54,11 +54,6 @@ test.describe('Mobile Viewport & Safe Area Verification', () => {
         const style = document.createElement('style');
         style.id = 'simulated-safe-areas';
         style.innerHTML = `
-          :root {
-            /* Simula safe area no iOS/Android */
-            padding-top: 47px !important;
-            padding-bottom: 34px !important;
-          }
           header {
             padding-top: 47px !important;
             height: calc(3.5rem + 47px) !important;

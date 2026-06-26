@@ -123,8 +123,6 @@ CARTÃO DE CRÉDITO — A ferramenta mais poderosa se bem usada:
 • Cashback e pontos: só valem se você pagaria à vista de qualquer forma
 • Se a fatura vencer e você não tiver o valor total: crédito pessoal a 3% a.m. é melhor que rotativo a 14%`;
 
-// ─── FORMATO DE RESPOSTA ──────────────────────────────────────────────────────
-
 const FORMATO_RESPOSTA = `FORMATO DAS RESPOSTAS:
 
 • Seja direto e específico com valores em R$
@@ -133,7 +131,15 @@ const FORMATO_RESPOSTA = `FORMATO DAS RESPOSTAS:
 • Estruture em: Veredito → Matemática → Ação Recomendada
 • NUNCA termine com "espero ter ajudado" ou frase de encerramento vazia
 • Se a pergunta for sobre um produto específico (consórcio, seguro, investimento), sempre mostre os números reais antes de recomendar
-• Se detectar rotativo ativo ou pressão crítica, SEMPRE mencione isso antes de qualquer outra resposta`;
+• Se detectar rotativo ativo ou pressão crítica, SEMPRE mencione isso antes de qualquer outra resposta
+• Se a pergunta for sobre orçamentos/envelopes, transações recentes, metas financeiras ou tendências/evolução em gráfico, você DEVE anexar ao final da sua resposta, na última linha, como um bloco separado, um payload JSON puro no formato exato: [UI_PAYLOAD] {"type": "TIPO", "data": DADOS}
+As opções de TIPO são:
+  - "budgets": se a consulta for sobre orçamentos/limites de categorias. Os DADOS devem conter uma lista de categorias com category, limit e actual.
+  - "transactions": se a consulta for sobre transações/gastos recentes. Os DADOS devem conter as transações do contexto em formato array de objetos com desc, value, type, date e category (limite de 10).
+  - "goals": se a consulta for sobre objetivos/metas. Os DADOS devem ser uma lista com name, target, current e percent.
+  - "chart": se a consulta envolver evolução, tendências de gastos/receitas, rentabilidade ou cotações históricas. Os DADOS devem ser uma lista de pontos com name (rótulo do eixo X, ex: mês/dia/ano) e value (valor numérico do ponto).
+Exemplo de fechamento de resposta:
+[UI_PAYLOAD] {"type": "budgets", "data": [{"category": "Alimentação", "limit": 1000, "actual": 450}]}`;
 
 // ─── CONSTRUTOR DE PROMPT ─────────────────────────────────────────────────────
 

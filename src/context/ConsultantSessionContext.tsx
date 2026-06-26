@@ -47,6 +47,29 @@ export interface ConsultantChatMessage {
   marketPayload?: any;
   /** Sugestão determinística de cartão (benefícios cadastrados + texto do usuário). */
   cardPurchaseSuggestion?: CardPurchaseSuggestion | null;
+  uiPayload?: {
+    type: 'budgets' | 'transactions' | 'goals' | 'chart';
+    data: any;
+  } | null;
+}
+
+export function parseUiPayloadFromText(rawText: string): { cleanText: string; uiPayload: any | null } {
+  if (!rawText.includes('[UI_PAYLOAD]')) {
+    return { cleanText: rawText, uiPayload: null };
+  }
+  const parts = rawText.split('[UI_PAYLOAD]');
+  const cleanText = parts[0].trim();
+  const jsonText = parts[1]?.trim() || '';
+  let uiPayload = null;
+  try {
+    const match = jsonText.match(/\{[\s\S]*\}/);
+    if (match) {
+      uiPayload = JSON.parse(match[0]);
+    }
+  } catch (err) {
+    console.error('[GenerativeUI] Falha ao parsear UI_PAYLOAD:', err);
+  }
+  return { cleanText, uiPayload };
 }
 
 /** Resposta de `assistantEntryCaptureApi` (voz + visão unificadas). */
@@ -411,10 +434,15 @@ export function ConsultantSessionProvider({ children }: { children: ReactNode })
                     if (parsed.text) {
                       aiFullText += parsed.text;
                       rawReply = aiFullText;
+                      const { cleanText, uiPayload } = parseUiPayloadFromText(aiFullText);
                       // Atualiza estado do texto formatado dinamicamente
                       setMessages((prev) => {
                         const next = [...prev];
-                        next[next.length - 1] = { ...next[next.length - 1], content: formatConsultantReply(aiFullText) };
+                        next[next.length - 1] = { 
+                          ...next[next.length - 1], 
+                          content: formatConsultantReply(cleanText),
+                          uiPayload: uiPayload
+                        };
                         return next;
                       });
                     }
@@ -446,11 +474,13 @@ export function ConsultantSessionProvider({ children }: { children: ReactNode })
             throw new Error('A IA não retornou conteúdo nesta tentativa.');
           }
           rawReply = replyText;
+          const { cleanText, uiPayload } = parseUiPayloadFromText(replyText);
           setMessages((prev) => {
             const next = [...prev];
             next[next.length - 1] = {
               ...next[next.length - 1],
-              content: formatConsultantReply(replyText),
+              content: formatConsultantReply(cleanText),
+              uiPayload: uiPayload,
               marketPayload: fallback.data?.marketPayload as any,
             };
             return next;

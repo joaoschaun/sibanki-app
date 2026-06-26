@@ -17,6 +17,20 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Generative UI no Assistente IA (CECI) (26/06/2026, Antigravity)
+
+- **Experiência Unificada**:
+  - Migrada a página principal do Consultor (`Consultant.tsx`) e o chat drawer global (`ConsultantDrawer.tsx`) para consumir o estado compartilhado e streaming em tempo real via `ConsultantSessionContext.tsx`.
+- **Renderização de Generative UI**:
+  - Criado o componente [GenerativeUiContainer.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/consultant/GenerativeUiContainer.tsx) capaz de interceptar o marcador `[UI_PAYLOAD]` do streaming da IA e renderizar widgets React nativos e interativos:
+    - **Mini-Budgets**: Progresso dos envelopes de orçamento da Metodologia ZBB.
+    - **Mini-Transactions**: Transações recentes com logomarcas dos estabelecimentos (`MerchantLogo`) e pontuação de soberania (`SovereigntyBadge`).
+    - **Mini-Goals**: Barra de progresso dos objetivos ativos do usuário.
+    - **Mini-Chart**: Gráficos de área usando Recharts para tendências históricas e cotações.
+- **Enriquecimento do Contexto**:
+  - Adicionado suporte a formatação das últimas transações no prompt de contexto (`src/utils/consultantContext.ts`) para que o LLM consiga construir os payloads de transações com precisão.
+  - Atualizadas as instruções do prompt de sistema (`functions/services/llm/sovereignSystemPrompt.js`) orientando o LLM a gerar tags `[UI_PAYLOAD]` para consultas financeiras, incluindo suporte a gráficos históricos.
+
 ### Autenticação Biométrica Nativa via Capacitor (26/06/2026, Antigravity)
 
 - **Autenticação Biométrica Nativa (Mobile)**:
