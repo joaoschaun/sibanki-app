@@ -1,15 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Receipt, TrendingUp, Wallet, CreditCard, Target, PieChart,
   FileBarChart, Calendar, User, Settings, MoreHorizontal, ChevronDown,
   Handshake, Users, Heart, MessageCircle, LayoutDashboard, ShoppingBag,
-  Coins, BookOpen, Wrench, Flame, ShieldCheck, Zap, RefreshCw,
+  Coins, BookOpen, Wrench, Flame, ShieldCheck, Zap, RefreshCw, Lock,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTenant } from '../../hooks/useTenant';
 import { useModuleFlags } from '../../hooks/useModuleFlags';
 import { cn } from '../../utils/cn';
+import { useAppContext } from '../../context/AppContext';
 
 export type SidebarOpenGroup = 'mais' | null;
 
@@ -88,6 +89,29 @@ export function Sidebar({
   const location = useLocation();
   const { isModuleEnabled } = useModuleFlags();
 
+  const {
+    accounts, entries, goals, creditObligations, investments, financialProfile
+  } = useAppContext();
+
+  const coachDismissed = useMemo(
+    () => localStorage.getItem('sibanki_coach_dismissed') === 'true',
+    []
+  );
+
+  const isCoachActive = useMemo(() => {
+    if (coachDismissed) return false;
+    const hasAccounts = accounts.length > 0;
+    const hasMinEntries = entries.filter(e => e.type === 'despesa' || e.type === 'receita').length >= 3;
+    const hasGoals = goals.length > 0;
+    const hasDebts = creditObligations.length > 0;
+    const hasInvestments = investments.length > 0;
+    const hasWhatsapp = !!((financialProfile as unknown as Record<string, any>)?.whatsappPhone);
+    const allDone = hasAccounts && hasMinEntries && hasGoals && hasDebts && hasInvestments && hasWhatsapp;
+    return !allDone;
+  }, [accounts, entries, goals, creditObligations, investments, financialProfile, coachDismissed]);
+
+  const ALLOWED_PATHS = useMemo(() => new Set(['/dashboard', '/lancamentos', '/contas', '/perfil', '/configuracoes']), []);
+
   // Gating de módulos: esconde itens desligados pelo admin (essenciais sempre on).
   const coreItems = coreNav.filter((i) => isModuleEnabled(i.key));
   const maisItems = maisNav.filter((i) => isModuleEnabled(i.key));
@@ -137,6 +161,30 @@ export function Sidebar({
 
   function NavLink({ item }: { item: NavItem }) {
     const active = isActive(item.path);
+    const isBlocked = isCoachActive && !ALLOWED_PATHS.has(item.path);
+
+    if (isBlocked) {
+      return (
+        <div
+          title={collapsed ? `${item.label} (Desbloqueie no Modo Coach)` : undefined}
+          className={cn(
+            collapsed ? rowCollapsed(false) : row(false),
+            'opacity-40 cursor-not-allowed select-none'
+          )}
+        >
+          {collapsed ? (
+            <Lock className="w-[14px] h-[14px] text-si-5" />
+          ) : (
+            <>
+              <item.icon className={iconCls(false)} />
+              <span className="flex-1 truncate">{item.label}</span>
+              <Lock className="w-3 h-3 text-si-5 shrink-0" />
+            </>
+          )}
+        </div>
+      );
+    }
+
     return (
       <Link
         to={item.path}
@@ -200,9 +248,15 @@ export function Sidebar({
             <>
               <button
                 type="button"
-                onClick={toggleMais}
-                aria-expanded={maisOpen}
-                className={cn(row(false), 'justify-between pr-2', routeInMais && !maisOpen && 'text-si-2')}
+                onClick={isCoachActive ? undefined : toggleMais}
+                disabled={isCoachActive}
+                aria-expanded={isCoachActive ? false : maisOpen}
+                className={cn(
+                  row(false),
+                  'justify-between pr-2',
+                  routeInMais && !maisOpen && 'text-si-2',
+                  isCoachActive && 'opacity-40 cursor-not-allowed select-none'
+                )}
               >
                 <span className="flex items-center gap-2.5">
                   <MoreHorizontal className={cn('w-[14px] h-[14px] shrink-0', routeInMais && !maisOpen ? 'text-si-2' : 'text-si-5')} />
@@ -211,10 +265,14 @@ export function Sidebar({
                     <span className="w-1.5 h-1.5 rounded-full bg-si-2" aria-hidden />
                   )}
                 </span>
-                <ChevronDown className={cn(
-                  'w-3 h-3 text-si-5 transition-transform duration-150',
-                  maisOpen && 'rotate-180'
-                )} />
+                {isCoachActive ? (
+                  <Lock className="w-3 h-3 text-si-5 shrink-0" />
+                ) : (
+                  <ChevronDown className={cn(
+                    'w-3 h-3 text-si-5 transition-transform duration-150',
+                    maisOpen && 'rotate-180'
+                  )} />
+                )}
               </button>
 
               <div className={cn(
