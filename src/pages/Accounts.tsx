@@ -72,6 +72,7 @@ export default function Accounts() {
   const [editChequeLimite, setEditChequeLimite] = useState('');
   const [editChequeJuros, setEditChequeJuros] = useState('');
   const [editBankSlug, setEditBankSlug] = useState('');
+  const [editBalance, setEditBalance] = useState('');
 
   // Status
   const [busy, setBusy] = useState(false);
@@ -205,6 +206,8 @@ export default function Accounts() {
   const openEdit = (accountName: string) => {
     setEditAccount(accountName);
     setEditName(accountName);
+    const balance = accountBalances[accountName] ?? 0;
+    setEditBalance(String(balance));
     const meta = accountMeta[accountName];
     setEditTipo(meta?.tipo ?? 'Conta corrente');
     setEditCor(meta?.cor ?? '#4F8CFF');
@@ -231,6 +234,15 @@ export default function Accounts() {
       if (newName !== editAccount) {
         await renameAccount(user.uid, accounts, accountBalances, meta, entries, editAccount, newName);
       }
+
+      // Atualiza o saldo se o valor foi modificado
+      const newBalanceValue = parseFloat(editBalance.replace(',', '.')) || 0;
+      const targetName = newName !== editAccount ? newName : editAccount;
+      const currentBalance = accountBalances[targetName] ?? 0;
+      if (newBalanceValue !== currentBalance) {
+        await updateAccountBalance(user.uid, accountBalances, targetName, Math.round(newBalanceValue * 100) / 100);
+      }
+
       const metaComNovoNome = newName !== editAccount
         ? { ...meta, [newName]: meta[editAccount] ?? {} }
         : meta;
@@ -719,6 +731,19 @@ export default function Accounts() {
                     onChange={(e) => setEditName(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium"
                     required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="edit-balance" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Saldo Atual (R$)</label>
+                  <input
+                    id="edit-balance"
+                    type="text"
+                    inputMode="decimal"
+                    value={editBalance}
+                    onChange={(e) => setEditBalance(e.target.value.replace(/[^0-9,.-]/, ''))}
+                    placeholder="0,00"
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-sm"
                   />
                 </div>
 
