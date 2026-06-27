@@ -694,6 +694,10 @@ export interface Investment {
   qtd?: number;
   /** Taxa de rendimento anual declarada em **% a.a.** (ex: 12 = 12% a.a.). */
   taxaAnual?: number;
+  /** Indexador original (para Renda Fixa). Ex: 'cdi', 'ipca', 'pre', 'mensal'. */
+  indexer?: 'pre' | 'cdi' | 'ipca' | 'mensal';
+  /** Valor do indexador. Ex: 105 para 105% do CDI, 6 para IPCA+6%. */
+  indexerValue?: number;
   /**
    * Renda passiva mensal estimada deste ativo em R$ (dividendos de FIIs, JCP de ações,
    * etc.). Quando informado, entra em `monthlyPassiveIncome` no cálculo de Ld.

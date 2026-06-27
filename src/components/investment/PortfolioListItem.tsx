@@ -123,6 +123,23 @@ export function PortfolioListItem({ investment: inv, onEdit, onDelete, onAlert }
                 <p className="font-bold text-emerald-400">{dy.toFixed(2)}% a.a.</p>
               </div>
             )}
+            {inv.indexer && inv.indexerValue != null && (
+              <div>
+                <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-0.5">Rentabilidade</p>
+                <p className="font-bold text-amber-400">
+                  {inv.indexer === 'pre' ? `${inv.indexerValue}% a.a.` :
+                   inv.indexer === 'cdi' ? `${inv.indexerValue}% CDI` :
+                   inv.indexer === 'ipca' ? `IPCA + ${inv.indexerValue}%` :
+                   `${inv.indexerValue}% a.m.`}
+                </p>
+              </div>
+            )}
+            {!inv.indexer && inv.taxaAnual != null && (
+              <div>
+                <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-0.5">Rentabilidade</p>
+                <p className="font-bold text-amber-400">{inv.taxaAnual.toFixed(2)}% a.a.</p>
+              </div>
+            )}
             {Number(inv.proventosMensais) > 0 && (
               <div>
                 <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-0.5">Renda/mês</p>

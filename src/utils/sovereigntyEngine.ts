@@ -262,7 +262,20 @@ export function calculateDaysOfFreedom(params: {
   //    SOV-7 (auditoria 26/04/2026): dividendos antes não contavam — sub-estimava
   //    renda passiva especialmente para usuários com FIIs (target Sibanki).
   //    Excluímos Renda Variável da base de juros presumidos para evitar dupla contagem com os proventos declarados.
-  const yieldFromLiquid = (isLiquidityEstimated ? 0 : liquidRFValue) * investmentYieldMonthly;
+  let yieldFromLiquid = 0;
+  if (!isLiquidityEstimated) {
+    investments.forEach((inv) => {
+      const tipo = (inv.tipo || '').toLowerCase();
+      const valor = Number(inv.atual ?? inv.valor) || 0;
+      if (liquidRFTypeKeys.some((t) => tipo.includes(t))) {
+        const rate = inv.taxaAnual
+          ? Math.pow(1 + inv.taxaAnual / 100, 1 / 12) - 1
+          : investmentYieldMonthly;
+        yieldFromLiquid += valor * rate;
+      }
+    });
+  }
+
   const declaredProventos = investments.reduce((s, inv) => {
     const p = Number(inv.proventosMensais) || 0;
     return p > 0 ? s + p : s;

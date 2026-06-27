@@ -59,6 +59,10 @@ export default function Growth() {
   const [formProventos, setFormProventos] = useState('');
   const [formQtd, setFormQtd] = useState('');
   const [formPrecoCompra, setFormPrecoCompra] = useState('');
+  const [formIndexer, setFormIndexer] = useState<'pre' | 'cdi' | 'ipca' | 'mensal'>('pre');
+  const [formIndexerValue, setFormIndexerValue] = useState('');
+  const [editIndexer, setEditIndexer] = useState<'pre' | 'cdi' | 'ipca' | 'mensal'>('pre');
+  const [editIndexerValue, setEditIndexerValue] = useState('');
   const [tickerSuggestions, setTickerSuggestions] = useState<B3SearchResult[]>([]);
   const [tickerSearchBusy, setTickerSearchBusy] = useState(false);
   // DY anual (%) retornado pela cotação ao selecionar ticker — usado para estimar proventos mensais
@@ -137,6 +141,8 @@ export default function Growth() {
     setFormProventos('');
     setFormQtd('');
     setFormPrecoCompra('');
+    setFormIndexer('pre');
+    setFormIndexerValue('');
     setTickerSuggestions([]);
     setFormDyAnual(null);
     setError(null);
@@ -180,6 +186,21 @@ export default function Growth() {
     try {
       const qtdVal = parseFloat(formQtd.replace(',', '.')) || 0;
       const precoVal = parseFloat(formPrecoCompra.replace(',', '.')) || 0;
+
+      let calculatedTaxaAnual: number | undefined = undefined;
+      const idxVal = parseFloat(formIndexerValue.replace(',', '.')) || 0;
+      if (formTipo === 'Renda Fixa' && idxVal > 0) {
+        if (formIndexer === 'pre') {
+          calculatedTaxaAnual = idxVal;
+        } else if (formIndexer === 'cdi') {
+          calculatedTaxaAnual = Number((10.5 * idxVal / 100).toFixed(4));
+        } else if (formIndexer === 'ipca') {
+          calculatedTaxaAnual = Number(((((1 + 0.045) * (1 + idxVal / 100)) - 1) * 100).toFixed(4));
+        } else if (formIndexer === 'mensal') {
+          calculatedTaxaAnual = Number(((Math.pow(1 + idxVal / 100, 12) - 1) * 100).toFixed(4));
+        }
+      }
+
       await addInvestment(user.uid, investments, {
         date: formDate, tipo: formTipo, nome: formNome.trim(),
         valor: Math.round(valor * 100) / 100,
@@ -188,8 +209,12 @@ export default function Growth() {
         proventosMensais: Math.round(proventosVal * 100) / 100,
         ...(qtdVal > 0 && { qtd: qtdVal }),
         ...(precoVal > 0 && { precoCompra: Math.round(precoVal * 100) / 100 }),
-        // DY anual real da Brapi (% a.a.) para ponderar renda passiva no InvestmentInsights
         ...(formDyAnual && formDyAnual > 0 && { dy: formDyAnual }),
+        ...(calculatedTaxaAnual !== undefined && { taxaAnual: calculatedTaxaAnual }),
+        ...(formTipo === 'Renda Fixa' && idxVal > 0 && {
+          indexer: formIndexer,
+          indexerValue: idxVal,
+        }),
       });
       triggerWithToast('investment_added'); // fire-and-forget SibCoin (shows toast on mission complete)
       setAddOpen(false);
@@ -202,6 +227,8 @@ export default function Growth() {
     setEditingAtual(inv);
     setEditAtualValue(String(inv.atual ?? inv.valor ?? 0));
     setEditProventosValue(inv.proventosMensais !== undefined && inv.proventosMensais !== null ? String(inv.proventosMensais) : '');
+    setEditIndexer((inv.indexer as any) || 'pre');
+    setEditIndexerValue(inv.indexerValue ? String(inv.indexerValue) : '');
     setError(null);
   };
 
@@ -212,10 +239,27 @@ export default function Growth() {
     const proventosVal = editProventosValue ? parseFloat(editProventosValue.replace(',', '.')) : 0;
     setError(null); setBusy(true);
     try {
+      let calculatedTaxaAnual: number | undefined = undefined;
+      const idxVal = parseFloat(editIndexerValue.replace(',', '.')) || 0;
+      if (editingAtual.tipo === 'Renda Fixa' && idxVal > 0) {
+        if (editIndexer === 'pre') {
+          calculatedTaxaAnual = idxVal;
+        } else if (editIndexer === 'cdi') {
+          calculatedTaxaAnual = Number((10.5 * idxVal / 100).toFixed(4));
+        } else if (editIndexer === 'ipca') {
+          calculatedTaxaAnual = Number(((((1 + 0.045) * (1 + idxVal / 100)) - 1) * 100).toFixed(4));
+        } else if (editIndexer === 'mensal') {
+          calculatedTaxaAnual = Number(((Math.pow(1 + idxVal / 100, 12) - 1) * 100).toFixed(4));
+        }
+      }
+
       await updateInvestment(user.uid, investments, editingAtual.id, {
         ...editingAtual,
         atual: Math.round(atual * 100) / 100,
         proventosMensais: Math.round(proventosVal * 100) / 100,
+        taxaAnual: calculatedTaxaAnual,
+        indexer: editingAtual.tipo === 'Renda Fixa' ? editIndexer : undefined,
+        indexerValue: editingAtual.tipo === 'Renda Fixa' && idxVal > 0 ? idxVal : undefined,
       });
       setEditingAtual(null);
     } catch (err) {
@@ -1153,6 +1197,33 @@ export default function Growth() {
               {INVESTMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
+          {formTipo === 'Renda Fixa' && (
+            <div className="grid grid-cols-2 gap-3 p-4 rounded-xl border border-si-border bg-si-card/30">
+              <div>
+                <label className={labelCls}>Indexador de Renda Fixa</label>
+                <select
+                  value={formIndexer}
+                  onChange={(e) => setFormIndexer(e.target.value as any)}
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                >
+                  <option value="pre">Prefixado (% a.a.)</option>
+                  <option value="cdi">% do CDI</option>
+                  <option value="ipca">IPCA + (% a.a.)</option>
+                  <option value="mensal">Rendimento Mensal (%)</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Taxa / Valor</label>
+                <input
+                  type="text"
+                  value={formIndexerValue}
+                  onChange={(e) => setFormIndexerValue(e.target.value.replace(/[^0-9,.]/, ''))}
+                  placeholder={formIndexer === 'cdi' ? 'Ex: 105' : formIndexer === 'ipca' ? 'Ex: 6' : 'Ex: 12.5'}
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+          )}
           <div className="relative">
             <label htmlFor="inv-nome" className={labelCls}>Nome / ativo {isRV && <span className="text-zinc-500">(ticker, ex: PETR4)</span>}</label>
             <input id="inv-nome" type="text" value={formNome} onChange={(e) => handleTickerInput(e.target.value)}
@@ -1304,6 +1375,33 @@ export default function Growth() {
                 className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
                 placeholder="0,00" />
             </div>
+            {editingAtual.tipo === 'Renda Fixa' && (
+              <div className="grid grid-cols-2 gap-3 p-4 rounded-xl border border-si-border bg-si-card/30">
+                <div>
+                  <label className={labelCls}>Indexador de Renda Fixa</label>
+                  <select
+                    value={editIndexer}
+                    onChange={(e) => setEditIndexer(e.target.value as any)}
+                    className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="pre">Prefixado (% a.a.)</option>
+                    <option value="cdi">% do CDI</option>
+                    <option value="ipca">IPCA + (% a.a.)</option>
+                    <option value="mensal">Rendimento Mensal (%)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Taxa / Valor</label>
+                  <input
+                    type="text"
+                    value={editIndexerValue}
+                    onChange={(e) => setEditIndexerValue(e.target.value.replace(/[^0-9,.]/, ''))}
+                    placeholder={editIndexer === 'cdi' ? 'Ex: 105' : editIndexer === 'ipca' ? 'Ex: 6' : 'Ex: 12.5'}
+                    className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            )}
             <div>
               <label htmlFor="edit-proventos" className={labelCls}>Proventos mensais estimados (R$) – opcional</label>
               <input id="edit-proventos" type="text" inputMode="decimal" value={editProventosValue}

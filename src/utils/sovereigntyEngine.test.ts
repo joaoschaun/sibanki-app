@@ -246,6 +246,20 @@ describe('calculateDaysOfFreedom', () => {
     // monthlyPassiveIncome = 100
     expect(result.monthlyPassiveIncome).toBe(100);
   });
+
+  it('calcula juros da Renda Fixa líquida usando taxaAnual individual quando cadastrada', () => {
+    const result = calculateDaysOfFreedom({
+      accountBalances: { 'Conta': 1_000 },
+      investments: [
+        // 12% a.a. -> taxa mensal = (1 + 0.12)^(1/12) - 1 = ~0.948879% a.m.
+        investment({ tipo: 'CDB Liquidez Diária', atual: 10_000, taxaAnual: 12 }),
+      ],
+      entries: [expense(1000, 5), expense(1000, 35)],
+      investmentYieldMonthly: 0.01,
+    });
+    // RF líquida = 10.000. Juros reais = 10.000 * ((1.12)^(1/12) - 1) = ~94.88
+    expect(result.monthlyPassiveIncome).toBeCloseTo(94.8879, 2);
+  });
 });
 
 // ─── 2. calculateSpreadGap ────────────────────────────────────────────────────
