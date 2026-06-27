@@ -283,139 +283,141 @@ export default function Dashboard() {
 
   return (
     <PageTransition className="space-y-8">
-      {/* Sub-navegação do cockpit */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-si-border pb-4">
-        <div className="flex flex-wrap items-center gap-2">
-          {(
-            [
-              { id: 'visao_geral', label: 'Visão geral', icon: LayoutDashboard },
-              { id: 'transacoes', label: 'Transações', icon: ArrowLeftRight },
-              { id: 'parcelamentos', label: 'Parcelamentos', icon: Layers },
-              { id: 'assinaturas', label: 'Assinaturas', icon: RefreshCw },
-              { id: 'categorias', label: 'Categorias', icon: Tag },
-              { id: 'cartoes', label: 'Cartões', icon: CreditCard },
-            ] as const
-          ).map((tab) => {
-            const Icon = tab.icon;
-            const active = activeSubTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveSubTab(tab.id)}
-                className={`relative flex items-center gap-2 px-3 py-2 rounded-full text-[11px] font-bold tracking-[0.1em] uppercase border transition-all ${
-                  active
-                    ? 'text-zinc-900 border-white'
-                    : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border-si-border'
-                }`}
+      {!hasOnboardingData ? (
+        /* ── Empty state premium com animação: usuário sem nenhum dado ainda ── */
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 py-12">
+          <div className="bg-si-card border border-si-border rounded-2xl p-8 max-w-4xl mx-auto text-center space-y-6">
+            <div className="max-w-xl mx-auto space-y-2">
+              <p className="text-si-1 font-bold text-2xl uppercase tracking-wider">Ative seu OS Financeiro</p>
+              <p className="text-si-4 text-xs leading-relaxed">
+                Para calcular seus Dias de Liberdade (Ld) e Spread Gap (Sg), precisamos de dados financeiros. 
+                Conecte sua conta bancária via Open Finance de forma 100% segura ou inicie manualmente.
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link 
+                to="/configuracoes#open-finance" 
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm text-center transition-colors shadow-sm"
               >
-                {active && (
-                  <motion.span
-                    layoutId="activeCockpitSubTabPill"
-                    className="absolute inset-0 bg-white rounded-full"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    style={{ zIndex: 0 }}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-2">
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{tab.label}</span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
-          <SibcoinMissionBanner eventType="login_streak" />
-          <button
-            type="button"
-            onClick={() => setShowEditor((v) => !v)}
-            className="px-3 py-1.5 rounded-lg bg-si-over-2 border border-si-border text-[10px] font-bold text-si-4 hover:text-si-2 hover:bg-si-over-3 uppercase tracking-wider transition-colors"
-          >
-            {showEditor ? 'Fechar' : 'Editar'}
-          </button>
-        </div>
-      </div>
+                Conectar banco via Open Finance
+              </Link>
+              <Link 
+                to="/lancamentos" 
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-si-over-2 hover:bg-si-over-3 border border-si-border text-si-2 font-bold text-sm text-center transition-colors"
+              >
+                Adicionar Lançamento Manual
+              </Link>
+            </div>
 
-      {showEditor && (
-        <div className="bg-si-card rounded-2xl border border-si-border p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-          {([
-            ['insight', 'Insight do dia'],
-            ['alertas', 'Alertas'],
-            ['resumo', 'Resumo financeiro'],
-            ['graficos', 'Gráficos'],
-          ] as const).map(([key, label]) => (
-            <label key={key} className="inline-flex items-center gap-2 text-sm text-si-3">
-              <input
-                type="checkbox"
-                checked={widgets[key]}
-                onChange={(e) => setWidgets((w) => ({ ...w, [key]: e.target.checked }))}
-                className="rounded border-si-border-xl bg-si-bg"
-              />
-              {label}
-            </label>
-          ))}
-        </div>
-      )}
-
-      {/* ── Empty state premium: usuário sem nenhum dado ainda ── */}
-      {accounts.length === 0 && entriesNoTransfer.length === 0 && (
-        <div className="bg-si-card border border-si-border rounded-2xl p-8 max-w-4xl mx-auto text-center space-y-6">
-          <div className="max-w-xl mx-auto space-y-2">
-            <p className="text-si-1 font-bold text-2xl uppercase tracking-wider">Ative seu OS Financeiro</p>
-            <p className="text-si-4 text-xs leading-relaxed">
-              Para calcular seus Dias de Liberdade (Ld) e Spread Gap (Sg), precisamos de dados financeiros. 
-              Conecte sua conta bancária via Open Finance de forma 100% segura ou inicie manualmente.
-            </p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link 
-              to="/configuracoes#open-finance" 
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm text-center transition-colors shadow-sm"
-            >
-              Conectar banco via Open Finance
-            </Link>
-            <Link 
-              to="/lancamentos" 
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-si-over-2 hover:bg-si-over-3 border border-si-border text-si-2 font-bold text-sm text-center transition-colors"
-            >
-              Adicionar Lançamento Manual
-            </Link>
-          </div>
-
-          <div className="pt-4 border-t border-si-border">
-            <p className="text-[10px] font-bold text-si-5 uppercase tracking-widest mb-3">Ou siga o passo a passo manual:</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-              {[
-                { num: '1', label: 'Crie uma conta', sub: 'Corrente ou investimentos', link: '/contas' },
-                { num: '2', label: 'Registre despesas', sub: 'Informe seus gastos do mês', link: '/lancamentos' },
-                { num: '3', label: 'Veja o Ld surgir', sub: 'Atualização em tempo real', link: null }
-              ].map((s) => (
-                <div key={s.num} className="p-4 rounded-xl bg-si-over-1 border border-si-border space-y-2 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <span className="w-6 h-6 rounded-full bg-si-over-2 border border-si-border text-si-3 text-xs font-bold flex items-center justify-center">{s.num}</span>
-                    <div>
-                      <p className="text-xs font-bold text-si-2 uppercase tracking-wide">{s.label}</p>
-                      <p className="text-[11px] text-si-5 leading-normal mt-0.5">{s.sub}</p>
+            <div className="pt-4 border-t border-si-border">
+              <p className="text-[10px] font-bold text-si-5 uppercase tracking-widest mb-3">Ou siga o passo a passo manual:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+                {[
+                  { num: '1', label: 'Crie uma conta', sub: 'Corrente ou investimentos', link: '/contas' },
+                  { num: '2', label: 'Registre despesas', sub: 'Informe seus gastos do mês', link: '/lancamentos' },
+                  { num: '3', label: 'Veja o Ld surgir', sub: 'Atualização em tempo real', link: null }
+                ].map((s) => (
+                  <div key={s.num} className="p-4 rounded-xl bg-si-over-1 border border-si-border space-y-2 flex flex-col justify-between">
+                    <div className="space-y-2">
+                      <span className="w-6 h-6 rounded-full bg-si-over-2 border border-si-border text-si-3 text-xs font-bold flex items-center justify-center">{s.num}</span>
+                      <div>
+                        <p className="text-xs font-bold text-si-2 uppercase tracking-wide">{s.label}</p>
+                        <p className="text-[11px] text-si-5 leading-normal mt-0.5">{s.sub}</p>
+                      </div>
                     </div>
+                    {s.link && (
+                      <Link to={s.link} className="inline-block text-[11px] font-bold text-si-4 hover:text-si-2 underline underline-offset-2 mt-2">
+                        Configurar →
+                      </Link>
+                    )}
                   </div>
-                  {s.link && (
-                    <Link to={s.link} className="inline-block text-[11px] font-bold text-si-4 hover:text-si-2 underline underline-offset-2 mt-2">
-                      Configurar →
-                    </Link>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      )}
+      ) : (
+        <>
+          {/* Sub-navegação do cockpit */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-si-border pb-4">
+            <div className="flex flex-wrap items-center gap-2">
+              {(
+                [
+                  { id: 'visao_geral', label: 'Visão geral', icon: LayoutDashboard },
+                  { id: 'transacoes', label: 'Transações', icon: ArrowLeftRight },
+                  { id: 'parcelamentos', label: 'Parcelamentos', icon: Layers },
+                  { id: 'assinaturas', label: 'Assinaturas', icon: RefreshCw },
+                  { id: 'categorias', label: 'Categorias', icon: Tag },
+                  { id: 'cartoes', label: 'Cartões', icon: CreditCard },
+                ] as const
+              ).map((tab) => {
+                const Icon = tab.icon;
+                const active = activeSubTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveSubTab(tab.id)}
+                    className={`relative flex items-center gap-2 px-3 py-2 rounded-full text-[11px] font-bold tracking-[0.1em] uppercase border transition-all ${
+                      active
+                        ? 'text-zinc-900 border-white'
+                        : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border-si-border'
+                    }`}
+                  >
+                    {active && (
+                      <motion.span
+                        layoutId="activeCockpitSubTabPill"
+                        className="absolute inset-0 bg-white rounded-full"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        style={{ zIndex: 0 }}
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center gap-2">
+                      <Icon className="w-3.5 h-3.5" />
+                      <span>{tab.label}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
+              <SibcoinMissionBanner eventType="login_streak" />
+              <button
+                type="button"
+                onClick={() => setShowEditor((v) => !v)}
+                className="px-3 py-1.5 rounded-lg bg-si-over-2 border border-si-border text-[10px] font-bold text-si-4 hover:text-si-2 hover:bg-si-over-3 uppercase tracking-wider transition-colors"
+              >
+                {showEditor ? 'Fechar' : 'Editar'}
+              </button>
+            </div>
+          </div>
 
-      {activeSubTab === 'visao_geral' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          {/* Coluna Principal (Esquerda) */}
-          <div className="lg:col-span-2 space-y-6">
+          {showEditor && (
+            <div className="bg-si-card rounded-2xl border border-si-border p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+              {([
+                ['insight', 'Insight do dia'],
+                ['alertas', 'Alertas'],
+                ['resumo', 'Resumo financeiro'],
+                ['graficos', 'Gráficos'],
+              ] as const).map(([key, label]) => (
+                <label key={key} className="inline-flex items-center gap-2 text-sm text-si-3">
+                  <input
+                    type="checkbox"
+                    checked={widgets[key]}
+                    onChange={(e) => setWidgets((w) => ({ ...w, [key]: e.target.checked }))}
+                    className="rounded border-si-border-xl bg-si-bg"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          )}
+
+          {activeSubTab === 'visao_geral' && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Coluna Principal (Esquerda) */}
+              <div className="lg:col-span-8 space-y-6">
             {hasOnboardingData && (
               <CoachSetup
                 entries={entries}
@@ -666,7 +668,7 @@ export default function Dashboard() {
           </div>
 
           {/* Coluna Lateral (Direita) */}
-          <div className="space-y-6">
+          <div className="lg:col-span-4 space-y-6">
 
 
             {/* Próximas Ações */}
@@ -751,19 +753,21 @@ export default function Dashboard() {
       )}
 
 
-      {/* ── Sub-views extraídas (Ação #8 — Análise 360) ── */}
-      {activeSubTab === 'transacoes' && <DashboardTransactionsTab />}
-      {activeSubTab === 'parcelamentos' && <DashboardParcelamentosTab />}
-      {activeSubTab === 'assinaturas' && <DashboardAssinaturasTab />}
-      {activeSubTab === 'categorias' && (
-        <DashboardCategoriasTab
-          catTotals={catTotals}
-          budgetMap={budgetMap}
-          donutSegments={donutSegments}
-          donutTotal={donutTotal}
-        />
+          {/* ── Sub-views extraídas (Ação #8 — Análise 360) ── */}
+          {activeSubTab === 'transacoes' && <DashboardTransactionsTab />}
+          {activeSubTab === 'parcelamentos' && <DashboardParcelamentosTab />}
+          {activeSubTab === 'assinaturas' && <DashboardAssinaturasTab />}
+          {activeSubTab === 'categorias' && (
+            <DashboardCategoriasTab
+              catTotals={catTotals}
+              budgetMap={budgetMap}
+              donutSegments={donutSegments}
+              donutTotal={donutTotal}
+            />
+          )}
+          {activeSubTab === 'cartoes' && <DashboardCartoesTab catTotals={catTotals} budgetMap={budgetMap} />}
+        </>
       )}
-      {activeSubTab === 'cartoes' && <DashboardCartoesTab catTotals={catTotals} budgetMap={budgetMap} />}
-        </PageTransition>
+    </PageTransition>
   );
 }
