@@ -16,7 +16,8 @@ import {
   ArrowLeftRight,
   Layers,
   RefreshCw,
-  Tag
+  Tag,
+  Lock
 } from 'lucide-react';
 import { useIntelligence } from '../context/IntelligenceContext';
 import { CoachSetup } from '../components/ui/CoachSetup';
@@ -721,7 +722,7 @@ export default function Dashboard() {
                 {/* Efeito Glassmorphism Overlay e Cadeado */}
                 <div className="absolute inset-0 bg-si-bg/50 backdrop-blur-[7px] flex flex-col items-center justify-center p-8 text-center z-10">
                   <div className="w-12 h-12 rounded-full bg-si-over-2 border border-si-border-md flex items-center justify-center mb-4 text-amber-500/80 animate-pulse">
-                    <span className="text-xl">🔒</span>
+                    <Lock className="w-5 h-5 text-amber-400" />
                   </div>
                   <h4 className="text-sm font-bold text-si-1 mb-2">Painel de Inteligência Financeira</h4>
                   <p className="text-xs text-si-4 max-w-sm leading-relaxed">
