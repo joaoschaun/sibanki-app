@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { DashboardSkeleton } from '../components/ui/PageSkeleton';
 import { Link } from 'react-router-dom';
+import { buttonClasses } from '../components/ui/Button';
 import { useAppContext } from '../context/AppContext';
 import {
   TrendingUp,
@@ -324,13 +325,16 @@ export default function Dashboard() {
             );
           })}
         </div>
-        <button
-          type="button"
-          onClick={() => setShowEditor((v) => !v)}
-          className="self-end sm:self-auto px-3 py-1.5 rounded-md bg-si-over-1 border border-si-border text-[11px] font-bold text-si-5 hover:bg-si-over-2 hover:text-si-3 uppercase tracking-[0.1em] transition-colors"
-        >
-          {showEditor ? 'Fechar' : 'Editar'}
-        </button>
+        <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
+          <SibcoinMissionBanner eventType="login_streak" />
+          <button
+            type="button"
+            onClick={() => setShowEditor((v) => !v)}
+            className="px-3 py-1.5 rounded-lg bg-si-over-2 border border-si-border text-[10px] font-bold text-si-4 hover:text-si-2 hover:bg-si-over-3 uppercase tracking-wider transition-colors"
+          >
+            {showEditor ? 'Fechar' : 'Editar'}
+          </button>
+        </div>
       </div>
 
       {showEditor && (
@@ -354,34 +358,57 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Empty state: usuário sem nenhum dado ainda ── */}
+      {/* ── Empty state premium: usuário sem nenhum dado ainda ── */}
       {accounts.length === 0 && entriesNoTransfer.length === 0 && (
-        <div className="bg-si-card border border-si-border rounded-2xl p-6 space-y-4">
-          <div>
-            <p className="text-si-1 font-bold text-lg">Bem-vindo ao Sibanki 👋</p>
-            <p className="text-si-4 text-sm mt-1">Veja seu Ld (Dias de Liberdade) em 3 minutos. Siga os passos abaixo:</p>
+        <div className="bg-si-card border border-si-border rounded-2xl p-8 max-w-4xl mx-auto text-center space-y-6">
+          <div className="max-w-xl mx-auto space-y-2">
+            <p className="text-si-1 font-bold text-2xl uppercase tracking-wider">Ative seu OS Financeiro</p>
+            <p className="text-si-4 text-xs leading-relaxed">
+              Para calcular seus Dias de Liberdade (Ld) e Spread Gap (Sg), precisamos de dados financeiros. 
+              Conecte sua conta bancária via Open Finance de forma 100% segura ou inicie manualmente.
+            </p>
           </div>
-          <div className="space-y-2">
-            {[
-              { num: '1', label: 'Adicione uma conta', sub: 'Conta corrente, poupança ou carteira', link: '/contas' },
-              { num: '2', label: 'Registre uma receita', sub: 'Seu salário ou principal renda', link: '/lancamentos' },
-              { num: '3', label: 'Volte ao painel', sub: 'Seu Ld aparece automaticamente', link: null },
-            ].map((s) => (
-              <div key={s.num} className="flex items-center gap-3 p-3 rounded-xl bg-si-over-1 border border-si-border">
-                <span className="w-7 h-7 rounded-full bg-si-over-2 border border-si-border text-si-3 text-xs font-bold flex items-center justify-center shrink-0">{s.num}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-si-2">{s.label}</p>
-                  <p className="text-xs text-si-5">{s.sub}</p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link 
+              to="/configuracoes#open-finance" 
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm text-center transition-colors shadow-sm"
+            >
+              Conectar banco via Open Finance
+            </Link>
+            <Link 
+              to="/lancamentos" 
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-si-over-2 hover:bg-si-over-3 border border-si-border text-si-2 font-bold text-sm text-center transition-colors"
+            >
+              Adicionar Lançamento Manual
+            </Link>
+          </div>
+
+          <div className="pt-4 border-t border-si-border">
+            <p className="text-[10px] font-bold text-si-5 uppercase tracking-widest mb-3">Ou siga o passo a passo manual:</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+              {[
+                { num: '1', label: 'Crie uma conta', sub: 'Corrente ou investimentos', link: '/contas' },
+                { num: '2', label: 'Registre despesas', sub: 'Informe seus gastos do mês', link: '/lancamentos' },
+                { num: '3', label: 'Veja o Ld surgir', sub: 'Atualização em tempo real', link: null }
+              ].map((s) => (
+                <div key={s.num} className="p-4 rounded-xl bg-si-over-1 border border-si-border space-y-2 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <span className="w-6 h-6 rounded-full bg-si-over-2 border border-si-border text-si-3 text-xs font-bold flex items-center justify-center">{s.num}</span>
+                    <div>
+                      <p className="text-xs font-bold text-si-2 uppercase tracking-wide">{s.label}</p>
+                      <p className="text-[11px] text-si-5 leading-normal mt-0.5">{s.sub}</p>
+                    </div>
+                  </div>
+                  {s.link && (
+                    <Link to={s.link} className="inline-block text-[11px] font-bold text-si-4 hover:text-si-2 underline underline-offset-2 mt-2">
+                      Configurar →
+                    </Link>
+                  )}
                 </div>
-                {s.link && (
-                  <Link to={s.link} className="text-xs font-bold text-si-3 hover:text-si-1 underline underline-offset-2 shrink-0">
-                    Ir →
-                  </Link>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-          <p className="text-xs text-si-5">Ou conecte seu banco via <Link to="/configuracoes#open-finance" className="underline underline-offset-2 hover:text-si-3">Open Finance</Link> para importar tudo automaticamente.</p>
         </div>
       )}
 
@@ -575,19 +602,19 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3 flex-wrap">
                   <Link
                     to="/cartoes"
-                    className="bg-si-over-2 hover:bg-si-over-3 text-si-1 px-4 py-2 rounded-xl text-sm font-semibold border border-si-border-md"
+                    className={buttonClasses('secondary', 'md', 'w-full sm:w-auto')}
                   >
                     Revisar cartões
                   </Link>
                   <Link
                     to="/consultor-ia"
-                    className="bg-white hover:bg-zinc-100 text-zinc-900 px-4 py-2 rounded-xl text-sm font-semibold"
+                    className={buttonClasses('primary', 'md', 'w-full sm:w-auto')}
                   >
                     Pedir orientação ao consultor
                   </Link>
                   <Link
                     to="/solucoes/credito"
-                    className="text-sm text-si-4 hover:text-si-2 underline"
+                    className="text-xs font-bold text-si-4 hover:text-si-2 uppercase tracking-wider underline underline-offset-4 decoration-si-border hover:decoration-si-4 transition-colors"
                   >
                     Ver soluções de crédito
                   </Link>
@@ -640,7 +667,6 @@ export default function Dashboard() {
 
           {/* Coluna Lateral (Direita) */}
           <div className="space-y-6">
-            <SibcoinMissionBanner eventType="login_streak" />
 
 
             {/* Próximas Ações */}
@@ -683,17 +709,17 @@ export default function Dashboard() {
 
 
 
-            {widgets.alertas && alertas.length > 0 && (
+            {widgets.alertas && hasOnboardingData && alertas.length > 0 && (
               <div className="space-y-3">
                 {alertas.map((a, i) => (
                   <div
                     key={i}
                     className={`rounded-xl border-l-4 p-4 flex items-start gap-3 ${
                       a.type === 'positive'
-                        ? 'bg-emerald-500/10 border-emerald-500 text-emerald-100'
+                        ? 'bg-si-positive-bg border-emerald-500 text-si-positive-text'
                         : a.type === 'warning'
-                          ? 'bg-amber-500/10 border-amber-500 text-amber-100'
-                          : 'bg-blue-500/10 border-blue-500 text-blue-100'
+                          ? 'bg-si-warning-bg border-amber-500 text-si-warning-text'
+                          : 'bg-si-info-bg border-blue-500 text-si-info-text'
                     }`}
                   >
                     {a.type === 'positive' ? (

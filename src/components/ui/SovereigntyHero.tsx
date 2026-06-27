@@ -97,10 +97,10 @@ export function SovereigntyHero({
         {/* ── Top row: greeting + score badge + CTA ── */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-si-4 text-sm">
-              {greeting}, <span className="text-si-2 font-semibold">{userName}</span>
+            <p className="text-si-3 text-sm">
+              {greeting}, <span className="text-si-1 font-semibold">{userName}</span>
             </p>
-            <p className="text-si-5 text-xs mt-0.5">{dateStr}</p>
+            <p className="text-si-3 text-xs mt-0.5">{dateStr}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className="bg-si-over-2 text-si-4 text-[11px] font-bold px-2 py-1 rounded-md border border-si-border hidden sm:flex items-center gap-1">
@@ -119,7 +119,7 @@ export function SovereigntyHero({
 
         {/* ── Hero: Dias de Liberdade ── */}
         <div className="flex flex-col items-center py-3">
-          <p className="text-si-5 text-xs uppercase tracking-widest font-semibold mb-2">
+          <p className="si-label text-si-2 mb-2">
             Dias de Liberdade
           </p>
           {noLdData ? (
@@ -145,9 +145,9 @@ export function SovereigntyHero({
             <span className={`text-[52px] sm:text-[72px] font-black tracking-tight leading-none ${FREEDOM_TIERS[freedom.status].numClass}`}>
               {freedom.days}
             </span>
-            <span className="text-si-4 text-xl sm:text-2xl mb-1.5">dias</span>
+            <span className="text-si-2 text-xl sm:text-2xl mb-1.5">dias</span>
           </div>
-          <p className="text-si-5 text-xs mt-2">
+          <p className="text-si-3 text-xs mt-2">
             {freedom.coverageMonths.toFixed(1)} meses&nbsp;·&nbsp;queima R$&nbsp;
             {fmtBRL0(freedom.dailyBurnRate)}/dia
           </p>
@@ -161,33 +161,33 @@ export function SovereigntyHero({
 
           {/* Confidence badge — only shown when meaningful */}
           {!noLdData && freedom.dataConfidence === 'alta' && (
-            <span className="mt-2 flex items-center gap-1 text-[11px] text-emerald-400/80">
+            <span className="mt-2 flex items-center gap-1 text-[11px] text-emerald-400">
               <CheckCircle2 className="w-3 h-3" />
               {freedom.verifiedExpensesPct}% das despesas verificadas pelo banco
             </span>
           )}
           {!noLdData && freedom.isEstimated && (
-            <span className="mt-2 flex items-center gap-1 text-[11px] text-amber-400/80">
+            <span className="mt-2 flex items-center gap-1 text-[11px] text-amber-400">
               <AlertCircle className="w-3 h-3 text-amber-500" />
               baseado em estimativas do cadastro — adicione contas/lançamentos para precisão
             </span>
           )}
           {!noLdData && !freedom.isEstimated && freedom.dataConfidence === 'baixa' && (
-            <span className="mt-2 flex items-center gap-1 text-[11px] text-si-5">
-              <AlertCircle className="w-3 h-3 text-amber-400/60" />
+            <span className="mt-2 flex items-center gap-1 text-[11px] text-si-3">
+              <AlertCircle className="w-3 h-3 text-amber-400" />
               baseado em dados manuais — conecte seu banco para maior precisão
             </span>
           )}
         </div>
 
         {/* ── O que significa? ── */}
-        {!showExplanation ? (
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={() => setShowExplanation(true)}
-              className="flex items-center gap-1.5 text-[11px] text-si-5 hover:text-si-3 transition-colors"
-            >
+          {!showExplanation ? (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowExplanation(true)}
+                className="flex items-center gap-1.5 text-[11px] text-si-3 hover:text-si-1 transition-colors"
+              >
               <HelpCircle className="w-3.5 h-3.5" />
               O que significam esses números?
             </button>
@@ -195,23 +195,23 @@ export function SovereigntyHero({
         ) : (
           <div className="bg-si-over-1 rounded-xl border border-si-border p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-si-4">Glossário rápido</p>
-              <button type="button" onClick={() => setShowExplanation(false)} className="text-si-5 hover:text-si-3">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-si-3">Glossário rápido</p>
+              <button type="button" onClick={() => setShowExplanation(false)} className="text-si-3 hover:text-si-1">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
             <div className="space-y-2.5 text-[12px]">
               <div>
                 <p className="font-bold text-si-2">Ld — Dias de Liberdade</p>
-                <p className="text-si-4 mt-0.5">Quantos dias você consegue viver com seu patrimônio atual sem precisar de nenhuma renda. Quanto maior, mais soberano você é.</p>
+                <p className="text-si-3 mt-0.5">Quantos dias você consegue viver com seu patrimônio atual sem precisar de nenhuma renda. Quanto maior, mais soberano você é.</p>
               </div>
               <div>
                 <p className="font-bold text-si-2">Sg — Spread Gap</p>
-                <p className="text-si-4 mt-0.5">Diferença entre o rendimento médio dos seus investimentos e o custo médio das suas dívidas. Positivo = seu dinheiro rende mais do que custa. Negativo = suas dívidas drenam mais do que você investe.</p>
+                <p className="text-si-3 mt-0.5">Diferença entre o rendimento médio dos seus investimentos e o custo médio das suas dívidas. Positivo = seu dinheiro rende mais do que custa. Negativo = suas dívidas drenam mais do que você investe.</p>
               </div>
               <div>
                 <p className="font-bold text-si-2">Sv — Sovereignty Score</p>
-                <p className="text-si-4 mt-0.5">Pontuação de 0–100 por gasto, indicando se ele aumenta ou diminui sua soberania financeira. Ver nos lançamentos.</p>
+                <p className="text-si-3 mt-0.5">Pontuação de 0–100 por gasto, indicando se ele aumenta ou diminui sua soberania financeira. Ver nos lançamentos.</p>
               </div>
             </div>
           </div>
@@ -223,7 +223,7 @@ export function SovereigntyHero({
         {/* ── Bottom strip: receita / despesa / saldo / spread ── */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
           <div>
-            <p className="text-si-5 text-xs">Receitas (mês)</p>
+            <p className="text-si-3 text-xs">Receitas (mês)</p>
             <p className="text-sm font-bold text-emerald-400 mt-0.5">R$ {fmtBRL2(receitaMes)}</p>
             {varReceita !== 0 && (
               <p
@@ -243,7 +243,7 @@ export function SovereigntyHero({
           </div>
 
           <div>
-            <p className="text-si-5 text-xs">Despesas (mês)</p>
+            <p className="text-si-3 text-xs">Despesas (mês)</p>
             <p className="text-sm font-bold text-rose-400 mt-0.5">R$ {fmtBRL2(despesaMes)}</p>
             {varDespesa !== 0 && (
               <p
@@ -263,7 +263,7 @@ export function SovereigntyHero({
           </div>
 
           <div>
-            <p className="text-si-5 text-xs">Saldo (mês)</p>
+            <p className="text-si-3 text-xs">Saldo (mês)</p>
             <p
               className={`text-sm font-bold mt-0.5 ${
                 saldoMes >= 0 ? 'text-emerald-400' : 'text-rose-400'
@@ -274,7 +274,7 @@ export function SovereigntyHero({
           </div>
 
           <div>
-            <p className="text-si-5 text-xs">Spread Gap</p>
+            <p className="text-si-3 text-xs">Spread Gap</p>
             <p
               className={`text-sm font-bold mt-0.5 flex items-center gap-1 ${
                 spread.spreadGap >= 0 ? 'text-emerald-400' : 'text-rose-400'
@@ -284,7 +284,7 @@ export function SovereigntyHero({
               {spread.spreadGap >= 0 ? '+' : ''}
               {(spread.spreadGap * 100).toFixed(2)}%
             </p>
-            <p className="text-xs text-si-5 mt-0.5">
+            <p className="text-xs text-si-3 mt-0.5">
               {spread.spreadGap < 0
                 ? `−R$ ${fmtBRL0(Math.abs(spread.monthlyLeakage))}/mês`
                 : 'positivo'}
