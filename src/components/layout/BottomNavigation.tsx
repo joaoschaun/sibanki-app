@@ -3,8 +3,7 @@ import { LayoutDashboard, Receipt, Wallet, Menu, Mic, Lock } from 'lucide-react'
 import { clsx } from 'clsx';
 import { useModuleFlags } from '../../hooks/useModuleFlags';
 import { useUiStore } from '../../store/useUiStore';
-import { useAppContext } from '../../context/AppContext';
-import { useMemo } from 'react';
+import { useCoachActive } from '../../hooks/useCoachActive';
 
 interface BottomNavigationProps {
   onMenuClick: () => void;
@@ -14,27 +13,8 @@ export function BottomNavigation({ onMenuClick }: BottomNavigationProps) {
   const location = useLocation();
   const { isModuleEnabled } = useModuleFlags();
   const openConsultantDrawer = useUiStore((s) => s.openConsultantDrawer);
+  const { isCoachActive } = useCoachActive();
 
-  const {
-    accounts, entries, goals, creditObligations, investments, financialProfile
-  } = useAppContext();
-
-  const coachDismissed = useMemo(
-    () => localStorage.getItem('sibanki_coach_dismissed') === 'true',
-    []
-  );
-
-  const isCoachActive = useMemo(() => {
-    if (coachDismissed) return false;
-    const hasAccounts = accounts.length > 0;
-    const hasMinEntries = entries.filter(e => e.type === 'despesa' || e.type === 'receita').length >= 3;
-    const hasGoals = goals.length > 0;
-    const hasDebts = creditObligations.length > 0;
-    const hasInvestments = investments.length > 0;
-    const hasWhatsapp = !!((financialProfile as unknown as Record<string, any>)?.whatsappPhone);
-    const allDone = hasAccounts && hasMinEntries && hasGoals && hasDebts && hasInvestments && hasWhatsapp;
-    return !allDone;
-  }, [accounts, entries, goals, creditObligations, investments, financialProfile, coachDismissed]);
 
   const items = [
     {

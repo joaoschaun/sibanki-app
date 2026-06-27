@@ -1,32 +1,30 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { DashboardSkeleton } from '../components/ui/PageSkeleton';
 import { Link } from 'react-router-dom';
-import { buttonClasses } from '../components/ui/Button';
 import { useAppContext } from '../context/AppContext';
 import {
   TrendingUp,
   TrendingDown,
   ArrowUpRight,
-  AlertTriangle,
   Lightbulb,
-  CreditCard,
+  AlertTriangle,
   Zap,
   LayoutDashboard,
   ArrowLeftRight,
-  Layers,
-  RefreshCw,
   Tag,
+  CreditCard,
   Lock
 } from 'lucide-react';
 import { useIntelligence } from '../context/IntelligenceContext';
+import { useCoachActive } from '../hooks/useCoachActive';
+import { useDashboardData, getMonthLabel } from '../hooks/useDashboardData';
 import { CoachSetup } from '../components/ui/CoachSetup';
 import { SovereigntyHero } from '../components/ui/SovereigntyHero';
 import { SpreadGapCard } from '../components/ui/SpreadGapCard';
 import { InsightDoDia } from '../components/ui/InsightDoDia';
 import { SibcoinWidget } from '../components/sibcoin/SibcoinWidget';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
-import { isTransferEntry, nonTransferEntries } from '../utils/entryUtils';
 import { useDashboardMode } from '../hooks/useDashboardMode';
 import { ExpensesPieChart } from '../components/charts/ExpensesPieChart';
 import { FinancialBarChart } from '../components/charts/FinancialBarChart';
@@ -34,10 +32,11 @@ import { BalanceAreaChart } from '../components/charts/BalanceAreaChart';
 import { PageTransition } from '../components/ui/PageTransition';
 import { RoundUpWidget } from '../components/ui/RoundUpWidget';
 import { DashboardTransactionsTab } from '../components/dashboard/DashboardTransactionsTab';
-import { DashboardParcelamentosTab } from '../components/dashboard/DashboardParcelamentosTab';
-import { DashboardAssinaturasTab } from '../components/dashboard/DashboardAssinaturasTab';
 import { DashboardCategoriasTab } from '../components/dashboard/DashboardCategoriasTab';
 import { DashboardCartoesTab } from '../components/dashboard/DashboardCartoesTab';
+import { DashboardCreditSection } from '../components/dashboard/DashboardCreditSection';
+
+// ─── Widget config (persisted in localStorage) ─────────────────────────────────
 
 const DASHBOARD_WIDGETS_KEY = 'sibanki_dashboard_widgets';
 
@@ -64,229 +63,79 @@ function readWidgetConfig(): WidgetConfig {
   }
 }
 
-function getMonthKey(d: Date): string {
-  const y = d.getFullYear();
-  const m = d.getMonth() + 1;
-  return `${y}-${String(m).padStart(2, '0')}`;
-}
+// ─── Constants ──────────────────────────────────────────────────────────────────
 
-function getMonthLabel(monthKey: string): string {
-  const [, m] = monthKey.split('-').map(Number);
-  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  return `${months[m - 1]}`;
-}
+const ACTION_MAP: Record<string, { label: string; to: string; description: string }> = {
+  'conectar-open-finance': { label: 'Conectar banco',        to: '/configuracoes',  description: 'Ative o Open Finance para dados reais' },
+  'revisar-credito':       { label: 'Revisar crédito',       to: '/cartoes',        description: 'Uso de limite elevado detectado' },
+  'organizar-dividas':     { label: 'Organizar dívidas',     to: '/consultor-ia',   description: 'Estratégia de quitação otimizada' },
+  'ajustar-orcamento':     { label: 'Ajustar orçamento',     to: '/orcamento',      description: 'Categorias acima do limite' },
+  'criar-meta':            { label: 'Criar uma meta',        to: '/planejamento',   description: 'Defina objetivos financeiros claros' },
+  'avaliar-investimentos': { label: 'Avaliar investimentos', to: '/crescimento',    description: 'Momento certo para investir' },
+  'aprofundar-consultoria':{ label: 'Falar com consultor',   to: '/consultor-ia',   description: 'Análise aprofundada da sua situação' },
+};
+
+const HEALTH_COLORS: Record<string, string> = {
+  'critico': 'text-rose-400 bg-rose-500/10 border-rose-500/25',
+  'pressao': 'text-amber-400 bg-amber-500/10 border-amber-500/25',
+  'atencao': 'text-amber-300 bg-amber-500/10 border-amber-500/25',
+  'saudavel': 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25',
+};
+
+const JOURNEY_LABELS: Record<string, string> = {
+  'primeiros-passos':    'Começando a jornada',
+  'pressionado':         'Sob pressão financeira',
+  'organizando-base':    'Organizando a base',
+  'estabilizando':       'Estabilizando as finanças',
+  'pronto-para-crescer': 'Pronto para crescer',
+};
+
+// ─── Sub-tab definitions ────────────────────────────────────────────────────────
+
+type SubTabId = 'visao_geral' | 'transacoes' | 'categorias' | 'cartoes';
+
+const SUB_TABS: { id: SubTabId; label: string; icon: typeof LayoutDashboard }[] = [
+  { id: 'visao_geral', label: 'Visão geral', icon: LayoutDashboard },
+  { id: 'transacoes', label: 'Transações', icon: ArrowLeftRight },
+  { id: 'categorias', label: 'Categorias', icon: Tag },
+  { id: 'cartoes', label: 'Cartões', icon: CreditCard },
+];
+
+// ─── Component ──────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const {
-    user, entries, accounts, score, budgets, loading,
+    user, entries, accounts, score, loading,
     accountBalances, accountMeta, cards, goals, recurrents,
     financialProfile, investments, creditObligations,
     hasOpenFinance, verifiedEntries, openFinanceIdentityByItem, dataFreshness,
   } = useAppContext();
   const { mode: dashboardMode } = useDashboardMode();
+  const { isCoachActive, dismiss: dismissCoach } = useCoachActive();
 
-  const now = useMemo(() => new Date(), []);
   const [showEditor, setShowEditor] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState<'visao_geral' | 'transacoes' | 'parcelamentos' | 'assinaturas' | 'categorias' | 'cartoes'>('visao_geral');
+  const [activeSubTab, setActiveSubTab] = useState<SubTabId>('visao_geral');
   const [activeChartTab, setActiveChartTab] = useState<'categorias' | 'evolucao' | 'saldo'>('categorias');
   const [widgets, setWidgets] = useState<WidgetConfig>(() => readWidgetConfig());
-  const [coachDismissed, setCoachDismissed] = useState(
-    () => localStorage.getItem('sibanki_coach_dismissed') === 'true'
-  );
 
-  const isCoachActive = useMemo(() => {
-    if (coachDismissed) return false;
-    const hasAccounts = accounts.length > 0;
-    const hasMinEntries = entries.filter(e => e.type === 'despesa' || e.type === 'receita').length >= 3;
-    const hasGoals = goals.length > 0;
-    const hasDebts = creditObligations.length > 0;
-    const hasInvestments = investments.length > 0;
-    const hasWhatsapp = !!((financialProfile as unknown as Record<string, any>)?.whatsappPhone);
-    const allDone = hasAccounts && hasMinEntries && hasGoals && hasDebts && hasInvestments && hasWhatsapp;
-    return !allDone;
-  }, [accounts, entries, goals, creditObligations, investments, financialProfile, coachDismissed]);
+  // ── Derived financial data (extracted to hook) ────────────────────────────────
+  const {
+    now, currentMonthKey,
+    receitaMes, despesaMes, saldoMes,
+    receitaMesAnt, despesaMesAnt,
+    varReceita, varDespesa,
+    catTotals, last6Months,
+    hasOnboardingData, saldo,
+    budgetMap, alertas,
+    donutTotal, donutSegments, maxVal,
+  } = useDashboardData(widgets.insight);
 
-  const currentMonthKey = getMonthKey(now);
-  const prevMonthDate = useMemo(() => {
-    const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    return d;
-  }, [now]);
-  const prevMonthKey = getMonthKey(prevMonthDate);
-
-  const { receitaMes, despesaMes, receitaMesAnt, despesaMesAnt, catTotals, last6Months } = useMemo(() => {
-    let rec = 0,
-      desp = 0,
-      recAnt = 0,
-      despAnt = 0;
-    const byCat: Record<string, number> = {};
-    const monthKeys: string[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      monthKeys.push(getMonthKey(d));
-    }
-    const byMonthMap: Record<string, { receita: number; despesa: number }> = {};
-    for (const mk of monthKeys) byMonthMap[mk] = { receita: 0, despesa: 0 };
-
-    for (const e of entries) {
-      if (isTransferEntry(e)) continue;
-      const date = e.date ?? '';
-      const monthKey = date.slice(0, 7);
-      const val = Number(e.value) || 0;
-      if (monthKey === currentMonthKey) {
-        if (e.type === 'receita') rec += val;
-        else if (e.type === 'despesa') {
-          desp += val;
-          const cat = e.category || 'Outros';
-          byCat[cat] = (byCat[cat] ?? 0) + val;
-        }
-      } else if (monthKey === prevMonthKey) {
-        if (e.type === 'receita') recAnt += val;
-        else if (e.type === 'despesa') despAnt += val;
-      }
-      if (byMonthMap[monthKey]) {
-        if (e.type === 'receita') byMonthMap[monthKey].receita += val;
-        else if (e.type === 'despesa') byMonthMap[monthKey].despesa += val;
-      }
-    }
-
-    const last6Months = monthKeys.map((mk) => ({ monthKey: mk, ...byMonthMap[mk] }));
-
-    return {
-      receitaMes: rec,
-      despesaMes: desp,
-      receitaMesAnt: recAnt,
-      despesaMesAnt: despAnt,
-      catTotals: byCat,
-      last6Months,
-    };
-  }, [entries, currentMonthKey, prevMonthKey, now]);
-
-  const saldoMes = receitaMes - despesaMes;
-  const entriesNoTransfer = nonTransferEntries(entries);
-  const hasOnboardingData = accounts.length > 0 || entriesNoTransfer.length > 0;
-  const totalReceita = entriesNoTransfer.filter((e) => e.type === 'receita').reduce((s, e) => s + (e.value ?? 0), 0);
-  const totalDespesa = entriesNoTransfer.filter((e) => e.type === 'despesa').reduce((s, e) => s + (e.value ?? 0), 0);
-  const saldo = totalReceita - totalDespesa;
-
-  const varReceita =
-    receitaMesAnt > 0 ? ((receitaMes - receitaMesAnt) / receitaMesAnt) * 100 : receitaMes > 0 ? 100 : 0;
-  const varDespesa =
-    despesaMesAnt > 0 ? ((despesaMes - despesaMesAnt) / despesaMesAnt) * 100 : despesaMes > 0 ? 100 : 0;
-
-  const budgetMap = useMemo(() => {
-    const b: Record<string, number> = {};
-    if (budgets && typeof budgets === 'object') {
-      for (const [k, v] of Object.entries(budgets)) {
-        const n = typeof v === 'number' ? v : Number(v);
-        if (!Number.isNaN(n)) b[k] = n;
-      }
-    }
-    return b;
-  }, [budgets]);
-
-  // Dados de soberania via IntelligenceContext — calculados uma vez, compartilhados por todo o app
+  // ── Intelligence Context ──────────────────────────────────────────────────────
   const { freedom, spread, healthLevel, nextBestActions, journeyStage } = useIntelligence();
-
-  const ACTION_MAP: Record<string, { label: string; to: string; description: string }> = {
-    'conectar-open-finance': { label: 'Conectar banco',        to: '/configuracoes',  description: 'Ative o Open Finance para dados reais' },
-    'revisar-credito':       { label: 'Revisar crédito',       to: '/cartoes',        description: 'Uso de limite elevado detectado' },
-    'organizar-dividas':     { label: 'Organizar dívidas',     to: '/consultor-ia',   description: 'Estratégia de quitação otimizada' },
-    'ajustar-orcamento':     { label: 'Ajustar orçamento',     to: '/orcamento',      description: 'Categorias acima do limite' },
-    'criar-meta':            { label: 'Criar uma meta',        to: '/planejamento',   description: 'Defina objetivos financeiros claros' },
-    'avaliar-investimentos': { label: 'Avaliar investimentos', to: '/crescimento',    description: 'Momento certo para investir' },
-    'aprofundar-consultoria':{ label: 'Falar com consultor',   to: '/consultor-ia',   description: 'Análise aprofundada da sua situação' },
-  };
-
-  const HEALTH_COLORS: Record<string, string> = {
-    'critico': 'text-rose-400 bg-rose-500/10 border-rose-500/25',
-    'pressao': 'text-amber-400 bg-amber-500/10 border-amber-500/25',
-    'atencao': 'text-amber-300 bg-amber-500/10 border-amber-500/25',
-    'saudavel': 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25',
-  };
-
-  const JOURNEY_LABELS: Record<string, string> = {
-    'primeiros-passos':    'Começando a jornada',
-    'pressionado':         'Sob pressão financeira',
-    'organizando-base':    'Organizando a base',
-    'estabilizando':       'Estabilizando as finanças',
-    'pronto-para-crescer': 'Pronto para crescer',
-  };
-
-
-  const alertas = useMemo(() => {
-    const list: { type: 'positive' | 'warning' | 'info'; title: string; text: string; link?: string }[] = [];
-    if (saldoMes > 0) {
-      list.push({
-        type: 'positive',
-        title: 'Saldo positivo!',
-        text: 'Você gasta menos do que ganha. Direcione o excedente para investimentos.',
-      });
-    } else if (saldoMes < 0 && despesaMes > 0 && !widgets.insight) {
-      list.push({
-        type: 'warning',
-        title: 'Déficit no mês',
-        text: 'Despesas superam receitas. Reveja gastos e orçamento.',
-        link: '/orcamento',
-      });
-    }
-    for (const [cat, gasto] of Object.entries(catTotals)) {
-      const limite = budgetMap[cat];
-      if (limite != null && limite > 0 && gasto > limite) {
-        const pct = Math.round((gasto / limite) * 100);
-        list.push({
-          type: 'warning',
-          title: 'Gastos altos',
-          text: `${cat}: ${pct}% acima do orçado`,
-          link: '/planejamento',
-        });
-      }
-    }
-    if (list.length === 0 && entriesNoTransfer.length === 0) {
-      list.push({
-        type: 'info',
-        title: 'Comece a registrar',
-        text: 'Adicione receitas e despesas em Lançamentos para ver seu resumo aqui.',
-        link: '/lancamentos',
-      });
-    }
-    return list;
-  }, [saldoMes, despesaMes, catTotals, budgetMap, entriesNoTransfer.length, widgets.insight]);
-
-  const donutTotal = Object.values(catTotals).reduce((a, b) => a + b, 0);
-  const donutSegments = useMemo(() => {
-    if (donutTotal <= 0) return [];
-    return Object.entries(catTotals)
-      .filter(([, v]) => v > 0)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([name, value]) => {
-        const pct = (value / donutTotal) * 100;
-        return { name, value, pct };
-      });
-  }, [catTotals, donutTotal]);
-
-  const maxVal = useMemo(() => {
-    let m = 0;
-    for (const row of last6Months) m = Math.max(m, row.receita, row.despesa);
-    return m || 1;
-  }, [last6Months]);
-
 
   const cardClass = dashboardMode === 'caixa'
     ? 'bg-si-bg border border-blue-500/25 rounded-xl p-5 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.12)]'
-    : 'bg-si-card border border-si-border rounded-2xl p-6';
-  const creditTone = useMemo(() => {
-    switch (financialProfile.credit.pressureLevel) {
-      case 'critico':
-        return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
-      case 'elevado':
-        return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-      case 'atencao':
-        return 'text-blue-300 bg-blue-500/10 border-blue-500/20';
-      default:
-        return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-    }
-  }, [financialProfile.credit.pressureLevel]);
+    : 'bg-si-card rounded-2xl p-6';
 
   useEffect(() => {
     try {
@@ -303,7 +152,7 @@ export default function Dashboard() {
       {!hasOnboardingData ? (
         /* ── Empty state premium com animação: usuário sem nenhum dado ainda ── */
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 py-12">
-          <div className="bg-si-card border border-si-border rounded-2xl p-8 max-w-4xl mx-auto text-center space-y-6">
+          <div className="bg-si-card rounded-2xl p-8 max-w-4xl mx-auto text-center space-y-6">
             <div className="max-w-xl mx-auto space-y-2">
               <p className="text-si-1 font-bold text-2xl uppercase tracking-wider">Ative seu OS Financeiro</p>
               <p className="text-si-4 text-xs leading-relaxed">
@@ -356,19 +205,10 @@ export default function Dashboard() {
         </div>
       ) : (
         <>
-          {/* Sub-navegação do cockpit */}
+          {/* ── Sub-navegação do cockpit ── */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-si-border pb-4">
             <div className="flex flex-wrap items-center gap-2">
-              {(
-                [
-                  { id: 'visao_geral', label: 'Visão geral', icon: LayoutDashboard },
-                  { id: 'transacoes', label: 'Transações', icon: ArrowLeftRight },
-                  { id: 'parcelamentos', label: 'Parcelamentos', icon: Layers },
-                  { id: 'assinaturas', label: 'Assinaturas', icon: RefreshCw },
-                  { id: 'categorias', label: 'Categorias', icon: Tag },
-                  { id: 'cartoes', label: 'Cartões', icon: CreditCard },
-                ] as const
-              ).map((tab) => {
+              {SUB_TABS.map((tab) => {
                 const Icon = tab.icon;
                 const active = activeSubTab === tab.id;
                 const isSecondary = tab.id !== 'visao_geral';
@@ -379,7 +219,7 @@ export default function Dashboard() {
                     type="button"
                     disabled={isDisabled}
                     onClick={() => setActiveSubTab(tab.id)}
-                    className={`relative flex items-center gap-2 px-3 py-2 rounded-full text-[11px] font-bold tracking-[0.1em] uppercase border transition-all ${
+                    className={`relative flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold tracking-wide border transition-all ${
                       isDisabled
                         ? 'opacity-40 cursor-not-allowed text-si-5 border-si-border/30 bg-transparent'
                         : active
@@ -438,391 +278,304 @@ export default function Dashboard() {
 
           {activeSubTab === 'visao_geral' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* Coluna Principal (Esquerda) */}
+              {/* ── Coluna Principal (Esquerda) ── */}
               <div className="lg:col-span-8 space-y-6">
-            {isCoachActive && (
-              <CoachSetup
-                entries={entries}
-                accountBalances={accountBalances}
-                goals={goals}
-                creditObligations={creditObligations}
-                investments={investments}
-                financialProfile={financialProfile as unknown as Record<string, unknown> | null}
-                onDismiss={() => setCoachDismissed(true)}
-              />
-            )}
-
-            {!isCoachActive ? (
-              <div className="space-y-6 animate-in fade-in duration-500">
-                <SovereigntyHero
-                  userName={user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
-                  score={score}
-                  freedom={freedom}
-                  spread={spread}
-                  receitaMes={receitaMes}
-                  despesaMes={despesaMes}
-                  saldoMes={saldoMes}
-                  varReceita={varReceita}
-                  varDespesa={varDespesa}
-                />
-
-                {widgets.insight && (
-                  <InsightDoDia
+                {isCoachActive && (
+                  <CoachSetup
                     entries={entries}
-                    cards={cards}
-                    goals={goals}
-                    recurrents={recurrents}
                     accountBalances={accountBalances}
-                    accountMeta={accountMeta}
-                    loading={loading}
-                    hasOpenFinance={hasOpenFinance}
-                    verifiedEntries={verifiedEntries}
-                    openFinanceIdentityByItem={openFinanceIdentityByItem}
-                    dataFreshness={dataFreshness}
+                    goals={goals}
+                    creditObligations={creditObligations}
+                    investments={investments}
+                    financialProfile={financialProfile as unknown as Record<string, unknown> | null}
+                    onDismiss={dismissCoach}
                   />
                 )}
 
+                {!isCoachActive ? (
+                  <div className="space-y-6 animate-in fade-in duration-500">
+                    <SovereigntyHero
+                      userName={user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
+                      score={score}
+                      freedom={freedom}
+                      spread={spread}
+                      receitaMes={receitaMes}
+                      despesaMes={despesaMes}
+                      saldoMes={saldoMes}
+                      varReceita={varReceita}
+                      varDespesa={varDespesa}
+                    />
 
-                {/* Abas de Gráficos Compactos */}
-                {widgets.graficos && (
-                  <div className="bg-si-card rounded-2xl border border-si-border p-6 space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-si-border pb-3">
-                      <h3 className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Análise Visual</h3>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {(
-                          [
-                            { id: 'categorias', label: 'Categorias' },
-                            { id: 'evolucao', label: 'Evolução (6m)' },
-                            { id: 'saldo', label: 'Saldo Acumulado' },
-                          ] as const
-                        ).map((tab) => {
-                          const active = activeChartTab === tab.id;
-                          return (
-                            <button
-                              key={tab.id}
-                              type="button"
-                              onClick={() => setActiveChartTab(tab.id)}
-                              className={`relative px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors ${
-                                active
-                                  ? 'text-zinc-900'
-                                  : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border border-transparent hover:border-si-border'
-                              }`}
-                            >
-                              {active && (
-                                <motion.span
-                                  layoutId="activeChartTabPill"
-                                  className="absolute inset-0 bg-white rounded-md"
-                                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                                  style={{ zIndex: 0 }}
-                                />
+                    {widgets.insight && (
+                      <InsightDoDia
+                        entries={entries}
+                        cards={cards}
+                        goals={goals}
+                        recurrents={recurrents}
+                        accountBalances={accountBalances}
+                        accountMeta={accountMeta}
+                        loading={loading}
+                        hasOpenFinance={hasOpenFinance}
+                        verifiedEntries={verifiedEntries}
+                        openFinanceIdentityByItem={openFinanceIdentityByItem}
+                        dataFreshness={dataFreshness}
+                      />
+                    )}
+
+                    {/* ── Gráficos ── */}
+                    {widgets.graficos && (
+                      <div className="bg-si-card rounded-2xl p-6 space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-si-border pb-3">
+                          <h3 className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Análise Visual</h3>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {([
+                              { id: 'categorias', label: 'Categorias' },
+                              { id: 'evolucao', label: 'Evolução (6m)' },
+                              { id: 'saldo', label: 'Saldo Acumulado' },
+                            ] as const).map((tab) => {
+                              const active = activeChartTab === tab.id;
+                              return (
+                                <button
+                                  key={tab.id}
+                                  type="button"
+                                  onClick={() => setActiveChartTab(tab.id)}
+                                  className={`relative px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                                    active
+                                      ? 'text-zinc-900'
+                                      : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border border-transparent hover:border-si-border'
+                                  }`}
+                                >
+                                  {active && (
+                                    <motion.span
+                                      layoutId="activeChartTabPill"
+                                      className="absolute inset-0 bg-white rounded-md"
+                                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                                      style={{ zIndex: 0 }}
+                                    />
+                                  )}
+                                  <span className="relative z-10">{tab.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="pt-2">
+                          {activeChartTab === 'categorias' && (
+                            <div className="space-y-4">
+                              <h4 className="text-xs font-bold text-si-4 uppercase tracking-wider">
+                                Despesas por categoria · {getMonthLabel(currentMonthKey)} {now.getFullYear()}
+                              </h4>
+                              {donutTotal > 0 ? (
+                                <ExpensesPieChart data={donutSegments} height={200} innerRadius={46} outerRadius={72} />
+                              ) : (
+                                <p className="text-si-5 text-xs py-8 text-center">Nenhuma despesa no mês para exibir.</p>
                               )}
-                              <span className="relative z-10">{tab.label}</span>
-                            </button>
-                          );
-                        })}
+                            </div>
+                          )}
+
+                          {activeChartTab === 'evolucao' && (
+                            <div className="space-y-4">
+                              <h4 className="text-xs font-bold text-si-4 uppercase tracking-wider">Evolução · Últimos 6 meses</h4>
+                              {maxVal > 0 ? (
+                                <FinancialBarChart data={last6Months.map((row) => ({
+                                  monthKey: row.monthKey,
+                                  label: getMonthLabel(row.monthKey),
+                                  receita: row.receita,
+                                  despesa: row.despesa,
+                                }))} height={200} />
+                              ) : (
+                                <p className="text-si-5 text-xs py-8 text-center">Nenhum dado nos últimos 6 meses.</p>
+                              )}
+                            </div>
+                          )}
+
+                          {activeChartTab === 'saldo' && (
+                            <div className="space-y-4">
+                              <h4 className="text-xs font-bold text-si-4 uppercase tracking-wider">Saldo acumulado · Últimos 6 meses</h4>
+                              {last6Months.some((m) => m.receita > 0 || m.despesa > 0) ? (
+                                <BalanceAreaChart data={(() => {
+                                  let acc = 0;
+                                  return last6Months.map((row) => {
+                                    acc += row.receita - row.despesa;
+                                    return { label: getMonthLabel(row.monthKey), saldo: +acc.toFixed(2) };
+                                  });
+                                })()} height={180} />
+                              ) : (
+                                <p className="text-si-5 text-xs py-8 text-center">Nenhum dado nos últimos 6 meses.</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── Macro de Crédito (extraído) ── */}
+                    <DashboardCreditSection />
+
+                    {/* ── Resumo Financeiro ── */}
+                    {widgets.resumo && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className={cardClass}>
+                          <p className="text-si-5 text-sm">Receitas (mês)</p>
+                          <p className="text-2xl font-bold text-emerald-400">
+                            R$ {receitaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </p>
+                          {receitaMesAnt > 0 && (
+                            <p className={`text-xs mt-1 flex items-center gap-1 ${varReceita >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {varReceita >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                              {varReceita >= 0 ? '+' : ''}{varReceita.toFixed(1)}% vs mês anterior
+                            </p>
+                          )}
+                        </div>
+                        <div className={cardClass}>
+                          <p className="text-si-5 text-sm">Despesas (mês)</p>
+                          <p className="text-2xl font-bold text-rose-400">
+                            R$ {despesaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </p>
+                          {despesaMesAnt > 0 && (
+                            <p className={`text-xs mt-1 flex items-center gap-1 ${varDespesa <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {varDespesa <= 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
+                              {varDespesa >= 0 ? '+' : ''}{varDespesa.toFixed(1)}% vs mês anterior
+                            </p>
+                          )}
+                        </div>
+                        <div className={cardClass}>
+                          <p className="text-si-5 text-sm">Saldo (mês)</p>
+                          <p className={`text-2xl font-bold ${saldoMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            R$ {saldoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </p>
+                          <p className="text-xs text-si-5 mt-1">{accounts.length} conta(s)</p>
+                        </div>
+                        <div className={cardClass}>
+                          <p className="text-si-5 text-sm">Lançamentos</p>
+                          <p className="text-2xl font-bold text-si-1">{entries.length}</p>
+                          <p className="text-xs text-si-5 mt-1">Total geral: R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* ── Teaser Glassmorphism — Coach pendente ── */
+                  <div className="relative rounded-2xl overflow-hidden border border-si-border bg-si-card p-1 min-h-[320px] flex items-center justify-center animate-in fade-in duration-500">
+                    {/* Silhueta / Mockup falso dos gráficos ao fundo */}
+                    <div className="absolute inset-0 p-6 grid grid-cols-1 md:grid-cols-2 gap-6 opacity-[0.07] pointer-events-none select-none blur-[3px]">
+                      <div className="md:col-span-2 h-36 rounded-xl bg-si-over-2 border border-si-border-md p-4 space-y-3">
+                        <div className="h-4 w-32 rounded bg-si-5" />
+                        <div className="h-8 w-24 rounded bg-si-4" />
+                        <div className="h-3 w-48 rounded bg-si-5" />
+                      </div>
+                      <div className="h-44 rounded-xl bg-si-over-2 border border-si-border-md p-4 space-y-4">
+                        <div className="h-3 w-24 rounded bg-si-5" />
+                        <div className="flex items-end justify-between h-24 pt-4 px-2">
+                          <div className="h-12 w-6 rounded bg-si-5" />
+                          <div className="h-20 w-6 rounded bg-si-4" />
+                          <div className="h-16 w-6 rounded bg-si-5" />
+                          <div className="h-24 w-6 rounded bg-si-4" />
+                        </div>
+                      </div>
+                      <div className="h-44 rounded-xl bg-si-over-2 border border-si-border-md p-4 flex items-center justify-center">
+                        <div className="relative w-24 h-24 rounded-full border-8 border-si-over-3 flex items-center justify-center">
+                          <div className="absolute inset-2 rounded-full border-8 border-si-5" />
+                        </div>
                       </div>
                     </div>
 
-                    <div className="pt-2">
-                      {activeChartTab === 'categorias' && (
-                        <div className="space-y-4">
-                          <h4 className="text-xs font-bold text-si-4 uppercase tracking-wider">
-                            Despesas por categoria · {getMonthLabel(currentMonthKey)} {now.getFullYear()}
-                          </h4>
-                          {donutTotal > 0 ? (
-                            <ExpensesPieChart data={donutSegments} height={200} innerRadius={46} outerRadius={72} />
-                          ) : (
-                            <p className="text-si-5 text-xs py-8 text-center">Nenhuma despesa no mês para exibir.</p>
-                          )}
-                        </div>
-                      )}
-
-                      {activeChartTab === 'evolucao' && (
-                        <div className="space-y-4">
-                          <h4 className="text-xs font-bold text-si-4 uppercase tracking-wider">Evolução · Últimos 6 meses</h4>
-                          {maxVal > 0 ? (
-                            <FinancialBarChart data={last6Months.map((row) => ({
-                              monthKey: row.monthKey,
-                              label: getMonthLabel(row.monthKey),
-                              receita: row.receita,
-                              despesa: row.despesa,
-                            }))} height={200} />
-                          ) : (
-                            <p className="text-si-5 text-xs py-8 text-center">Nenhum dado nos últimos 6 meses.</p>
-                          )}
-                        </div>
-                      )}
-
-                      {activeChartTab === 'saldo' && (
-                        <div className="space-y-4">
-                          <h4 className="text-xs font-bold text-si-4 uppercase tracking-wider">Saldo acumulado · Últimos 6 meses</h4>
-                          {last6Months.some((m) => m.receita > 0 || m.despesa > 0) ? (
-                            <BalanceAreaChart data={(() => {
-                              let acc = 0;
-                              return last6Months.map((row) => {
-                                acc += row.receita - row.despesa;
-                                return { label: getMonthLabel(row.monthKey), saldo: +acc.toFixed(2) };
-                              });
-                            })()} height={180} />
-                          ) : (
-                            <p className="text-si-5 text-xs py-8 text-center">Nenhum dado nos últimos 6 meses.</p>
-                          )}
-                        </div>
-                      )}
+                    {/* Glassmorphism Overlay */}
+                    <div className="absolute inset-0 bg-si-bg/50 backdrop-blur-[7px] flex flex-col items-center justify-center p-8 text-center z-10">
+                      <div className="w-12 h-12 rounded-full bg-si-over-2 border border-si-border-md flex items-center justify-center mb-4 text-amber-500/80 animate-pulse">
+                        <Lock className="w-5 h-5 text-amber-400" />
+                      </div>
+                      <h4 className="text-sm font-bold text-si-1 mb-2">Painel de Inteligência Financeira</h4>
+                      <p className="text-xs text-si-4 max-w-sm leading-relaxed">
+                        Complete as etapas do seu <strong className="text-si-2">Modo Coach</strong> acima para destravar as visões de Dias de Liberdade, análises gráficas e limites de crédito.
+                      </p>
                     </div>
                   </div>
                 )}
+              </div>
 
-                {/* Macro de Crédito */}
-                {(financialProfile.credit.activeCards > 0 || financialProfile.credit.monthlyDebtCommitment > 0) && (
-                  <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
-                    <div className="flex items-start justify-between gap-4 flex-wrap">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="w-5 h-5 text-blue-400" />
-                          <h3 className="text-lg font-bold text-si-1">Macro de crédito</h3>
-                        </div>
-                        <p className="text-si-5 text-sm mt-1">
-                          Visão consolidada do uso de limite, pressão mensal e próximas obrigações.
-                        </p>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${creditTone}`}>
-                        {financialProfile.credit.pressureLevel}
-                      </span>
-                    </div>
+              {/* ── Coluna Lateral (Direita) — sticky para eliminar vazio ── */}
+              <div className="lg:col-span-4 lg:sticky lg:top-8 space-y-6">
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className={cardClass}>
-                        <p className="text-si-5 text-sm">Limite total</p>
-                        <p className="text-2xl font-bold text-blue-400">
-                          R$ {financialProfile.credit.totalCardLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                        <p className="text-xs text-si-5 mt-1">{financialProfile.credit.activeCards} cartão(ões) ativos</p>
+                {/* Próximas Ações */}
+                {!isCoachActive && hasOnboardingData && nextBestActions.length > 0 && (
+                  <section className="bg-si-card rounded-2xl p-6 space-y-4 animate-in fade-in duration-500">
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        <Zap className="w-3.5 h-3.5 text-si-5" />
+                        <h3 className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Próximas Ações</h3>
                       </div>
-                      <div className={cardClass}>
-                        <p className="text-si-5 text-sm">Uso estimado</p>
-                        <p className="text-2xl font-bold text-si-1">
-                          {financialProfile.credit.cardUtilizationPct.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}%
-                        </p>
-                        <p className="text-xs text-si-5 mt-1">
-                          R$ {financialProfile.credit.estimatedCardUsage.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} na fatura atual
-                        </p>
-                      </div>
-                      <div className={cardClass}>
-                        <p className="text-si-5 text-sm">Faturas em 7 dias</p>
-                        <p className="text-2xl font-bold text-amber-400">
-                          R$ {financialProfile.credit.dueSoonAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                        <p className="text-xs text-si-5 mt-1">{financialProfile.credit.dueSoonCount} vencimento(s) próximo(s)</p>
-                      </div>
-                      <div className={cardClass}>
-                        <p className="text-si-5 text-sm">Compromisso mensal</p>
-                        <p className="text-2xl font-bold text-si-1">
-                          R$ {financialProfile.credit.monthlyDebtCommitment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                        <p className="text-xs text-si-5 mt-1">
-                          Disponível: R$ {financialProfile.credit.availableLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
+                      <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${HEALTH_COLORS[healthLevel] ?? 'text-si-4 bg-si-over-1 border-si-border'}`}>
+                        <span>{healthLevel}</span>
+                        <span className="opacity-60">·</span>
+                        <span className="font-normal normal-case opacity-80">{JOURNEY_LABELS[journeyStage] ?? journeyStage}</span>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <Link
-                        to="/cartoes"
-                        className={buttonClasses('secondary', 'md', 'w-full sm:w-auto')}
-                      >
-                        Revisar cartões
-                      </Link>
-                      <Link
-                        to="/consultor-ia"
-                        className={buttonClasses('primary', 'md', 'w-full sm:w-auto')}
-                      >
-                        Pedir orientação ao consultor
-                      </Link>
-                      <Link
-                        to="/solucoes/credito"
-                        className="text-xs font-bold text-si-4 hover:text-si-2 uppercase tracking-wider underline underline-offset-4 decoration-si-border hover:decoration-si-4 transition-colors"
-                      >
-                        Ver soluções de crédito
-                      </Link>
+                    <div className="flex flex-col gap-3">
+                      {nextBestActions.map((action) => {
+                        const info = ACTION_MAP[action];
+                        if (!info) return null;
+                        return (
+                          <Link
+                            key={action}
+                            to={info.to}
+                            className="flex items-start gap-3 p-4 rounded-xl bg-si-over-1 hover:bg-si-over-2 hover:scale-[1.01] transition-all group"
+                          >
+                            <div className="w-7 h-7 rounded-md bg-si-over-2 flex items-center justify-center shrink-0 group-hover:bg-si-over-3 transition-colors mt-0.5">
+                              <ArrowUpRight className="w-3.5 h-3.5 text-si-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-si-1 leading-tight">{info.label}</p>
+                              <p className="text-xs text-si-5 mt-0.5 leading-snug">{info.description}</p>
+                            </div>
+                          </Link>
+                        );
+                      })}
                     </div>
                   </section>
                 )}
 
-                {/* Resumo Financeiro (Cards de Receitas/Despesas) */}
-                {widgets.resumo && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className={cardClass}>
-                      <p className="text-si-5 text-sm">Receitas (mês)</p>
-                      <p className="text-2xl font-bold text-emerald-400">
-                        R$ {receitaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </p>
-                      {receitaMesAnt > 0 && (
-                        <p className={`text-xs mt-1 flex items-center gap-1 ${varReceita >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {varReceita >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                          {varReceita >= 0 ? '+' : ''}{varReceita.toFixed(1)}% vs mês anterior
-                        </p>
-                      )}
-                    </div>
-                    <div className={cardClass}>
-                      <p className="text-si-5 text-sm">Despesas (mês)</p>
-                      <p className="text-2xl font-bold text-rose-400">
-                        R$ {despesaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </p>
-                      {despesaMesAnt > 0 && (
-                        <p className={`text-xs mt-1 flex items-center gap-1 ${varDespesa <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {varDespesa <= 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
-                          {varDespesa >= 0 ? '+' : ''}{varDespesa.toFixed(1)}% vs mês anterior
-                        </p>
-                      )}
-                    </div>
-                    <div className={cardClass}>
-                      <p className="text-si-5 text-sm">Saldo (mês)</p>
-                      <p className={`text-2xl font-bold ${saldoMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        R$ {saldoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </p>
-                      <p className="text-xs text-si-5 mt-1">{accounts.length} conta(s)</p>
-                    </div>
-                    <div className={cardClass}>
-                      <p className="text-si-5 text-sm">Lançamentos</p>
-                      <p className="text-2xl font-bold text-si-1">{entries.length}</p>
-                      <p className="text-xs text-si-5 mt-1">Total geral: R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                    </div>
+                {/* ── Alertas — estilo inline sutil (P1: sem border-l-4) ── */}
+                {!isCoachActive && widgets.alertas && hasOnboardingData && alertas.length > 0 && (
+                  <div className="space-y-3 animate-in fade-in duration-500">
+                    {alertas.map((a, i) => (
+                      <div
+                        key={i}
+                        className="flex items-start gap-3 px-4 py-3 rounded-xl"
+                      >
+                        {a.type === 'positive' ? (
+                          <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
+                        ) : (
+                          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-semibold text-sm ${
+                            a.type === 'positive' ? 'text-emerald-400' : a.type === 'warning' ? 'text-amber-400' : 'text-blue-400'
+                          }`}>{a.title}</p>
+                          <p className="text-xs text-si-4 mt-0.5">{a.text}</p>
+                          {a.link && (
+                            <Link to={a.link} className="text-xs font-medium text-si-3 hover:text-si-1 underline mt-1 inline-block transition-colors">
+                              Revisar →
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
+
+                {!isCoachActive && <SpreadGapCard spread={spread} />}
+
+                <RoundUpWidget />
+
+                <SibcoinWidget isCoachActive={isCoachActive} />
               </div>
-            ) : (
-              <div className="relative rounded-2xl overflow-hidden border border-si-border bg-si-card p-1 min-h-[320px] flex items-center justify-center animate-in fade-in duration-500">
-                {/* Silhueta / Mockup falso dos gráficos ao fundo */}
-                <div className="absolute inset-0 p-6 grid grid-cols-1 md:grid-cols-2 gap-6 opacity-[0.07] pointer-events-none select-none blur-[3px]">
-                  {/* Hero silhueta */}
-                  <div className="md:col-span-2 h-36 rounded-xl bg-si-over-2 border border-si-border-md p-4 space-y-3">
-                    <div className="h-4 w-32 rounded bg-si-5" />
-                    <div className="h-8 w-24 rounded bg-si-4" />
-                    <div className="h-3 w-48 rounded bg-si-5" />
-                  </div>
-                  {/* Gráfico 1 silhueta */}
-                  <div className="h-44 rounded-xl bg-si-over-2 border border-si-border-md p-4 space-y-4">
-                    <div className="h-3 w-24 rounded bg-si-5" />
-                    <div className="flex items-end justify-between h-24 pt-4 px-2">
-                      <div className="h-12 w-6 rounded bg-si-5" />
-                      <div className="h-20 w-6 rounded bg-si-4" />
-                      <div className="h-16 w-6 rounded bg-si-5" />
-                      <div className="h-24 w-6 rounded bg-si-4" />
-                    </div>
-                  </div>
-                  {/* Gráfico 2 silhueta */}
-                  <div className="h-44 rounded-xl bg-si-over-2 border border-si-border-md p-4 flex items-center justify-center">
-                    <div className="relative w-24 h-24 rounded-full border-8 border-si-over-3 flex items-center justify-center">
-                      <div className="absolute inset-2 rounded-full border-8 border-si-5" />
-                    </div>
-                  </div>
-                </div>
+            </div>
+          )}
 
-                {/* Efeito Glassmorphism Overlay e Cadeado */}
-                <div className="absolute inset-0 bg-si-bg/50 backdrop-blur-[7px] flex flex-col items-center justify-center p-8 text-center z-10">
-                  <div className="w-12 h-12 rounded-full bg-si-over-2 border border-si-border-md flex items-center justify-center mb-4 text-amber-500/80 animate-pulse">
-                    <Lock className="w-5 h-5 text-amber-400" />
-                  </div>
-                  <h4 className="text-sm font-bold text-si-1 mb-2">Painel de Inteligência Financeira</h4>
-                  <p className="text-xs text-si-4 max-w-sm leading-relaxed">
-                    Complete as etapas do seu **Modo Coach** acima para destravar as visões de Dias de Liberdade, análises gráficas e limites de crédito.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Coluna Lateral (Direita) */}
-          <div className="lg:col-span-4 space-y-6">
-
-
-            {/* Próximas Ações */}
-            {!isCoachActive && hasOnboardingData && nextBestActions.length > 0 && (
-              <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4 animate-in fade-in duration-500">
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <div className="flex items-center gap-3">
-                    <Zap className="w-3.5 h-3.5 text-si-5" />
-                    <h3 className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Próximas Ações</h3>
-                  </div>
-                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${HEALTH_COLORS[healthLevel] ?? 'text-si-4 bg-si-over-1 border-si-border'}`}>
-                    <span>{healthLevel}</span>
-                    <span className="opacity-60">·</span>
-                    <span className="font-normal normal-case opacity-80">{JOURNEY_LABELS[journeyStage] ?? journeyStage}</span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-3">
-                  {nextBestActions.map((action) => {
-                    const info = ACTION_MAP[action];
-                    if (!info) return null;
-                    return (
-                      <Link
-                        key={action}
-                        to={info.to}
-                        className="flex items-start gap-3 p-4 rounded-xl bg-si-over-1 border border-si-border hover:bg-si-over-2 hover:border-emerald-500/20 transition-all group"
-                      >
-                        <div className="w-7 h-7 rounded-md bg-si-over-2 flex items-center justify-center shrink-0 group-hover:bg-si-over-3 transition-colors mt-0.5">
-                          <ArrowUpRight className="w-3.5 h-3.5 text-si-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-si-1 leading-tight">{info.label}</p>
-                          <p className="text-xs text-si-5 mt-0.5 leading-snug">{info.description}</p>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
-
-
-            {!isCoachActive && widgets.alertas && hasOnboardingData && alertas.length > 0 && (
-              <div className="space-y-3 animate-in fade-in duration-500">
-                {alertas.map((a, i) => (
-                  <div
-                    key={i}
-                    className={`rounded-xl border-l-4 p-4 flex items-start gap-3 ${
-                      a.type === 'positive'
-                        ? 'bg-si-positive-bg border-emerald-500 text-si-positive-text'
-                        : a.type === 'warning'
-                          ? 'bg-si-warning-bg border-amber-500 text-si-warning-text'
-                          : 'bg-si-info-bg border-blue-500 text-si-info-text'
-                    }`}
-                  >
-                    {a.type === 'positive' ? (
-                      <Lightbulb className="w-5 h-5 shrink-0 mt-0.5" />
-                    ) : (
-                      <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm">{a.title}</p>
-                      <p className="text-sm opacity-90">{a.text}</p>
-                      {a.link && (
-                        <Link to={a.link} className="text-sm font-medium underline mt-1 inline-block">
-                          Revisar orçamento
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {!isCoachActive && <SpreadGapCard spread={spread} />}
-
-            <RoundUpWidget />
-
-            <SibcoinWidget isCoachActive={isCoachActive} />
-          </div>
-        </div>
-      )}
-
-
-          {/* ── Sub-views extraídas (Ação #8 — Análise 360) ── */}
+          {/* ── Sub-views ── */}
           {activeSubTab === 'transacoes' && <DashboardTransactionsTab />}
-          {activeSubTab === 'parcelamentos' && <DashboardParcelamentosTab />}
-          {activeSubTab === 'assinaturas' && <DashboardAssinaturasTab />}
           {activeSubTab === 'categorias' && (
             <DashboardCategoriasTab
               catTotals={catTotals}

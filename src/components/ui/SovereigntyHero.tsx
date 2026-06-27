@@ -125,11 +125,11 @@ export function SovereigntyHero({
           {noLdData ? (
             /* Sem dados suficientes — não exibir o sentinela 99999 nem premiar conta vazia */
             <>
-              <div className="flex items-end gap-2 leading-none">
+              <div className="flex items-end gap-2 leading-none animate-pulse">
                 <span className="text-[52px] sm:text-[72px] font-black tracking-tight leading-none text-si-4">—</span>
               </div>
               <p className="text-si-5 text-xs mt-2 text-center max-w-xs">
-                Ainda não há dados suficientes. Registre despesas ou conecte seu banco
+                Seu índice de liberdade aparecerá aqui. Registre despesas ou conecte seu banco
                 para descobrir por quantos dias o seu patrimônio te banca.
               </p>
               <Link

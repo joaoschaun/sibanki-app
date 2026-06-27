@@ -27,6 +27,8 @@ import { lazyWithReload } from './utils/lazyWithReload';
 import Login from './pages/Login';
 import { useState, useEffect, useMemo } from 'react';
 
+import { useCoachActive } from './hooks/useCoachActive';
+
 captureRefParam();
 
 // Dedupe de telemetria module_viewed: 1 evento por módulo por sessão (carga da página).
@@ -94,26 +96,8 @@ function ModuleGuard({ children }: { children: ReactNode }) {
   const location = useLocation();
   const { isModuleEnabled, loaded } = useModuleFlags();
   
-  const {
-    accounts, entries, goals, creditObligations, investments, financialProfile, loading: contextLoading
-  } = useAppContext();
-
-  const coachDismissed = useMemo(
-    () => localStorage.getItem('sibanki_coach_dismissed') === 'true',
-    []
-  );
-
-  const isCoachActive = useMemo(() => {
-    if (coachDismissed) return false;
-    const hasAccounts = accounts.length > 0;
-    const hasMinEntries = entries.filter(e => e.type === 'despesa' || e.type === 'receita').length >= 3;
-    const hasGoals = goals.length > 0;
-    const hasDebts = creditObligations.length > 0;
-    const hasInvestments = investments.length > 0;
-    const hasWhatsapp = !!((financialProfile as unknown as Record<string, any>)?.whatsappPhone);
-    const allDone = hasAccounts && hasMinEntries && hasGoals && hasDebts && hasInvestments && hasWhatsapp;
-    return !allDone;
-  }, [accounts, entries, goals, creditObligations, investments, financialProfile, coachDismissed]);
+  const { loading: contextLoading } = useAppContext();
+  const { isCoachActive } = useCoachActive();
 
   const ALLOWED_PATHS = useMemo(() => new Set([
     '/dashboard', 

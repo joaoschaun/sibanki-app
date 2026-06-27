@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import {
   Receipt, TrendingUp, Wallet, CreditCard, Target, PieChart,
   FileBarChart, Calendar, User, Settings, MoreHorizontal, ChevronDown,
@@ -9,8 +9,8 @@ import {
 import { Link, useLocation } from 'react-router-dom';
 import { useTenant } from '../../hooks/useTenant';
 import { useModuleFlags } from '../../hooks/useModuleFlags';
+import { useCoachActive } from '../../hooks/useCoachActive';
 import { cn } from '../../utils/cn';
-import { useAppContext } from '../../context/AppContext';
 
 export type SidebarOpenGroup = 'mais' | null;
 
@@ -88,29 +88,9 @@ export function Sidebar({
   const { branding } = useTenant();
   const location = useLocation();
   const { isModuleEnabled } = useModuleFlags();
+  const { isCoachActive } = useCoachActive();
 
-  const {
-    accounts, entries, goals, creditObligations, investments, financialProfile
-  } = useAppContext();
-
-  const coachDismissed = useMemo(
-    () => localStorage.getItem('sibanki_coach_dismissed') === 'true',
-    []
-  );
-
-  const isCoachActive = useMemo(() => {
-    if (coachDismissed) return false;
-    const hasAccounts = accounts.length > 0;
-    const hasMinEntries = entries.filter(e => e.type === 'despesa' || e.type === 'receita').length >= 3;
-    const hasGoals = goals.length > 0;
-    const hasDebts = creditObligations.length > 0;
-    const hasInvestments = investments.length > 0;
-    const hasWhatsapp = !!((financialProfile as unknown as Record<string, any>)?.whatsappPhone);
-    const allDone = hasAccounts && hasMinEntries && hasGoals && hasDebts && hasInvestments && hasWhatsapp;
-    return !allDone;
-  }, [accounts, entries, goals, creditObligations, investments, financialProfile, coachDismissed]);
-
-  const ALLOWED_PATHS = useMemo(() => new Set(['/dashboard', '/lancamentos', '/contas', '/perfil', '/configuracoes']), []);
+  const ALLOWED_PATHS = new Set(['/dashboard', '/lancamentos', '/contas', '/perfil', '/configuracoes']);
 
   // Gating de módulos: esconde itens desligados pelo admin (essenciais sempre on).
   const coreItems = coreNav.filter((i) => isModuleEnabled(i.key));
