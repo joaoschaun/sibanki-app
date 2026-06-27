@@ -90,7 +90,7 @@ export function Sidebar({
   const { isModuleEnabled } = useModuleFlags();
   const { isCoachActive } = useCoachActive();
 
-  const ALLOWED_PATHS = new Set(['/dashboard', '/lancamentos', '/contas', '/perfil', '/configuracoes']);
+  const ALLOWED_PATHS = new Set(['/dashboard', '/lancamentos', '/contas', '/perfil', '/configuracoes', '/planejamento', '/credito', '/crescimento']);
 
   // Gating de módulos: esconde itens desligados pelo admin (essenciais sempre on).
   const coreItems = coreNav.filter((i) => isModuleEnabled(i.key));

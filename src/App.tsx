@@ -105,6 +105,9 @@ function ModuleGuard({ children }: { children: ReactNode }) {
     '/contas', 
     '/perfil', 
     '/configuracoes',
+    '/planejamento',
+    '/credito',
+    '/crescimento',
     '/login',
     '/'
   ]), []);
