@@ -18,13 +18,14 @@ import {
   CreditCard, AlertTriangle, CheckCircle,
   ChevronRight, Zap, BookOpen, Clock,
   ArrowUpRight, RefreshCw, ShieldCheck, Target,
+  Plus, Pencil, Trash2,
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { ComingSoonBadge } from '../components/ui/ComingSoonBadge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Modal } from '../components/ui/Modal';
-import { getBillingMonth } from '../services/persistUserData';
-import type { CreditAccount, CreditSnapshot } from '../types/userData';
+import { getBillingMonth, setCreditAccounts, setCreditObligations } from '../services/persistUserData';
+import type { CreditAccount, CreditSnapshot, CreditObligation } from '../types/userData';
 import { analyzeInstallmentDecision, analyzeDebtPayoffStrategy, analyzeFgtsAmortization } from '../utils/decisionEngine';
 import { identifyBank } from '../components/banks/bankData';
 
@@ -99,7 +100,7 @@ function UtilBar({ pct, warn = 70 }: { pct: number; warn?: number }) {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function CreditHub() {
-  const { data, financialProfile } = useAppContext();
+  const { user, data, financialProfile, creditAccounts, creditObligations } = useAppContext();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('Visão Geral');
   const [eduIdx, setEduIdx] = useState(0);
@@ -116,6 +117,137 @@ export default function CreditHub() {
   const [amortizationExtraAmount, setAmortizationExtraAmount] = useState('5000');
   const [amortizationRemainingMonths, setAmortizationRemainingMonths] = useState(24);
   const [amortizationUseFgts, setAmortizationUseFgts] = useState(false);
+
+  // States para o modal de empréstimo manual
+  const [loanModalOpen, setLoanModalOpen] = useState(false);
+  const [editLoanId, setEditLoanId] = useState<string | null>(null);
+  const [loanLabel, setLoanLabel] = useState('');
+  const [loanInstitution, setLoanInstitution] = useState('');
+  const [loanKind, setLoanKind] = useState<'emprestimo' | 'financiamento' | 'consignado' | 'outro'>('emprestimo');
+  const [loanLimitTotal, setLoanLimitTotal] = useState('');
+  const [loanBalanceUsed, setLoanBalanceUsed] = useState('');
+  const [loanMonthlyInstallment, setLoanMonthlyInstallment] = useState('');
+  const [loanAnnualInterestPct, setLoanAnnualInterestPct] = useState('');
+  const [loanDueDate, setLoanDueDate] = useState('');
+  const [loanError, setLoanError] = useState<string | null>(null);
+  const [loanBusy, setLoanBusy] = useState(false);
+
+  const handleOpenAddLoan = () => {
+    setEditLoanId(null);
+    setLoanLabel('');
+    setLoanInstitution('');
+    setLoanKind('emprestimo');
+    setLoanLimitTotal('');
+    setLoanBalanceUsed('');
+    setLoanMonthlyInstallment('');
+    setLoanAnnualInterestPct('');
+    setLoanDueDate(new Date().toISOString().split('T')[0]);
+    setLoanError(null);
+    setLoanModalOpen(true);
+  };
+
+  const handleEditLoan = (loan: CreditAccount) => {
+    setEditLoanId(loan.id);
+    setLoanLabel(loan.label || '');
+    setLoanInstitution(loan.institution || '');
+    setLoanKind((loan.kind as any) || 'emprestimo');
+    setLoanLimitTotal(loan.limitTotal ? String(loan.limitTotal) : '');
+    setLoanBalanceUsed(loan.balanceUsed ? String(loan.balanceUsed) : '');
+    setLoanMonthlyInstallment(loan.monthlyInstallment ? String(loan.monthlyInstallment) : '');
+    setLoanAnnualInterestPct(loan.annualInterestPct ? String(loan.annualInterestPct) : '');
+    
+    // Encontrar data de vencimento correspondente em creditObligations
+    const ob = creditObligations.find(o => o.accountId === loan.id);
+    setLoanDueDate(ob?.dueDate || new Date().toISOString().split('T')[0]);
+    
+    setLoanError(null);
+    setLoanModalOpen(true);
+  };
+
+  const handleSaveLoan = async () => {
+    if (!user) return;
+    if (!loanLabel.trim()) {
+      setLoanError('Nome do empréstimo é obrigatório');
+      return;
+    }
+    const balance = parseFloat(loanBalanceUsed) || 0;
+    const limitVal = parseFloat(loanLimitTotal) || balance || 0;
+    const installment = parseFloat(loanMonthlyInstallment) || 0;
+    const annualRate = parseFloat(loanAnnualInterestPct) || 0;
+
+    setLoanBusy(true);
+    setLoanError(null);
+
+    try {
+      const activeAccounts = [...creditAccounts];
+      const activeObligations = [...creditObligations];
+
+      const targetAccountId = editLoanId || `manual-loan-${Date.now()}`;
+      
+      const newAccount: CreditAccount = {
+        id: targetAccountId,
+        kind: loanKind,
+        label: loanLabel,
+        institution: loanInstitution || 'Outros',
+        source: 'manual',
+        status: balance > 0 ? 'ativo' : 'quitado',
+        limitTotal: limitVal,
+        balanceUsed: balance,
+        monthlyInstallment: installment,
+        annualInterestPct: annualRate,
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Converter taxa anual para mensal em %
+      const monthlyRate = Math.pow(1 + annualRate / 100, 1 / 12) - 1;
+      const monthlyRatePct = Number((monthlyRate * 100).toFixed(4));
+
+      const newObligation: CreditObligation = {
+        id: `manual-obligation-${targetAccountId}`,
+        accountId: targetAccountId,
+        kind: loanKind === 'financiamento' ? 'financiamento' : 'emprestimo',
+        label: loanLabel,
+        institution: loanInstitution || 'Outros',
+        source: 'manual',
+        status: balance > 0 ? 'aberta' : 'paga',
+        amount: balance,
+        dueDate: loanDueDate || new Date().toISOString().split('T')[0],
+        interestRatePct: monthlyRatePct,
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Atualizar ou adicionar nas listas
+      const accountIdx = activeAccounts.findIndex(a => a.id === targetAccountId);
+      if (accountIdx >= 0) activeAccounts[accountIdx] = newAccount;
+      else activeAccounts.push(newAccount);
+
+      const obIdx = activeObligations.findIndex(o => o.accountId === targetAccountId);
+      if (obIdx >= 0) activeObligations[obIdx] = newObligation;
+      else activeObligations.push(newObligation);
+
+      await setCreditAccounts(user.uid, activeAccounts);
+      await setCreditObligations(user.uid, activeObligations);
+
+      setLoanModalOpen(false);
+    } catch (err: any) {
+      setLoanError(err.message || 'Erro ao salvar empréstimo');
+    } finally {
+      setLoanBusy(false);
+    }
+  };
+
+  const handleDeleteLoan = async (id: string) => {
+    if (!user || !window.confirm('Tem certeza que deseja excluir este empréstimo?')) return;
+    try {
+      const activeAccounts = creditAccounts.filter(a => a.id !== id);
+      const activeObligations = creditObligations.filter(o => o.accountId !== id);
+
+      await setCreditAccounts(user.uid, activeAccounts);
+      await setCreditObligations(user.uid, activeObligations);
+    } catch (err: any) {
+      alert('Erro ao excluir empréstimo: ' + err.message);
+    }
+  };
 
   const hasRealData = Boolean(
     data?.creditSnapshot || 
@@ -633,58 +765,100 @@ export default function CreditHub() {
       )}
 
       {/* ══ EMPRÉSTIMOS — dentro da Visão Geral (consolidação 13/06) ══ */}
-      {activeTab === 'Visão Geral' && loans.length > 0 && (
+      {activeTab === 'Visão Geral' && (
         <div className="space-y-4">
-          <h3 className="text-[11px] font-bold tracking-[0.18em] uppercase text-si-5 pt-2">
-            Empréstimos e financiamentos
-          </h3>
-          {loans.map((l) => {
-            const saldo   = l.balanceUsed ?? 0;
-            const parcela = l.monthlyInstallment ?? 0;
-            const juros   = l.annualInterestPct ?? 0;
-            const pct     = l.limitTotal ? (saldo / l.limitTotal) * 100 : 0;
-            return (
-              <div key={l.id} className="bg-si-card rounded-2xl border border-si-border p-5 space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold text-si-1">{l.label}</p>
-                    <p className="text-xs text-si-5">{l.institution} · {l.kind}</p>
+          <div className="flex items-center justify-between pt-2">
+            <h3 className="text-[11px] font-bold tracking-[0.18em] uppercase text-si-5">
+              Empréstimos e financiamentos
+            </h3>
+            <button
+              onClick={handleOpenAddLoan}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-si-over-2 border border-si-border text-[10px] font-bold text-si-4 hover:text-si-2 hover:bg-si-over-3 uppercase tracking-wider transition-colors"
+            >
+              <Plus className="w-3 h-3" /> Adicionar
+            </button>
+          </div>
+
+          {loans.length === 0 ? (
+            <div className="p-6 rounded-2xl border border-si-border bg-si-card/30 text-center">
+              <p className="text-xs text-si-5">Nenhum empréstimo ou financiamento registrado.</p>
+              <button
+                onClick={handleOpenAddLoan}
+                className="mt-3 text-xs font-semibold text-blue-400 hover:underline"
+              >
+                Cadastrar empréstimo manualmente
+              </button>
+            </div>
+          ) : (
+            loans.map((l) => {
+              const saldo   = l.balanceUsed ?? 0;
+              const parcela = l.monthlyInstallment ?? 0;
+              const juros   = l.annualInterestPct ?? 0;
+              const pct     = l.limitTotal ? (saldo / l.limitTotal) * 100 : 0;
+              const prettyKind = l.kind === 'emprestimo' ? 'Empréstimo' : l.kind === 'financiamento' ? 'Financiamento' : l.kind === 'consignado' ? 'Consignado' : 'Outro';
+              return (
+                <div key={l.id} className="bg-si-card rounded-2xl border border-si-border p-5 space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-si-1">{l.label}</p>
+                        {l.source === 'manual' && (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleEditLoan(l)}
+                              className="p-1 text-si-5 hover:text-si-2 transition-colors"
+                              title="Editar"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteLoan(l.id)}
+                              className="p-1 text-si-5 hover:text-rose-400 transition-colors"
+                              title="Excluir"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-si-5">{l.institution} · {prettyKind}</p>
+                    </div>
+                    <span className="text-xs font-bold px-2 py-1 rounded-full bg-amber-500/10 text-amber-400">
+                      {juros.toFixed(1)}% a.a.
+                    </span>
                   </div>
-                  <span className="text-xs font-bold px-2 py-1 rounded-full bg-amber-500/10 text-amber-400">
-                    {juros.toFixed(1)}% a.a.
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <p className="text-xs text-si-5">Saldo devedor</p>
-                    <p className="font-bold text-rose-400">{fmtBRL(saldo)}</p>
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div>
+                      <p className="text-xs text-si-5">Saldo devedor</p>
+                      <p className="font-bold text-rose-400">{fmtBRL(saldo)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-si-5">Parcela mensal</p>
+                      <p className="font-bold text-si-1">{fmtBRL(parcela)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-si-5">Progresso</p>
+                      <p className="font-bold text-si-4">{fmtPct(100 - pct)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-si-5">Parcela mensal</p>
-                    <p className="font-bold text-si-1">{fmtBRL(parcela)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-si-5">Progresso</p>
-                    <p className="font-bold text-si-4">{fmtPct(100 - pct)}</p>
-                  </div>
-                </div>
-                <UtilBar pct={pct} warn={90} />
-                 <div className="flex gap-2">
-                  <button
-                    onClick={() => handleOpenAmortization(l)}
-                    className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 hover:text-si-1 hover:bg-si-over-3 text-xs transition-colors"
-                  >
-                    Simular antecipação
-                  </button>
-                  <ComingSoonBadge>
-                    <button disabled className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4/50 text-xs cursor-not-allowed">
-                      Renegociar
+                  <UtilBar pct={pct} warn={90} />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleOpenAmortization(l)}
+                      className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 hover:text-si-1 hover:bg-si-over-3 text-xs transition-colors"
+                    >
+                      Simular antecipação
                     </button>
-                  </ComingSoonBadge>
+                    <ComingSoonBadge>
+                      <button disabled className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4/50 text-xs cursor-not-allowed">
+                        Renegociar
+                      </button>
+                    </ComingSoonBadge>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       )}
 
@@ -1223,6 +1397,136 @@ export default function CreditHub() {
                 className="flex-1 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-bold transition-all uppercase tracking-wider"
               >
                 Concluir Simulação
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal de Adicionar/Editar Empréstimo Manual */}
+      {loanModalOpen && (
+        <Modal
+          open={loanModalOpen}
+          onClose={() => setLoanModalOpen(false)}
+          title={editLoanId ? 'Editar Empréstimo / Financiamento' : 'Cadastrar Empréstimo / Financiamento'}
+          size="md"
+        >
+          <div className="space-y-4">
+            {loanError && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-xs text-rose-400">
+                {loanError}
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs text-si-5 font-semibold mb-1 block">Nome do Empréstimo / Descrição</label>
+              <input
+                type="text"
+                value={loanLabel}
+                onChange={(e) => setLoanLabel(e.target.value)}
+                className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                placeholder="Ex: Empréstimo Pessoal Caixa"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-si-5 font-semibold mb-1 block">Instituição / Banco</label>
+                <input
+                  type="text"
+                  value={loanInstitution}
+                  onChange={(e) => setLoanInstitution(e.target.value)}
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                  placeholder="Ex: Itaú, BB"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-si-5 font-semibold mb-1 block">Tipo de Passivo</label>
+                <select
+                  value={loanKind}
+                  onChange={(e) => setLoanKind(e.target.value as any)}
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                >
+                  <option value="emprestimo">Empréstimo</option>
+                  <option value="financiamento">Financiamento</option>
+                  <option value="consignado">Consignado</option>
+                  <option value="outro">Outro</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-si-5 font-semibold mb-1 block">Valor Total Emprestado (R$)</label>
+                <input
+                  type="number"
+                  value={loanLimitTotal}
+                  onChange={(e) => setLoanLimitTotal(e.target.value)}
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                  placeholder="Ex: 20000"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-si-5 font-semibold mb-1 block">Saldo Devedor Atual (R$)</label>
+                <input
+                  type="number"
+                  value={loanBalanceUsed}
+                  onChange={(e) => setLoanBalanceUsed(e.target.value)}
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                  placeholder="Ex: 14500"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-si-5 font-semibold mb-1 block">Parcela Mensal (R$)</label>
+                <input
+                  type="number"
+                  value={loanMonthlyInstallment}
+                  onChange={(e) => setLoanMonthlyInstallment(e.target.value)}
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                  placeholder="Ex: 720"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-si-5 font-semibold mb-1 block">Taxa de Juros Anual (% a.a.)</label>
+                <input
+                  type="number"
+                  value={loanAnnualInterestPct}
+                  onChange={(e) => setLoanAnnualInterestPct(e.target.value)}
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                  placeholder="Ex: 28.4"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-si-5 font-semibold mb-1 block">Data do Próximo Vencimento</label>
+              <input
+                type="date"
+                value={loanDueDate}
+                onChange={(e) => setLoanDueDate(e.target.value)}
+                className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-3">
+              <button
+                type="button"
+                onClick={() => setLoanModalOpen(false)}
+                className="flex-1 py-2.5 rounded-xl bg-si-over-2 hover:bg-si-over-3 text-si-3 text-xs font-bold transition-all uppercase tracking-wider border border-si-border"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveLoan}
+                disabled={loanBusy}
+                className="flex-1 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-bold transition-all uppercase tracking-wider disabled:opacity-50"
+              >
+                {loanBusy ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
           </div>
