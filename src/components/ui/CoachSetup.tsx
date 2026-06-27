@@ -21,6 +21,7 @@ interface CoachSetupProps {
   creditObligations: unknown[];
   investments: unknown[];
   financialProfile: Record<string, unknown> | null;
+  onDismiss?: () => void;
 }
 
 // ─── Componente ──────────────────────────────────────────────────────────────
@@ -34,6 +35,7 @@ export function CoachSetup({
   creditObligations,
   investments,
   financialProfile,
+  onDismiss,
 }: CoachSetupProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [dismissed, setDismissed] = useState(
@@ -191,7 +193,11 @@ export function CoachSetup({
 
           <button
             type="button"
-            onClick={() => { localStorage.setItem(STORAGE_KEY, 'true'); setDismissed(true); }}
+            onClick={() => {
+              localStorage.setItem(STORAGE_KEY, 'true');
+              setDismissed(true);
+              if (onDismiss) onDismiss();
+            }}
             className="text-xs text-si-5 hover:text-si-3 mt-1"
           >
             Dispensar (posso configurar depois)

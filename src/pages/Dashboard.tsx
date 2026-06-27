@@ -89,6 +89,22 @@ export default function Dashboard() {
   const [activeSubTab, setActiveSubTab] = useState<'visao_geral' | 'transacoes' | 'parcelamentos' | 'assinaturas' | 'categorias' | 'cartoes'>('visao_geral');
   const [activeChartTab, setActiveChartTab] = useState<'categorias' | 'evolucao' | 'saldo'>('categorias');
   const [widgets, setWidgets] = useState<WidgetConfig>(() => readWidgetConfig());
+  const [coachDismissed, setCoachDismissed] = useState(
+    () => localStorage.getItem('sibanki_coach_dismissed') === 'true'
+  );
+
+  const isCoachActive = useMemo(() => {
+    if (coachDismissed) return false;
+    const hasAccounts = accounts.length > 0;
+    const hasMinEntries = entries.filter(e => e.type === 'despesa' || e.type === 'receita').length >= 3;
+    const hasGoals = goals.length > 0;
+    const hasDebts = creditObligations.length > 0;
+    const hasInvestments = investments.length > 0;
+    const hasWhatsapp = !!((financialProfile as unknown as Record<string, any>)?.whatsappPhone);
+    const allDone = hasAccounts && hasMinEntries && hasGoals && hasDebts && hasInvestments && hasWhatsapp;
+    return !allDone;
+  }, [accounts, entries, goals, creditObligations, investments, financialProfile, coachDismissed]);
+
   const currentMonthKey = getMonthKey(now);
   const prevMonthDate = useMemo(() => {
     const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -354,15 +370,20 @@ export default function Dashboard() {
               ).map((tab) => {
                 const Icon = tab.icon;
                 const active = activeSubTab === tab.id;
+                const isSecondary = tab.id !== 'visao_geral';
+                const isDisabled = isSecondary && isCoachActive;
                 return (
                   <button
                     key={tab.id}
                     type="button"
+                    disabled={isDisabled}
                     onClick={() => setActiveSubTab(tab.id)}
                     className={`relative flex items-center gap-2 px-3 py-2 rounded-full text-[11px] font-bold tracking-[0.1em] uppercase border transition-all ${
-                      active
-                        ? 'text-zinc-900 border-white'
-                        : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border-si-border'
+                      isDisabled
+                        ? 'opacity-40 cursor-not-allowed text-si-5 border-si-border/30 bg-transparent'
+                        : active
+                          ? 'text-zinc-900 border-white'
+                          : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border-si-border'
                     }`}
                   >
                     {active && (
@@ -426,243 +447,252 @@ export default function Dashboard() {
                 creditObligations={creditObligations}
                 investments={investments}
                 financialProfile={financialProfile as unknown as Record<string, unknown> | null}
+                onDismiss={() => setCoachDismissed(true)}
               />
             )}
 
-            <SovereigntyHero
-              userName={user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
-              score={score}
-              freedom={freedom}
-              spread={spread}
-              receitaMes={receitaMes}
-              despesaMes={despesaMes}
-              saldoMes={saldoMes}
-              varReceita={varReceita}
-              varDespesa={varDespesa}
-            />
+            {!isCoachActive ? (
+              <div className="space-y-6 animate-in fade-in duration-500">
+                <SovereigntyHero
+                  userName={user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
+                  score={score}
+                  freedom={freedom}
+                  spread={spread}
+                  receitaMes={receitaMes}
+                  despesaMes={despesaMes}
+                  saldoMes={saldoMes}
+                  varReceita={varReceita}
+                  varDespesa={varDespesa}
+                />
 
-            {widgets.insight && (
-              <InsightDoDia
-                entries={entries}
-                cards={cards}
-                goals={goals}
-                recurrents={recurrents}
-                accountBalances={accountBalances}
-                accountMeta={accountMeta}
-                loading={loading}
-                hasOpenFinance={hasOpenFinance}
-                verifiedEntries={verifiedEntries}
-                openFinanceIdentityByItem={openFinanceIdentityByItem}
-                dataFreshness={dataFreshness}
-              />
-            )}
+                {widgets.insight && (
+                  <InsightDoDia
+                    entries={entries}
+                    cards={cards}
+                    goals={goals}
+                    recurrents={recurrents}
+                    accountBalances={accountBalances}
+                    accountMeta={accountMeta}
+                    loading={loading}
+                    hasOpenFinance={hasOpenFinance}
+                    verifiedEntries={verifiedEntries}
+                    openFinanceIdentityByItem={openFinanceIdentityByItem}
+                    dataFreshness={dataFreshness}
+                  />
+                )}
 
 
-            {/* Abas de Gráficos Compactos */}
-            {widgets.graficos && (
-              <div className="bg-si-card rounded-2xl border border-si-border p-6 space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-si-border pb-3">
-                  <h3 className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Análise Visual</h3>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {(
-                      [
-                        { id: 'categorias', label: 'Categorias' },
-                        { id: 'evolucao', label: 'Evolução (6m)' },
-                        { id: 'saldo', label: 'Saldo Acumulado' },
-                      ] as const
-                    ).map((tab) => {
-                      const active = activeChartTab === tab.id;
-                      return (
-                        <button
-                          key={tab.id}
-                          type="button"
-                          onClick={() => setActiveChartTab(tab.id)}
-                          className={`relative px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors ${
-                            active
-                              ? 'text-zinc-900'
-                              : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border border-transparent hover:border-si-border'
-                          }`}
-                        >
-                          {active && (
-                            <motion.span
-                              layoutId="activeChartTabPill"
-                              className="absolute inset-0 bg-white rounded-md"
-                              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                              style={{ zIndex: 0 }}
-                            />
+                {/* Abas de Gráficos Compactos */}
+                {widgets.graficos && (
+                  <div className="bg-si-card rounded-2xl border border-si-border p-6 space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-si-border pb-3">
+                      <h3 className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Análise Visual</h3>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {(
+                          [
+                            { id: 'categorias', label: 'Categorias' },
+                            { id: 'evolucao', label: 'Evolução (6m)' },
+                            { id: 'saldo', label: 'Saldo Acumulado' },
+                          ] as const
+                        ).map((tab) => {
+                          const active = activeChartTab === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => setActiveChartTab(tab.id)}
+                              className={`relative px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                                active
+                                  ? 'text-zinc-900'
+                                  : 'bg-si-over-1 text-si-4 hover:bg-si-over-2 hover:text-si-2 border border-transparent hover:border-si-border'
+                              }`}
+                            >
+                              {active && (
+                                <motion.span
+                                  layoutId="activeChartTabPill"
+                                  className="absolute inset-0 bg-white rounded-md"
+                                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                                  style={{ zIndex: 0 }}
+                                />
+                              )}
+                              <span className="relative z-10">{tab.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      {activeChartTab === 'categorias' && (
+                        <div className="space-y-4">
+                          <h4 className="text-xs font-bold text-si-4 uppercase tracking-wider">
+                            Despesas por categoria · {getMonthLabel(currentMonthKey)} {now.getFullYear()}
+                          </h4>
+                          {donutTotal > 0 ? (
+                            <ExpensesPieChart data={donutSegments} height={200} innerRadius={46} outerRadius={72} />
+                          ) : (
+                            <p className="text-si-5 text-xs py-8 text-center">Nenhuma despesa no mês para exibir.</p>
                           )}
-                          <span className="relative z-10">{tab.label}</span>
-                        </button>
-                      );
-                    })}
+                        </div>
+                      )}
+
+                      {activeChartTab === 'evolucao' && (
+                        <div className="space-y-4">
+                          <h4 className="text-xs font-bold text-si-4 uppercase tracking-wider">Evolução · Últimos 6 meses</h4>
+                          {maxVal > 0 ? (
+                            <FinancialBarChart data={last6Months.map((row) => ({
+                              monthKey: row.monthKey,
+                              label: getMonthLabel(row.monthKey),
+                              receita: row.receita,
+                              despesa: row.despesa,
+                            }))} height={200} />
+                          ) : (
+                            <p className="text-si-5 text-xs py-8 text-center">Nenhum dado nos últimos 6 meses.</p>
+                          )}
+                        </div>
+                      )}
+
+                      {activeChartTab === 'saldo' && (
+                        <div className="space-y-4">
+                          <h4 className="text-xs font-bold text-si-4 uppercase tracking-wider">Saldo acumulado · Últimos 6 meses</h4>
+                          {last6Months.some((m) => m.receita > 0 || m.despesa > 0) ? (
+                            <BalanceAreaChart data={(() => {
+                              let acc = 0;
+                              return last6Months.map((row) => {
+                                acc += row.receita - row.despesa;
+                                return { label: getMonthLabel(row.monthKey), saldo: +acc.toFixed(2) };
+                              });
+                            })()} height={180} />
+                          ) : (
+                            <p className="text-si-5 text-xs py-8 text-center">Nenhum dado nos últimos 6 meses.</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div className="pt-2">
-                  {activeChartTab === 'categorias' && (
-                    <div className="space-y-4">
-                      <h4 className="text-xs font-bold text-si-4 uppercase tracking-wider">
-                        Despesas por categoria · {getMonthLabel(currentMonthKey)} {now.getFullYear()}
-                      </h4>
-                      {donutTotal > 0 ? (
-                        <ExpensesPieChart data={donutSegments} height={200} innerRadius={46} outerRadius={72} />
-                      ) : (
-                        <p className="text-si-5 text-xs py-8 text-center">Nenhuma despesa no mês para exibir.</p>
+                {/* Macro de Crédito */}
+                {(financialProfile.credit.activeCards > 0 || financialProfile.credit.monthlyDebtCommitment > 0) && (
+                  <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="w-5 h-5 text-blue-400" />
+                          <h3 className="text-lg font-bold text-si-1">Macro de crédito</h3>
+                        </div>
+                        <p className="text-si-5 text-sm mt-1">
+                          Visão consolidada do uso de limite, pressão mensal e próximas obrigações.
+                        </p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${creditTone}`}>
+                        {financialProfile.credit.pressureLevel}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className={cardClass}>
+                        <p className="text-si-5 text-sm">Limite total</p>
+                        <p className="text-2xl font-bold text-blue-400">
+                          R$ {financialProfile.credit.totalCardLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                        <p className="text-xs text-si-5 mt-1">{financialProfile.credit.activeCards} cartão(ões) ativos</p>
+                      </div>
+                      <div className={cardClass}>
+                        <p className="text-si-5 text-sm">Uso estimado</p>
+                        <p className="text-2xl font-bold text-si-1">
+                          {financialProfile.credit.cardUtilizationPct.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}%
+                        </p>
+                        <p className="text-xs text-si-5 mt-1">
+                          R$ {financialProfile.credit.estimatedCardUsage.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} na fatura atual
+                        </p>
+                      </div>
+                      <div className={cardClass}>
+                        <p className="text-si-5 text-sm">Faturas em 7 dias</p>
+                        <p className="text-2xl font-bold text-amber-400">
+                          R$ {financialProfile.credit.dueSoonAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                        <p className="text-xs text-si-5 mt-1">{financialProfile.credit.dueSoonCount} vencimento(s) próximo(s)</p>
+                      </div>
+                      <div className={cardClass}>
+                        <p className="text-si-5 text-sm">Compromisso mensal</p>
+                        <p className="text-2xl font-bold text-si-1">
+                          R$ {financialProfile.credit.monthlyDebtCommitment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                        <p className="text-xs text-si-5 mt-1">
+                          Disponível: R$ {financialProfile.credit.availableLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <Link
+                        to="/cartoes"
+                        className={buttonClasses('secondary', 'md', 'w-full sm:w-auto')}
+                      >
+                        Revisar cartões
+                      </Link>
+                      <Link
+                        to="/consultor-ia"
+                        className={buttonClasses('primary', 'md', 'w-full sm:w-auto')}
+                      >
+                        Pedir orientação ao consultor
+                      </Link>
+                      <Link
+                        to="/solucoes/credito"
+                        className="text-xs font-bold text-si-4 hover:text-si-2 uppercase tracking-wider underline underline-offset-4 decoration-si-border hover:decoration-si-4 transition-colors"
+                      >
+                        Ver soluções de crédito
+                      </Link>
+                    </div>
+                  </section>
+                )}
+
+                {/* Resumo Financeiro (Cards de Receitas/Despesas) */}
+                {widgets.resumo && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className={cardClass}>
+                      <p className="text-si-5 text-sm">Receitas (mês)</p>
+                      <p className="text-2xl font-bold text-emerald-400">
+                        R$ {receitaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                      {receitaMesAnt > 0 && (
+                        <p className={`text-xs mt-1 flex items-center gap-1 ${varReceita >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {varReceita >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                          {varReceita >= 0 ? '+' : ''}{varReceita.toFixed(1)}% vs mês anterior
+                        </p>
                       )}
                     </div>
-                  )}
-
-                  {activeChartTab === 'evolucao' && (
-                    <div className="space-y-4">
-                      <h4 className="text-xs font-bold text-si-4 uppercase tracking-wider">Evolução · Últimos 6 meses</h4>
-                      {maxVal > 0 ? (
-                        <FinancialBarChart data={last6Months.map((row) => ({
-                          monthKey: row.monthKey,
-                          label: getMonthLabel(row.monthKey),
-                          receita: row.receita,
-                          despesa: row.despesa,
-                        }))} height={200} />
-                      ) : (
-                        <p className="text-si-5 text-xs py-8 text-center">Nenhum dado nos últimos 6 meses.</p>
+                    <div className={cardClass}>
+                      <p className="text-si-5 text-sm">Despesas (mês)</p>
+                      <p className="text-2xl font-bold text-rose-400">
+                        R$ {despesaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                      {despesaMesAnt > 0 && (
+                        <p className={`text-xs mt-1 flex items-center gap-1 ${varDespesa <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {varDespesa <= 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
+                          {varDespesa >= 0 ? '+' : ''}{varDespesa.toFixed(1)}% vs mês anterior
+                        </p>
                       )}
                     </div>
-                  )}
-
-                  {activeChartTab === 'saldo' && (
-                    <div className="space-y-4">
-                      <h4 className="text-xs font-bold text-si-4 uppercase tracking-wider">Saldo acumulado · Últimos 6 meses</h4>
-                      {last6Months.some((m) => m.receita > 0 || m.despesa > 0) ? (
-                        <BalanceAreaChart data={(() => {
-                          let acc = 0;
-                          return last6Months.map((row) => {
-                            acc += row.receita - row.despesa;
-                            return { label: getMonthLabel(row.monthKey), saldo: +acc.toFixed(2) };
-                          });
-                        })()} height={180} />
-                      ) : (
-                        <p className="text-si-5 text-xs py-8 text-center">Nenhum dado nos últimos 6 meses.</p>
-                      )}
+                    <div className={cardClass}>
+                      <p className="text-si-5 text-sm">Saldo (mês)</p>
+                      <p className={`text-2xl font-bold ${saldoMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        R$ {saldoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-xs text-si-5 mt-1">{accounts.length} conta(s)</p>
                     </div>
-                  )}
-                </div>
+                    <div className={cardClass}>
+                      <p className="text-si-5 text-sm">Lançamentos</p>
+                      <p className="text-2xl font-bold text-si-1">{entries.length}</p>
+                      <p className="text-xs text-si-5 mt-1">Total geral: R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-
-            {/* Macro de Crédito */}
-            {(financialProfile.credit.activeCards > 0 || financialProfile.credit.monthlyDebtCommitment > 0) && (
-              <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="w-5 h-5 text-blue-400" />
-                      <h3 className="text-lg font-bold text-si-1">Macro de crédito</h3>
-                    </div>
-                    <p className="text-si-5 text-sm mt-1">
-                      Visão consolidada do uso de limite, pressão mensal e próximas obrigações.
-                    </p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${creditTone}`}>
-                    {financialProfile.credit.pressureLevel}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className={cardClass}>
-                    <p className="text-si-5 text-sm">Limite total</p>
-                    <p className="text-2xl font-bold text-blue-400">
-                      R$ {financialProfile.credit.totalCardLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                    <p className="text-xs text-si-5 mt-1">{financialProfile.credit.activeCards} cartão(ões) ativos</p>
-                  </div>
-                  <div className={cardClass}>
-                    <p className="text-si-5 text-sm">Uso estimado</p>
-                    <p className="text-2xl font-bold text-si-1">
-                      {financialProfile.credit.cardUtilizationPct.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}%
-                    </p>
-                    <p className="text-xs text-si-5 mt-1">
-                      R$ {financialProfile.credit.estimatedCardUsage.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} na fatura atual
-                    </p>
-                  </div>
-                  <div className={cardClass}>
-                    <p className="text-si-5 text-sm">Faturas em 7 dias</p>
-                    <p className="text-2xl font-bold text-amber-400">
-                      R$ {financialProfile.credit.dueSoonAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                    <p className="text-xs text-si-5 mt-1">{financialProfile.credit.dueSoonCount} vencimento(s) próximo(s)</p>
-                  </div>
-                  <div className={cardClass}>
-                    <p className="text-si-5 text-sm">Compromisso mensal</p>
-                    <p className="text-2xl font-bold text-si-1">
-                      R$ {financialProfile.credit.monthlyDebtCommitment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                    <p className="text-xs text-si-5 mt-1">
-                      Disponível: R$ {financialProfile.credit.availableLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 flex-wrap">
-                  <Link
-                    to="/cartoes"
-                    className={buttonClasses('secondary', 'md', 'w-full sm:w-auto')}
-                  >
-                    Revisar cartões
-                  </Link>
-                  <Link
-                    to="/consultor-ia"
-                    className={buttonClasses('primary', 'md', 'w-full sm:w-auto')}
-                  >
-                    Pedir orientação ao consultor
-                  </Link>
-                  <Link
-                    to="/solucoes/credito"
-                    className="text-xs font-bold text-si-4 hover:text-si-2 uppercase tracking-wider underline underline-offset-4 decoration-si-border hover:decoration-si-4 transition-colors"
-                  >
-                    Ver soluções de crédito
-                  </Link>
-                </div>
-              </section>
-            )}
-
-            {/* Resumo Financeiro (Cards de Receitas/Despesas) */}
-            {widgets.resumo && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className={cardClass}>
-                  <p className="text-si-5 text-sm">Receitas (mês)</p>
-                  <p className="text-2xl font-bold text-emerald-400">
-                    R$ {receitaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                  {receitaMesAnt > 0 && (
-                    <p className={`text-xs mt-1 flex items-center gap-1 ${varReceita >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {varReceita >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                      {varReceita >= 0 ? '+' : ''}{varReceita.toFixed(1)}% vs mês anterior
-                    </p>
-                  )}
-                </div>
-                <div className={cardClass}>
-                  <p className="text-si-5 text-sm">Despesas (mês)</p>
-                  <p className="text-2xl font-bold text-rose-400">
-                    R$ {despesaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                  {despesaMesAnt > 0 && (
-                    <p className={`text-xs mt-1 flex items-center gap-1 ${varDespesa <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {varDespesa <= 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
-                      {varDespesa >= 0 ? '+' : ''}{varDespesa.toFixed(1)}% vs mês anterior
-                    </p>
-                  )}
-                </div>
-                <div className={cardClass}>
-                  <p className="text-si-5 text-sm">Saldo (mês)</p>
-                  <p className={`text-2xl font-bold ${saldoMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    R$ {saldoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                  <p className="text-xs text-si-5 mt-1">{accounts.length} conta(s)</p>
-                </div>
-                <div className={cardClass}>
-                  <p className="text-si-5 text-sm">Lançamentos</p>
-                  <p className="text-2xl font-bold text-si-1">{entries.length}</p>
-                  <p className="text-xs text-si-5 mt-1">Total geral: R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                </div>
+            ) : (
+              <div className="bg-si-over-1 border border-si-border rounded-2xl p-6 text-center text-xs text-si-4 leading-relaxed animate-in fade-in duration-500">
+                Complete a configuração do seu cockpit financeiro no painel do Modo Coach acima para desbloquear as visões de Dias de Liberdade, análises gráficas e limites de crédito.
               </div>
             )}
           </div>
@@ -672,8 +702,8 @@ export default function Dashboard() {
 
 
             {/* Próximas Ações */}
-            {hasOnboardingData && nextBestActions.length > 0 && (
-              <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4">
+            {!isCoachActive && hasOnboardingData && nextBestActions.length > 0 && (
+              <section className="bg-si-card rounded-2xl border border-si-border p-6 space-y-4 animate-in fade-in duration-500">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-3">
                     <Zap className="w-3.5 h-3.5 text-si-5" />
@@ -711,8 +741,8 @@ export default function Dashboard() {
 
 
 
-            {widgets.alertas && hasOnboardingData && alertas.length > 0 && (
-              <div className="space-y-3">
+            {!isCoachActive && widgets.alertas && hasOnboardingData && alertas.length > 0 && (
+              <div className="space-y-3 animate-in fade-in duration-500">
                 {alertas.map((a, i) => (
                   <div
                     key={i}
@@ -743,7 +773,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            <SpreadGapCard spread={spread} />
+            {!isCoachActive && <SpreadGapCard spread={spread} />}
 
             <RoundUpWidget />
 
