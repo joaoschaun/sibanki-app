@@ -333,15 +333,16 @@ export default function Settings() {
           const category = (cols[3] ?? '').trim() || '';
           const value = parseFloat((cols[4] ?? '0').replace(',', '.')) || 0;
           const account = (cols[5] ?? '').trim();
-          newEntries.push({
+          const item: Entry = {
             id: base + i,
             type,
             date,
-            desc: desc || undefined,
             category: category || 'Outros',
             value,
-            account: account || undefined,
-          });
+          };
+          if (desc) item.desc = desc;
+          if (account) item.account = account;
+          newEntries.push(item);
         }
 
         if (newEntries.length === 0) {

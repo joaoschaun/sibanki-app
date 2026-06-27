@@ -66,16 +66,18 @@ export default function Recurring() {
     setError(null);
     setBusy(true);
     try {
-      await addRecurrent(user.uid, recurrents, {
+      const data = {
         type: formType,
         desc: formDesc.trim(),
-        category: formCategory || undefined,
         value: Math.round(value * 100) / 100,
-        account: formAccount || undefined,
         day,
         freq: formFreq,
         active: true,
-      });
+        ...(formCategory ? { category: formCategory } : {}),
+        ...(formAccount ? { account: formAccount } : {})
+      };
+
+      await addRecurrent(user.uid, recurrents, data as any);
       setModalOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao adicionar.');

@@ -342,7 +342,18 @@ export default function Transactions() {
     if (!aiResult?.entry || !user?.uid) return;
     setBusy(true);
     try {
-      const entry = { ...aiResult.entry, id: undefined, account: aiAccount || aiResult.entry.account || undefined };
+      const entry: Omit<Entry, 'id'> = {
+        type: aiResult.entry.type,
+        desc: aiResult.entry.desc,
+        category: aiResult.entry.category,
+        value: aiResult.entry.value,
+        date: aiResult.entry.date,
+        status: (aiResult.entry.status as any) || 'pago',
+      };
+      const acc = aiAccount || aiResult.entry.account;
+      if (acc) {
+        entry.account = acc;
+      }
       await addEntry(user.uid, entries, entry as Omit<Entry, 'id'>);
       triggerWithToast('entry_added');
       setAiResult(null);

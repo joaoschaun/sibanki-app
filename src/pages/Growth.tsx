@@ -156,8 +156,10 @@ export default function Growth() {
         desc: provDesc.trim() || 'Provento',
         category: 'Proventos',
         value: Math.round(v * 100) / 100,
-        account: provConta || undefined,
       };
+      if (provConta) {
+        data.account = provConta;
+      }
       await addEntry(user.uid, entries, data);
       setAddProventoOpen(false);
       setProvDesc(''); setProvValor(''); setProvConta('');

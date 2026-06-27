@@ -219,8 +219,8 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
       category: category || 'Outros',
       value: Math.round(numValue * 100) / 100,
       date,
-      account: account || undefined,
       status: 'pago' as const,
+      ...(account ? { account } : {})
     };
     const rSettings = isRecurring ? recurrenceSettings : undefined;
 
@@ -264,12 +264,12 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
       });
 
       if (scoreData.verdict === 'atencao' || scoreData.verdict === 'auto-sabotagem') {
-         setSentinelPayload({ scoreData, pendingTarget: { entryData, recurrentSettings: rSettings } });
+         setSentinelPayload({ scoreData, pendingTarget: { entryData: entryData as Omit<Entry, 'id'>, recurrentSettings: rSettings } });
          return; // Interrompe o envio nativo e mostra o modal
       }
     }
 
-    onSubmit(entryData, rSettings);
+    onSubmit(entryData as Omit<Entry, 'id'>, rSettings);
   };
 
   const freqLabel: Record<string, string> = {
