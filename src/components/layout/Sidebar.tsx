@@ -278,28 +278,12 @@ export function Sidebar({
               <div className={cn(
                 'overflow-hidden transition-[max-height,opacity] duration-200',
                 'pl-2 ml-2 border-l border-si-border',
-                maisOpen ? 'max-h-[520px] opacity-100 mt-1' : 'max-h-0 opacity-0 pointer-events-none'
+                (maisOpen && !isCoachActive) ? 'max-h-[520px] opacity-100 mt-1' : 'max-h-0 opacity-0 pointer-events-none'
               )}>
                 <div className="space-y-[1px]">
-                  {maisItems.map((item) => {
-                    const active = isActive(item.path);
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        className={cn(
-                          base,
-                          'px-2.5 py-[6px] w-full text-[11px] font-semibold tracking-[0.06em] uppercase',
-                          active
-                            ? 'text-si-1 bg-si-over-2'
-                            : 'text-si-5 hover:text-si-3 hover:bg-si-over-1'
-                        )}
-                      >
-                        <item.icon className={cn('w-3 h-3 shrink-0', active ? 'text-si-1' : 'text-si-5')} />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
+                  {maisItems.map((item) => (
+                    <NavLink key={item.path} item={item} />
+                  ))}
                 </div>
               </div>
             </>
@@ -311,21 +295,9 @@ export function Sidebar({
       {/* ── Rodapé ─────────────────────────────────────────────────────────── */}
       {/* Admin NÃO fica acessível dentro do app do usuário — é deployado separado. */}
       <div className="border-t border-si-border shrink-0 py-2 px-2 space-y-[1px]">
-        {bottomItems.map((item) => {
-          const active = isActive(item.path);
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              title={collapsed ? item.label : undefined}
-              className={collapsed ? rowCollapsed(active) : row(active)}
-              {...(item.tour ? { 'data-tour': item.tour } : {})}
-            >
-              <item.icon className={iconCls(active)} />
-              {!collapsed && item.label}
-            </Link>
-          );
-        })}
+        {bottomItems.map((item) => (
+          <NavLink key={item.path} item={item} />
+        ))}
       </div>
     </aside>
   );

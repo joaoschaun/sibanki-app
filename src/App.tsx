@@ -25,7 +25,7 @@ import { trackPlatformEvent } from './services/platformEvents';
 import { lazyWithReload } from './utils/lazyWithReload';
 
 import Login from './pages/Login';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 captureRefParam();
 
@@ -86,18 +86,68 @@ function PageLoader() {
 }
 
 /**
- * ModuleGuard — bloqueia acesso direto (URL) a um módulo desligado pelo admin.
- * Redireciona para o Painel. Essenciais e rotas sem módulo passam livremente.
+ * ModuleGuard — bloqueia acesso direto (URL) a um módulo desligado pelo admin
+ * ou se o usuário tentar burlar/acessar áreas bloqueadas enquanto o Modo Coach
+ * estiver ativo. Redireciona para o Dashboard/Painel.
  */
 function ModuleGuard({ children }: { children: ReactNode }) {
   const location = useLocation();
   const { isModuleEnabled, loaded } = useModuleFlags();
-  if (loaded) {
-    const mod = matchModuleByPath(location.pathname);
-    if (mod && !mod.essential && !isModuleEnabled(mod.key)) {
+  
+  const {
+    accounts, entries, goals, creditObligations, investments, financialProfile, loading: contextLoading
+  } = useAppContext();
+
+  const coachDismissed = useMemo(
+    () => localStorage.getItem('sibanki_coach_dismissed') === 'true',
+    []
+  );
+
+  const isCoachActive = useMemo(() => {
+    if (coachDismissed) return false;
+    const hasAccounts = accounts.length > 0;
+    const hasMinEntries = entries.filter(e => e.type === 'despesa' || e.type === 'receita').length >= 3;
+    const hasGoals = goals.length > 0;
+    const hasDebts = creditObligations.length > 0;
+    const hasInvestments = investments.length > 0;
+    const hasWhatsapp = !!((financialProfile as unknown as Record<string, any>)?.whatsappPhone);
+    const allDone = hasAccounts && hasMinEntries && hasGoals && hasDebts && hasInvestments && hasWhatsapp;
+    return !allDone;
+  }, [accounts, entries, goals, creditObligations, investments, financialProfile, coachDismissed]);
+
+  const ALLOWED_PATHS = useMemo(() => new Set([
+    '/dashboard', 
+    '/lancamentos', 
+    '/contas', 
+    '/perfil', 
+    '/configuracoes',
+    '/login',
+    '/'
+  ]), []);
+
+  if (!loaded || contextLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="w-8 h-8 border-2 border-si-border border-t-si-3 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Se o coach estiver ativo e tentar acessar uma rota não permitida, redireciona
+  if (isCoachActive) {
+    const isAllowed = Array.from(ALLOWED_PATHS).some(path => 
+      location.pathname === path || location.pathname.startsWith(path + '/')
+    );
+    if (!isAllowed) {
       return <Navigate to="/dashboard" replace />;
     }
   }
+
+  const mod = matchModuleByPath(location.pathname);
+  if (mod && !mod.essential && !isModuleEnabled(mod.key)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
 }
 
