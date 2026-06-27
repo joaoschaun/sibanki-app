@@ -163,32 +163,47 @@ export function CoachSetup({
 
           {/* Checklist completo */}
           <div className="space-y-2">
-            {steps.map(step => (
-              <div
-                key={step.id}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                  step.check ? 'opacity-50' : 'hover:bg-si-over-1'
-                }`}
-              >
-                {step.check
-                  ? <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                  : <Circle      className="w-4 h-4 text-si-5 shrink-0" />
-                }
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium ${step.check ? 'line-through text-si-5' : 'text-si-2'}`}>
-                    {step.title}
-                  </p>
-                </div>
-                {!step.check && (
-                  <Link
-                    to={step.link}
-                    className="text-xs text-violet-400 hover:text-violet-300 shrink-0"
+            {steps.map(step => {
+              const content = (
+                <>
+                  {step.check
+                    ? <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                    : <Circle      className="w-4 h-4 text-si-5 shrink-0" />
+                  }
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium ${step.check ? 'line-through text-si-5' : 'text-si-2 group-hover:text-si-1 transition-colors'}`}>
+                      {step.title}
+                    </p>
+                  </div>
+                  {!step.check && (
+                    <span className="text-xs text-violet-400 font-bold shrink-0">
+                      {step.linkLabel} →
+                    </span>
+                  )}
+                </>
+              );
+
+              if (step.check) {
+                return (
+                  <div
+                    key={step.id}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl opacity-50 select-none"
                   >
-                    {step.linkLabel} →
-                  </Link>
-                )}
-              </div>
-            ))}
+                    {content}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={step.id}
+                  to={step.link}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-si-over-1 border border-transparent hover:border-violet-500/10 transition-all cursor-pointer group"
+                >
+                  {content}
+                </Link>
+              );
+            })}
           </div>
 
           <button

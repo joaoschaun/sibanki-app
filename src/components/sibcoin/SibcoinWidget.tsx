@@ -45,16 +45,48 @@ function TierProgressBar({ tier, earned }: { tier: SibcoinTier; earned: number }
   );
 }
 
-export function SibcoinWidget() {
+export function SibcoinWidget({ isCoachActive }: { isCoachActive?: boolean }) {
   const { theme } = useTheme();
   const isDark = theme !== 'light';
   const { balance, tier, tierLabel, earned, missions, pendingMissions, fetchMissions, missionsLoading } = useSibcoin();
   const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => { fetchMissions(); }, [fetchMissions]);
+  useEffect(() => {
+    if (!isCoachActive) {
+      fetchMissions();
+    }
+  }, [fetchMissions, isCoachActive]);
 
   const cardBg = isDark ? 'bg-si-zinc-9 border-zinc-800' : 'bg-white border-zinc-200';
   const textMuted = isDark ? 'text-si-4' : 'text-si-5';
+
+  if (isCoachActive) {
+    return (
+      <div className={`rounded-2xl border p-5 space-y-4 ${cardBg} grayscale opacity-65 transition-all duration-300`}>
+        {/* Header Adormecido */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-si-over-3 flex items-center justify-center">
+              <Coins className="w-4 h-4 text-si-4" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-si-2">SibCoin</p>
+              <p className={`text-xs ${textMuted}`}>Adormecido</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-xl font-bold text-si-4">??? SC</p>
+            <p className={`text-xs ${textMuted}`}>Destrave no Coach</p>
+          </div>
+        </div>
+
+        {/* Mensagem de Teaser do Sibcoin */}
+        <div className="bg-si-over-1 border border-si-border rounded-xl p-3.5 text-center text-xs text-si-3 leading-relaxed">
+          🔒 Complete o **Modo Coach** para destravar o sistema de gamificação e ganhar seus primeiros **500 SC**.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`rounded-2xl border p-5 space-y-4 ${cardBg}`}>

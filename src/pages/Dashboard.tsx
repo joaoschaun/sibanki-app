@@ -439,7 +439,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Coluna Principal (Esquerda) */}
               <div className="lg:col-span-8 space-y-6">
-            {hasOnboardingData && (
+            {isCoachActive && (
               <CoachSetup
                 entries={entries}
                 accountBalances={accountBalances}
@@ -691,8 +691,43 @@ export default function Dashboard() {
                 )}
               </div>
             ) : (
-              <div className="bg-si-over-1 border border-si-border rounded-2xl p-6 text-center text-xs text-si-4 leading-relaxed animate-in fade-in duration-500">
-                Complete a configuração do seu cockpit financeiro no painel do Modo Coach acima para desbloquear as visões de Dias de Liberdade, análises gráficas e limites de crédito.
+              <div className="relative rounded-2xl overflow-hidden border border-si-border bg-si-card p-1 min-h-[320px] flex items-center justify-center animate-in fade-in duration-500">
+                {/* Silhueta / Mockup falso dos gráficos ao fundo */}
+                <div className="absolute inset-0 p-6 grid grid-cols-1 md:grid-cols-2 gap-6 opacity-[0.07] pointer-events-none select-none blur-[3px]">
+                  {/* Hero silhueta */}
+                  <div className="md:col-span-2 h-36 rounded-xl bg-si-over-2 border border-si-border-md p-4 space-y-3">
+                    <div className="h-4 w-32 rounded bg-si-5" />
+                    <div className="h-8 w-24 rounded bg-si-4" />
+                    <div className="h-3 w-48 rounded bg-si-5" />
+                  </div>
+                  {/* Gráfico 1 silhueta */}
+                  <div className="h-44 rounded-xl bg-si-over-2 border border-si-border-md p-4 space-y-4">
+                    <div className="h-3 w-24 rounded bg-si-5" />
+                    <div className="flex items-end justify-between h-24 pt-4 px-2">
+                      <div className="h-12 w-6 rounded bg-si-5" />
+                      <div className="h-20 w-6 rounded bg-si-4" />
+                      <div className="h-16 w-6 rounded bg-si-5" />
+                      <div className="h-24 w-6 rounded bg-si-4" />
+                    </div>
+                  </div>
+                  {/* Gráfico 2 silhueta */}
+                  <div className="h-44 rounded-xl bg-si-over-2 border border-si-border-md p-4 flex items-center justify-center">
+                    <div className="relative w-24 h-24 rounded-full border-8 border-si-over-3 flex items-center justify-center">
+                      <div className="absolute inset-2 rounded-full border-8 border-si-5" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Efeito Glassmorphism Overlay e Cadeado */}
+                <div className="absolute inset-0 bg-si-bg/50 backdrop-blur-[7px] flex flex-col items-center justify-center p-8 text-center z-10">
+                  <div className="w-12 h-12 rounded-full bg-si-over-2 border border-si-border-md flex items-center justify-center mb-4 text-amber-500/80 animate-pulse">
+                    <span className="text-xl">🔒</span>
+                  </div>
+                  <h4 className="text-sm font-bold text-si-1 mb-2">Painel de Inteligência Financeira</h4>
+                  <p className="text-xs text-si-4 max-w-sm leading-relaxed">
+                    Complete as etapas do seu **Modo Coach** acima para destravar as visões de Dias de Liberdade, análises gráficas e limites de crédito.
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -777,7 +812,7 @@ export default function Dashboard() {
 
             <RoundUpWidget />
 
-            <SibcoinWidget />
+            <SibcoinWidget isCoachActive={isCoachActive} />
           </div>
         </div>
       )}
