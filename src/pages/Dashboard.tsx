@@ -288,6 +288,7 @@ export default function Dashboard() {
                     creditObligations={creditObligations}
                     investments={investments}
                     financialProfile={financialProfile as unknown as Record<string, unknown> | null}
+                    cards={cards}
                     onDismiss={dismissCoach}
                   />
                 )}

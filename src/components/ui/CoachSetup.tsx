@@ -21,6 +21,7 @@ interface CoachSetupProps {
   creditObligations: unknown[];
   investments: unknown[];
   financialProfile: Record<string, unknown> | null;
+  cards?: unknown[];
   onDismiss?: () => void;
 }
 
@@ -35,6 +36,7 @@ export function CoachSetup({
   creditObligations,
   investments,
   financialProfile,
+  cards = [],
   onDismiss,
 }: CoachSetupProps) {
   const [collapsed, setCollapsed] = useState(false);
@@ -77,7 +79,7 @@ export function CoachSetup({
       desc: 'O Spread Gap e o Arquiteto precisam saber o custo das suas dívidas.',
       link: '/credito',
       linkLabel: 'Ver Crédito',
-      check: (creditObligations || []).length > 0,
+      check: (creditObligations || []).length > 0 || (cards || []).length > 0,
     },
     {
       id: 'investments',
@@ -97,7 +99,7 @@ export function CoachSetup({
       linkLabel: 'Configurar perfil',
       check: !!(financialProfile?.whatsappPhone),
     },
-  ], [accountBalances, entries, goals, creditObligations, investments, financialProfile]);
+  ], [accountBalances, entries, goals, creditObligations, investments, financialProfile, cards]);
 
   const done  = steps.filter(s => s.check).length;
   const total = steps.length;

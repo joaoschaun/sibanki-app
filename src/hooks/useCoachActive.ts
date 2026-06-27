@@ -21,7 +21,7 @@ const STORAGE_KEY = 'sibanki_coach_dismissed';
 
 export function useCoachActive() {
   const {
-    accounts, entries, goals, creditObligations, investments, financialProfile,
+    accounts, entries, goals, creditObligations, investments, financialProfile, cards
   } = useAppContext();
 
   const [coachDismissed, setCoachDismissedState] = useState(
@@ -38,13 +38,13 @@ export function useCoachActive() {
     const hasAccounts = accounts.length > 0;
     const hasMinEntries = entries.filter(e => e.type === 'despesa' || e.type === 'receita').length >= 3;
     const hasGoals = goals.length > 0;
-    const hasDebts = creditObligations.length > 0;
+    const hasDebts = creditObligations.length > 0 || (cards || []).length > 0;
     const hasInvestments = investments.length > 0;
     // FIXME(any): financialProfile é Record<string, unknown> no CoachSetup — narrowing via optional chaining.
     const hasWhatsapp = !!((financialProfile as unknown as Record<string, any>)?.whatsappPhone);
     const allDone = hasAccounts && hasMinEntries && hasGoals && hasDebts && hasInvestments && hasWhatsapp;
     return !allDone;
-  }, [accounts, entries, goals, creditObligations, investments, financialProfile, coachDismissed]);
+  }, [accounts, entries, goals, creditObligations, investments, financialProfile, cards, coachDismissed]);
 
   return { isCoachActive, coachDismissed, dismiss };
 }
