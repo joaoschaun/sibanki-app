@@ -228,7 +228,8 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
     if (finalAccount && user?.uid && !accounts.includes(finalAccount)) {
       setBusyCreatingAccount(true);
       try {
-        await addAccount(user.uid, accounts, accountBalances, finalAccount, 0);
+        const initialVal = type === 'receita' ? numValue : -numValue;
+        await addAccount(user.uid, accounts, accountBalances, finalAccount, Math.round(initialVal * 100) / 100);
       } catch (err) {
         console.error('Erro ao cadastrar conta automática no lançamento:', err);
       } finally {
