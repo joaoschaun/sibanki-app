@@ -21,6 +21,11 @@ const VALID_ENTRY_TYPES = ['receita', 'despesa', 'transferencia'] as const;
 /** Tipos válidos de investimento */
 const VALID_INVESTMENT_TYPES = ['renda-fixa', 'renda-variavel', 'cripto', 'fundo', 'previdencia', 'imovel', 'outro'] as const;
 
+const ALLOWED_INVESTMENT_TYPES_CHECK = [
+  ...VALID_INVESTMENT_TYPES,
+  'Renda Fixa', 'Ações', 'FIIs', 'ETFs', 'Cripto', 'Criptoativos', 'Fundos', 'Fundo', 'Tesouro Direto', 'CDB', 'LCI', 'LCA', 'Outros', 'Outro'
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -212,7 +217,7 @@ export function validateInvestment(inv: Partial<Investment>): ValidationResult {
   }
 
   const tipo = inv.tipo ?? (inv as Investment & { type?: string }).type;
-  if (tipo && !VALID_INVESTMENT_TYPES.includes(tipo as typeof VALID_INVESTMENT_TYPES[number])) {
+  if (tipo && !ALLOWED_INVESTMENT_TYPES_CHECK.includes(tipo)) {
     errors.push(`Tipo de investimento inválido. Use: ${VALID_INVESTMENT_TYPES.join(', ')}.`);
   }
 
