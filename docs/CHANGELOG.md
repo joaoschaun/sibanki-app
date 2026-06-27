@@ -17,6 +17,15 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Cadastro Manual de Passivos & Correção de Onboarding (27/06/2026, Antigravity)
+
+- **Hub de Crédito Manual (`/credito`)**:
+  - Implementado formulário e modal de cadastro de Empréstimos, Financiamentos e Consignados manuais em [CreditHub.tsx](file:///c:/Users/jscha/virtus-financeiro/src/pages/CreditHub.tsx).
+  - Adicionado suporte a conversão de juros anual para juros mensal canônico (`interestRatePct`) necessário para os engines de soberania financeira e Spread Gap.
+  - Adicionados botões de editar e excluir nos cards de passivos para gestão de ciclo de vida de dados manuais.
+- **Correção de Fluxo do Modo Coach**:
+  - Ajustado o validador de onboarding (`useCoachActive.ts` e `CoachSetup.tsx`) para permitir que a etapa "Registre suas dívidas" seja cumprida ao cadastrar **ou** dívidas estruturadas **ou** cartões de crédito. Isso destrava o onboarding para usuários 100% manuais que não possuem empréstimos tradicionais.
+
 ### Generative UI no Assistente IA (CECI) (26/06/2026, Antigravity)
 
 - **Experiência Unificada**:
