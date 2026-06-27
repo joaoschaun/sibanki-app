@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Entry } from '../../types/userData';
-import { DEFAULT_CATEGORIES, DEFAULT_ACCOUNTS } from '../../constants/defaults';
+import { DEFAULT_CATEGORIES } from '../../constants/defaults';
 import { X, RefreshCw, Calendar, Hash, Infinity } from 'lucide-react';
 import { useIntelligence } from '../../context/IntelligenceContext';
 import { useAppContext } from '../../context/AppContext';
@@ -8,6 +8,7 @@ import { calculateSovereigntyScore } from '../../utils/sovereigntyEngine';
 import type { SovereigntyScoreResult } from '../../utils/sovereigntyEngine';
 import { SentinelGuardModal } from './SentinelGuardModal';
 import { isTransferEntry } from '../../utils/entryUtils';
+import { addAccount } from '../../services/persistUserData';
 
 interface RecurrenceSettings {
   freq: string;
@@ -180,7 +181,7 @@ function RecurrenceModal({
 
 // ── Componente principal do formulário ───────────────────────────────────────
 export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
-  const { entries, budgets } = useAppContext();
+  const { user, entries, budgets, accounts, accountBalances } = useAppContext();
   const { freedom } = useIntelligence();
 
   const [type, setType] = useState<'receita' | 'despesa'>(entry?.type ?? 'despesa');
@@ -189,6 +190,10 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
   const [value, setValue] = useState(entry?.value !== undefined ? String(entry.value) : '');
   const [date, setDate] = useState(entry?.date ?? new Date().toISOString().slice(0, 10));
   const [account, setAccount] = useState(entry?.account ?? '');
+
+  const [selectedAccountType, setSelectedAccountType] = useState<'existing' | 'new'>('existing');
+  const [newAccountName, setNewAccountName] = useState('');
+  const [busyCreatingAccount, setBusyCreatingAccount] = useState(false);
 
   const [sentinelPayload, setSentinelPayload] = useState<{
     scoreData: SovereigntyScoreResult;
@@ -208,10 +213,28 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
     endDate: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const numValue = parseFloat(value.replace(',', '.'));
     if (Number.isNaN(numValue) || numValue <= 0) return;
+
+    let finalAccount = account;
+    if (selectedAccountType === 'new') {
+      const nameTrim = newAccountName.trim();
+      if (!nameTrim) return;
+      finalAccount = nameTrim;
+    }
+
+    if (finalAccount && user?.uid && !accounts.includes(finalAccount)) {
+      setBusyCreatingAccount(true);
+      try {
+        await addAccount(user.uid, accounts, accountBalances, finalAccount, 0);
+      } catch (err) {
+        console.error('Erro ao cadastrar conta automática no lançamento:', err);
+      } finally {
+        setBusyCreatingAccount(false);
+      }
+    }
     
     const entryData = {
       type,
@@ -220,7 +243,7 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
       value: Math.round(numValue * 100) / 100,
       date,
       status: 'pago' as const,
-      ...(account ? { account } : {})
+      ...(finalAccount ? { account: finalAccount } : {})
     };
     const rSettings = isRecurring ? recurrenceSettings : undefined;
 
@@ -406,18 +429,52 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
         {/* Conta */}
         <div>
           <label htmlFor="entry-form-account" className="block text-xs font-medium text-si-5 mb-1">Conta</label>
-          <select id="entry-form-account" value={account} onChange={(e) => setAccount(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500">
-            <option value="">—</option>
-            {DEFAULT_ACCOUNTS.map((a) => <option key={a} value={a}>{a}</option>)}
+          <select
+            id="entry-form-account"
+            value={selectedAccountType === 'new' ? '__NEW_ACCOUNT__' : account}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '__NEW_ACCOUNT__') {
+                setSelectedAccountType('new');
+                setAccount('');
+              } else {
+                setSelectedAccountType('existing');
+                setAccount(val);
+              }
+            }}
+            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 font-medium"
+          >
+            <option value="">— sem conta —</option>
+            {accounts.map((a) => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+            {!accounts.includes('Carteira física') && (
+              <option value="Carteira física">Carteira física (padrão)</option>
+            )}
+            <option value="__NEW_ACCOUNT__">+ Adicionar nova conta...</option>
           </select>
+
+          {selectedAccountType === 'new' && (
+            <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              <label htmlFor="new-account-name" className="block text-[10px] font-bold text-si-5 uppercase tracking-wider mb-1">Nome da Nova Conta</label>
+              <input
+                id="new-account-name"
+                type="text"
+                value={newAccountName}
+                onChange={(e) => setNewAccountName(e.target.value)}
+                placeholder="Ex: Nubank, Itaú..."
+                className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-medium text-sm"
+                required
+              />
+            </div>
+          )}
         </div>
 
         {/* Botões */}
         <div className="flex gap-3 pt-2">
-          <button type="submit"
-            className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm">
-            {entry ? 'Salvar' : 'Adicionar'}
+          <button type="submit" disabled={busyCreatingAccount}
+            className="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm disabled:opacity-50">
+            {busyCreatingAccount ? 'Criando conta...' : entry ? 'Salvar' : 'Adicionar'}
           </button>
           <button type="button" onClick={onCancel}
             className="px-6 py-3 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 font-medium text-sm hover:bg-si-over-3">
