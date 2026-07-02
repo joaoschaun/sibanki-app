@@ -96,3 +96,7 @@ public/assets/*.css
 # OS files
 .DS_Store
 Thumbs.db
+
+# artefatos locais
+.playwright-mcp/
+_legacy/*.zip
