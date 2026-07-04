@@ -5,11 +5,33 @@ import { useSibcoinToast } from '../hooks/useSibcoinToast';
 import { addGoal, updateGoal, deleteGoal, addEntry, ValidationError } from '../services/persistUserData';
 import type { Goal } from '../types/userData';
 import { Modal } from '../components/ui/Modal';
-import { Plus, Pencil, Trash2, Target, Shield, TrendingUp, Zap, Sparkles, Coins } from 'lucide-react';
+import { 
+  Plus, Pencil, Trash2, Target, Shield, TrendingUp, Zap, Sparkles, Coins,
+  Plane, Home, Car, Briefcase, GraduationCap, Heart
+} from 'lucide-react';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
 
-const GOAL_ICONS = ['🎯', '🛡️', '✈️', '🏠', '🚗', '💼', '🎓', '❤️'];
+const GOAL_ICON_MAP: Record<string, React.ComponentType<any>> = {
+  'target': Target,
+  '🎯': Target,
+  'shield': Shield,
+  '🛡️': Shield,
+  'plane': Plane,
+  '✈️': Plane,
+  'home': Home,
+  '🏠': Home,
+  'car': Car,
+  '🚗': Car,
+  'briefcase': Briefcase,
+  '💼': Briefcase,
+  'graduation-cap': GraduationCap,
+  '🎓': GraduationCap,
+  'heart': Heart,
+  '❤️': Heart,
+};
+
+const GOAL_ICONS = ['target', 'shield', 'plane', 'home', 'car', 'briefcase', 'graduation-cap', 'heart'];
 const GOAL_COLORS = [
   { value: '#4F8CFF', label: 'Azul' },
   { value: '#10b981', label: 'Verde' },
@@ -224,7 +246,7 @@ export default function Planning() {
             const target = g.target ?? 0;
             const current = g.current ?? 0;
             const pct = target > 0 ? Math.min(100, (100 * current) / target) : 0;
-            const icon = String((g as Goal & { icon?: string }).icon ?? '🎯');
+            const icon = String((g as Goal & { icon?: string }).icon ?? 'target');
             const color = String((g as Goal & { color?: string }).color ?? '#4F8CFF');
             const deadline = String((g as Goal & { deadline?: string }).deadline ?? '');
             
@@ -297,8 +319,11 @@ export default function Planning() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="p-2 rounded-xl shrink-0 flex items-center justify-center" style={{ backgroundColor: `${color}33`, color }}>
-                      <span className="text-lg leading-none">{icon}</span>
+                    <div className="p-2 rounded-xl shrink-0 flex items-center justify-center animate-pulse-slow" style={{ backgroundColor: `${color}22`, color }}>
+                      {(() => {
+                        const IconComp = GOAL_ICON_MAP[icon] || Target;
+                        return <IconComp className="w-5 h-5" />;
+                      })()}
                     </div>
                     <h3 className="font-bold text-si-1 truncate">{g.title || 'Meta'}</h3>
                   </div>
@@ -479,17 +504,24 @@ export default function Planning() {
           <div>
             <label className="block text-xs font-medium text-si-5 mb-1">Ícone</label>
             <div className="flex flex-wrap gap-2">
-              {GOAL_ICONS.map((ic) => (
-                <button
-                  key={ic}
-                  type="button"
-                  onClick={() => setFormIcon(ic)}
-                  className={`w-9 h-9 rounded-xl border text-base ${formIcon === ic ? 'border-blue-400 bg-blue-500/20' : 'border-si-border-md bg-si-over-2'}`}
-                  title={`Ícone ${ic}`}
-                >
-                  {ic}
-                </button>
-              ))}
+              {GOAL_ICONS.map((ic) => {
+                const IconComp = GOAL_ICON_MAP[ic] || Target;
+                return (
+                  <button
+                    key={ic}
+                    type="button"
+                    onClick={() => setFormIcon(ic)}
+                    className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
+                      formIcon === ic
+                        ? 'border-blue-400 bg-blue-500/20 text-blue-400'
+                        : 'border-si-border-md bg-si-over-2 text-si-4 hover:bg-si-over-3'
+                    }`}
+                    title={`Ícone ${ic}`}
+                  >
+                    <IconComp className="w-4 h-4" />
+                  </button>
+                );
+              })}
             </div>
           </div>
           <div>
@@ -573,20 +605,27 @@ export default function Planning() {
                 className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
               />
             </div>
-            <div>
+             <div>
               <label className="block text-xs font-medium text-si-5 mb-1">Ícone</label>
               <div className="flex flex-wrap gap-2">
-                {GOAL_ICONS.map((ic) => (
-                  <button
-                    key={ic}
-                    type="button"
-                    onClick={() => setFormIcon(ic)}
-                    className={`w-9 h-9 rounded-xl border text-base ${formIcon === ic ? 'border-blue-400 bg-blue-500/20' : 'border-si-border-md bg-si-over-2'}`}
-                    title={`Ícone ${ic}`}
-                  >
-                    {ic}
-                  </button>
-                ))}
+                {GOAL_ICONS.map((ic) => {
+                  const IconComp = GOAL_ICON_MAP[ic] || Target;
+                  return (
+                    <button
+                      key={ic}
+                      type="button"
+                      onClick={() => setFormIcon(ic)}
+                      className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
+                        formIcon === ic
+                          ? 'border-blue-400 bg-blue-500/20 text-blue-400'
+                          : 'border-si-border-md bg-si-over-2 text-si-4 hover:bg-si-over-3'
+                      }`}
+                      title={`Ícone ${ic}`}
+                    >
+                      <IconComp className="w-4 h-4" />
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div>

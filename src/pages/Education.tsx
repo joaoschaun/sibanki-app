@@ -19,12 +19,57 @@ import {
   Clock, Star, Trophy, Flame, Target, TrendingUp,
   BarChart2, Shield, Brain,
   ArrowRight, X,
+  Landmark, Radio, CreditCard, Scale, Search, Calendar, 
+  TrendingDown, Compass, Building, ShoppingBasket, Link, 
+  Folder, AlertTriangle, RefreshCw, Mountain, HelpCircle, 
+  Activity, ClipboardList, Map
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TRAILS, GLOSSARY, findLesson, type Trail, type Lesson } from '../constants/educationContent';
 import { useEducationProgress } from '../hooks/useEducationProgress';
 import { useIntelligence } from '../context/IntelligenceContext';
 import { useAppContext } from '../context/AppContext';
+
+// ─── Mapeamento de Emojis para Lucide ──────────────────────────────────────────
+const EDUCATION_ICON_MAP: Record<string, React.ComponentType<any>> = {
+  // Trilhas
+  '🏛️': Landmark,
+  '📡': Radio,
+  '📈': TrendingUp,
+  '💳': CreditCard,
+  '🔥': Flame,
+  
+  // Lições
+  '📊': BarChart2,
+  '🛡️': Shield,
+  '⚖️': Scale,
+  '🎯': Target,
+  '🔍': Search,
+  '🗓️': Calendar,
+  '📉': TrendingDown,
+  '⚡': Zap,
+  '🧭': Compass,
+  '🏦': Building,
+  '🧺': ShoppingBasket,
+  '🔗': Link,
+  '🗂️': Folder,
+  '⚠️': AlertTriangle,
+  '🔄': RefreshCw,
+  '🧗': Mountain,
+  '🃏': HelpCircle,
+  '🏄': Activity,
+  '📋': ClipboardList,
+  '🗺️': Map,
+  '🏗️': Building,
+};
+
+function RenderEducationIcon({ icon, className = 'w-4 h-4' }: { icon: string; className?: string }) {
+  const IconComp = EDUCATION_ICON_MAP[icon];
+  if (IconComp) {
+    return <IconComp className={className} />;
+  }
+  return <span className="leading-none text-base">{icon}</span>;
+}
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -118,7 +163,7 @@ function DiagnosticCard({ onClick }: { onClick: () => void }) {
             onClick={onClick}
             className="w-full flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.05] transition-colors text-left"
           >
-            <span className="text-base shrink-0 mt-0.5">{ins.icon}</span>
+            <RenderEducationIcon icon={ins.icon} className="w-4 h-4 text-si-4 mt-0.5 shrink-0" />
             <p className="text-xs text-zinc-400 leading-relaxed flex-1">{ins.text}</p>
             <div className={`shrink-0 w-1.5 h-1.5 rounded-full mt-1.5 ${ins.urgency === 'alta' ? 'bg-rose-400' : ins.urgency === 'média' ? 'bg-amber-400' : 'bg-emerald-400'}`} />
           </button>
@@ -183,7 +228,7 @@ function LessonViewer({ lessonId, onClose, onComplete, alreadyCompleted, record 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] sticky top-0 bg-[#0d0d0d] z-10">
           <div className="flex items-center gap-2.5">
-            <span className="text-lg">{lesson.icon}</span>
+            <RenderEducationIcon icon={lesson.icon} className="w-5 h-5 text-zinc-300 shrink-0" />
             <div>
               <p className="text-sm font-bold text-white leading-tight">{lesson.title}</p>
               <p className="text-[11px] text-zinc-500 flex items-center gap-1.5 mt-0.5">
@@ -387,7 +432,7 @@ function TrailCard({
         className="w-full flex items-center gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors text-left"
       >
         <div className={`w-10 h-10 rounded-xl ${trail.color} flex items-center justify-center shrink-0`}>
-          <span className="text-lg">{trail.icon}</span>
+          <RenderEducationIcon icon={trail.icon} className="w-5 h-5 text-white shrink-0" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -432,7 +477,7 @@ function TrailCard({
                     ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                     : <span className="text-[11px] font-bold text-zinc-600">{idx + 1}</span>}
                 </div>
-                <span className="text-base shrink-0">{lesson.icon}</span>
+                <RenderEducationIcon icon={lesson.icon} className="w-4 h-4 text-zinc-400 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-bold ${done ? 'text-zinc-400' : 'text-zinc-200'}`}>{lesson.title}</p>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -846,7 +891,7 @@ export default function Education() {
                     className="w-full flex items-center gap-4 px-5 py-4 hover:bg-white/[0.03] transition-colors text-left"
                   >
                     <div className={`w-12 h-12 rounded-xl ${trail.color} flex items-center justify-center shrink-0`}>
-                      <span className="text-xl">{lesson.icon}</span>
+                      <RenderEducationIcon icon={lesson.icon} className="w-5 h-5 text-white shrink-0" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-zinc-200 leading-tight">{lesson.title}</p>
@@ -881,7 +926,7 @@ export default function Education() {
                       onClick={() => setActiveTab('trilhas')}
                       className="w-full flex items-center gap-3 text-left"
                     >
-                      <span className="text-base shrink-0">{trail.icon}</span>
+                      <RenderEducationIcon icon={trail.icon} className="w-4 h-4 text-zinc-400 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-xs font-bold text-zinc-400 truncate">{trail.title}</p>

@@ -28,6 +28,7 @@ import { PageTransition } from '../components/ui/PageTransition';
 import { useSovereigntyScores } from '../hooks/useSovereigntyScores';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { MerchantLogo } from '../components/transactions/MerchantLogo';
+import { useDevice } from '../hooks/useDevice';
 
 // ── Tipos do Formulário ────────────────────────────────────────────────────
 interface RecurrenceSettings {
@@ -91,6 +92,7 @@ export default function Transactions() {
   const navigate = useNavigate();
   const canOcr = hasFeature('ocr_foto');
   const canStt = hasFeature('stt_voz');
+  const { isMobile } = useDevice();
 
   const [addOpen, setAddOpen]         = useState(false);
   const [editing, setEditing]         = useState<Entry | null>(null);
@@ -655,15 +657,19 @@ export default function Transactions() {
                             />
                           )}
                         </div>
-                        {/* Ações (hover) */}
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                        {/* Ações (sempre visíveis no mobile com botões maiores; hover no desktop) */}
+                        <div className={`flex items-center gap-1 shrink-0 transition-opacity ${
+                          isMobile 
+                            ? 'opacity-100' 
+                            : 'opacity-0 group-hover:opacity-100'
+                        }`}>
                           <button type="button" onClick={() => setEditing(e)}
-                            className="p-1.5 rounded-lg hover:bg-si-over-3 text-si-5 hover:text-si-1" title="Editar">
-                            <Pencil className="w-3.5 h-3.5" />
+                            className={`${isMobile ? 'p-2.5' : 'p-1.5'} rounded-lg hover:bg-si-over-3 text-si-4 hover:text-si-1`} title="Editar">
+                            <Pencil className={`${isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />
                           </button>
                           <button type="button" onClick={() => setDeletingId(e.id)}
-                            className="p-1.5 rounded-lg hover:bg-rose-500/20 text-si-5 hover:text-rose-400" title="Excluir">
-                            <Trash2 className="w-3.5 h-3.5" />
+                            className={`${isMobile ? 'p-2.5' : 'p-1.5'} rounded-lg hover:bg-rose-500/20 text-si-5 hover:text-rose-400`} title="Excluir">
+                            <Trash2 className={`${isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />
                           </button>
                         </div>
                       </div>
