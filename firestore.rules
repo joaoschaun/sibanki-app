@@ -238,6 +238,16 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Lista de fundadores (landing/fundadores.html). Visitante anônimo cria;
+    // leitura/edição só admin. Create restrito a campos esperados (anti-abuso).
+    match /founderWaitlist/{docId} {
+      allow create: if request.resource.data.email is string
+                    && request.resource.data.email.size() > 3
+                    && request.resource.data.email.size() < 200
+                    && request.resource.data.keys().hasOnly(['email','nome','source','createdAt','ua']);
+      allow read, update, delete: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

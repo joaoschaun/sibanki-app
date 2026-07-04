@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sibanki — Seja Fundador</title>
+  <meta name="description" content="Entre na lista de fundadores do Sibanki. Seu tempo, sua moeda. Open beta com preço travado para sempre, número de fundador e badge permanente." />
+  <link rel="canonical" href="https://www.sibanki.com.br/fundadores.html" />
+  <link rel="icon" type="image/png" href="/assets/favicon.png?v=2" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.sibanki.com.br/fundadores.html" />
+  <meta property="og:title" content="Sibanki — Seja Fundador" />
+  <meta property="og:description" content="Seu tempo, sua moeda. Entre na lista de fundadores do primeiro Financial OS independente do Brasil." />
+  <meta property="og:image" content="https://www.sibanki.com.br/assets/og-image.png?v=2" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Sibanki — Seja Fundador" />
+  <meta name="twitter:description" content="Seu tempo, sua moeda. Entre na lista de fundadores." />
+  <meta name="twitter:image" content="https://www.sibanki.com.br/assets/og-image.png?v=2" />
+  <meta name="theme-color" content="#0a0a0a" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Google Analytics 4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-M03SM9BFWX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-M03SM9BFWX');
+  </script>
+
+  <style>
+    :root {
+      --bg: #0a0a0a; --card: #111111; --card2: #161616;
+      --border: rgba(255,255,255,0.07); --border-md: rgba(255,255,255,0.12);
+      --over2: rgba(255,255,255,0.06); --over3: rgba(255,255,255,0.10);
+      --t1: #f5f5f5; --t2: #c9c9c9; --t3: #9a9a9a; --t4: #6b6b6b;
+      --pos: #34d399;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      background: var(--bg); color: var(--t2);
+      font-family: 'Inter', system-ui, sans-serif;
+      letter-spacing: -0.01em; -webkit-font-smoothing: antialiased;
+      line-height: 1.6; overflow-x: clip; position: relative;
+    }
+
+    /* premium ambient layers */
+    .glow {
+      position: fixed; top: -340px; left: 50%; transform: translateX(-50%);
+      width: 1100px; height: 760px; pointer-events: none; z-index: 0;
+      background: radial-gradient(50% 50% at 50% 50%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 38%, rgba(255,255,255,0) 70%);
+      filter: blur(8px);
+    }
+    .grain {
+      position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    #scroll-progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--t1); z-index: 9999; width: 0%; transition: width .1s ease; }
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 2; }
+
+    .label { font-size: 11px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--t4); }
+    a { color: inherit; text-decoration: none; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 9px; justify-content: center;
+      padding: 14px 26px; border-radius: 12px; font-size: 14px; font-weight: 600;
+      border: 1px solid var(--border-md); background: var(--over2); color: var(--t1);
+      transition: all .22s ease; cursor: pointer;
+    }
+    .btn:hover { background: var(--over3); border-color: rgba(255,255,255,0.22); transform: translateY(-1px); }
+    .btn .arr { transition: transform .2s ease; } .btn:hover .arr { transform: translateX(3px); }
+    .btn-primary { position: relative; overflow: hidden; background: var(--t1); color: #0a0a0a; border-color: var(--t1); }
+    .btn-primary:hover { background: #fff; }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .btn-primary::after {
+      content: ''; position: absolute; top: 0; left: -150%; width: 55%; height: 100%;
+      background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%);
+      transform: skewX(-20deg); animation: shimmer 5s infinite ease-in-out;
+    }
+    @keyframes shimmer { 0% { left: -150%; } 32% { left: 160%; } 100% { left: 160%; } }
+
+    .rv { opacity: 0; transform: translateY(26px); transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1); }
+    .rv.on { opacity: 1; transform: none; }
+    .rv-d1 { transition-delay: .08s; } .rv-d2 { transition-delay: .18s; } .rv-d3 { transition-delay: .28s; }
+
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(10,10,10,0.6); backdrop-filter: blur(18px) saturate(1.4);
+      border-bottom: 1px solid transparent; transition: border-color .3s, background .3s;
+    }
+    header.scrolled { border-bottom-color: var(--border); background: rgba(10,10,10,0.82); }
+    .nav { display: flex; align-items: center; justify-content: space-between; height: 72px; }
+    .nav .logo svg { display: block; }
+    .nav-actions .btn { padding: 10px 18px; font-size: 13px; border-radius: 10px; }
+
+    section { padding: 0 0 96px; }
+    .hero { padding-top: 132px; }
+
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 9px; margin-bottom: 26px;
+      padding: 7px 14px; border: 1px solid var(--border-md); border-radius: 100px;
+      background: rgba(255,255,255,0.02);
+    }
+    .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pos); box-shadow: 0 0 10px 1px rgba(52,211,153,.6); }
+    .eyebrow span { font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--t2); }
+
+    .hero-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 48px; align-items: center; }
+    h1 { font-size: clamp(42px, 7.2vw, 76px); line-height: 0.98; font-weight: 800; color: var(--t1); letter-spacing: -0.035em; margin-bottom: 24px; }
+    h1 em { font-style: normal; color: var(--t4); }
+    .sub { font-size: clamp(16px, 2.2vw, 19px); color: var(--t3); max-width: 540px; margin-bottom: 34px; }
+    .sub b { color: var(--t1); font-weight: 600; }
+
+    .wait { background: linear-gradient(180deg, var(--card2), var(--card)); border: 1px solid var(--border-md); border-radius: 20px; padding: 26px; max-width: 560px; box-shadow: 0 30px 80px -40px rgba(0,0,0,0.9); }
+    .wait .label { color: var(--t3); margin-bottom: 16px; display: block; }
+    .field-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    input[type=email], input[type=text] {
+      flex: 1 1 220px; min-width: 0; padding: 15px 16px; border-radius: 12px;
+      background: var(--bg); border: 1px solid var(--border-md); color: var(--t1);
+      font-family: inherit; font-size: 15px; letter-spacing: -0.01em; transition: border-color .2s;
+    }
+    input::placeholder { color: var(--t4); }
+    input:focus { outline: none; border-color: rgba(255,255,255,0.34); }
+    .wait .btn-primary { width: 100%; margin-top: 12px; padding: 16px; }
+    .fineprint { font-size: 12px; color: var(--t4); margin-top: 14px; display: flex; align-items: center; gap: 7px; }
+    .fineprint svg { flex: none; }
+    .form-msg { font-size: 13px; margin-top: 12px; min-height: 18px; color: var(--t3); }
+    .form-msg.err { color: #fb7185; }
+    .success { text-align: center; padding: 16px 4px; }
+    .success .big { font-size: 23px; font-weight: 800; color: var(--t1); letter-spacing: -0.02em; margin-bottom: 8px; }
+    .success p { color: var(--t3); font-size: 14px; }
+
+    /* founder badge mock */
+    .badge-card {
+      background: linear-gradient(155deg, #1a1a1a, #0d0d0d); border: 1px solid var(--border-md);
+      border-radius: 20px; padding: 24px; box-shadow: 0 40px 90px -50px rgba(0,0,0,1);
+      position: relative; overflow: hidden;
+    }
+    .badge-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(120% 80% at 90% -10%, rgba(255,255,255,0.07), transparent 60%); pointer-events: none; }
+    .badge-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+    .badge-sym { width: 42px; height: 42px; border-radius: 12px; background: var(--over2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
+    .badge-no { text-align: right; }
+    .badge-no .k { font-size: 9.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--t4); }
+    .badge-no .v { font-size: 22px; font-weight: 800; color: var(--t1); letter-spacing: -0.02em; }
+    .badge-name { font-size: 13px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--t2); margin-bottom: 18px; }
+    .badge-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .badge-stat { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+    .badge-stat .k { font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--t4); display: block; margin-bottom: 5px; }
+    .badge-stat .v { font-size: 15px; font-weight: 700; color: var(--t1); }
+    .vagas { margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: var(--t4); }
+    .vagas b { color: var(--t2); }
+
+    .block-head { margin-bottom: 34px; max-width: 660px; }
+    .block-head h2 { font-size: clamp(27px, 4vw, 38px); color: var(--t1); font-weight: 800; letter-spacing: -0.025em; margin: 14px 0 10px; line-height: 1.08; }
+    .block-head p { color: var(--t3); }
+
+    .grid { display: grid; gap: 16px; }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .feat {
+      position: relative; background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+      padding: 26px 24px 24px; overflow: hidden; transition: border-color .25s, transform .25s, background .25s;
+    }
+    .feat:hover { border-color: var(--border-md); transform: translateY(-3px); background: var(--card2); }
+    .feat .ghost-n { position: absolute; top: 6px; right: 14px; font-size: 64px; font-weight: 800; color: rgba(255,255,255,0.035); letter-spacing: -0.04em; }
+    .feat .k { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--t4); margin-bottom: 14px; display: block; }
+    .feat h3 { color: var(--t1); font-size: 19px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.01em; }
+    .feat p { font-size: 14px; color: var(--t3); }
+
+    /* ladder */
+    .ladder { position: relative; }
+    .rung { display: flex; align-items: flex-start; gap: 20px; padding: 20px 0; border-top: 1px solid var(--border); transition: padding-left .25s; }
+    .rung:first-child { border-top: none; }
+    .rung:hover { padding-left: 6px; }
+    .rung .step {
+      font-size: 12px; font-weight: 800; color: var(--t3); width: 34px; height: 34px; flex: none;
+      border: 1px solid var(--border-md); border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    }
+    .rung:last-child .step { background: var(--t1); color: #0a0a0a; border-color: var(--t1); }
+    .rung .body h3 { color: var(--t1); font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+    .rung .body p { font-size: 14px; color: var(--t3); }
+
+    .motor { position: relative; }
+    .motor::before {
+      content: ''; position: absolute; inset: 0; z-index: 0; opacity: 0.05;
+      background: url('/assets/brand/sibanki-pattern-simbolo.png') center/360px repeat;
+      mask-image: radial-gradient(70% 70% at 50% 30%, #000, transparent 75%);
+      -webkit-mask-image: radial-gradient(70% 70% at 50% 30%, #000, transparent 75%);
+      pointer-events: none;
+    }
+
+    .cta-band { text-align: center; padding: 64px 24px; border: 1px solid var(--border); border-radius: 24px; background: linear-gradient(180deg, var(--card2), var(--bg)); }
+    .cta-band h2 { font-size: clamp(28px, 4.4vw, 42px); color: var(--t1); font-weight: 800; letter-spacing: -0.025em; margin-bottom: 22px; }
+
+    footer { border-top: 1px solid var(--border); padding: 38px 0 64px; color: var(--t4); font-size: 13px; position: relative; z-index: 2; }
+    footer .container { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+    footer .logo svg { display: block; opacity: 0.85; }
+    footer a { color: var(--t3); }
+    footer a:hover { color: var(--t1); }
+
+    @media (max-width: 860px) {
+      .hero-grid { grid-template-columns: 1fr; gap: 36px; }
+      .badge-wrap { order: -1; max-width: 420px; }
+    }
+    @media (max-width: 680px) {
+      .grid-3 { grid-template-columns: 1fr; }
+      .hero { padding-top: 116px; }
+      .nav-actions { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="grain"></div>
+  <div id="scroll-progress"></div>
+
+  <header id="hd">
+    <div class="container nav">
+      <a href="/" class="logo" aria-label="Sibanki">
+        <svg width="150" height="34" viewBox="0 0 132 30" xmlns="http://www.w3.org/2000/svg">
+          <rect x="5.6" y="4.4" width="16" height="4.6" rx="2.3" fill="#f5f5f5"/>
+          <rect x="5" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(16 7.1 9.5)"/>
+          <rect x="17.6" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(-16 19.7 9.5)"/>
+          <text x="31" y="21.5" font-family="Inter,sans-serif" font-size="17.5" font-weight="700" fill="#f5f5f5" letter-spacing="-0.7">sibanki</text>
+        </svg>
+      </a>
+      <div class="nav-actions">
+        <a href="#entrar" class="btn btn-primary">Entrar na lista <span class="arr">→</span></a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div>
+            <div class="eyebrow rv"><span class="dot"></span><span>Pré-lançamento · Open Beta</span></div>
+            <h1 class="rv rv-d1">Seu tempo,<br>sua moeda.</h1>
+            <p class="sub rv rv-d2">Dinheiro não é papel — é tempo de vida que você trocou. O Sibanki é o primeiro Financial OS independente do Brasil: clareza matemática e soberania de decisão, sem anúncios e sem vender seus dados. Os primeiros entram como <b>Fundadores</b>.</p>
+
+            <div class="wait rv rv-d3" id="entrar">
+              <span class="label">Lista de fundadores</span>
+              <form id="waitForm" novalidate>
+                <div class="field-row">
+                  <input type="text" id="nome" name="nome" placeholder="Seu nome" autocomplete="name" />
+                  <input type="email" id="email" name="email" placeholder="seu@email.com" autocomplete="email" required />
+                </div>
+                <button type="submit" class="btn btn-primary" id="submitBtn">Quero ser fundador <span class="arr">→</span></button>
+                <div class="form-msg" id="formMsg" role="status"></div>
+              </form>
+              <p class="fineprint">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 6"/></svg>
+                Sem spam. Avisamos só quando o open beta abrir.
+              </p>
+            </div>
+          </div>
+
+          <div class="badge-wrap rv rv-d2">
+            <div class="badge-card">
+              <div class="badge-top">
+                <div class="badge-sym">
+                  <svg width="22" height="20" viewBox="0 0 28 30" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="5.6" y="4.4" width="16" height="4.6" rx="2.3" fill="#f5f5f5"/>
+                    <rect x="5" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(16 7.1 9.5)"/>
+                    <rect x="17.6" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#f5f5f5" transform="rotate(-16 19.7 9.5)"/>
+                  </svg>
+                </div>
+                <div class="badge-no"><div class="k">Fundador</div><div class="v">#007</div></div>
+              </div>
+              <div class="badge-name">Membro Fundador</div>
+              <div class="badge-stats">
+                <div class="badge-stat"><span class="k">Preço</span><span class="v">Travado p/ sempre</span></div>
+                <div class="badge-stat"><span class="k">Acesso</span><span class="v">Antecipado</span></div>
+              </div>
+              <div class="vagas"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--pos);display:inline-block;"></span> Vagas de fundador: <b>500</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="block-head rv">
+          <span class="label">Por que ser fundador</span>
+          <h2>Um status que ninguém mais consegue depois.</h2>
+          <p>Entrar cedo trava vantagens permanentes. Quando o Sibanki crescer, fundador é fundador — para sempre.</p>
+        </div>
+        <div class="grid grid-3">
+          <div class="feat rv"><span class="ghost-n">01</span><span class="k">Nº de fundador</span><h3>#001 a #500</h3><p>Sua posição na história do Sibanki, fixa no seu perfil.</p></div>
+          <div class="feat rv rv-d1"><span class="ghost-n">02</span><span class="k">Preço travado</span><h3>Para sempre</h3><p>O valor que você assina no beta nunca aumenta enquanto a assinatura estiver ativa.</p></div>
+          <div class="feat rv rv-d2"><span class="ghost-n">03</span><span class="k">Badge permanente</span><h3>Fundador</h3><p>Selo exclusivo, bônus recorrente de SibCoins e acesso antecipado a novas features.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="block-head rv">
+          <span class="label">A comunidade</span>
+          <h2>Você sobe de nível fazendo, não pagando.</h2>
+          <p>Cada tarefa — feedback, indicação, conteúdo — reconhece sua contribuição e te leva mais fundo no círculo.</p>
+        </div>
+        <div class="ladder">
+          <div class="rung rv"><div class="step">01</div><div class="body"><h3>Beta-tester</h3><p>Entrou no open beta e começou a usar.</p></div></div>
+          <div class="rung rv"><div class="step">02</div><div class="body"><h3>Fundador</h3><p>Assinou no beta — número, preço travado e badge permanente.</p></div></div>
+          <div class="rung rv"><div class="step">03</div><div class="body"><h3>Embaixador</h3><p>Indica novos usuários e cria conteúdo para a comunidade.</p></div></div>
+          <div class="rung rv"><div class="step">04</div><div class="body"><h3>Conselheiro</h3><p>Engajamento alto e sustentado — ganha voto consultivo no roadmap.</p></div></div>
+          <div class="rung rv"><div class="step">05</div><div class="body"><h3>Círculo Soberano</h3><p>Topo de contribuição — linha direta com o fundador e acesso vitalício.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="motor">
+      <div class="container">
+        <div class="block-head rv">
+          <span class="label">O motor de soberania</span>
+          <h2>Três indicadores que nenhum app de gastos te dá.</h2>
+        </div>
+        <div class="grid grid-3">
+          <div class="feat rv"><span class="k">Ld</span><h3>Dias de Liberdade</h3><p>Por quantos dias você vive hoje sem nenhuma renda. A verdadeira métrica de riqueza.</p></div>
+          <div class="feat rv rv-d1"><span class="k">Sg</span><h3>Spread Gap</h3><p>A diferença entre o que rende e o que suas dívidas custam. Expõe o vazamento invisível.</p></div>
+          <div class="feat rv rv-d2"><span class="k">Sv</span><h3>Sovereignty Score</h3><p>Cada gasto é um voto: aumenta ou drena sua liberdade. Pontuado de 0 a 100.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="cta-band rv">
+          <h2>Pronto para retomar seu tempo?</h2>
+          <a href="#entrar" class="btn btn-primary" style="padding:16px 32px;">Entrar na lista de fundadores <span class="arr">→</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <a href="/" class="logo" aria-label="Sibanki">
+        <svg width="120" height="27" viewBox="0 0 132 30" xmlns="http://www.w3.org/2000/svg">
+          <rect x="5.6" y="4.4" width="16" height="4.6" rx="2.3" fill="#c9c9c9"/>
+          <rect x="5" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#c9c9c9" transform="rotate(16 7.1 9.5)"/>
+          <rect x="17.6" y="8.6" width="4.2" height="12.6" rx="2.1" fill="#c9c9c9" transform="rotate(-16 19.7 9.5)"/>
+          <text x="31" y="21.5" font-family="Inter,sans-serif" font-size="17.5" font-weight="700" fill="#c9c9c9" letter-spacing="-0.7">sibanki</text>
+        </svg>
+      </a>
+      <div>Seu tempo, sua moeda. · <a href="/privacidade.html">Privacidade</a> · <a href="/termos.html">Termos</a></div>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyAFuVpVJQb51MYqXyKD9w9ETwI-FHKv2k8',
+      authDomain: 'virtus-financeiro-cd7bd.firebaseapp.com',
+      projectId: 'virtus-financeiro-cd7bd',
+      storageBucket: 'virtus-financeiro-cd7bd.firebasestorage.app',
+      messagingSenderId: '508459921027',
+      appId: '1:508459921027:web:fb54b7f94795bdb88735b6',
+      measurementId: 'G-M03SM9BFWX'
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const hd = document.getElementById('hd');
+    const prog = document.getElementById('scroll-progress');
+    addEventListener('scroll', () => {
+      hd.classList.toggle('scrolled', scrollY > 8);
+      const h = document.documentElement;
+      const p = h.scrollTop / (h.scrollHeight - h.clientHeight || 1);
+      prog.style.width = (p * 100) + '%';
+    });
+
+    // reveal on scroll
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.rv').forEach(el => io.observe(el));
+
+    const form = document.getElementById('waitForm');
+    const msg = document.getElementById('formMsg');
+    const btn = document.getElementById('submitBtn');
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const nome = document.getElementById('nome').value.trim();
+      msg.className = 'form-msg';
+      if (!emailRe.test(email)) { msg.classList.add('err'); msg.textContent = 'Confira o e-mail e tente de novo.'; return; }
+      btn.disabled = true; btn.textContent = 'Enviando…';
+      try {
+        await addDoc(collection(db, 'founderWaitlist'), {
+          email, nome: nome || null,
+          source: 'landing/fundadores',
+          createdAt: serverTimestamp(),
+          ua: navigator.userAgent
+        });
+        gtag('event', 'founder_waitlist_signup', { method: 'landing' });
+        form.innerHTML = '<div class="success"><div class="big">Você está na lista.</div><p>Avisaremos assim que o open beta abrir. Bem-vindo ao começo do Sibanki.</p></div>';
+      } catch (err) {
+        btn.disabled = false; btn.innerHTML = 'Quero ser fundador <span class="arr">→</span>';
+        msg.classList.add('err'); msg.textContent = 'Algo falhou ao salvar. Tente novamente em instantes.';
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
