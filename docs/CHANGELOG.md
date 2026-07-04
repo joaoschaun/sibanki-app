@@ -6,7 +6,7 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 > **Política:** este é o changelog incremental do projeto. Use-o para registrar
 > features fechadas, bug fixes, mudanças de governança IA, etc., **por sessão**.
 > Não use o `CLAUDE.md` para acumular histórico de sessão (a regra está em
-> `AGENTS.md` §8).
+> `AGENTS.md` §11, "Onde escrever histórico").
 >
 > O histórico antigo, anterior à introdução deste arquivo (26/04/2026), pode
 > estar em `CLAUDE.md` (seções "ATUALIZAÇÃO DE SESSÃO …") até que seja migrado
@@ -16,6 +16,61 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 ---
 
 ## [Unreleased]
+
+### Changed — Layout Adaptativo, Modo Coach & Ícones Lucide (30/06/2026)
+
+- **Layout Adaptativo na Lista de Transações (`Transactions.tsx`)**:
+  - Implementado o hook `useDevice` no componente para identificar o tipo de dispositivo.
+  - Ajustado o comportamento dos botões de ação (editar e excluir) na lista de transações: no desktop, são ocultos e revelados via `hover`; no mobile, permanecem sempre visíveis e ganham área de clique expandida (`p-2.5`) para facilitar o toque.
+- **Correção da Validação de Conclusão do Modo Coach**:
+  - Corrigido o bug nos validadores do [useCoachActive.ts](file:///c:/Users/jscha/virtus-financeiro/src/hooks/useCoachActive.ts) e [CoachSetup.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/ui/CoachSetup.tsx) que buscavam os dados cadastrais de telefone e WhatsApp em `financialProfile` em vez do objeto raiz `data` (Firestore `users/{uid}`).
+  - Removida a etapa obrigatória de Investimentos do Modo Coach, permitindo que usuários que não possuem ativos de investimentos completem as metas de onboarding e liberem o acesso ao Consultor e ao menu "Mais" da sidebar.
+  - Limpos os parâmetros não utilizados no `Dashboard.tsx` para compatibilidade com o compilador restrito de TypeScript.
+- **Modernização de Ícones (Metas & Educação)**:
+  - Migrados os emojis de sistema operacional (antigos/inconsistentes) para ícones premium do **`lucide-react`**.
+  - No módulo de Metas (`Planning.tsx`), definidos identificadores do Lucide no Firestore (`target`, `shield`, etc.) e implementado o mapeamento dinâmico `GOAL_ICON_MAP` para garantir retrocompatibilidade com metas antigas criadas via emoji.
+  - No módulo de Educação (`Education.tsx`), implementado o helper `RenderEducationIcon` que intercepta dinamicamente os emojis de trilhas e lições definidos em `educationContent.ts` e renderiza os componentes Lucide equivalentes, preservando os dados estáticos inalterados.
+
+### Changed — Governança IA (29/06/2026)
+
+- **AGENTS.md → v2.1**: adicionada a **§1 "O papel: sócio desenvolvedor (não
+  executor)"** logo após a Regra de ouro, definindo o Claude como sócio que
+  carrega contexto, propõe antes de executar, protege a base e fecha o ciclo
+  (onboarding → enquadramento → plano → execução → verificação → entrega). As
+  seções 1–11 foram renumeradas para 2–12; referências cruzadas internas
+  (`§2`→`§3`, `§5`→`§6`) e os subníveis de Convenções de código (`3.x`→`4.x`)
+  atualizados.
+- **Nova skill `sibanki`** (`.claude/skills/sibanki/SKILL.md`): operacionaliza o
+  contrato do AGENTS.md a cada sessão (carregamento automático). Em conflito,
+  AGENTS.md vence. Drafts revisados em `docs/_proposta-socio-dev/` antes de mover
+  para o local final.
+
+### Evolução do Módulo de Contas, Balanço Dinâmico e Projeção de Fluxo de Caixa (29/06/2026, Antigravity)
+
+- **Patrimônio Consolidado & Net Worth no Topo**:
+  - Atualizado o header da página de contas para exibir **Ativos** (Disponibilidades e Investimentos), **Passivos** (Faturas de cartões + Dívidas em aberto) e **Patrimônio Líquido Real** (Ativos - Passivos).
+  - Adicionado botão de modo oculto (olho) para mascarar todos os valores do header e dos cards, com persistência local no `localStorage` sob a chave `sibanki_hide_values`.
+- **Previsão de Fluxo de Caixa (Próximos 15 dias)**:
+  - Criada uma seção preditiva na página de contas que calcula o saldo futuro cruzando as contas líquidas (correntes/digitais) com faturas de cartões, parcelas de empréstimos e despesas recorrentes (`recurrents`) a vencer nos próximos 15 dias.
+  - Implementado o **Nudge Contextual de Crédito**, exibindo uma recomendação de limite do Hub de Crédito corporativo ou pessoal caso o fluxo de caixa projetado caia abaixo de R$ 500,00 ou fique negativo, prevenindo uso de cheque especial.
+- **Visualização de Passivos e Obrigações**:
+  - Adicionada a seção "Meus Compromissos (Cartões e Obrigações)" renderizando faturas de cartões (`cards`) e saldos de empréstimos (`creditObligations`) como cartões de passivo com saldos negativos vermelhos.
+
+### Correção de Onboarding, Sincronização de Telefone e Refatoração de Configurações (29/06/2026, Antigravity)
+
+- **Correção do Fluxo Coach/WhatsApp**:
+  - Unificados os campos `phone` (Perfil) e `whatsappPhone` (usado por robôs de WhatsApp e engines do Sentinela). Agora, ao salvar o número no Perfil, o `whatsappPhone` é gravado no formato canônico E.164 (`55XXXXXXXXXXX`), completando o passo 6 do Modo Coach com sucesso.
+  - O link do passo 6 do Modo Coach foi alterado de `/perfil` para `/configuracoes` (pois os toggles de WhatsApp/Telegram residem nas configurações).
+  - O validador central `useCoachActive.ts` foi atualizado para verificar a presença de `phone` ou `whatsappPhone` indistintamente para validar o passo de WhatsApp.
+- **Uplift de Qualidade do Perfil (`Profile.tsx`)**:
+  - Inserido um indicador de "perfil completo" no topo com barra de progresso e detalhamento de campos restantes para motivar o preenchimento.
+  - Campo de telefone celular melhorado com feedback visual de conclusão (`CheckCircle`), `inputMode="tel"`, e legenda explicativa sobre o uso do WhatsApp.
+  - Adicionado suporte ao campo `whatsappPhone` no tipo TypeScript `UserData`.
+- **Refatoração e Decomposição de Configurações (`Settings.tsx`)**:
+  - Extraído o sub-componente [NotificationsSection.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/settings/NotificationsSection.tsx) para centralizar canais de notificações, alertas de orçamento, biometria e toggle de WhatsApp com tratamento para campos faltantes.
+  - Extraído o sub-componente [GuardianSection.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/settings/GuardianSection.tsx) para regras preventivas do Guardião Financeiro.
+  - Extraído o sub-componente [BillingSection.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/settings/BillingSection.tsx) encapsulando assinaturas Pro/Família e integrações de pagamento (Stripe/Asaas).
+  - Reduzida a complexidade do arquivo principal `Settings.tsx` em mais de 370 linhas, resolvendo warnings de compilação.
 
 ### Cadastro Manual de Passivos & Correção de Onboarding (27/06/2026, Antigravity)
 
