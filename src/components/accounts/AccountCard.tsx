@@ -29,6 +29,7 @@ interface AccountCardProps {
   ofStatus?: 'nao-conectado' | 'ativo' | 'erro' | 'expirado';
   /** Moeda da conta */
   currency?: string;
+  hideValues?: boolean;
   onOpenApp?: () => void;
   onOpenDetails?: () => void;
   onEdit?: () => void;
@@ -58,6 +59,7 @@ export function AccountCard({
   tipo,
   ofStatus,
   currency = 'BRL',
+  hideValues = false,
   onOpenApp,
   onOpenDetails,
   onEdit,
@@ -191,7 +193,7 @@ export function AccountCard({
           "text-3xl font-black tracking-tighter truncate",
           bank ? "text-current" : (balance >= 0 ? "text-emerald-400" : "text-rose-400")
         )}>
-          {!isEmpty ? formatCurrency(balance, currency) : '—'}
+          {!isEmpty ? (hideValues ? '••••' : formatCurrency(balance, currency)) : '—'}
         </p>
 
         {/* Delta mensal */}
@@ -202,7 +204,7 @@ export function AccountCard({
           )}>
             <DeltaIcon className="w-3.5 h-3.5" />
             <span>
-              {deltaPositive ? '+' : ''}{formatCurrency(monthlyDelta!, currency)} este mês
+              {hideValues ? '•••• este mês' : `${deltaPositive ? '+' : ''}${formatCurrency(monthlyDelta!, currency)} este mês`}
             </span>
           </div>
         )}

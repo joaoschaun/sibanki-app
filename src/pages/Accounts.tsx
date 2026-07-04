@@ -9,8 +9,9 @@ import {
   renameAccount,
 } from '../services/persistUserData';
 import { Modal } from '../components/ui/Modal';
-import { Building2, Search } from 'lucide-react';
+import { Building2, Search, ArrowRight, ShieldAlert } from 'lucide-react';
 import { EmptyState } from '../components/ui/EmptyState';
+import { useNavigate } from 'react-router-dom';
 
 import { AccountCard } from '../components/accounts/AccountCard';
 import { BankSimulator } from '../components/accounts/BankSimulator';
@@ -34,8 +35,41 @@ const MOEDAS = [
 // Orquestrador Principal
 // ==========================================
 export default function Accounts() {
-  const { user, accounts, accountBalances, accountMeta, entries, loading, data } = useAppContext();
-  
+  const { 
+    user, 
+    accounts, 
+    accountBalances, 
+    accountMeta, 
+    entries, 
+    loading, 
+    data,
+    cards = [],
+    creditObligations = [],
+    recurrents = []
+  } = useAppContext();
+
+  const navigate = useNavigate();
+
+  const [hideValues, setHideValues] = useState(() => {
+    try {
+      return localStorage.getItem('sibanki_hide_values') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleHideValues = () => {
+    setHideValues((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('sibanki_hide_values', String(next));
+      } catch (err) {
+        console.error('Erro ao salvar hideValues:', err);
+      }
+      return next;
+    });
+  };
+
   // States - Modals
   const [modalOpen, setModalOpen] = useState(false);
   const [adjustAccount, setAdjustAccount] = useState<string | null>(null);
@@ -113,9 +147,76 @@ export default function Accounts() {
   // ==========================================
   const validAccounts = accounts.length > 0 ? accounts : [];
   
-  const totalBalance = validAccounts
+  // Ativos Totais (Cash + Investimentos)
+  const assetsTotal = validAccounts
     .filter((name) => accountMeta[name]?.incluirNaSoma !== false)
     .reduce((sum, name) => sum + (accountBalances[name] ?? 0), 0);
+
+  // Passivos Totais (Faturas de cartão + Empréstimos/Financiamentos em aberto)
+  const cardsTotal = (cards || []).reduce((sum, c) => sum + (c.currentBill ?? 0), 0);
+  const obligationsTotal = (creditObligations || [])
+    .filter((o) => o.status !== 'paga')
+    .reduce((sum, o) => sum + (o.amount ?? 0), 0);
+  const liabilitiesTotal = cardsTotal + obligationsTotal;
+
+  // Patrimônio Líquido
+  const netWorth = assetsTotal - liabilitiesTotal;
+
+  // Projeção de Fluxo de Caixa (Próximos 15 dias)
+  const liquidCash = validAccounts
+    .filter((name) => {
+      const meta = accountMeta[name];
+      if (meta?.incluirNaSoma === false) return false;
+      const tipo = meta?.tipo ?? 'Conta corrente';
+      return tipo !== 'Investimento' && tipo !== 'Poupança';
+    })
+    .reduce((sum, name) => sum + (accountBalances[name] ?? 0), 0);
+
+  const next15DaysCompromissos = (() => {
+    const now = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(now.getDate() + 15);
+
+    const nextObligations = (creditObligations || [])
+      .filter((o) => {
+        if (o.status === 'paga' || !o.dueDate) return false;
+        const due = new Date(o.dueDate);
+        return due >= now && due <= futureDate;
+      })
+      .reduce((sum, o) => sum + (o.amount ?? 0), 0);
+
+    const nextRecurrents = (recurrents || [])
+      .filter((r) => r.active && r.type === 'despesa' && r.day)
+      .reduce((sum, r) => {
+        let match = false;
+        for (let offset = 0; offset <= 15; offset++) {
+          const checkDate = new Date();
+          checkDate.setDate(now.getDate() + offset);
+          if (checkDate.getDate() === r.day) {
+            match = true;
+            break;
+          }
+        }
+        return sum + (match ? (r.value ?? 0) : 0);
+      }, 0);
+
+    const nextCards = (cards || []).reduce((sum, c) => {
+      let match = false;
+      for (let offset = 0; offset <= 15; offset++) {
+        const checkDate = new Date();
+        checkDate.setDate(now.getDate() + offset);
+        if (checkDate.getDate() === c.dueDay) {
+          match = true;
+          break;
+        }
+      }
+      return sum + (match ? (c.currentBill ?? 0) : 0);
+    }, 0);
+
+    return nextObligations + nextRecurrents + nextCards;
+  })();
+
+  const estimatedBalance15Days = liquidCash - next15DaysCompromissos;
 
   // Variação mensal por conta (receitas - despesas do mês corrente, excluindo transferências)
   const currentYM = (() => {
@@ -288,19 +389,91 @@ export default function Accounts() {
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
       {/* Premium Header */}
       <AccountsHeader
-        totalBalance={totalBalance}
+        assetsTotal={assetsTotal}
+        liabilitiesTotal={liabilitiesTotal}
+        netWorth={netWorth}
+        hideValues={hideValues}
+        onToggleHideValues={handleToggleHideValues}
         onNewAccount={() => { setError(null); setModalOpen(true); }}
         onOpenFinance={() => {
-          // Abre o drawer de Open Finance ou navega para a rota de conexão
           const ofBtn = document.querySelector('[data-open-finance-trigger]') as HTMLElement | null;
           if (ofBtn) {
             ofBtn.click();
           } else {
-            // fallback: dispara evento customizado para o Sidebar capturar
             window.dispatchEvent(new CustomEvent('sibanki:open-finance'));
           }
         }}
       />
+
+      {/* Previsão de Fluxo de Caixa (Próximos 15 dias) */}
+      <section className="bg-si-card border border-si-border rounded-3xl p-6 space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="font-semibold text-si-1 flex items-center gap-2">
+              <span className="text-blue-400">📊</span>
+              Previsão de Fluxo de Caixa (Próximos 15 dias)
+            </h3>
+            <p className="text-si-5 text-xs mt-0.5">
+              Projeção de saldo considerando disponibilidades líquidas menos obrigações e recorrências.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-si-over-1 border border-si-border/30 rounded-2xl p-4">
+            <span className="block text-[10px] font-bold text-si-4 uppercase tracking-widest">Caixa Disponível</span>
+            <p className="text-lg font-black text-si-1 mt-1">
+              {hideValues ? '••••' : `R$ ${liquidCash.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+            </p>
+          </div>
+          <div className="bg-si-over-1/40 border border-si-border/30 rounded-2xl p-4">
+            <span className="block text-[10px] font-bold text-si-4 uppercase tracking-widest">Saídas Previstas (15d)</span>
+            <p className="text-lg font-black text-rose-400 mt-1">
+              {hideValues ? '••••' : `- R$ ${next15DaysCompromissos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+            </p>
+          </div>
+          <div className={`border rounded-2xl p-4 transition-colors ${
+            estimatedBalance15Days < 0 
+              ? 'bg-rose-500/10 border-rose-500/30' 
+              : estimatedBalance15Days < 500 
+              ? 'bg-amber-500/10 border-amber-500/30' 
+              : 'bg-emerald-500/10 border-emerald-500/30'
+          }`}>
+            <span className="block text-[10px] font-bold text-si-4 uppercase tracking-widest">Saldo Projetado</span>
+            <p className={`text-lg font-black mt-1 ${
+              estimatedBalance15Days < 0 
+                ? 'text-rose-400' 
+                : estimatedBalance15Days < 500 
+                ? 'text-amber-400' 
+                : 'text-emerald-400'
+            }`}>
+              {hideValues ? '••••' : `R$ ${estimatedBalance15Days.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+            </p>
+          </div>
+        </div>
+
+        {/* Nudge Contextual do Hub de Crédito */}
+        {estimatedBalance15Days < 500 && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-amber-500/5 border border-amber-500/25 rounded-2xl animate-in fade-in duration-300">
+            <div className="flex items-start gap-3">
+              <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold text-amber-300">Respiro de Caixa do Sibanki</p>
+                <p className="text-[11px] text-si-4 mt-0.5">
+                  Seu fluxo de caixa projetado está apertado. Utilize o limite disponível no Hub de Crédito para manter sua operação ou contas seguras sem recorrer ao cheque especial.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/credito/visao-geral')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 text-zinc-950 font-bold text-xs hover:bg-amber-400 transition-colors shrink-0 w-full sm:w-auto justify-center"
+            >
+              <span>Ver Limites Disponíveis</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+      </section>
 
       {error && !modalOpen && (
         <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl px-4 py-3 text-rose-400 text-sm animate-in fade-in slide-in-from-top-2">
@@ -332,6 +505,7 @@ export default function Accounts() {
                 tipo={meta?.tipo}
                 ofStatus={meta?.ofStatus}
                 currency={meta?.currency}
+                hideValues={hideValues}
                 onOpenApp={() => setExtratoAccount(accountName)}
                 onOpenDetails={() => setDetailAccount(accountName)}
                 onEdit={() => openEdit(accountName)}
@@ -342,6 +516,88 @@ export default function Accounts() {
           );
         })}
       </div>
+
+      {/* Seção 2: Compromissos & Cartões de Crédito */}
+      {((cards && cards.length > 0) || (creditObligations && creditObligations.filter(o => o.status !== 'paga').length > 0)) && (
+        <div className="space-y-4 pt-4">
+          <h3 className="text-sm font-bold text-si-5 uppercase tracking-wider">Meus Compromissos (Cartões e Obrigações)</h3>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Cartões */}
+            {cards.map((card) => (
+              <div 
+                key={`card-${card.id}`}
+                className="rounded-[24px] border border-si-border bg-si-card/40 p-6 flex flex-col gap-4 relative overflow-hidden backdrop-blur-xl transition-all duration-300 hover:bg-si-over-2 hover:-translate-y-0.5"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                      <span className="font-black text-sm">💳</span>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-si-1 text-sm">{card.name}</h4>
+                      <p className="text-[10px] text-si-5 font-bold uppercase tracking-wider mt-0.5">Vence dia {card.dueDay}</p>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[10px] text-si-5 font-bold uppercase tracking-wider block">Fatura Atual</span>
+                  <p className="text-2xl font-black text-rose-400 tracking-tight mt-0.5">
+                    {hideValues ? '••••' : `- R$ ${(card.currentBill ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-si-border/50 text-[10px] text-si-5 font-medium">
+                  <span>Limite Total: R$ {hideValues ? '••••' : (card.limit ?? 0).toLocaleString('pt-BR')}</span>
+                  <button 
+                    onClick={() => navigate('/credito/cartoes')}
+                    className="text-blue-400 hover:underline font-bold"
+                  >
+                    Ver Limites
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* Obrigações */}
+            {creditObligations
+              .filter((o) => o.status !== 'paga')
+              .map((obl) => (
+                <div 
+                  key={`obl-${obl.id}`}
+                  className="rounded-[24px] border border-si-border bg-si-card/40 p-6 flex flex-col gap-4 relative overflow-hidden backdrop-blur-xl transition-all duration-300 hover:bg-si-over-2 hover:-translate-y-0.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <span className="font-black text-sm">⚠️</span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-si-1 text-sm">{obl.label}</h4>
+                        <p className="text-[10px] text-si-5 font-bold uppercase tracking-wider mt-0.5">
+                          Vencimento: {obl.dueDate ? new Date(obl.dueDate).toLocaleDateString('pt-BR') : '—'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-si-5 font-bold uppercase tracking-wider block">Saldo Devedor</span>
+                    <p className="text-2xl font-black text-rose-400 tracking-tight mt-0.5">
+                      {hideValues ? '••••' : `- R$ ${(obl.amount ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between pt-3 border-t border-si-border/50 text-[10px] text-si-5 font-medium">
+                    <span>Taxa: {obl.interestRatePct ? `${obl.interestRatePct}% a.m.` : '—'}</span>
+                    <button 
+                      onClick={() => navigate('/credito/visao-geral')}
+                      className="text-blue-400 hover:underline font-bold"
+                    >
+                      Gerenciar
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
 
       {/* Empty State */}
       {validAccounts.length === 0 && (
