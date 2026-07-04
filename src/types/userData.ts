@@ -223,6 +223,7 @@ export interface UserData {
   tourModulos?: Record<string, unknown>;
   investorProfile?: InvestorProfile | null;
   phone?: string | null;
+  whatsappPhone?: string | null;
   financialObjective?: string | null;
   family?: UserFamilyConfig | null;
   creditAccounts?: CreditAccount[];

@@ -11,7 +11,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAppContext } from '../context/AppContext';
 import { useSibcoinToast } from '../hooks/useSibcoinToast';
 import { updateUserDoc } from '../services/persistUserData';
-import { User, Camera, Lock, Shield, Users, Loader2 } from 'lucide-react';
+import { User, Camera, Lock, Shield, Users, Loader2, CheckCircle, MessageCircle } from 'lucide-react';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
 
 const PRIVACY_OPTIONS: { k: string; title: string; description: string }[] = [
@@ -103,7 +103,12 @@ export default function Profile() {
 
   // Input states (Strictly typed via UserData properties)
   const [name, setName] = useState(user?.displayName ?? data?.name ?? '');
-  const [phone, setPhone] = useState(data?.phone ?? '');
+  // Fallback: se whatsappPhone existir (via bot) mas phone não, exibe o número formatado
+  const [phone, setPhone] = useState(
+    data?.phone
+      ?? (data as Record<string, unknown> | undefined)?.whatsappPhone as string
+      ?? ''
+  );
   const [financialObjective, setFinancialObjective] = useState(data?.financialObjective ?? '');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
@@ -154,9 +159,15 @@ export default function Profile() {
     setBusy(true);
     try {
       await updateProfile(user, { displayName: name.trim() });
+      // Extrair dígitos puros para formato E.164 (55XXXXXXXXXXX) usado pelas Cloud Functions
+      const phoneDigits = phone.trim().replace(/\D/g, '');
+      const whatsappE164 = phoneDigits.length >= 10
+        ? (phoneDigits.length <= 11 ? `55${phoneDigits}` : phoneDigits)
+        : null;
       await updateUserDoc(user.uid, {
         name: name.trim(),
         phone: phone.trim() || null,
+        whatsappPhone: whatsappE164,
         financialObjective: financialObjective.trim() || null,
       });
       
@@ -285,6 +296,40 @@ export default function Profile() {
         <p className="text-si-5 text-sm">Gerencie seus dados pessoais, segurança, privacidade e conta compartilhada</p>
       </div>
 
+      {/* ── Indicador de perfil completo ── */}
+      {activeTab === 'dados' && (() => {
+        const fields = [
+          { label: 'Nome', ok: !!name.trim() },
+          { label: 'Telefone', ok: !!phone.trim() },
+          { label: 'Objetivo', ok: !!financialObjective.trim() },
+          { label: 'Foto', ok: !!avatarURL },
+        ];
+        const done = fields.filter(f => f.ok).length;
+        const pct = Math.round((done / fields.length) * 100);
+        if (pct >= 100) return null;
+        return (
+          <div className="bg-si-card rounded-2xl border border-si-border p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-si-4 uppercase tracking-wider">Perfil {pct}% completo</span>
+              <span className="text-[11px] text-si-5">{done}/{fields.length} campos</span>
+            </div>
+            <div className="w-full h-1.5 bg-si-over-2 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-700"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <div className="flex gap-3 mt-2">
+              {fields.map(f => (
+                <span key={f.label} className={`text-[10px] font-semibold ${f.ok ? 'text-emerald-400' : 'text-si-5'}`}>
+                  {f.ok ? '✓' : '○'} {f.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       <SibcoinMissionBanner eventType="profile_completed" />
 
       {/* ── Sub-navegação do Cockpit ── */}
@@ -378,17 +423,29 @@ export default function Profile() {
                 />
               </div>
               <div>
-                <label htmlFor="profile-phone" className="block text-xs font-semibold text-si-5 uppercase tracking-wider mb-1">
-                  Telefone celular
+                <label htmlFor="profile-phone" className="flex items-center gap-1.5 text-xs font-semibold text-si-5 uppercase tracking-wider mb-1">
+                  <MessageCircle className="w-3 h-3" />
+                  Telefone celular (WhatsApp)
+                  {phone.trim() && (
+                    <CheckCircle className="w-3 h-3 text-emerald-400 ml-auto" />
+                  )}
                 </label>
                 <input
                   id="profile-phone"
-                  type="text"
+                  type="tel"
+                  inputMode="tel"
                   value={phone}
                   onChange={(e) => setPhone(formatPhone(e.target.value))}
                   placeholder="(11) 99999-9999"
-                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm"
+                  className={`w-full px-4 py-3 rounded-xl bg-si-bg border text-si-1 placeholder-zinc-500 focus:outline-none text-sm transition-colors ${
+                    phone.trim()
+                      ? 'border-emerald-500/30 focus:border-emerald-500'
+                      : 'border-si-border-md focus:border-blue-500'
+                  }`}
                 />
+                <p className="text-[10px] text-si-5 mt-1">
+                  Usado para alertas do Sentinela e relatórios semanais via WhatsApp.
+                </p>
               </div>
               <div>
                 <label htmlFor="profile-objective" className="block text-xs font-semibold text-si-5 uppercase tracking-wider mb-1">

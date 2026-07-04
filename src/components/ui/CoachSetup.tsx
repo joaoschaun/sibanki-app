@@ -19,8 +19,8 @@ interface CoachSetupProps {
   accountBalances: Record<string, unknown>;
   goals: unknown[];
   creditObligations: unknown[];
-  investments: unknown[];
-  financialProfile: Record<string, unknown> | null;
+  phone?: string | null;
+  whatsappPhone?: string | null;
   cards?: unknown[];
   onDismiss?: () => void;
 }
@@ -34,8 +34,8 @@ export function CoachSetup({
   accountBalances,
   goals,
   creditObligations,
-  investments,
-  financialProfile,
+  phone,
+  whatsappPhone,
   cards = [],
   onDismiss,
 }: CoachSetupProps) {
@@ -82,24 +82,15 @@ export function CoachSetup({
       check: (creditObligations || []).length > 0 || (cards || []).length > 0,
     },
     {
-      id: 'investments',
-      priority: 5,
-      title: 'Adicione seus investimentos',
-      desc: 'Com isso calculamos seus Dias de Liberdade com precisão real.',
-      link: '/crescimento',
-      linkLabel: 'Ver Investimentos',
-      check: (investments || []).length > 0,
-    },
-    {
       id: 'whatsapp',
-      priority: 6,
+      priority: 5,
       title: 'Ative alertas WhatsApp',
       desc: 'O Sentinela e relatórios semanais chegam direto no seu celular.',
-      link: '/perfil',
-      linkLabel: 'Configurar perfil',
-      check: !!(financialProfile?.whatsappPhone),
+      link: '/configuracoes',
+      linkLabel: 'Ir para Configurações',
+      check: !!(whatsappPhone) || !!(phone),
     },
-  ], [accountBalances, entries, goals, creditObligations, investments, financialProfile, cards]);
+  ], [accountBalances, entries, goals, creditObligations, phone, whatsappPhone, cards]);
 
   const done  = steps.filter(s => s.check).length;
   const total = steps.length;

@@ -107,8 +107,9 @@ export default function Dashboard() {
   const {
     user, entries, accounts, score, loading,
     accountBalances, accountMeta, cards, goals, recurrents,
-    financialProfile, investments, creditObligations,
+    creditObligations,
     hasOpenFinance, verifiedEntries, openFinanceIdentityByItem, dataFreshness,
+    data,
   } = useAppContext();
   const { mode: dashboardMode } = useDashboardMode();
   const { isCoachActive, dismiss: dismissCoach } = useCoachActive();
@@ -286,8 +287,8 @@ export default function Dashboard() {
                     accountBalances={accountBalances}
                     goals={goals}
                     creditObligations={creditObligations}
-                    investments={investments}
-                    financialProfile={financialProfile as unknown as Record<string, unknown> | null}
+                    phone={data?.phone}
+                    whatsappPhone={data?.whatsappPhone}
                     cards={cards}
                     onDismiss={dismissCoach}
                   />
