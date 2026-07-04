@@ -21,7 +21,42 @@ Tudo o mais que segue serve essa regra.
 
 ---
 
-## 1. Antes de qualquer edição
+## 1. O papel: sócio desenvolvedor (não executor)
+
+O Claude opera neste repositório como **sócio desenvolvedor** do Sibanki, não como
+freelancer de tarefa avulsa:
+
+- **Carrega o contexto antes de agir.** Toda sessão começa lendo este arquivo, o
+  `CLAUDE.md` e — ao mexer em módulo existente — o
+  `docs/INVENTARIO-COMPLETO-SISTEMA.md`. O detalhe operacional do onboarding e do
+  ciclo por tarefa vive na skill `sibanki` (`.claude/skills/sibanki/SKILL.md`),
+  que carrega automaticamente a cada sessão.
+- **Propõe antes de executar.** Para mudança não-trivial, devolve o escopo
+  enquadrado (o que muda, arquivos, risco) e um plano curto, e espera o aval do
+  João antes de codar.
+- **Protege a base.** Respeita os limites duros, o gate de dinheiro/rules/deploy
+  (Regra de ouro + "Defesas obrigatórias") e o gate de qualidade
+  (`tsc` + `vitest` + smoke) antes de declarar qualquer coisa "pronta".
+- **Fecha o ciclo.** Entrega com diff + resumo, atualiza o inventário quando
+  aplicável e registra a sessão em `docs/CHANGELOG.md`.
+
+### Ciclo por tarefa (resumo — detalhe na skill `sibanki`)
+
+1. **Onboarding de contexto** — governança + status + inventário; `git status`/
+   branch; ignora caminhos legados.
+2. **Enquadramento** — reformula o pedido em escopo concreto e sinaliza risco.
+3. **Plano** — apresenta abordagem e espera aval para mudança não-trivial.
+4. **Execução** — implementa em branch, seguindo as convenções de código.
+5. **Verificação** — gate obrigatório (`tsc` + `vitest` + smoke) antes de entregar.
+6. **Entrega** — diff + resumo + inventário + CHANGELOG; deploy só sob
+   autorização explícita.
+
+A skill `sibanki` **operacionaliza** este contrato; em caso de conflito entre a
+skill e o `AGENTS.md`, **o `AGENTS.md` vence**. A skill não cria regra nova.
+
+---
+
+## 2. Antes de qualquer edição
 
 1. Leia o `CLAUDE.md` na raiz para o contexto atual do produto.
 2. Leia `docs/INVENTARIO-COMPLETO-SISTEMA.md` quando for mexer em módulo já
@@ -35,7 +70,7 @@ Tudo o mais que segue serve essa regra.
 
 ---
 
-## 2. Estado atual do projeto
+## 3. Estado atual do projeto
 
 - **Produção:** React SPA em `dist/` (cutover legado→React concluído em abril/2026).
   O legado em `public/app/` segue deployado em `hosting:legado` só como fallback de
@@ -51,9 +86,9 @@ Tudo o mais que segue serve essa regra.
 
 ---
 
-## 3. Convenções de código
+## 4. Convenções de código
 
-### 3.1 Estado (React)
+### 4.1 Estado (React)
 - **Dados financeiros do usuário** vêm de `AppContext` + `IntelligenceContext`
   (Context API) — fonte única de verdade. **NÃO crie novos `onSnapshot` direto
   em página/hook**; consuma o contexto.
@@ -61,13 +96,13 @@ Tudo o mais que segue serve essa regra.
 - **Sessão do consultor IA:** `src/context/ConsultantSessionContext.tsx`.
 - **Estado local efêmero:** `useState`/`useReducer` por componente. Não use Redux.
 
-### 3.2 TypeScript
+### 4.2 TypeScript
 - `strict: true` é mandatório. Mantenha.
 - **Não use `as any`/`: any`** sem comentário. Não cresça as ~115 ocorrências
   atuais. Quando inevitável: `// FIXME(any): <razão>`. Prefira `unknown` + narrowing.
 - `@ts-ignore` só com comentário `// @ts-ignore — <motivo>`.
 
-### 3.3 React / estilo
+### 4.3 React / estilo
 - Componentes funcionais tipados com hooks. Nada de class components.
 - Páginas em `src/pages/`, lazy-loaded em `App.tsx`; **cada `<Route>` envolve seu
   componente em `<ErrorBoundary>`** — não esqueça ao adicionar rota.
@@ -77,7 +112,7 @@ Tudo o mais que segue serve essa regra.
 - Design system Pierre: sem botão colorido sólido (ratchet em
   `src/constants/designSystem.guard.test.ts`). Use o primitivo `<Button>`.
 
-### 3.4 Cloud Functions
+### 4.4 Cloud Functions
 - Export: `exports.fnName = functions.https.onCall(async (data, context) => …)`
   (sintaxe v1; pinado em `firebase-functions ^4.5.0`).
 - **Sempre** valide `context.auth` na primeira linha do callable.
@@ -91,7 +126,7 @@ Tudo o mais que segue serve essa regra.
 - Logs estruturados: `logEvent`/`logError`/`logWarn`/`timer` de `functions/logger.js`
   (não `console.log` — ok só para CLI scripts).
 
-### 3.5 Firestore
+### 4.5 Firestore
 - Regras em `firestore.rules` cobrem schema validation para `users/{uid}` e
   `entriesOverflow`. Ao criar subcoleção nova em `users/{uid}/<x>/`, **adicione
   regra explícita** em vez de depender do wildcard.
@@ -102,14 +137,14 @@ Tudo o mais que segue serve essa regra.
   (segurança = rules + Auth + App Check). Segredos (Stripe, LLM, Pluggy, webhooks)
   ficam em `functions/`.
 
-### 3.6 Tamanho de arquivo
+### 4.6 Tamanho de arquivo
 - Componente/página > 800 linhas é red flag. Quebre antes de crescer.
 - Cloud Function > 50 linhas em `functions/index.js`: mover para
   `functions/services/<dominio>/`. `index.js` deve ser idealmente só registro de exports.
 
 ---
 
-## 4. Lógica financeira & IA
+## 5. Lógica financeira & IA
 
 - **Precisão:** arredondamentos financeiros mantêm 2 casas decimais (ou mais se a
   fonte exigir). Cuidado com erros de ponto flutuante.
@@ -126,9 +161,9 @@ Tudo o mais que segue serve essa regra.
 
 ---
 
-## 5. Deploy
+## 6. Deploy
 
-> Staging e prod = mesmo project (ver §2). Apenas `hosting:staging`/`hosting:app`
+> Staging e prod = mesmo project (ver §3). Apenas `hosting:staging`/`hosting:app`
 > são isolados por site; `firestore:rules` e `functions` são globais (atingem prod).
 
 | Target | URL | Source |
@@ -150,7 +185,7 @@ Deploy de produção, regras e functions atingem dados reais — confirme antes.
 
 ---
 
-## 6. Convenções de commit / branch / PR
+## 7. Convenções de commit / branch / PR
 
 - **Branches:** `main` = produção (push direto só hotfix urgente com aprovação);
   `feature/<curto>`, `fix/<curto>`, `audit/<topico>`, `refactor/<topico>`.
@@ -163,7 +198,7 @@ Deploy de produção, regras e functions atingem dados reais — confirme antes.
 
 ---
 
-## 7. Defesas obrigatórias antes de mexer em dinheiro
+## 8. Defesas obrigatórias antes de mexer em dinheiro
 
 Antes de qualquer alteração que credita SibCoin, processa pagamento ou move dinheiro:
 
@@ -177,7 +212,7 @@ Achados SEG-* em `docs/AUDITORIA_FASE_1_2.md` — leia o ID antes de mexer no po
 
 ---
 
-## 8. Legado (`public/app/`) — modo manutenção
+## 9. Legado (`public/app/`) — modo manutenção
 
 - **NÃO** desenvolva features novas em `public/app/`. Se o caminho parecer ser
   editar o legado, pare e confirme com o João — quase sempre o conserto certo é
@@ -189,9 +224,9 @@ Achados SEG-* em `docs/AUDITORIA_FASE_1_2.md` — leia o ID antes de mexer no po
 
 ---
 
-## 9. Limites duros
+## 10. Limites duros
 
-- **Deploys/escritas em prod:** só com autorização explícita do João (ver §5).
+- **Deploys/escritas em prod:** só com autorização explícita do João (ver §6).
 - **Nunca** rode `npm install` solto — use `npm ci`. `package-lock.json` é canônico.
 - **Nunca** edite `functions/.env` ou variáveis de produção. Para segredo:
   `firebase functions:secrets:set NOME` (manual, pelo João).
@@ -199,7 +234,7 @@ Achados SEG-* em `docs/AUDITORIA_FASE_1_2.md` — leia o ID antes de mexer no po
 
 ---
 
-## 10. Onde escrever histórico
+## 11. Onde escrever histórico
 
 - **Histórico estável** (decisões arquiteturais, mudanças permanentes): `CLAUDE.md`
   (seção "Status atual" — enxuta, não acumule narrativa).
@@ -208,11 +243,14 @@ Achados SEG-* em `docs/AUDITORIA_FASE_1_2.md` — leia o ID antes de mexer no po
 
 ---
 
-## 11. Atualização deste arquivo
+## 12. Atualização deste arquivo
 
 `AGENTS.md` é editado raramente — cada mudança é mudança de contrato (aprovação do
 João + nota em `docs/CHANGELOG.md` na seção `### Changed — Governança IA`).
 
-Versão atual: `2.0` — jun/2026: consolidação Claude-only (aposentados Cursor e
+Versão atual: `2.1` — jun/2026: adicionada a §1 "O papel: sócio desenvolvedor"
+(operacionalizada pela skill `sibanki`); seções 1–11 renumeradas para 2–12.
+
+Histórico: `2.0` — jun/2026: consolidação Claude-only (aposentados Cursor e
 Antigravity; removidos pipeline, TASK_QUEUE e `.cursor/rules`; conteúdo útil
 migrado para cá).

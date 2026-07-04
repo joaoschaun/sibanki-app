@@ -46,8 +46,8 @@
 >
 > ---
 >
-> **Status atual (13/04/2026):** React SPA é a PRODUÇÃO. Cutover legado→React concluído.
-> 35/35 testes Playwright (`npm run test:react-smoke`: PWA + setup auth `storageState` + login isolado + 24 rotas). 22/22 health checks verdes. 52 Cloud Functions ativas (inclui `valoresAReceberApi`).
+> **Status atual (29/06/2026):** React SPA é a PRODUÇÃO (web em `sibanki.com.br`). **Empacotamento mobile via Capacitor 8.x já no repo** (`capacitor.config.ts`, pastas nativas `android/` e `ios/`, plugins `core`/`ios`/`android`/`keyboard`/`splash-screen`/`status-bar` + `@capgo/capacitor-native-biometric`) — habilita recursos nativos (ex.: geofencing em background para o Sentinela). Módulo de Contas (`Accounts.tsx`) evoluído com Patrimônio Líquido Real (Ativos vs Passivos), Projeção Preditiva de Fluxo de Caixa (15 dias) integrada ao Hub de Crédito e suporte a modo ocultar valores (`hideValues`).
+> 35/35 testes Playwright (`npm run test:react-smoke`). 22/22 health checks verdes. 171 testes unitários passando. 52 Cloud Functions ativas.
 > **Feature flags:** Todas liberadas para todos os planos (fase de construção).
 > **Sidebar:** 13 itens (4 principal + 7 secundário "Mais" + 2 rodapé, inclui **Loja**). Botão flutuante "Consultor IA" em todas as páginas.
 > **Hub conta (estilo Pierre):** `AccountSummaryStrip` (plano + Open Finance + link `#open-finance`) e `FeedbackCallout` em `/perfil` e `/configuracoes`. Redirects: `/settings`, `/dashboard/settings` → `/configuracoes`; `/my-account` → `/perfil`.

@@ -11,7 +11,12 @@
       "Bash(curl:*)",
       "Bash(node:*)",
       "Bash(cd \"C:/Users/jscha/virtus-financeiro\" && node -e \"\nconst fs = require\\('fs'\\);\nlet content = fs.readFileSync\\('public/app/app.js', 'utf8'\\);\n\n// Check exact bytes for the unicode ones\nconst lines = content.split\\('\\\\n'\\);\nfor \\(let i = 0; i < lines.length; i++\\) {\n  if \\(lines[i].includes\\('Família vinculada'\\) || lines[i].includes\\('Convite aceito'\\) || lines[i].includes\\('Configurações salvas'\\)\\) {\n    console.log\\('Line', i+1, ':', JSON.stringify\\(lines[i].substring\\(0, 200\\)\\)\\);\n  }\n}\n\" 2>&1 | head -20)",
-      "Bash(cd \"C:/Users/jscha/virtus-financeiro\" && grep -n \"textContent\\\\s*=\\\\s*'\" public/app/app.js | grep -v \"R\\\\$\\\\|score\\\\|Score\\\\|Saldo\\\\|saldo\\\\|Nível\\\\|total\\\\|DY\\\\|+\\\\|//\\\\|widget\\\\|data-\" | grep \"[áéíóúâêîôûãõàçÁÉÍÓÚÂÊÎÔÛÃÕÀÇ]\" | head -20)"
+      "Bash(cd \"C:/Users/jscha/virtus-financeiro\" && grep -n \"textContent\\\\s*=\\\\s*'\" public/app/app.js | grep -v \"R\\\\$\\\\|score\\\\|Score\\\\|Saldo\\\\|saldo\\\\|Nível\\\\|total\\\\|DY\\\\|+\\\\|//\\\\|widget\\\\|data-\" | grep \"[áéíóúâêîôûãõàçÁÉÍÓÚÂÊÎÔÛÃÕÀÇ]\" | head -20)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git checkout *)",
+      "PowerShell(git worktree prune --verbose)",
+      "PowerShell(Remove-Item \".git/refs/heads/feat/arquitetura-inteligencia-registry.lock\" -Force; Write-Host \"Lockfile removido\"; git branch -D feat/arquitetura-inteligencia-registry; Write-Host \"Branch deletado\"; git branch --list feat/arquitetura-inteligencia-registry | ForEach-Object { Write-Host $_ })"
     ]
   }
 }
