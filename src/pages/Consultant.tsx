@@ -5,21 +5,21 @@ import { useAppContext } from '../context/AppContext';
 import { useIntelligence } from '../context/IntelligenceContext';
 import { useConsultantSession } from '../context/ConsultantSessionContext';
 import { GenerativeUiContainer } from '../components/consultant/GenerativeUiContainer';
-import { Send, AlertTriangle, Scale, Lock, Receipt, TrendingUp, Target, type LucideIcon } from 'lucide-react';
+import { Send, AlertTriangle, Scale, Lock, Wallet, CreditCard, TrendingUp, type LucideIcon } from 'lucide-react';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
 /** Cards de sugestão do estado vazio (Chat 2.0 — S2 da auditoria visual). */
 const SUGGESTIONS: Array<{ icon: LucideIcon; title: string; prompt?: string; tool?: 'decision' }> = [
-  { icon: Receipt,    title: 'Quanto gastei este mês — e onde?', prompt: 'Quanto gastei no mês e quais foram minhas maiores categorias?' },
   { icon: TrendingUp, title: 'Como aumento meus Dias de Liberdade?', prompt: 'Como melhorar minha saúde financeira e aumentar meus dias de liberdade?' },
-  { icon: Target,     title: 'Resumo das minhas metas', prompt: 'Me dá um resumo das minhas metas e do quanto falta para cada uma.' },
+  { icon: Wallet,     title: 'Tenho dinheiro parado rendendo zero?', prompt: 'Tenho dinheiro parado em conta que não rende? Quanto eu ganharia, em dias de liberdade, movendo para algo que renda ~100% do CDI?' },
+  { icon: CreditCard, title: 'Benefícios de cartão que não uso', prompt: 'Quais benefícios os meus cartões oferecem que eu provavelmente não estou aproveitando?' },
   { icon: Scale,      title: 'À vista ou parcelado?', tool: 'decision' },
 ];
 
 const PILLS = [
-  'Quanto gastei no mês?',
-  'Como está meu orçamento por categoria?',
-  'Quanto devo poupar para meu objetivo?',
+  'Como aumento meus dias de liberdade?',
+  'Tenho dinheiro parado rendendo zero?',
+  'Meu cartão tem benefício que não uso?',
 ];
 
 /** Símbolo do banquinho (marca) em currentColor. */

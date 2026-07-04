@@ -133,19 +133,19 @@ function buildCardBenefitsSnapshot(cards: Card[]): string {
 
 const WELCOME = `**Assistente Sibanki**
 
-Seu assistente para controle financeiro. Você pode:
-• **Lançar** receitas e despesas (ex: "almoço 45", "recebi 3000 salário")
-• **Tirar dúvidas** sobre finanças e sobre o uso do app
-• **Pedir análises** com base nos seus dados (receitas, despesas, metas, investimentos)
+Não sou um app de controle de gastos. Eu te mostro **quantos dias de liberdade** o seu dinheiro compra — e o que fazer pra esse número subir. Comigo você pode:
+• **Ganhar dias de liberdade** — onde seu dinheiro está parado, caro ou esquecido
+• **Pedir análises dos seus dados** — receitas, despesas, metas e investimentos, com o mercado em tempo real
+• **Lançar rápido** (ex: "almoço 45", "recebi 3000 salário")
 
-Digite sua mensagem abaixo.`;
+Pergunte sobre o seu dinheiro abaixo.`;
 
 export const CONSULTANT_PILLS = [
-  'Quanto gastei no mês?',
-  'Como melhorar minha saúde financeira?',
-  'Resumo das minhas metas',
-  'Como está meu orçamento por categoria?',
-  'Quanto devo poupar para meu objetivo?',
+  'Como aumento meus dias de liberdade?',
+  'Tenho dinheiro parado rendendo zero?',
+  'Meu cartão tem benefício que não uso?',
+  'Tenho dinheiro esquecido pra resgatar?',
+  'Onde meu dinheiro está vazando todo mês?',
   'Compare CDB, LCI e LCA para mim',
 ];
 

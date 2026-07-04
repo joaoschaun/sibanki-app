@@ -161,3 +161,5 @@ export function usePushNotifications(uid: string | undefined) {
     requestPermission,
   };
 }
+
+export type UsePushNotificationsReturn = ReturnType<typeof usePushNotifications>;

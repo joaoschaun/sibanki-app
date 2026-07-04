@@ -6,8 +6,8 @@ import { useConsultantSession } from '../../context/ConsultantSessionContext';
 import { GenerativeUiContainer } from './GenerativeUiContainer';
 
 const PILLS = [
-  'Quanto gastei no mês?',
-  'Resumo das minhas metas',
+  'Como aumento meus dias de liberdade?',
+  'Tenho dinheiro parado rendendo zero?',
 ];
 
 export function ConsultantDrawer() {

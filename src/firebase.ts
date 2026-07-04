@@ -71,7 +71,7 @@ export const fnsUS = getFunctions(app, 'us-central1');
 
 /**
  * @deprecated Use `fnsUS` ou `fnsBR` explicitamente.
- * Mantido para compatibilidade com AgentCouncil.tsx e imports antigos.
+ * Mantido para compatibilidade com imports antigos.
  */
 export const functions = fnsUS;
 
