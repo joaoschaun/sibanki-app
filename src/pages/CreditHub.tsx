@@ -12,8 +12,8 @@
  *   5. Oportunidades — produtos contextuais por saúde financeira
  *   6. Educação financeira — carrossel contextual
  */
-import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   CreditCard, AlertTriangle, CheckCircle,
   ChevronRight, Zap, BookOpen, Clock,
@@ -28,6 +28,7 @@ import { getBillingMonth, setCreditAccounts, setCreditObligations } from '../ser
 import type { CreditAccount, CreditSnapshot, CreditObligation } from '../types/userData';
 import { analyzeInstallmentDecision, analyzeDebtPayoffStrategy, analyzeFgtsAmortization } from '../utils/decisionEngine';
 import { identifyBank } from '../components/banks/bankData';
+import Cards from './Cards';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -85,7 +86,7 @@ const EDUCATION_CARDS = [
  * Visão Geral absorve Empréstimos + Plano de ação; Oportunidades absorve
  * Educação. Menos navegação, mais conteúdo por tela.
  */
-const TABS = ['Visão Geral', 'Cartões', 'Oportunidades'] as const;
+const TABS = ['Visão Geral', 'Cartões', 'Empréstimos', 'Oportunidades'] as const;
 type Tab = typeof TABS[number];
 
 // ── Componente: barra de utilização ──────────────────────────────────────────
@@ -100,10 +101,24 @@ function UtilBar({ pct, warn = 70 }: { pct: number; warn?: number }) {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function CreditHub() {
-  const { user, data, financialProfile, creditAccounts, creditObligations } = useAppContext();
+  const { user, data, financialProfile, creditAccounts, creditObligations, cards: contextCards = [] } = useAppContext();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<Tab>('Visão Geral');
   const [eduIdx, setEduIdx] = useState(0);
+
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.includes('/cartoes')) {
+      setActiveTab('Cartões');
+    } else if (path.includes('/emprestimos')) {
+      setActiveTab('Empréstimos');
+    } else if (path.includes('/oportunidades')) {
+      setActiveTab('Oportunidades');
+    } else {
+      setActiveTab('Visão Geral');
+    }
+  }, [location.pathname]);
 
   // States para os simuladores interativos
   const [selectedPayoffStrategy, setSelectedPayoffStrategy] = useState<'avalanche' | 'bola-de-neve'>('avalanche');
@@ -251,20 +266,36 @@ export default function CreditHub() {
 
   const hasRealData = Boolean(
     data?.creditSnapshot || 
-    (data?.cards && data.cards.length > 0) || 
+    (contextCards && contextCards.length > 0) || 
     (data?.creditAccounts && data.creditAccounts.length > 0)
   );
 
   // UX primeiro contato (10/06/2026): conta nova NÃO vê mais números falsos
   // como se fossem dela. Demo só aparece se o usuário pedir explicitamente.
-  const [showDemo, setShowDemo] = useState(false);
+  const [showDemo, setShowDemo] = useState(() => {
+    return (location.state as { forceDemo?: boolean } | null)?.forceDemo ?? false;
+  });
   const isDemo = !hasRealData && showDemo;
   const isEmpty = !hasRealData && !showDemo;
+
+  useEffect(() => {
+    const state = location.state as { forceDemo?: boolean } | null;
+    if (state?.forceDemo) {
+      setShowDemo(true);
+      navigate('/credito/visao-geral', { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
+
+  useEffect(() => {
+    if (isEmpty && !isDemo) {
+      navigate('/credito/cartoes');
+    }
+  }, [isEmpty, isDemo, navigate]);
 
   const accounts: CreditAccount[] = useMemo(() => {
     if (isDemo) return DEMO_ACCOUNTS;
     const openFinanceAccounts = data?.creditAccounts ?? [];
-    const manualAccounts: CreditAccount[] = (data?.cards ?? []).map((c) => {
+    const manualAccounts: CreditAccount[] = (contextCards ?? []).map((c) => {
       const bm = getBillingMonth(c, new Date().toISOString().split('T')[0]);
       const used = (c.purchases ?? []).filter((p) => p.billingMonth === bm).reduce((s, p) => s + p.value, 0);
       return {
@@ -278,10 +309,11 @@ export default function CreditHub() {
         closeDay: c.closeDay ?? 10,
         status: 'ativo',
         source: 'manual',
+        originalId: c.id,
       };
     });
     return [...openFinanceAccounts, ...manualAccounts];
-  }, [isDemo, data]);
+  }, [isDemo, data, contextCards]);
 
   const snapshot: CreditSnapshot = useMemo(() => {
     if (isDemo) return DEMO_SNAPSHOT;
@@ -520,7 +552,12 @@ export default function CreditHub() {
       {/* Tabs */}
       <div className="flex gap-1 bg-si-card rounded-xl p-1 border border-si-border overflow-x-auto">
         {TABS.map((t) => (
-          <button key={t} onClick={() => setActiveTab(t)}
+          <button key={t} onClick={() => {
+            if (t === 'Visão Geral') navigate('/credito/visao-geral');
+            else if (t === 'Cartões') navigate('/credito/cartoes');
+            else if (t === 'Empréstimos') navigate('/credito/emprestimos');
+            else if (t === 'Oportunidades') navigate('/credito/oportunidades');
+          }}
             className={`flex-1 py-2 px-2 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
               activeTab === t ? 'bg-white text-zinc-900 shadow' : 'text-si-5 hover:text-si-3'
             }`}
@@ -694,170 +731,121 @@ export default function CreditHub() {
 
       {/* ══ CARTÕES ══ */}
       {activeTab === 'Cartões' && (
-        <div className="space-y-4">
-          {/* Banner para gerenciar cartões manualmente */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-si-card border border-si-border/60 p-4 rounded-2xl gap-3">
-            <div className="min-w-0">
-              <h4 className="text-sm font-bold text-si-2">Lançamento & Detalhamento Manual</h4>
-              <p className="text-xs text-si-5">Lance compras parceladas, anuidade e configure faturas sem Open Finance.</p>
-            </div>
-            <Link to="/credito/cartoes" className="px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-bold transition-colors shrink-0 uppercase tracking-wider">
-              Painel de Cartões
-            </Link>
-          </div>
-
-          {cards.length === 0 ? (
-            <div className="text-center py-16 text-si-5 space-y-4">
-              <CreditCard className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p>Nenhum cartão cadastrado.</p>
-              <Link 
-                to="/credito/cartoes" 
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-bold transition-colors uppercase tracking-wider"
-              >
-                Criar Cartão Manualmente
-              </Link>
-            </div>
-          ) : cards.map((c) => {
-            const used   = c.balanceUsed  ?? 0;
-            const total  = c.limitTotal   ?? 1;
-            const avail  = total - used;
-            const pct    = (used / total) * 100;
-            return (
-              <div key={c.id} className="bg-si-card rounded-2xl border border-si-border p-5 space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold text-si-1">{c.label}</p>
-                    <p className="text-xs text-si-5">{c.institution} · fecha dia {c.closeDay} · vence dia {c.dueDay}</p>
-                  </div>
-                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                    pct >= 70 ? 'bg-rose-500/10 text-rose-400' : 'bg-emerald-500/10 text-emerald-400'
-                  }`}>{fmtPct(pct)} usado</span>
-                </div>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <p className="text-xs text-si-5">Fatura atual</p>
-                    <p className="font-bold text-si-1">{fmtBRL(used)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-si-5">Disponível</p>
-                    <p className="font-bold text-emerald-400">{fmtBRL(avail)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-si-5">Limite total</p>
-                    <p className="font-bold text-si-4">{fmtBRL(total)}</p>
-                  </div>
-                </div>
-                <UtilBar pct={pct} />
-                <div className="flex gap-2">
-                  <ComingSoonBadge>
-                    <button disabled className="flex-1 py-2 rounded-xl bg-si-over-2 text-si-5 text-xs font-semibold cursor-not-allowed">
-                      Pagar fatura
-                    </button>
-                  </ComingSoonBadge>
-                  <button className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 text-xs hover:bg-si-over-3 transition-colors">
-                    Ver compras
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <Cards isEmbedded={true} />
       )}
 
-      {/* ══ EMPRÉSTIMOS — dentro da Visão Geral (consolidação 13/06) ══ */}
-      {activeTab === 'Visão Geral' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between pt-2">
-            <h3 className="text-[11px] font-bold tracking-[0.18em] uppercase text-si-5">
-              Empréstimos e financiamentos
-            </h3>
+      {/* ══ EMPRÉSTIMOS ══ */}
+      {activeTab === 'Empréstimos' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-si-1">Empréstimos & Financiamentos</h2>
+              <p className="text-xs text-si-5">Acompanhe seus passivos de médio/longo prazo e simule antecipações ou amortizações.</p>
+            </div>
             <button
               onClick={handleOpenAddLoan}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-si-over-2 border border-si-border text-[10px] font-bold text-si-4 hover:text-si-2 hover:bg-si-over-3 uppercase tracking-wider transition-colors"
+              className="px-6 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold transition-colors shrink-0 flex items-center gap-2"
             >
-              <Plus className="w-3 h-3" /> Adicionar
+              <Plus className="w-4 h-4" /> Novo empréstimo
             </button>
           </div>
 
           {loans.length === 0 ? (
-            <div className="p-6 rounded-2xl border border-si-border bg-si-card/30 text-center">
-              <p className="text-xs text-si-5">Nenhum empréstimo ou financiamento registrado.</p>
+            <div className="p-12 rounded-2xl border border-si-border bg-si-card/30 text-center space-y-4">
+              <RefreshCw className="w-10 h-10 text-si-5 mx-auto opacity-30 animate-pulse" />
+              <p className="text-sm font-semibold text-si-3">Nenhum empréstimo ou financiamento registrado.</p>
+              <p className="text-xs text-si-5 max-w-md mx-auto">
+                Registre seus financiamentos de veículos, imóveis ou empréstimos pessoais para calcular o Spread Gap e ver o impacto real no seu fluxo de caixa e patrimônio líquido.
+              </p>
               <button
                 onClick={handleOpenAddLoan}
-                className="mt-3 text-xs font-semibold text-blue-400 hover:underline"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-bold transition-colors uppercase tracking-wider"
               >
-                Cadastrar empréstimo manualmente
+                Cadastrar agora
               </button>
             </div>
           ) : (
-            loans.map((l) => {
-              const saldo   = l.balanceUsed ?? 0;
-              const parcela = l.monthlyInstallment ?? 0;
-              const juros   = l.annualInterestPct ?? 0;
-              const pct     = l.limitTotal ? (saldo / l.limitTotal) * 100 : 0;
-              const prettyKind = l.kind === 'emprestimo' ? 'Empréstimo' : l.kind === 'financiamento' ? 'Financiamento' : l.kind === 'consignado' ? 'Consignado' : 'Outro';
-              return (
-                <div key={l.id} className="bg-si-card rounded-2xl border border-si-border p-5 space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-si-1">{l.label}</p>
-                        {l.source === 'manual' && (
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => handleEditLoan(l)}
-                              className="p-1 text-si-5 hover:text-si-2 transition-colors"
-                              title="Editar"
-                            >
-                              <Pencil className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteLoan(l.id)}
-                              className="p-1 text-si-5 hover:text-rose-400 transition-colors"
-                              title="Excluir"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {loans.map((l) => {
+                const saldo   = l.balanceUsed ?? 0;
+                const parcela = l.monthlyInstallment ?? 0;
+                const juros   = l.annualInterestPct ?? 0;
+                const pct     = l.limitTotal ? (saldo / l.limitTotal) * 100 : 0;
+                const prettyKind = l.kind === 'emprestimo' ? 'Empréstimo' : l.kind === 'financiamento' ? 'Financiamento' : l.kind === 'consignado' ? 'Consignado' : 'Outro';
+                return (
+                  <div key={l.id} className="bg-si-card rounded-2xl border border-si-border p-5 space-y-4 flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-si-1">{l.label}</p>
+                            {l.source === 'manual' && (
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  onClick={() => handleEditLoan(l)}
+                                  className="p-1 text-si-5 hover:text-si-2 transition-colors"
+                                  title="Editar"
+                                >
+                                  <Pencil className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteLoan(l.id)}
+                                  className="p-1 text-si-5 hover:text-rose-400 transition-colors"
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
                           </div>
-                        )}
+                          <p className="text-xs text-si-5">{l.institution} · {prettyKind}</p>
+                        </div>
+                        <span className="text-xs font-bold px-2 py-1 rounded-full bg-amber-500/10 text-amber-400 shrink-0">
+                          {juros.toFixed(1)}% a.a.
+                        </span>
                       </div>
-                      <p className="text-xs text-si-5">{l.institution} · {prettyKind}</p>
+                      
+                      <div className="grid grid-cols-3 gap-3 text-center bg-si-over-1 rounded-xl p-3 border border-si-border/40">
+                        <div>
+                          <p className="text-[10px] text-si-5 uppercase tracking-wider">Saldo devedor</p>
+                          <p className="font-bold text-rose-400 text-sm mt-0.5">{fmtBRL(saldo)}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-si-5 uppercase tracking-wider">Parcela mensal</p>
+                          <p className="font-bold text-si-1 text-sm mt-0.5">{fmtBRL(parcela)}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-si-5 uppercase tracking-wider">Progresso</p>
+                          <p className="font-bold text-si-4 text-sm mt-0.5">{fmtPct(100 - pct)}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] text-si-5">
+                          <span>Restante</span>
+                          <span>Amortizado</span>
+                        </div>
+                        <UtilBar pct={pct} warn={90} />
+                      </div>
                     </div>
-                    <span className="text-xs font-bold px-2 py-1 rounded-full bg-amber-500/10 text-amber-400">
-                      {juros.toFixed(1)}% a.a.
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div>
-                      <p className="text-xs text-si-5">Saldo devedor</p>
-                      <p className="font-bold text-rose-400">{fmtBRL(saldo)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-si-5">Parcela mensal</p>
-                      <p className="font-bold text-si-1">{fmtBRL(parcela)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-si-5">Progresso</p>
-                      <p className="font-bold text-si-4">{fmtPct(100 - pct)}</p>
-                    </div>
-                  </div>
-                  <UtilBar pct={pct} warn={90} />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleOpenAmortization(l)}
-                      className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 hover:text-si-1 hover:bg-si-over-3 text-xs transition-colors"
-                    >
-                      Simular antecipação
-                    </button>
-                    <ComingSoonBadge>
-                      <button disabled className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4/50 text-xs cursor-not-allowed">
-                        Renegociar
+
+                    <div className="flex gap-2 mt-4 pt-3 border-t border-si-border/30">
+                      <button
+                        onClick={() => handleOpenAmortization(l)}
+                        className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4 hover:text-si-1 hover:bg-si-over-3 text-xs font-semibold transition-colors"
+                      >
+                        Simular antecipação
                       </button>
-                    </ComingSoonBadge>
+                      <ComingSoonBadge>
+                        <button disabled className="flex-1 py-2 rounded-xl bg-si-over-2 border border-si-border-md text-si-4/50 text-xs cursor-not-allowed">
+                          Renegociar
+                        </button>
+                      </ComingSoonBadge>
+                    </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
           )}
         </div>
       )}

@@ -46,7 +46,7 @@ function getDiasParaFecha(card: Card): number {
   return Math.ceil((closeDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export default function Cards() {
+export default function Cards({ isEmbedded = false }: any = {}) {
   const { user, cards, entries, categories, loading } = useAppContext();
   const location = useLocation();
   const navigate = useNavigate();
@@ -180,17 +180,22 @@ export default function Cards() {
     ? getCatalogEntry(resolvedBenefitsCatalogId)
     : undefined;
 
-  // Quando o CreditHub navega com { state: { autoOpenAdd: true } }, abre o modal
-  // automaticamente na chegada. O state é limpo para não reabrir em re-renders.
+  // Quando o CreditHub navega com { state: { autoOpenAdd: true } } ou { state: { selectCardId: number } }
   useEffect(() => {
-    if ((location.state as { autoOpenAdd?: boolean } | null)?.autoOpenAdd) {
+    const state = location.state as { autoOpenAdd?: boolean; selectCardId?: number } | null;
+    if (state?.autoOpenAdd) {
       setAddBenefitsManual(false);
       setAddPendingBenefits(null);
       setAddBenefitsBadge(false);
       setModalOpen(true);
       navigate('/credito/cartoes', { replace: true, state: {} });
+    } else if (state?.selectCardId) {
+      setFaturaCardId(state.selectCardId);
+      navigate('/credito/cartoes', { replace: true, state: {} });
+    } else if (faturaCardId === null && cards.length > 0) {
+      setFaturaCardId(cards[0].id);
     }
-  }, [location.state, navigate]);
+  }, [location.state, navigate, cards, faturaCardId]);
 
   const touchManualBenefits = () => setBenefitsFromCatalog(false);
 
@@ -517,11 +522,15 @@ export default function Cards() {
     <div className="space-y-8">
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-3xl font-bold">Crédito · Cartões</h2>
-          <p className="text-si-5 text-sm">Acompanhe faturas, limites e compras dos seus cartões</p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
+        {!isEmbedded ? (
+          <div>
+            <h2 className="text-3xl font-bold">Crédito · Cartões</h2>
+            <p className="text-si-5 text-sm">Acompanhe faturas, limites e compras dos seus cartões</p>
+          </div>
+        ) : (
+          <div />
+        )}
+        <div className="flex gap-2 flex-wrap ml-auto">
           <button
             type="button"
             onClick={() => { setError(null); setImportOpen(true); setImportCardId(cards[0]?.id ?? null); }}
@@ -557,7 +566,7 @@ export default function Cards() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.length === 0 ? (
-          <div className="col-span-full">
+          <div className="col-span-full space-y-6">
             <EmptyState
               icon={<CreditCard className="w-7 h-7" />}
               title="Nenhum cartão cadastrado"
@@ -570,6 +579,15 @@ export default function Cards() {
                 setModalOpen(true);
               }}
             />
+            <div className="flex items-center justify-center gap-4 text-xs pt-2">
+              <button
+                type="button"
+                onClick={() => navigate('/credito/visao-geral', { state: { forceDemo: true } })}
+                className="text-si-4 underline underline-offset-2 hover:text-si-2 font-bold transition-colors uppercase tracking-wider"
+              >
+                Ver demonstração do Hub de Crédito
+              </button>
+            </div>
           </div>
         ) : (
           cards.map((card) => {
