@@ -535,7 +535,7 @@ export default function Transactions() {
               {filterOpen && (
                 <div className="absolute right-0 top-full mt-2 w-64 py-3 px-4 bg-si-card border border-si-border-md rounded-xl shadow-xl z-30">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold text-si-5 uppercase">Filtros avançados</span>
+                    <span className="text-xs font-bold text-si-4 uppercase">Filtros avançados</span>
                     {hasActiveFilter && (
                       <button type="button" onClick={clearFilters} className="text-xs text-blue-400 hover:underline flex items-center gap-1">
                         <X className="w-3 h-3" /> Limpar
@@ -698,7 +698,7 @@ export default function Transactions() {
         <div className="bg-si-card rounded-2xl border border-si-border overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-si-border text-[11px] font-bold text-si-5 uppercase tracking-widest">
+              <tr className="border-b border-si-border text-[11px] font-bold text-si-4 uppercase tracking-widest">
                 <th className="px-6 py-4">Descrição</th>
                 <th className="px-6 py-4">Data</th>
                 <th className="px-6 py-4 text-right">Valor</th>

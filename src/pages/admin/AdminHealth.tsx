@@ -136,7 +136,7 @@ export default function AdminHealth() {
             </div>
           </div>
 
-          <p className="text-[10px] text-si-5 uppercase tracking-[0.15em]">
+          <p className="text-[10px] text-si-4 uppercase tracking-[0.15em]">
             Atualizado {new Date(data.timestamp || Date.now()).toLocaleString('pt-BR')}
           </p>
         </>

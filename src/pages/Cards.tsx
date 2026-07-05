@@ -989,7 +989,7 @@ export default function Cards({ isEmbedded = false }: any = {}) {
             {/* Coluna Esquerda: Preview do Cartão + Busca e Seleção de Banco */}
             <div className="space-y-4">
               <div className="animate-in fade-in zoom-in-95 duration-300">
-                <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Visualização do Cartão</span>
+                <span className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Visualização do Cartão</span>
                 <div className="flex justify-center">
                   <CreditCardVisual
                     name={name || 'Meu Cartão'}
@@ -1003,7 +1003,7 @@ export default function Cards({ isEmbedded = false }: any = {}) {
 
               {/* Busca e Grade de Bancos */}
               <div className="space-y-3">
-                <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Instituição Emissora</span>
+                <span className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-1">Instituição Emissora</span>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-3.5 w-3.5 text-zinc-500" />
                   <input
@@ -1205,7 +1205,7 @@ export default function Cards({ isEmbedded = false }: any = {}) {
               {/* Coluna Esquerda: Preview do Cartão + Vincular Banco */}
               <div className="space-y-4">
                 <div className="animate-in fade-in zoom-in-95 duration-300">
-                  <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Visualização do Cartão</span>
+                  <span className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Visualização do Cartão</span>
                   <div className="flex justify-center">
                     <CreditCardVisual
                       name={editName || 'Meu Cartão'}
@@ -1408,7 +1408,7 @@ export default function Cards({ isEmbedded = false }: any = {}) {
             </p>
             {catalogRowsForModal.length > 0 && (
               <div className="rounded-xl border border-si-border-md bg-si-over-1 p-3 space-y-3">
-                <p className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Catálogo de referência</p>
+                <p className="text-[11px] font-bold text-si-4 uppercase tracking-[0.18em]">Catálogo de referência</p>
                 <p className="text-xs text-si-5 leading-relaxed">
                   Perfis típicos para bandeira <span className="text-si-3">{benefitsModalCard?.flag ?? '—'}</span>.
                   São referências de mercado — confira sempre no app do banco antes de confiar em 100%.

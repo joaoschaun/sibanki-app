@@ -340,7 +340,7 @@ export function ImportEntries({ open, onClose }: Props) {
               <div className="border border-si-border rounded-xl overflow-hidden max-h-[350px] overflow-y-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-si-over-1 sticky top-0">
-                    <tr className="text-left text-xs text-si-5 uppercase tracking-wide">
+                    <tr className="text-left text-xs text-si-4 uppercase tracking-wide">
                       <th className="p-3 w-8"></th>
                       <th className="p-3">Data</th>
                       <th className="p-3">Descrição</th>

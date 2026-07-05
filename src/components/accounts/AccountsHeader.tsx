@@ -34,7 +34,7 @@ export function AccountsHeader({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xs font-bold text-si-5 uppercase tracking-wider">Patrimônio Líquido Real</h2>
+              <h2 className="text-xs font-bold text-si-4 uppercase tracking-wider">Patrimônio Líquido Real</h2>
               <button
                 type="button"
                 onClick={onToggleHideValues}

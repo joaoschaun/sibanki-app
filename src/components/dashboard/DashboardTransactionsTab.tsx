@@ -203,7 +203,7 @@ export function DashboardTransactionsTab() {
         <div className="bg-si-card border border-si-border rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <h3 className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Transações Recentes</h3>
+              <h3 className="text-[11px] font-bold text-si-4 uppercase tracking-[0.18em]">Transações Recentes</h3>
               <p className="text-si-5 text-xs mt-0.5">Últimos lançamentos e impacto Sv em tempo real.</p>
             </div>
             <div className="relative w-full sm:w-64">

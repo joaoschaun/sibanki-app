@@ -87,7 +87,7 @@ export function BiometricGuard({ children }: BiometricGuardProps) {
   return (
     <div className="fixed inset-0 bg-[#0a0a0a] z-[9999] flex flex-col items-center justify-center p-6 space-y-8 select-none">
       <div className="text-center space-y-2">
-        <p className="text-xs font-bold text-si-5 uppercase tracking-[0.2em] mb-1">CFO Pessoal</p>
+        <p className="text-xs font-bold text-si-4 uppercase tracking-[0.2em] mb-1">CFO Pessoal</p>
         <h1 className="text-xl font-bold text-si-1 uppercase tracking-[0.18em]">Sibanki OS</h1>
         <p className="text-xs text-si-4">Dispositivo Bloqueado por Segurança</p>
       </div>

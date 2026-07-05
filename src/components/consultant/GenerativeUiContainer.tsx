@@ -32,7 +32,7 @@ export function GenerativeUiContainer({ uiPayload }: GenerativeUiContainerProps)
             <span className="text-[10px] font-bold text-si-4 uppercase tracking-[0.18em]">
               Orçamentos Ativos
             </span>
-            <span className="text-[9px] font-semibold text-si-5 uppercase">
+            <span className="text-[9px] font-semibold text-si-4 uppercase">
               Envelope (ZBB)
             </span>
           </div>
@@ -79,7 +79,7 @@ export function GenerativeUiContainer({ uiPayload }: GenerativeUiContainerProps)
             <span className="text-[10px] font-bold text-si-4 uppercase tracking-[0.18em]">
               Lançamentos Envolvidos
             </span>
-            <span className="text-[9px] font-semibold text-si-5 uppercase">
+            <span className="text-[9px] font-semibold text-si-4 uppercase">
               {txs.length} itens
             </span>
           </div>
@@ -127,7 +127,7 @@ export function GenerativeUiContainer({ uiPayload }: GenerativeUiContainerProps)
             <span className="text-[10px] font-bold text-si-4 uppercase tracking-[0.18em]">
               Metas & Objetivos
             </span>
-            <span className="text-[9px] font-semibold text-si-5 uppercase">
+            <span className="text-[9px] font-semibold text-si-4 uppercase">
               Economia
             </span>
           </div>
@@ -181,7 +181,7 @@ export function GenerativeUiContainer({ uiPayload }: GenerativeUiContainerProps)
             <span className="text-[10px] font-bold text-si-4 uppercase tracking-[0.18em]">
               Evolução & Tendência
             </span>
-            <span className="text-[9px] font-semibold text-si-5 uppercase">
+            <span className="text-[9px] font-semibold text-si-4 uppercase">
               Gráfico Reativo
             </span>
           </div>

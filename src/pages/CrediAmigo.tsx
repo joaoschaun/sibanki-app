@@ -108,7 +108,7 @@ export default function CrediAmigo() {
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <HandCoins className="w-6 h-6" /> Credi Amigo
           </h2>
-          <p className="text-xs text-si-5 uppercase tracking-widest font-bold mt-0.5">
+          <p className="text-xs text-si-4 uppercase tracking-widest font-bold mt-0.5">
             Empréstimos entre pessoas de confiança
           </p>
         </div>

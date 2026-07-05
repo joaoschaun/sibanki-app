@@ -457,7 +457,7 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
 
           {selectedAccountType === 'new' && (
             <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
-              <label htmlFor="new-account-name" className="block text-[10px] font-bold text-si-5 uppercase tracking-wider mb-1">Nome da Nova Conta</label>
+              <label htmlFor="new-account-name" className="block text-[10px] font-bold text-si-4 uppercase tracking-wider mb-1">Nome da Nova Conta</label>
               <input
                 id="new-account-name"
                 type="text"

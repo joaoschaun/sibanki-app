@@ -159,7 +159,7 @@ export default function Filiados() {
         <div className="bg-si-card rounded-2xl border border-si-border p-4">
           <div className="flex items-center gap-2 mb-1">
             <Trophy className="w-5 h-5 text-purple-400" />
-            <span className="text-xs text-si-5 uppercase tracking-wide">Nível</span>
+            <span className="text-xs text-si-4 uppercase tracking-wide">Nível</span>
           </div>
           <p className={`text-xl font-bold ${nivel.color}`}>{nivel.label}</p>
           <p className="text-xs text-si-5">Multiplicador: {nivel.mult}x</p>
@@ -245,7 +245,7 @@ function MetricCard({ label, value, icon }: { label: string; value: number; icon
     <div className="bg-si-card rounded-2xl border border-si-border p-4">
       <div className="flex items-center gap-2 mb-1">
         {icon}
-        <span className="text-xs text-si-5 uppercase tracking-wide">{label}</span>
+        <span className="text-xs text-si-4 uppercase tracking-wide">{label}</span>
       </div>
       <p className="text-2xl font-bold text-si-1">{value.toLocaleString('pt-BR')}</p>
     </div>

@@ -96,7 +96,7 @@ export default function ConsorcioAmigo() {
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Users className="w-6 h-6" /> Consórcio Amigo
           </h2>
-          <p className="text-xs text-si-5 uppercase tracking-widest font-bold mt-0.5">
+          <p className="text-xs text-si-4 uppercase tracking-widest font-bold mt-0.5">
             Caixinha entre pessoas de confiança
           </p>
         </div>
@@ -417,7 +417,7 @@ function CreateGroupFlow({ adminName, onSave, onCancel }: CreateGroupFlowProps) 
 
             {/* Add member form */}
             <div className="border border-dashed border-si-border rounded-xl p-4 space-y-3">
-              <p className="text-xs font-bold text-si-5 uppercase tracking-widest">Adicionar participante</p>
+              <p className="text-xs font-bold text-si-4 uppercase tracking-widest">Adicionar participante</p>
               <input
                 type="text" placeholder="Nome"
                 value={newMember.name}

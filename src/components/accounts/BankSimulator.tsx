@@ -98,7 +98,7 @@ export function BankSimulator({
 
         {/* Lista de Transações */}
         <div className="space-y-3">
-          <h4 className="text-xs font-bold text-si-5 uppercase tracking-wider">Histórico de Lançamentos</h4>
+          <h4 className="text-xs font-bold text-si-4 uppercase tracking-wider">Histórico de Lançamentos</h4>
           
           {accountEntries.length === 0 ? (
             <div className="border border-dashed border-si-border rounded-2xl py-12 text-center">

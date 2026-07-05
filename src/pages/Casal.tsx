@@ -228,7 +228,7 @@ export default function Casal() {
             >
               Fazer Upgrade para Família
             </a>
-            <p className="text-[10px] text-si-5 uppercase tracking-widest mt-3">30 dias grátis de Família. Cancele quando quiser.</p>
+            <p className="text-[10px] text-si-4 uppercase tracking-widest mt-3">30 dias grátis de Família. Cancele quando quiser.</p>
           </div>
         </div>
       </PageTransition>

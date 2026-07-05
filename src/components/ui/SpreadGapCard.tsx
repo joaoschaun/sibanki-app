@@ -82,7 +82,7 @@ export function SpreadGapCard({ spread }: SpreadGapCardProps) {
       {/* ── Cabeçalho ── */}
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-0.5">
-          <p className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Spread Gap — Sg</p>
+          <p className="text-[11px] font-bold text-si-4 uppercase tracking-[0.18em]">Spread Gap — Sg</p>
           <p className={`text-xs font-bold uppercase tracking-wide ${cfg.color}`}>{cfg.label}</p>
         </div>
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cfg.bg}`}>
@@ -94,7 +94,7 @@ export function SpreadGapCard({ spread }: SpreadGapCardProps) {
       <div>
         {hasLeakage && isNegative ? (
           <>
-            <p className="text-[11px] text-si-5 uppercase tracking-wide mb-0.5">Vazamento mensal</p>
+            <p className="text-[11px] text-si-4 uppercase tracking-wide mb-0.5">Vazamento mensal</p>
             <p className={`text-3xl font-black tabular-nums leading-none ${cfg.color}`}>
               −{fmtBRL(spread.monthlyLeakage)}
             </p>
@@ -102,7 +102,7 @@ export function SpreadGapCard({ spread }: SpreadGapCardProps) {
           </>
         ) : (
           <>
-            <p className="text-[11px] text-si-5 uppercase tracking-wide mb-0.5">Spread</p>
+            <p className="text-[11px] text-si-4 uppercase tracking-wide mb-0.5">Spread</p>
             <p className={`text-3xl font-black tabular-nums leading-none ${cfg.color}`}>
               {spread.spreadGap >= 0 ? '+' : ''}{fmtPct(spread.spreadGap)} /mês
             </p>

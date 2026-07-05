@@ -424,7 +424,7 @@ export default function Home() {
 
           {/* Dias de Liberdade */}
           <div className="bg-si-card border border-si-border rounded-xl p-4 lg:p-5 flex sm:flex-col items-center sm:items-start gap-4 sm:gap-0">
-            <p className="text-[11px] font-bold text-si-5 uppercase tracking-widest sm:mb-2 shrink-0">Dias de Liberdade</p>
+            <p className="text-[11px] font-bold text-si-4 uppercase tracking-widest sm:mb-2 shrink-0">Dias de Liberdade</p>
             <p className={`text-3xl lg:text-5xl font-black tabular-nums leading-none ${FREEDOM_COLORS[freedom.status] ?? 'text-si-1'}`}>
               {freedom.days > 9999 ? '∞' : freedom.days}
             </p>
@@ -435,7 +435,7 @@ export default function Home() {
 
           {/* Status Financeiro */}
           <div className="bg-si-card border border-si-border rounded-xl p-4 lg:p-5 flex sm:flex-col items-center sm:items-start gap-4 sm:gap-0">
-            <p className="text-[11px] font-bold text-si-5 uppercase tracking-widest sm:mb-2 shrink-0">Status</p>
+            <p className="text-[11px] font-bold text-si-4 uppercase tracking-widest sm:mb-2 shrink-0">Status</p>
             <p className={`text-lg lg:text-2xl font-black uppercase tracking-tight leading-none ${HEALTH_COLORS[healthLevel] ?? 'text-si-1'}`}>
               {healthLevel}
             </p>
@@ -446,7 +446,7 @@ export default function Home() {
 
           {/* Próxima Ação */}
           <div className="bg-si-card border border-si-border rounded-xl p-4 lg:p-5 flex sm:flex-col items-center sm:items-start gap-4 sm:gap-0">
-            <p className="text-[11px] font-bold text-si-5 uppercase tracking-widest sm:mb-2 shrink-0">Próxima Ação</p>
+            <p className="text-[11px] font-bold text-si-4 uppercase tracking-widest sm:mb-2 shrink-0">Próxima Ação</p>
             {nextBestActions[0] ? (
               <Link
                 to={ACTION_MAP[nextBestActions[0]]?.to ?? '/consultor-ia'}
@@ -599,7 +599,7 @@ export default function Home() {
 
       {/* ── quick actions grid ── */}
       <div>
-        <p className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em] mb-3">Acesso Rápido</p>
+        <p className="text-[11px] font-bold text-si-4 uppercase tracking-[0.18em] mb-3">Acesso Rápido</p>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 lg:gap-3">
           {ACTIONS.map(({ icon: Icon, label, to }) => (
             <Link

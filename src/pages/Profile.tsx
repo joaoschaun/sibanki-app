@@ -409,7 +409,7 @@ export default function Profile() {
 
             <form onSubmit={handleSaveName} className="space-y-4">
               <div>
-                <label htmlFor="profile-name" className="block text-xs font-semibold text-si-5 uppercase tracking-wider mb-1">
+                <label htmlFor="profile-name" className="block text-xs font-semibold text-si-4 uppercase tracking-wider mb-1">
                   Nome Completo
                 </label>
                 <input
@@ -423,7 +423,7 @@ export default function Profile() {
                 />
               </div>
               <div>
-                <label htmlFor="profile-phone" className="flex items-center gap-1.5 text-xs font-semibold text-si-5 uppercase tracking-wider mb-1">
+                <label htmlFor="profile-phone" className="flex items-center gap-1.5 text-xs font-semibold text-si-4 uppercase tracking-wider mb-1">
                   <MessageCircle className="w-3 h-3" />
                   Telefone celular (WhatsApp)
                   {phone.trim() && (
@@ -448,7 +448,7 @@ export default function Profile() {
                 </p>
               </div>
               <div>
-                <label htmlFor="profile-objective" className="block text-xs font-semibold text-si-5 uppercase tracking-wider mb-1">
+                <label htmlFor="profile-objective" className="block text-xs font-semibold text-si-4 uppercase tracking-wider mb-1">
                   Objetivo financeiro principal
                 </label>
                 <input
@@ -612,7 +612,7 @@ export default function Profile() {
                 
                 <form onSubmit={handleChangePassword} className="space-y-4">
                   <div>
-                    <label htmlFor="current-password" className="block text-xs font-semibold text-si-5 uppercase tracking-wider mb-1">
+                    <label htmlFor="current-password" className="block text-xs font-semibold text-si-4 uppercase tracking-wider mb-1">
                       Senha atual
                     </label>
                     <input
@@ -626,7 +626,7 @@ export default function Profile() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="new-password" className="block text-xs font-semibold text-si-5 uppercase tracking-wider mb-1">
+                    <label htmlFor="new-password" className="block text-xs font-semibold text-si-4 uppercase tracking-wider mb-1">
                       Nova senha
                     </label>
                     <input
@@ -641,7 +641,7 @@ export default function Profile() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="new-password-confirm" className="block text-xs font-semibold text-si-5 uppercase tracking-wider mb-1">
+                    <label htmlFor="new-password-confirm" className="block text-xs font-semibold text-si-4 uppercase tracking-wider mb-1">
                       Confirmar nova senha
                     </label>
                     <input
@@ -686,7 +686,7 @@ export default function Profile() {
 
                 <form onSubmit={handleChangeEmail} className="space-y-4">
                   <div>
-                    <label htmlFor="new-email" className="block text-xs font-semibold text-si-5 uppercase tracking-wider mb-1">
+                    <label htmlFor="new-email" className="block text-xs font-semibold text-si-4 uppercase tracking-wider mb-1">
                       Novo e-mail de acesso
                     </label>
                     <input
@@ -700,7 +700,7 @@ export default function Profile() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="email-password" className="block text-xs font-semibold text-si-5 uppercase tracking-wider mb-1">
+                    <label htmlFor="email-password" className="block text-xs font-semibold text-si-4 uppercase tracking-wider mb-1">
                       Senha atual para confirmação
                     </label>
                     <input
@@ -802,7 +802,7 @@ export default function Profile() {
 
           <form onSubmit={handleSaveFamily} className="space-y-4 pt-2">
             <div>
-              <label htmlFor="family-invite-email" className="block text-xs font-semibold text-si-5 uppercase tracking-wider mb-1">
+              <label htmlFor="family-invite-email" className="block text-xs font-semibold text-si-4 uppercase tracking-wider mb-1">
                 E-mail do parceiro(a)
               </label>
               <input
@@ -815,7 +815,7 @@ export default function Profile() {
               />
             </div>
             <div>
-              <label htmlFor="family-role" className="block text-xs font-semibold text-si-5 uppercase tracking-wider mb-1">
+              <label htmlFor="family-role" className="block text-xs font-semibold text-si-4 uppercase tracking-wider mb-1">
                 Permissão de Acesso
               </label>
               <select

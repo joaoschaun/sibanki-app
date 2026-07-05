@@ -24,6 +24,7 @@ import { useAppContext } from '../context/AppContext';
 import { ComingSoonBadge } from '../components/ui/ComingSoonBadge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Modal } from '../components/ui/Modal';
+import { Input, Select } from '../components/ui/Field';
 import { getBillingMonth, setCreditAccounts, setCreditObligations } from '../services/persistUserData';
 import type { CreditAccount, CreditSnapshot, CreditObligation } from '../types/userData';
 import { analyzeInstallmentDecision, analyzeDebtPayoffStrategy, analyzeFgtsAmortization } from '../utils/decisionEngine';
@@ -807,15 +808,15 @@ export default function CreditHub() {
                       
                       <div className="grid grid-cols-3 gap-3 text-center bg-si-over-1 rounded-xl p-3 border border-si-border/40">
                         <div>
-                          <p className="text-[10px] text-si-5 uppercase tracking-wider">Saldo devedor</p>
+                          <p className="text-[10px] text-si-4 uppercase tracking-wider">Saldo devedor</p>
                           <p className="font-bold text-rose-400 text-sm mt-0.5">{fmtBRL(saldo)}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-si-5 uppercase tracking-wider">Parcela mensal</p>
+                          <p className="text-[10px] text-si-4 uppercase tracking-wider">Parcela mensal</p>
                           <p className="font-bold text-si-1 text-sm mt-0.5">{fmtBRL(parcela)}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-si-5 uppercase tracking-wider">Progresso</p>
+                          <p className="text-[10px] text-si-4 uppercase tracking-wider">Progresso</p>
                           <p className="font-bold text-si-4 text-sm mt-0.5">{fmtPct(100 - pct)}</p>
                         </div>
                       </div>
@@ -1003,7 +1004,7 @@ export default function CreditHub() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-si-5 font-semibold mb-0.5 block">Valor do Item (R$)</label>
+                <label className="text-[11px] text-si-4 font-semibold mb-0.5 block">Valor do Item (R$)</label>
                 <input
                   type="number"
                   value={simValue}
@@ -1012,7 +1013,7 @@ export default function CreditHub() {
                 />
               </div>
               <div>
-                <label className="text-[11px] text-si-5 font-semibold mb-0.5 block">Desconto à Vista (%)</label>
+                <label className="text-[11px] text-si-4 font-semibold mb-0.5 block">Desconto à Vista (%)</label>
                 <input
                   type="number"
                   value={simDiscount}
@@ -1021,7 +1022,7 @@ export default function CreditHub() {
                 />
               </div>
               <div>
-                <label className="text-[11px] text-si-5 font-semibold mb-0.5 block flex justify-between">
+                <label className="text-[11px] text-si-4 font-semibold mb-0.5 block flex justify-between">
                   <span>Parcelas</span>
                   <span className="text-violet-400 font-bold">{simInstallments}x</span>
                 </label>
@@ -1035,7 +1036,7 @@ export default function CreditHub() {
                 />
               </div>
               <div>
-                <label className="text-[11px] text-si-5 font-semibold mb-0.5 block">Rendimento (% a.m. CDI)</label>
+                <label className="text-[11px] text-si-4 font-semibold mb-0.5 block">Rendimento (% a.m. CDI)</label>
                 <input
                   type="number"
                   step="0.05"
@@ -1296,18 +1297,18 @@ export default function CreditHub() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-si-bg p-3 border border-si-border rounded-xl">
-                <p className="text-[11px] text-si-5 uppercase font-semibold">Saldo Devedor Atual</p>
+                <p className="text-[11px] text-si-4 uppercase font-semibold">Saldo Devedor Atual</p>
                 <p className="text-sm font-bold text-rose-400">{fmtBRL(selectedAmortizationLoan.balanceUsed ?? 0)}</p>
               </div>
               <div className="bg-si-bg p-3 border border-si-border rounded-xl">
-                <p className="text-[11px] text-si-5 uppercase font-semibold">Parcela Mensal Atual</p>
+                <p className="text-[11px] text-si-4 uppercase font-semibold">Parcela Mensal Atual</p>
                 <p className="text-sm font-bold text-si-1">{fmtBRL(selectedAmortizationLoan.monthlyInstallment ?? 0)}</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-si-5 font-semibold mb-1 block">Valor Extra para Amortizar (R$)</label>
+                <label className="text-xs text-si-4 font-semibold mb-1 block">Valor Extra para Amortizar (R$)</label>
                 <input
                   type="number"
                   value={amortizationExtraAmount}
@@ -1318,7 +1319,7 @@ export default function CreditHub() {
               </div>
 
               <div>
-                <label className="text-xs text-si-5 font-semibold mb-1 block flex justify-between">
+                <label className="text-xs text-si-4 font-semibold mb-1 block flex justify-between">
                   <span>Meses Restantes de Contrato</span>
                   <span className="text-violet-400 font-bold">{amortizationRemainingMonths} meses</span>
                 </label>
@@ -1406,99 +1407,75 @@ export default function CreditHub() {
               </div>
             )}
 
-            <div>
-              <label className="text-xs text-si-5 font-semibold mb-1 block">Nome do Empréstimo / Descrição</label>
-              <input
+            <Input
+              label="Nome do Empréstimo / Descrição"
+              type="text"
+              value={loanLabel}
+              onChange={(e) => setLoanLabel(e.target.value)}
+              placeholder="Ex: Empréstimo Pessoal Caixa"
+              required
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Instituição / Banco"
                 type="text"
-                value={loanLabel}
-                onChange={(e) => setLoanLabel(e.target.value)}
-                className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
-                placeholder="Ex: Empréstimo Pessoal Caixa"
-                required
+                value={loanInstitution}
+                onChange={(e) => setLoanInstitution(e.target.value)}
+                placeholder="Ex: Itaú, BB"
+              />
+              <Select
+                label="Tipo de Passivo"
+                value={loanKind}
+                onChange={(e) => setLoanKind(e.target.value as any)}
+              >
+                <option value="emprestimo">Empréstimo</option>
+                <option value="financiamento">Financiamento</option>
+                <option value="consignado">Consignado</option>
+                <option value="outro">Outro</option>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Valor Total Emprestado (R$)"
+                type="number"
+                value={loanLimitTotal}
+                onChange={(e) => setLoanLimitTotal(e.target.value)}
+                placeholder="Ex: 20000"
+              />
+              <Input
+                label="Saldo Devedor Atual (R$)"
+                type="number"
+                value={loanBalanceUsed}
+                onChange={(e) => setLoanBalanceUsed(e.target.value)}
+                placeholder="Ex: 14500"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-si-5 font-semibold mb-1 block">Instituição / Banco</label>
-                <input
-                  type="text"
-                  value={loanInstitution}
-                  onChange={(e) => setLoanInstitution(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
-                  placeholder="Ex: Itaú, BB"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-si-5 font-semibold mb-1 block">Tipo de Passivo</label>
-                <select
-                  value={loanKind}
-                  onChange={(e) => setLoanKind(e.target.value as any)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
-                >
-                  <option value="emprestimo">Empréstimo</option>
-                  <option value="financiamento">Financiamento</option>
-                  <option value="consignado">Consignado</option>
-                  <option value="outro">Outro</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-si-5 font-semibold mb-1 block">Valor Total Emprestado (R$)</label>
-                <input
-                  type="number"
-                  value={loanLimitTotal}
-                  onChange={(e) => setLoanLimitTotal(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
-                  placeholder="Ex: 20000"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-si-5 font-semibold mb-1 block">Saldo Devedor Atual (R$)</label>
-                <input
-                  type="number"
-                  value={loanBalanceUsed}
-                  onChange={(e) => setLoanBalanceUsed(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
-                  placeholder="Ex: 14500"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-si-5 font-semibold mb-1 block">Parcela Mensal (R$)</label>
-                <input
-                  type="number"
-                  value={loanMonthlyInstallment}
-                  onChange={(e) => setLoanMonthlyInstallment(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
-                  placeholder="Ex: 720"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-si-5 font-semibold mb-1 block">Taxa de Juros Anual (% a.a.)</label>
-                <input
-                  type="number"
-                  value={loanAnnualInterestPct}
-                  onChange={(e) => setLoanAnnualInterestPct(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
-                  placeholder="Ex: 28.4"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs text-si-5 font-semibold mb-1 block">Data do Próximo Vencimento</label>
-              <input
-                type="date"
-                value={loanDueDate}
-                onChange={(e) => setLoanDueDate(e.target.value)}
-                className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
+              <Input
+                label="Parcela Mensal (R$)"
+                type="number"
+                value={loanMonthlyInstallment}
+                onChange={(e) => setLoanMonthlyInstallment(e.target.value)}
+                placeholder="Ex: 720"
+              />
+              <Input
+                label="Taxa de Juros Anual (% a.a.)"
+                type="number"
+                value={loanAnnualInterestPct}
+                onChange={(e) => setLoanAnnualInterestPct(e.target.value)}
+                placeholder="Ex: 28.4"
               />
             </div>
+
+            <Input
+              label="Data do Próximo Vencimento"
+              type="date"
+              value={loanDueDate}
+              onChange={(e) => setLoanDueDate(e.target.value)}
+            />
 
             <div className="flex gap-3 pt-3">
               <button

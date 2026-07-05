@@ -98,7 +98,7 @@ export default function AceitarEmprestimo() {
           </p>
         </div>
         <div className="bg-si-card border border-si-border rounded-2xl p-4 text-left space-y-2">
-          <p className="text-xs font-bold text-si-5 uppercase tracking-widest">Resumo</p>
+          <p className="text-xs font-bold text-si-4 uppercase tracking-widest">Resumo</p>
           <div className="flex justify-between text-sm"><span className="text-si-5">Valor</span><span className="font-bold text-si-1">{fmtBRL(loan?.amount ?? 0)}</span></div>
           <div className="flex justify-between text-sm"><span className="text-si-5">Parcelas</span><span className="font-bold text-si-1">{loan?.installments}×</span></div>
           <div className="flex justify-between text-sm"><span className="text-si-5">1º vencimento</span><span className="font-bold text-si-1">{loan?.firstDueDate ? fmtDate(loan.firstDueDate) : ''}</span></div>

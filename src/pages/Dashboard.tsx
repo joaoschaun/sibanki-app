@@ -178,7 +178,7 @@ export default function Dashboard() {
             </div>
 
             <div className="pt-4 border-t border-si-border">
-              <p className="text-[10px] font-bold text-si-5 uppercase tracking-widest mb-3">Ou siga o passo a passo manual:</p>
+              <p className="text-[10px] font-bold text-si-4 uppercase tracking-widest mb-3">Ou siga o passo a passo manual:</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
                 {[
                   { num: '1', label: 'Crie uma conta', sub: 'Corrente ou investimentos', link: '/contas' },
@@ -328,7 +328,7 @@ export default function Dashboard() {
                     {widgets.graficos && (
                       <div className="bg-si-card rounded-2xl p-6 space-y-6">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-si-border pb-3">
-                          <h3 className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Análise Visual</h3>
+                          <h3 className="text-[11px] font-bold text-si-4 uppercase tracking-[0.18em]">Análise Visual</h3>
                           <div className="flex flex-wrap items-center gap-1.5">
                             {([
                               { id: 'categorias', label: 'Categorias' },
@@ -506,7 +506,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between gap-4 flex-wrap">
                       <div className="flex items-center gap-3">
                         <Zap className="w-3.5 h-3.5 text-si-5" />
-                        <h3 className="text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]">Próximas Ações</h3>
+                        <h3 className="text-[11px] font-bold text-si-4 uppercase tracking-[0.18em]">Próximas Ações</h3>
                       </div>
                       <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${HEALTH_COLORS[healthLevel] ?? 'text-si-4 bg-si-over-1 border-si-border'}`}>
                         <span>{healthLevel}</span>

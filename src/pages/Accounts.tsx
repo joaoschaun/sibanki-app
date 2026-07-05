@@ -520,7 +520,7 @@ export default function Accounts() {
       {/* Seção 2: Compromissos & Cartões de Crédito */}
       {((cards && cards.length > 0) || (creditObligations && creditObligations.filter(o => o.status !== 'paga').length > 0)) && (
         <div className="space-y-4 pt-4">
-          <h3 className="text-sm font-bold text-si-5 uppercase tracking-wider">Meus Compromissos (Cartões e Obrigações)</h3>
+          <h3 className="text-sm font-bold text-si-4 uppercase tracking-wider">Meus Compromissos (Cartões e Obrigações)</h3>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {/* Cartões */}
             {cards.map((card) => (
@@ -619,7 +619,7 @@ export default function Accounts() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <h3 className="text-xl font-bold text-si-1 tracking-tight">Inspeção Detalhada</h3>
-              <p className="text-sm font-medium text-si-5 uppercase tracking-wider mt-1">{detailAccount}</p>
+              <p className="text-sm font-medium text-si-4 uppercase tracking-wider mt-1">{detailAccount}</p>
             </div>
             <div className="flex gap-2">
               <button
@@ -640,24 +640,24 @@ export default function Accounts() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-[#0f172a]/50 border border-white/5 rounded-2xl p-5">
-              <p className="text-[11px] font-bold text-si-5 uppercase tracking-widest mb-2">Classificação</p>
+              <p className="text-[11px] font-bold text-si-4 uppercase tracking-widest mb-2">Classificação</p>
               <p className="text-base font-bold text-si-1">{accountMeta[detailAccount]?.tipo ?? 'Conta corrente'}</p>
             </div>
             <div className="bg-[#0f172a]/50 border border-white/5 rounded-2xl p-5">
-              <p className="text-[11px] font-bold text-si-5 uppercase tracking-widest mb-2">Consolidação</p>
+              <p className="text-[11px] font-bold text-si-4 uppercase tracking-widest mb-2">Consolidação</p>
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${accountMeta[detailAccount]?.incluirNaSoma === false ? 'bg-rose-500' : 'bg-emerald-500'}`} />
                 <p className="text-base font-bold text-si-1">{accountMeta[detailAccount]?.incluirNaSoma === false ? 'Excluída' : 'Incluída'}</p>
               </div>
             </div>
             <div className="bg-[#0f172a]/50 border border-white/5 rounded-2xl p-5">
-              <p className="text-[11px] font-bold text-si-5 uppercase tracking-widest mb-2">Receitas Mês</p>
+              <p className="text-[11px] font-bold text-si-4 uppercase tracking-widest mb-2">Receitas Mês</p>
               <p className="text-base font-bold text-emerald-400">
                 R$ {detailReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </div>
             <div className="bg-[#0f172a]/50 border border-white/5 rounded-2xl p-5">
-              <p className="text-[11px] font-bold text-si-5 uppercase tracking-widest mb-2">Despesas Mês</p>
+              <p className="text-[11px] font-bold text-si-4 uppercase tracking-widest mb-2">Despesas Mês</p>
               <p className="text-base font-bold text-rose-400">
                 R$ {detailDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
@@ -684,7 +684,7 @@ export default function Accounts() {
               {/* Preview Card */}
               {name && (
                 <div className="animate-in fade-in zoom-in-95 duration-300">
-                  <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Visualização do Card</span>
+                  <span className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Visualização do Card</span>
                   <AccountCard
                     name={name}
                     balance={parseFloat(initialBalance.replace(',', '.')) || 0}
@@ -697,7 +697,7 @@ export default function Accounts() {
 
               {/* Busca e Grade de Bancos */}
               <div className="space-y-3">
-                <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-1">Instituição Bancária</span>
+                <span className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-1">Instituição Bancária</span>
                 <div className="relative">
                   <Search className="absolute left-3 top-3.5 h-3.5 w-3.5 text-zinc-500" />
                   <input
@@ -762,7 +762,7 @@ export default function Accounts() {
             {/* Coluna Direita: Campos do Formulário */}
             <div className="space-y-4">
               <div>
-                <label htmlFor="account-name" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Identificador da Conta</label>
+                <label htmlFor="account-name" className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Identificador da Conta</label>
                 <input
                   id="account-name"
                   type="text"
@@ -775,7 +775,7 @@ export default function Accounts() {
               </div>
 
               <div>
-                <label htmlFor="account-balance" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Sincronização Inicial (R$)</label>
+                <label htmlFor="account-balance" className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Sincronização Inicial (R$)</label>
                 <input
                   id="account-balance"
                   type="text"
@@ -789,7 +789,7 @@ export default function Accounts() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="account-type" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Modelo</label>
+                  <label htmlFor="account-type" className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Modelo</label>
                   <select
                     id="account-type"
                     value={createTipo}
@@ -800,7 +800,7 @@ export default function Accounts() {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="create-currency" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Moeda</label>
+                  <label htmlFor="create-currency" className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Moeda</label>
                   <select
                     id="create-currency"
                     value={createCurrency}
@@ -814,7 +814,7 @@ export default function Accounts() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="create-agency" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Agência</label>
+                  <label htmlFor="create-agency" className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Agência</label>
                   <input
                     id="create-agency"
                     type="text"
@@ -825,7 +825,7 @@ export default function Accounts() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="create-acctnum" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Nº da Conta</label>
+                  <label htmlFor="create-acctnum" className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Nº da Conta</label>
                   <input
                     id="create-acctnum"
                     type="text"
@@ -897,7 +897,7 @@ export default function Accounts() {
               Alterar registro da conta financeira: <strong className="text-white block mt-1 text-lg">{adjustAccount}</strong>
             </p>
             <div>
-              <label htmlFor="adjust-balance" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Atualizar Registro (R$)</label>
+              <label htmlFor="adjust-balance" className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Atualizar Registro (R$)</label>
               <input
                 id="adjust-balance"
                 type="text"
@@ -938,7 +938,7 @@ export default function Accounts() {
               <div className="space-y-4">
                 {editName && (
                   <div className="animate-in fade-in zoom-in-95 duration-300">
-                    <span className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Visualização do Card</span>
+                    <span className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Visualização do Card</span>
                     <AccountCard
                       name={editName}
                       balance={parseFloat(String(accountBalances[editAccount] ?? 0)) || 0}
@@ -950,7 +950,7 @@ export default function Accounts() {
                 )}
 
                 <div>
-                  <label htmlFor="edit-bank-select" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Vincular Instituição (Logo/Cores)</label>
+                  <label htmlFor="edit-bank-select" className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Vincular Instituição (Logo/Cores)</label>
                   <select
                     id="edit-bank-select"
                     value={editBankSlug}
@@ -980,7 +980,7 @@ export default function Accounts() {
               {/* Coluna Direita: Dados Adicionais */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Apelido (Label)</label>
+                  <label className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Apelido (Label)</label>
                   <input
                     type="text"
                     value={editName}
@@ -991,7 +991,7 @@ export default function Accounts() {
                 </div>
 
                 <div>
-                  <label htmlFor="edit-balance" className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Saldo Atual (R$)</label>
+                  <label htmlFor="edit-balance" className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Saldo Atual (R$)</label>
                   <input
                     id="edit-balance"
                     type="text"
@@ -1005,7 +1005,7 @@ export default function Accounts() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Modelo</label>
+                    <label className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Modelo</label>
                     <select
                       value={editTipo}
                       onChange={(e) => setEditTipo(e.target.value)}
@@ -1015,7 +1015,7 @@ export default function Accounts() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Moeda</label>
+                    <label className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Moeda</label>
                     <select value={editCurrency} onChange={(e) => setEditCurrency(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-si-border-lg text-sm font-medium">
                       {MOEDAS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
@@ -1025,12 +1025,12 @@ export default function Accounts() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Agência</label>
+                    <label className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Agência</label>
                     <input type="text" value={editAgency} onChange={(e) => setEditAgency(e.target.value)} placeholder="0001-7"
                       className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-si-border-lg text-sm font-medium" />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Nº da Conta</label>
+                    <label className="block text-[11px] font-bold text-si-4 uppercase tracking-wider mb-2">Nº da Conta</label>
                     <input type="text" value={editAccountNumber} onChange={(e) => setEditAccountNumber(e.target.value)} placeholder="12345-8"
                       className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-si-border-lg text-sm font-medium" />
                   </div>

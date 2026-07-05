@@ -21,7 +21,7 @@ import {
 import { tooltipStyle } from '../charts/chartConfig';
 import { scoreToRedBlueHsl } from '../../utils/scoreHue';
 
-const LABEL = 'text-[11px] font-bold text-si-5 uppercase tracking-[0.18em]';
+const LABEL = 'text-[11px] font-bold text-si-4 uppercase tracking-[0.18em]';
 
 export interface FundamentalScorecardProps {
   ticker: string;
@@ -66,7 +66,7 @@ function SemiGauge({ value }: { value: number }) {
         <span className="text-3xl font-bold tabular-nums" style={{ color: scoreToRedBlueHsl(v) }}>
           {v}
         </span>
-        <span className="text-[11px] font-bold text-si-5 uppercase tracking-[0.2em]">de 100</span>
+        <span className="text-[11px] font-bold text-si-4 uppercase tracking-[0.2em]">de 100</span>
         <span className="sr-only">Escala visual: 0 vermelho a 100 azul</span>
       </div>
     </div>

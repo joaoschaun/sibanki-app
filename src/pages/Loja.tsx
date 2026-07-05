@@ -246,7 +246,7 @@ export default function Loja() {
           <div className="flex items-center justify-between gap-3 mb-2">
             <div className="flex items-center gap-2">
               <Coins className="w-4 h-4 text-amber-400" />
-              <span className="text-xs text-si-5 uppercase tracking-widest font-bold">Saldo</span>
+              <span className="text-xs text-si-4 uppercase tracking-widest font-bold">Saldo</span>
             </div>
             <span className={`text-xs font-bold ${tierCfg.color}`}>{tierCfg.label}</span>
           </div>
@@ -615,7 +615,7 @@ function OfferCard({ offer, multiplier, onActivate, ldImpact }: OfferCardProps) 
         <div className="flex items-center justify-between">
           <div>
             <p className="text-2xl font-bold text-emerald-400 leading-none">{effective}%</p>
-            <p className="text-[11px] text-si-5 uppercase tracking-widest font-bold">cashback</p>
+            <p className="text-[11px] text-si-4 uppercase tracking-widest font-bold">cashback</p>
           </div>
           {ldImpact && (
             <div className="text-right">
@@ -652,7 +652,7 @@ function OfferRow({ offer, multiplier, onActivate, ldImpact }: OfferCardProps) {
       <div className="flex items-center gap-4 shrink-0">
         <div className="text-right">
           <p className="text-xl font-bold text-emerald-400 leading-none">{effective}%</p>
-          <p className="text-[10px] text-si-5 uppercase tracking-widest font-bold">cashback</p>
+          <p className="text-[10px] text-si-4 uppercase tracking-widest font-bold">cashback</p>
         </div>
         <button
           onClick={() => onActivate(offer)}

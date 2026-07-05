@@ -1240,7 +1240,7 @@ export default function Growth() {
                       className="w-full text-left px-4 py-2 hover:bg-si-over-2 text-sm flex items-center gap-3">
                       <span className="font-bold text-si-1 w-20 shrink-0">{s.ticker}</span>
                       <span className="text-si-4 truncate">{s.name}</span>
-                      {s.type && <span className="ml-auto text-[11px] text-si-5 uppercase">{s.type}</span>}
+                      {s.type && <span className="ml-auto text-[11px] text-si-4 uppercase">{s.type}</span>}
                     </button>
                   </li>
                 ))}
