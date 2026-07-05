@@ -511,7 +511,7 @@ export function InsightDoDia({
     return (
       <div className="flex gap-3 items-start">
         <div
-          className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-emerald-500/20"
+          className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-black/20"
           style={{ background: 'linear-gradient(135deg,#10b981,#7c3aed)' }}
         >AS</div>
         <div className="flex-1 min-w-0">
@@ -528,7 +528,7 @@ export function InsightDoDia({
   return (
     <div className="flex gap-3 items-start">
       <div
-        className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-emerald-500/20"
+        className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-black/20"
         style={{ background: 'linear-gradient(135deg,#10b981,#7c3aed)' }}
       >AS</div>
 

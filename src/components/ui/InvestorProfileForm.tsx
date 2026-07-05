@@ -5,7 +5,7 @@ import { formatFirestoreDatePtBR } from '../../utils/firestoreDate';
 
 const labelCls = 'block text-xs font-medium text-si-5 mb-1';
 const inputCls =
-  'w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm';
+  'w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg text-sm';
 
 export interface InvestorProfileFormProps {
   answers: InvestorProfileAnswers;
