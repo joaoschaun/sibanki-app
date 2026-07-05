@@ -121,7 +121,7 @@ export function ConsultantDrawer() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
               placeholder="Pergunte algo..."
-              className="flex-1 min-w-0 px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="flex-1 min-w-0 px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm placeholder-zinc-500 focus:outline-none focus:border-si-border-lg"
               disabled={sending || !consultorAllowed}
             />
             <button

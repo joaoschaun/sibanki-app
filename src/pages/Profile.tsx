@@ -418,7 +418,7 @@ export default function Profile() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Seu nome"
-                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg text-sm"
                   required
                 />
               </div>
@@ -440,7 +440,7 @@ export default function Profile() {
                   className={`w-full px-4 py-3 rounded-xl bg-si-bg border text-si-1 placeholder-zinc-500 focus:outline-none text-sm transition-colors ${
                     phone.trim()
                       ? 'border-emerald-500/30 focus:border-emerald-500'
-                      : 'border-si-border-md focus:border-blue-500'
+                      : 'border-si-border-md focus:border-si-border-lg'
                   }`}
                 />
                 <p className="text-[10px] text-si-5 mt-1">
@@ -457,7 +457,7 @@ export default function Profile() {
                   value={financialObjective}
                   onChange={(e) => setFinancialObjective(e.target.value)}
                   placeholder="Ex: Reserva de emergência, Comprar imóvel"
-                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg text-sm"
                 />
               </div>
               
@@ -498,7 +498,7 @@ export default function Profile() {
                 },
                 gold: {
                   bg: 'linear-gradient(135deg, #382e18 0%, #201a0d 50%, #100c05 100%)',
-                  border: 'border-amber-400/30 shadow-amber-400/5',
+                  border: 'border-amber-400/30 shadow-black/5',
                   glow: 'rgba(251, 191, 36, 0.08)',
                   textColor: 'text-amber-400',
                   badge: 'Membro Ouro',
@@ -506,7 +506,7 @@ export default function Profile() {
                 },
                 diamond: {
                   bg: 'linear-gradient(135deg, #1b2f3a 0%, #0c1a24 50%, #050a0f 100%)',
-                  border: 'border-cyan-400/30 shadow-cyan-400/10',
+                  border: 'border-cyan-400/30 shadow-black/10',
                   glow: 'rgba(34, 211, 238, 0.12)',
                   textColor: 'text-cyan-400',
                   badge: 'Investidor Diamante',
@@ -621,7 +621,7 @@ export default function Profile() {
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm"
+                      className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg text-sm"
                       required
                     />
                   </div>
@@ -635,7 +635,7 @@ export default function Profile() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Mínimo 6 caracteres"
-                      className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm"
+                      className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg text-sm"
                       minLength={6}
                       required
                     />
@@ -650,7 +650,7 @@ export default function Profile() {
                       value={newPasswordConfirm}
                       onChange={(e) => setNewPasswordConfirm(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm"
+                      className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg text-sm"
                       required
                     />
                   </div>
@@ -695,7 +695,7 @@ export default function Profile() {
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
                       placeholder="novo@email.com"
-                      className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm"
+                      className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg text-sm"
                       required
                     />
                   </div>
@@ -709,7 +709,7 @@ export default function Profile() {
                       value={emailPassword}
                       onChange={(e) => setEmailPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm"
+                      className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg text-sm"
                       required
                     />
                   </div>
@@ -765,7 +765,7 @@ export default function Profile() {
                     aria-label={isOn ? `Desativar ${opt.title}` : `Ativar ${opt.title}`}
                     disabled={privacyBusy}
                     onClick={() => handleTogglePrivacy(opt.k)}
-                    className={`relative inline-flex h-7 w-12 shrink-0 rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-si-card disabled:opacity-50 cursor-pointer ${
+                    className={`relative inline-flex h-7 w-12 shrink-0 rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-si-border-lg focus:ring-offset-2 focus:ring-offset-si-card disabled:opacity-50 cursor-pointer ${
                       isOn ? 'bg-blue-600 border-blue-500' : 'bg-zinc-700 border-si-border-md'
                     }`}
                   >
@@ -811,7 +811,7 @@ export default function Profile() {
                 value={familyInviteEmail}
                 onChange={(e) => setFamilyInviteEmail(e.target.value)}
                 placeholder="parceiro@exemplo.com"
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 text-sm"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg text-sm"
               />
             </div>
             <div>
@@ -822,7 +822,7 @@ export default function Profile() {
                 id="family-role"
                 value={familyRole}
                 onChange={(e) => setFamilyRole(e.target.value as 'viewer' | 'editor')}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm font-semibold"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg text-sm font-semibold"
               >
                 <option value="viewer">Apenas visualizar (Leitura)</option>
                 <option value="editor">Visualizar e lançar transações (Escrita)</option>

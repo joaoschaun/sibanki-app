@@ -1008,7 +1008,7 @@ export default function CreditHub() {
                   type="number"
                   value={simValue}
                   onChange={(e) => setSimValue(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-1.5 text-xs text-si-1 focus:outline-none focus:border-violet-500 transition-colors"
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-1.5 text-xs text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
                 />
               </div>
               <div>
@@ -1017,7 +1017,7 @@ export default function CreditHub() {
                   type="number"
                   value={simDiscount}
                   onChange={(e) => setSimDiscount(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-1.5 text-xs text-si-1 focus:outline-none focus:border-violet-500 transition-colors"
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-1.5 text-xs text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
                 />
               </div>
               <div>
@@ -1041,7 +1041,7 @@ export default function CreditHub() {
                   step="0.05"
                   value={simCDI}
                   onChange={(e) => setSimCDI(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-1.5 text-xs text-si-1 focus:outline-none focus:border-violet-500 transition-colors"
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-1.5 text-xs text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
                 />
               </div>
             </div>
@@ -1312,7 +1312,7 @@ export default function CreditHub() {
                   type="number"
                   value={amortizationExtraAmount}
                   onChange={(e) => setAmortizationExtraAmount(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-violet-500 transition-colors"
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
                   placeholder="Ex: 5000"
                 />
               </div>
@@ -1337,7 +1337,7 @@ export default function CreditHub() {
                   type="checkbox"
                   checked={amortizationUseFgts}
                   onChange={(e) => setAmortizationUseFgts(e.target.checked)}
-                  className="w-4 h-4 rounded border-si-border text-violet-600 focus:ring-violet-500 bg-si-bg"
+                  className="w-4 h-4 rounded border-si-border text-violet-600 focus:ring-si-border-lg bg-si-bg"
                 />
                 <span className="text-xs text-si-4 font-medium">Usar saldo do FGTS para a amortização</span>
               </label>
@@ -1412,7 +1412,7 @@ export default function CreditHub() {
                 type="text"
                 value={loanLabel}
                 onChange={(e) => setLoanLabel(e.target.value)}
-                className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
                 placeholder="Ex: Empréstimo Pessoal Caixa"
                 required
               />
@@ -1425,7 +1425,7 @@ export default function CreditHub() {
                   type="text"
                   value={loanInstitution}
                   onChange={(e) => setLoanInstitution(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
                   placeholder="Ex: Itaú, BB"
                 />
               </div>
@@ -1434,7 +1434,7 @@ export default function CreditHub() {
                 <select
                   value={loanKind}
                   onChange={(e) => setLoanKind(e.target.value as any)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
                 >
                   <option value="emprestimo">Empréstimo</option>
                   <option value="financiamento">Financiamento</option>
@@ -1451,7 +1451,7 @@ export default function CreditHub() {
                   type="number"
                   value={loanLimitTotal}
                   onChange={(e) => setLoanLimitTotal(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
                   placeholder="Ex: 20000"
                 />
               </div>
@@ -1461,7 +1461,7 @@ export default function CreditHub() {
                   type="number"
                   value={loanBalanceUsed}
                   onChange={(e) => setLoanBalanceUsed(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
                   placeholder="Ex: 14500"
                 />
               </div>
@@ -1474,7 +1474,7 @@ export default function CreditHub() {
                   type="number"
                   value={loanMonthlyInstallment}
                   onChange={(e) => setLoanMonthlyInstallment(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
                   placeholder="Ex: 720"
                 />
               </div>
@@ -1484,7 +1484,7 @@ export default function CreditHub() {
                   type="number"
                   value={loanAnnualInterestPct}
                   onChange={(e) => setLoanAnnualInterestPct(e.target.value)}
-                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
                   placeholder="Ex: 28.4"
                 />
               </div>
@@ -1496,7 +1496,7 @@ export default function CreditHub() {
                 type="date"
                 value={loanDueDate}
                 onChange={(e) => setLoanDueDate(e.target.value)}
-                className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-si-bg border border-si-border rounded-xl px-3 py-2 text-sm text-si-1 focus:outline-none focus:border-si-border-lg transition-colors"
               />
             </div>
 

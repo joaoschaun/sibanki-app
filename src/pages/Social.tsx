@@ -312,7 +312,7 @@ export default function Social() {
                 onChange={(e) => setPostText(e.target.value)}
                 placeholder="Compartilhe uma dica, conquista ou dúvida (mín. 10 caracteres)..."
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg resize-none"
               />
               <div className="flex flex-wrap items-center gap-3">
                 <select
@@ -717,7 +717,7 @@ export default function Social() {
               onChange={(e) => setNickname(e.target.value)}
               placeholder="Mín. 3 caracteres"
               minLength={3}
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg"
             />
           </div>
           <div>

@@ -705,7 +705,7 @@ export default function Accounts() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Buscar banco ou instituição..."
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-xs"
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-si-border-lg transition-all font-medium text-xs"
                   />
                 </div>
 
@@ -769,7 +769,7 @@ export default function Accounts() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ex: Itaú Personalité, Carteira, Nubank PJ"
-                  className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-sm"
+                  className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-si-border-lg transition-all font-medium text-sm"
                   required
                 />
               </div>
@@ -783,7 +783,7 @@ export default function Accounts() {
                   value={initialBalance}
                   onChange={(e) => setInitialBalance(e.target.value.replace(/[^0-9,.-]/, ''))}
                   placeholder="0,00"
-                  className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-sm"
+                  className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-si-border-lg transition-all font-medium text-sm"
                 />
               </div>
 
@@ -794,7 +794,7 @@ export default function Accounts() {
                     id="account-type"
                     value={createTipo}
                     onChange={(e) => setCreateTipo(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-si-border-lg transition-all text-sm font-medium"
                   >
                     {TIPOS_CONTA.map((t) => <option key={t} value={t}>{t}</option>)}
                   </select>
@@ -805,7 +805,7 @@ export default function Accounts() {
                     id="create-currency"
                     value={createCurrency}
                     onChange={(e) => setCreateCurrency(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-si-border-lg transition-all text-sm font-medium"
                   >
                     {MOEDAS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                   </select>
@@ -821,7 +821,7 @@ export default function Accounts() {
                     value={createAgency}
                     onChange={(e) => setCreateAgency(e.target.value)}
                     placeholder="0001-7"
-                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-si-border-lg transition-all text-sm font-medium"
                   />
                 </div>
                 <div>
@@ -832,7 +832,7 @@ export default function Accounts() {
                     value={createAccountNumber}
                     onChange={(e) => setCreateAccountNumber(e.target.value)}
                     placeholder="12345-8"
-                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-si-border-lg transition-all text-sm font-medium"
                   />
                 </div>
               </div>
@@ -843,7 +843,7 @@ export default function Accounts() {
                      type="checkbox"
                      checked={createIncluir}
                      onChange={(e) => setCreateIncluir(e.target.checked)}
-                     className="w-4 h-4 rounded-md border-si-5 text-blue-600 focus:ring-blue-500 bg-transparent"
+                     className="w-4 h-4 rounded-md border-si-5 text-blue-600 focus:ring-si-border-lg bg-transparent"
                    />
                    <span className="text-xs font-bold uppercase tracking-wider text-si-3 group-hover:text-si-2 transition-colors">Consolidar no Patrimônio</span>
                  </label>
@@ -883,7 +883,7 @@ export default function Accounts() {
 
           <div className="flex gap-3 pt-3">
             <button type="button" onClick={() => setModalOpen(false)} className="flex-1 py-3.5 rounded-xl bg-si-over-2 text-si-3 hover:text-si-1 font-bold text-sm transition-colors uppercase tracking-wider">Cancelar</button>
-            <button type="submit" disabled={busy} className="flex-[2] py-3.5 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 uppercase tracking-wider">
+            <button type="submit" disabled={busy} className="flex-[2] py-3.5 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm transition-colors shadow-lg shadow-black/20 uppercase tracking-wider">
               {busy ? 'Processando...' : 'Autenticar Conta'}
             </button>
           </div>
@@ -904,13 +904,13 @@ export default function Accounts() {
                 inputMode="decimal"
                 value={adjustValue}
                 onChange={(e) => setAdjustValue(e.target.value.replace(/[^0-9,.-]/, ''))}
-                className="w-full px-5 py-4 rounded-xl bg-si-bg border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-black text-2xl tracking-tighter"
+                className="w-full px-5 py-4 rounded-xl bg-si-bg border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-si-border-lg transition-all font-black text-2xl tracking-tighter"
                 autoFocus
               />
             </div>
             <div className="flex gap-3 pt-3">
               <button type="button" onClick={() => setAdjustAccount(null)} className="flex-1 py-3.5 rounded-xl bg-si-over-2 text-si-3 hover:text-si-1 font-bold text-sm transition-colors uppercase tracking-wider">Descartar</button>
-              <button type="submit" disabled={busy} className="flex-[2] py-3.5 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 uppercase tracking-wider">
+              <button type="submit" disabled={busy} className="flex-[2] py-3.5 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm transition-colors shadow-lg shadow-black/20 uppercase tracking-wider">
                 {busy ? 'Calculando...' : 'Confirmar Ajuste'}
               </button>
             </div>
@@ -964,7 +964,7 @@ export default function Accounts() {
                         }
                       }
                     }}
-                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-si-border-lg transition-all text-sm font-medium"
                   >
                     <option value="">Nenhum / Sem Vínculo</option>
                     {BANKS.filter(b => b.name !== 'Carteira').map((b) => (
@@ -985,7 +985,7 @@ export default function Accounts() {
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium"
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-si-border-lg transition-all font-medium"
                     required
                   />
                 </div>
@@ -999,7 +999,7 @@ export default function Accounts() {
                     value={editBalance}
                     onChange={(e) => setEditBalance(e.target.value.replace(/[^0-9,.-]/, ''))}
                     placeholder="0,00"
-                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-sm"
+                    className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-si-border-lg transition-all font-medium text-sm"
                   />
                 </div>
 
@@ -1009,7 +1009,7 @@ export default function Accounts() {
                     <select
                       value={editTipo}
                       onChange={(e) => setEditTipo(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-medium"
+                      className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-si-border-lg transition-all text-sm font-medium"
                     >
                       {TIPOS_CONTA.map((t) => <option key={t} value={t}>{t}</option>)}
                     </select>
@@ -1017,7 +1017,7 @@ export default function Accounts() {
                   <div>
                     <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Moeda</label>
                     <select value={editCurrency} onChange={(e) => setEditCurrency(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium">
+                      className="w-full px-4 py-3 rounded-xl bg-si-over-1 border border-si-border text-si-1 focus:outline-none focus:ring-2 focus:ring-si-border-lg text-sm font-medium">
                       {MOEDAS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                     </select>
                   </div>
@@ -1027,12 +1027,12 @@ export default function Accounts() {
                   <div>
                     <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Agência</label>
                     <input type="text" value={editAgency} onChange={(e) => setEditAgency(e.target.value)} placeholder="0001-7"
-                      className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium" />
+                      className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-si-border-lg text-sm font-medium" />
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-si-5 uppercase tracking-wider mb-2">Nº da Conta</label>
                     <input type="text" value={editAccountNumber} onChange={(e) => setEditAccountNumber(e.target.value)} placeholder="12345-8"
-                      className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium" />
+                      className="w-full px-3 py-2.5 rounded-xl bg-si-over-1 border border-si-border text-si-1 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-si-border-lg text-sm font-medium" />
                   </div>
                 </div>
 
@@ -1042,7 +1042,7 @@ export default function Accounts() {
                        type="checkbox"
                        checked={editIncluir}
                        onChange={(e) => setEditIncluir(e.target.checked)}
-                       className="w-4 h-4 rounded-md border-si-5 text-blue-600 focus:ring-blue-500 bg-transparent"
+                       className="w-4 h-4 rounded-md border-si-5 text-blue-600 focus:ring-si-border-lg bg-transparent"
                      />
                      <span className="text-xs font-bold text-si-3 group-hover:text-si-1 uppercase tracking-wider transition-colors">Consolidar no Patrimônio</span>
                    </label>
@@ -1076,7 +1076,7 @@ export default function Accounts() {
             
             <div className="flex gap-3 pt-4 w-full">
               <button type="button" onClick={() => setEditAccount(null)} className="flex-1 py-3 rounded-xl bg-si-over-2 text-si-3 hover:text-si-1 font-bold text-sm transition-colors uppercase tracking-wider">Cancelar</button>
-              <button type="submit" disabled={busy} className="flex-[2] py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 uppercase tracking-wider">
+              <button type="submit" disabled={busy} className="flex-[2] py-3 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm transition-colors shadow-lg shadow-black/20 uppercase tracking-wider">
                 {busy ? 'Salvando...' : 'Aplicar Preferências'}
               </button>
             </div>
@@ -1103,7 +1103,7 @@ export default function Accounts() {
                 type="button"
                 onClick={handleDeleteAccount}
                 disabled={busy}
-                className="flex-1 py-3.5 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-bold text-sm transition-colors shadow-lg shadow-rose-600/20 uppercase tracking-wider"
+                className="flex-1 py-3.5 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-bold text-sm transition-colors shadow-lg shadow-black/20 uppercase tracking-wider"
               >
                 {busy ? '...' : 'Destruir'}
               </button>

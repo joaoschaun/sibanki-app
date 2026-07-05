@@ -630,7 +630,7 @@ function Input({
           type={type} value={value}
           onChange={(e) => onChange(e.target.value)} onBlur={onBlur}
           placeholder={placeholder}
-          className={`w-full px-4 py-2.5 rounded-xl bg-si-bg border text-si-1 text-sm focus:outline-none focus:border-blue-500 ${prefix ? 'pl-8' : ''} ${error ? 'border-rose-500' : 'border-si-border-md'}`}
+          className={`w-full px-4 py-2.5 rounded-xl bg-si-bg border text-si-1 text-sm focus:outline-none focus:border-si-border-lg ${prefix ? 'pl-8' : ''} ${error ? 'border-rose-500' : 'border-si-border-md'}`}
         />
         {loading && <div className="absolute right-3 top-3 w-4 h-4 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />}
       </div>

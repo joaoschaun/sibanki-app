@@ -270,7 +270,7 @@ export default function Recurring() {
               value={formDesc}
               onChange={(e) => setFormDesc(e.target.value)}
               placeholder="Ex: Aluguel, Netflix"
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg"
               required
             />
           </div>
@@ -280,7 +280,7 @@ export default function Recurring() {
               id="rc-category"
               value={formCategory}
               onChange={(e) => setFormCategory(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
             >
               <option value="">—</option>
               {categories.map((c) => (
@@ -297,7 +297,7 @@ export default function Recurring() {
               value={formValue}
               onChange={(e) => setFormValue(e.target.value.replace(/[^0-9,.-]/, ''))}
               placeholder="0,00"
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg"
               required
             />
           </div>
@@ -311,7 +311,7 @@ export default function Recurring() {
                 max={31}
                 value={formDay}
                 onChange={(e) => setFormDay(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
               />
             </div>
             <div>
@@ -320,7 +320,7 @@ export default function Recurring() {
                 id="rc-freq"
                 value={formFreq}
                 onChange={(e) => setFormFreq(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
               >
                 {FREQ_OPTIONS.map((f) => (
                   <option key={f.value} value={f.value}>{f.label}</option>
@@ -334,7 +334,7 @@ export default function Recurring() {
               id="rc-account"
               value={formAccount}
               onChange={(e) => setFormAccount(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
             >
               <option value="">—</option>
               {accountOptions.map((a) => (

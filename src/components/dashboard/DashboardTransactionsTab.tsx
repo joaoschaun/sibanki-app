@@ -213,7 +213,7 @@ export function DashboardTransactionsTab() {
                 value={txSearch}
                 onChange={(e) => setTxSearch(e.target.value)}
                 placeholder="Buscar transações..."
-                className="w-full bg-si-bg border border-si-border rounded-xl py-2 pl-10 pr-4 text-xs focus:outline-none focus:border-blue-500/50 transition-colors"
+                className="w-full bg-si-bg border border-si-border rounded-xl py-2 pl-10 pr-4 text-xs focus:outline-none focus:border-si-border-lg transition-colors"
               />
             </div>
           </div>

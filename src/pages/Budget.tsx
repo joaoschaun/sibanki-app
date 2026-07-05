@@ -568,13 +568,13 @@ export default function Budget() {
                 <input type="text" inputMode="decimal" value={planIncome}
                   onChange={e => setPlanIncome(e.target.value.replace(/[^0-9,.-]/, ''))}
                   placeholder={receitaMes > 0 ? fmtBRL(receitaMes) : '0,00'}
-                  className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm" />
+                  className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-si-5 mb-1">% para poupar</label>
                 <input type="text" inputMode="decimal" value={planSavePct}
                   onChange={e => setPlanSavePct(e.target.value.replace(/[^0-9,.-]/, ''))}
-                  className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm" />
+                  className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg text-sm" />
               </div>
               <div className="rounded-xl border border-si-border-md bg-si-bg px-4 py-2.5">
                 <p className="text-xs text-si-5">Para distribuir</p>
@@ -620,7 +620,7 @@ export default function Budget() {
               <p className="text-xs text-si-5 mb-2">Renda mensal (R$)</p>
               <input type="text" inputMode="decimal" value={rendaStr}
                 onChange={e => setRendaStr(e.target.value)} onBlur={handleSaveRenda}
-                className="w-full bg-si-bg border border-si-border-md rounded-xl px-3 py-2 text-si-1 text-sm focus:outline-none focus:border-blue-500" />
+                className="w-full bg-si-bg border border-si-border-md rounded-xl px-3 py-2 text-si-1 text-sm focus:outline-none focus:border-si-border-lg" />
             </div>
             <div className="bg-si-card border border-si-border rounded-2xl p-6 text-center">
               <p className="text-xs text-si-5 mb-1">Alocado</p>
@@ -748,7 +748,7 @@ export default function Budget() {
               <input type="text" inputMode="decimal" value={editValue}
                 onChange={e => setEditValue(e.target.value.replace(/[^0-9,.-]/, ''))}
                 placeholder="0,00"
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500" />
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg" />
               <p className="text-xs text-si-5 mt-1">Deixe em branco ou 0 para remover o limite.</p>
             </div>
             <div className="flex gap-3">

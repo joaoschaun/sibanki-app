@@ -523,7 +523,7 @@ export default function Transactions() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-si-5" />
               <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar..."
-                className="w-full bg-si-card border border-si-border rounded-xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-blue-500/50 transition-colors" />
+                className="w-full bg-si-card border border-si-border rounded-xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-si-border-lg transition-colors" />
             </div>
 
             <div className="relative" ref={filterRef}>
@@ -741,7 +741,7 @@ export default function Transactions() {
             <div>
               <label className="block text-xs font-medium text-si-5 mb-1">Conta</label>
               <select value={aiAccount} onChange={(e) => setAiAccount(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-blue-500">
+                className="w-full px-3 py-2 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-si-border-lg">
                 <option value="">— sem conta —</option>
                 {allAccounts.map((a) => <option key={a} value={a}>{a}</option>)}
               </select>

@@ -28,7 +28,7 @@ const TOOLS: ToolCard[] = [
 ];
 
 // ── helpers ────────────────────────────────────────────────────────────────
-const inputCls = 'w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm';
+const inputCls = 'w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg text-sm';
 const labelCls = 'block text-xs font-medium text-si-5 mb-1';
 
 function ResultBox({ color, label, value, sub }: { color: string; label: string; value: string; sub?: string }) {

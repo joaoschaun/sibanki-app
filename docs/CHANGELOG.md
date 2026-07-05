@@ -17,6 +17,16 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Changed — Foco Neutro Pierre, Modularização de Cartões & Sidebar Categorizada (04/07/2026)
+
+- **Foco Neutro Pierre (Design System)**:
+  - Implementado o teste de regressão "Gate 2" no [designSystem.guard.test.ts](file:///c:/Users/jscha/virtus-financeiro/src/constants/designSystem.guard.test.ts) que restringe anéis de foco coloridos fora da marca (`focus:ring-blue-500`, etc.) no front-end, congelando o limite em zero.
+  - Ajustados os componentes de inputs em [Field.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/ui/Field.tsx) e mais de 25 arquivos de páginas/componentes para utilizar foco neutro ou deixar que a pseudo-classe `:focus-visible` global gerencie o foco.
+- **Modularização de Cartões (`CardTile`)**:
+  - Decomposta a tela de gestão de cartões (`Cards.tsx`), extraindo a visualização individual e ações do cartão para o novo componente modular [CardTile.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/credit/CardTile.tsx).
+- **Organização Linear da Sidebar (Lei de Hick)**:
+  - Reestruturados os 15 links extras sob o menu "Mais" na [Sidebar.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/layout/Sidebar.tsx) dividindo-os em quatro grupos temáticos (`GESTÃO`, `CRESCER`, `PARCEIROS`, `SERVIÇOS`) para facilitar o escaneamento visual.
+
 ### Changed — Layout Adaptativo, Modo Coach & Ícones Lucide (30/06/2026)
 
 - **Layout Adaptativo na Lista de Transações (`Transactions.tsx`)**:

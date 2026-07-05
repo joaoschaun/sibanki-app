@@ -404,7 +404,7 @@ export default function Growth() {
 
   if (loading) return <GrowthSkeleton />;
 
-  const inputCls = 'w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm';
+  const inputCls = 'w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg text-sm';
   const labelCls = 'block text-xs font-medium text-si-5 mb-1';
 
   return (
@@ -875,12 +875,12 @@ export default function Growth() {
                     inputMode="numeric"
                     value={calcPeriod}
                     onChange={(e) => setCalcPeriod(e.target.value.replace(/[^0-9]/, ''))}
-                    className="flex-1 px-4 py-2 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-sm"
+                    className="flex-1 px-4 py-2 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg text-sm"
                   />
                   <select
                     value={calcPeriodType}
                     onChange={(e) => setCalcPeriodType(e.target.value as 'anos' | 'meses')}
-                    className="px-3 py-2 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 text-xs font-bold uppercase"
+                    className="px-3 py-2 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg text-xs font-bold uppercase"
                   >
                     <option value="anos">Anos</option>
                     <option value="meses">Meses</option>
@@ -1188,12 +1188,12 @@ export default function Growth() {
           <div>
             <label htmlFor="inv-date" className={labelCls}>Data</label>
             <input id="inv-date" type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500" />
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg" />
           </div>
           <div>
             <label htmlFor="inv-tipo" className={labelCls}>Tipo</label>
             <select id="inv-tipo" value={formTipo} onChange={(e) => setFormTipo(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500">
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg">
               {INVESTMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
@@ -1204,7 +1204,7 @@ export default function Growth() {
                 <select
                   value={formIndexer}
                   onChange={(e) => setFormIndexer(e.target.value as any)}
-                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
                 >
                   <option value="pre">Prefixado (% a.a.)</option>
                   <option value="cdi">% do CDI</option>
@@ -1219,7 +1219,7 @@ export default function Growth() {
                   value={formIndexerValue}
                   onChange={(e) => setFormIndexerValue(e.target.value.replace(/[^0-9,.]/, ''))}
                   placeholder={formIndexer === 'cdi' ? 'Ex: 105' : formIndexer === 'ipca' ? 'Ex: 6' : 'Ex: 12.5'}
-                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
                 />
               </div>
             </div>
@@ -1228,7 +1228,7 @@ export default function Growth() {
             <label htmlFor="inv-nome" className={labelCls}>Nome / ativo {isRV && <span className="text-zinc-500">(ticker, ex: PETR4)</span>}</label>
             <input id="inv-nome" type="text" value={formNome} onChange={(e) => handleTickerInput(e.target.value)}
               placeholder={isRV ? 'Ex: PETR4, BOVA11, MXRF11' : 'Ex: Tesouro Selic, CDB Nubank'}
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg"
               autoComplete="off"
               required />
             {isRV && tickerSuggestions.length > 0 && (
@@ -1258,7 +1258,7 @@ export default function Growth() {
                     syncValorFromQtdPreco(v, formPrecoCompra);
                   }}
                   placeholder="0"
-                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg" />
               </div>
               <div>
                 <label htmlFor="inv-preco-compra" className={labelCls}>Preço de compra (R$)</label>
@@ -1269,7 +1269,7 @@ export default function Growth() {
                     syncValorFromQtdPreco(formQtd, v);
                   }}
                   placeholder="0,00"
-                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
+                  className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg" />
               </div>
             </div>
           )}
@@ -1277,7 +1277,7 @@ export default function Growth() {
             <label htmlFor="inv-valor" className={labelCls}>Valor aplicado (R$){isRV && formQtd && formPrecoCompra && <span className="text-blue-400 ml-1">— calculado</span>}</label>
             <input id="inv-valor" type="text" inputMode="decimal" value={formValor}
               onChange={(e) => setFormValor(e.target.value.replace(/[^0-9,.-]/, ''))} placeholder="0,00"
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg"
               required />
           </div>
 
@@ -1286,19 +1286,19 @@ export default function Growth() {
             <input id="inv-atual" type="text" inputMode="decimal" value={formAtual}
               onChange={(e) => setFormAtual(e.target.value.replace(/[^0-9,.-]/, ''))}
               placeholder="Igual ao aplicado se não preencher"
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg" />
           </div>
           <div>
             <label htmlFor="inv-proventos" className={labelCls}>Proventos mensais estimados (R$) – opcional</label>
             <input id="inv-proventos" type="text" inputMode="decimal" value={formProventos}
               onChange={(e) => setFormProventos(e.target.value.replace(/[^0-9,.-]/, ''))}
               placeholder="Ex: 50,00"
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg" />
           </div>
           <div>
             <label htmlFor="inv-conta" className={labelCls}>Conta (opcional)</label>
             <select id="inv-conta" value={formConta} onChange={(e) => setFormConta(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500">
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg">
               <option value="">—</option>
               {accounts.length > 0
                 ? accounts.map((a) => <option key={a} value={a}>{a}</option>)
@@ -1326,12 +1326,12 @@ export default function Growth() {
             <div>
               <label htmlFor="prov-date" className={labelCls}>Data do provento</label>
               <input id="prov-date" type="date" value={provDate} onChange={(e) => setProvDate(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-blue-500" />
+                className="w-full px-3 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-si-border-lg" />
             </div>
             <div>
               <label htmlFor="prov-account" className={labelCls}>Conta de crédito</label>
               <select id="prov-account" value={provConta} onChange={(e) => setProvConta(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-blue-500">
+                className="w-full px-3 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-si-border-lg">
                 <option value="">Selecione</option>
                 {(accounts.length ? accounts : DEFAULT_ACCOUNTS).map((a) => <option key={a} value={a}>{a}</option>)}
               </select>
@@ -1341,13 +1341,13 @@ export default function Growth() {
             <label htmlFor="prov-desc" className={labelCls}>Descrição</label>
             <input id="prov-desc" type="text" value={provDesc} onChange={(e) => setProvDesc(e.target.value)}
               placeholder="Ex: Dividendos PETR4"
-              className="w-full px-3 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-blue-500" />
+              className="w-full px-3 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-si-border-lg" />
           </div>
           <div>
             <label htmlFor="prov-value" className={labelCls}>Valor (R$)</label>
             <input id="prov-value" type="text" inputMode="decimal" value={provValor}
               onChange={(e) => setProvValor(e.target.value.replace(/[^0-9,.-]/, ''))} placeholder="0,00"
-              className="w-full px-3 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-si-border-lg"
               required />
           </div>
           <div className="flex gap-3 pt-2">
@@ -1372,7 +1372,7 @@ export default function Growth() {
               <label htmlFor="edit-atual" className={labelCls}>{editingAtual.nome} – valor atual (R$)</label>
               <input id="edit-atual" type="text" inputMode="decimal" value={editAtualValue}
                 onChange={(e) => setEditAtualValue(e.target.value.replace(/[^0-9,.-]/, ''))}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
                 placeholder="0,00" />
             </div>
             {editingAtual.tipo === 'Renda Fixa' && (
@@ -1382,7 +1382,7 @@ export default function Growth() {
                   <select
                     value={editIndexer}
                     onChange={(e) => setEditIndexer(e.target.value as any)}
-                    className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
                   >
                     <option value="pre">Prefixado (% a.a.)</option>
                     <option value="cdi">% do CDI</option>
@@ -1397,7 +1397,7 @@ export default function Growth() {
                     value={editIndexerValue}
                     onChange={(e) => setEditIndexerValue(e.target.value.replace(/[^0-9,.]/, ''))}
                     placeholder={editIndexer === 'cdi' ? 'Ex: 105' : editIndexer === 'ipca' ? 'Ex: 6' : 'Ex: 12.5'}
-                    className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
                   />
                 </div>
               </div>
@@ -1406,7 +1406,7 @@ export default function Growth() {
               <label htmlFor="edit-proventos" className={labelCls}>Proventos mensais estimados (R$) – opcional</label>
               <input id="edit-proventos" type="text" inputMode="decimal" value={editProventosValue}
                 onChange={(e) => setEditProventosValue(e.target.value.replace(/[^0-9,.-]/, ''))}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg"
                 placeholder="0,00" />
             </div>
             <div className="flex gap-3 pt-2">

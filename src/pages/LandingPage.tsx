@@ -946,7 +946,7 @@ export default function LandingPage() {
                 <Award className="w-5 h-5 text-amber-400" />
               </div>
               {/* Moeda 3D simulada rotacionando */}
-              <div className="w-12 h-12 rounded-full border border-amber-500/40 bg-gradient-to-r from-amber-500/20 to-yellow-600/30 flex items-center justify-center font-black text-amber-300 shadow-lg shadow-amber-500/10 spin-coin-slow text-sm">
+              <div className="w-12 h-12 rounded-full border border-amber-500/40 bg-gradient-to-r from-amber-500/20 to-yellow-600/30 flex items-center justify-center font-black text-amber-300 shadow-lg shadow-black/10 spin-coin-slow text-sm">
                 $
               </div>
             </div>

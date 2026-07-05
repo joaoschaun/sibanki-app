@@ -463,7 +463,7 @@ export default function Planning() {
               value={formTitle}
               onChange={(e) => setFormTitle(e.target.value)}
               placeholder="Ex: Reserva de emergência"
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg"
               required
             />
           </div>
@@ -476,7 +476,7 @@ export default function Planning() {
               value={formTarget}
               onChange={(e) => setFormTarget(e.target.value.replace(/[^0-9,.-]/, ''))}
               placeholder="0,00"
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg"
             />
           </div>
           <div>
@@ -488,7 +488,7 @@ export default function Planning() {
               value={formCurrent}
               onChange={(e) => setFormCurrent(e.target.value.replace(/[^0-9,.-]/, ''))}
               placeholder="0,00"
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg"
             />
           </div>
           <div>
@@ -498,7 +498,7 @@ export default function Planning() {
               type="date"
               value={formDeadline}
               onChange={(e) => setFormDeadline(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
             />
           </div>
           <div>
@@ -569,7 +569,7 @@ export default function Planning() {
                 type="text"
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
                 required
               />
             </div>
@@ -581,7 +581,7 @@ export default function Planning() {
                 inputMode="decimal"
                 value={formTarget}
                 onChange={(e) => setFormTarget(e.target.value.replace(/[^0-9,.-]/, ''))}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
               />
             </div>
             <div>
@@ -592,7 +592,7 @@ export default function Planning() {
                 inputMode="decimal"
                 value={formCurrent}
                 onChange={(e) => setFormCurrent(e.target.value.replace(/[^0-9,.-]/, ''))}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
               />
             </div>
             <div>
@@ -602,7 +602,7 @@ export default function Planning() {
                 type="date"
                 value={formDeadline}
                 onChange={(e) => setFormDeadline(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
               />
             </div>
              <div>
