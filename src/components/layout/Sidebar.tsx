@@ -31,6 +31,8 @@ interface NavItem {
   /** Chave do módulo em appModules — gating de ligar/desligar via admin. */
   key: string;
   tour?: string;
+  /** Subgrupo dentro de "Mais" (só para maisNav). */
+  group?: string;
 }
 
 /**
@@ -54,22 +56,29 @@ const coreNav: NavItem[] = [
 ];
 
 // ── Mais — todo o resto, colapsável ───────────────────────────────────────────
+// Subgrupos de "Mais" — reduzem a varredura linear de 15 itens (Lei de Hick).
+const MAIS_GROUPS = ['GESTÃO', 'CRESCER', 'PARCEIROS', 'SERVIÇOS'] as const;
+
 const maisNav: NavItem[] = [
-  { icon: PieChart,     label: 'Orçamento',   path: '/orcamento',       key: 'orcamento'   },
-  { icon: Target,       label: 'Metas',       path: '/planejamento',    key: 'metas'       },
-  { icon: RefreshCw,    label: 'Recorrentes', path: '/recorrentes',     key: 'recorrentes' },
-  { icon: ShoppingBag,  label: 'Loja',        path: '/loja',            key: 'loja'        },
-  { icon: Heart,        label: 'Família',     path: '/casal',           key: 'familia'     },
-  { icon: Handshake,    label: 'Credi Amigo', path: '/credi-amigo',     key: 'credi_amigo' },
-  { icon: Users,        label: 'Consórcio',   path: '/consorcio-amigo', key: 'consorcio'   },
-  { icon: FileBarChart, label: 'Relatórios',  path: '/relatorios',      key: 'relatorios'  },
-  { icon: Calendar,     label: 'Calendário',  path: '/calendario',      key: 'calendario'  },
-  { icon: BookOpen,     label: 'Educação',    path: '/educacao',        key: 'educacao'    },
-  { icon: Wrench,       label: 'Ferramentas', path: '/ferramentas',     key: 'ferramentas' },
-  { icon: Flame,        label: 'FIRE',        path: '/fire',            key: 'fire'        },
-  { icon: ShieldCheck,  label: 'Meu CPF',     path: '/meu-cpf',         key: 'meu_cpf'     },
-  { icon: Coins,        label: 'SibCoin',     path: '/sibcoin',         key: 'sibcoin'     },
-  { icon: Zap,          label: 'Filiados',    path: '/filiados',        key: 'filiados'    },
+  // ── GESTÃO
+  { icon: PieChart,     label: 'Orçamento',   path: '/orcamento',       key: 'orcamento',   group: 'GESTÃO'    },
+  { icon: Target,       label: 'Metas',       path: '/planejamento',    key: 'metas',       group: 'GESTÃO'    },
+  { icon: RefreshCw,    label: 'Recorrentes', path: '/recorrentes',     key: 'recorrentes', group: 'GESTÃO'    },
+  { icon: Calendar,     label: 'Calendário',  path: '/calendario',      key: 'calendario',  group: 'GESTÃO'    },
+  { icon: FileBarChart, label: 'Relatórios',  path: '/relatorios',      key: 'relatorios',  group: 'GESTÃO'    },
+  // ── CRESCER
+  { icon: BookOpen,     label: 'Educação',    path: '/educacao',        key: 'educacao',    group: 'CRESCER'   },
+  { icon: Flame,        label: 'FIRE',        path: '/fire',            key: 'fire',        group: 'CRESCER'   },
+  { icon: Coins,        label: 'SibCoin',     path: '/sibcoin',         key: 'sibcoin',     group: 'CRESCER'   },
+  // ── PARCEIROS
+  { icon: ShoppingBag,  label: 'Loja',        path: '/loja',            key: 'loja',        group: 'PARCEIROS' },
+  { icon: Handshake,    label: 'Credi Amigo', path: '/credi-amigo',     key: 'credi_amigo', group: 'PARCEIROS' },
+  { icon: Users,        label: 'Consórcio',   path: '/consorcio-amigo', key: 'consorcio',   group: 'PARCEIROS' },
+  { icon: Zap,          label: 'Filiados',    path: '/filiados',        key: 'filiados',    group: 'PARCEIROS' },
+  // ── SERVIÇOS
+  { icon: Heart,        label: 'Família',     path: '/casal',           key: 'familia',     group: 'SERVIÇOS'  },
+  { icon: ShieldCheck,  label: 'Meu CPF',     path: '/meu-cpf',         key: 'meu_cpf',     group: 'SERVIÇOS'  },
+  { icon: Wrench,       label: 'Ferramentas', path: '/ferramentas',     key: 'ferramentas', group: 'SERVIÇOS'  },
 ];
 
 // ── Rodapé ────────────────────────────────────────────────────────────────────
@@ -128,16 +137,16 @@ export function Sidebar({
     'px-2.5 py-[7px] w-full text-[11px] font-semibold tracking-[0.06em] uppercase',
     active
       ? 'bg-si-over-2 text-si-1'
-      : 'text-si-5 hover:text-si-3 hover:bg-si-over-1'
+      : 'text-si-4 hover:text-si-2 hover:bg-si-over-1'
   );
 
   const rowCollapsed = (active: boolean) => cn(
     base, 'justify-center w-8 h-8 mx-auto',
-    active ? 'bg-si-over-2 text-si-1' : 'text-si-5 hover:text-si-3 hover:bg-si-over-1'
+    active ? 'bg-si-over-2 text-si-1' : 'text-si-4 hover:text-si-2 hover:bg-si-over-1'
   );
 
   const iconCls = (active: boolean) =>
-    cn('w-[14px] h-[14px] shrink-0', active ? 'text-si-1' : 'text-si-5');
+    cn('w-[14px] h-[14px] shrink-0', active ? 'text-si-1' : 'text-si-4');
 
   function NavLink({ item }: { item: NavItem }) {
     const active = isActive(item.path);
@@ -261,9 +270,20 @@ export function Sidebar({
                 (maisOpen && !isCoachActive) ? 'max-h-[520px] opacity-100 mt-1' : 'max-h-0 opacity-0 pointer-events-none'
               )}>
                 <div className="space-y-[1px]">
-                  {maisItems.map((item) => (
-                    <NavLink key={item.path} item={item} />
-                  ))}
+                  {MAIS_GROUPS.map((grp) => {
+                    const groupItems = maisItems.filter((i) => i.group === grp);
+                    if (groupItems.length === 0) return null;
+                    return (
+                      <div key={grp} className="mb-1">
+                        <div className="px-2.5 pt-3 pb-1 text-[9px] font-bold tracking-[0.18em] uppercase text-si-4 select-none">
+                          {grp}
+                        </div>
+                        {groupItems.map((item) => (
+                          <NavLink key={item.path} item={item} />
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </>

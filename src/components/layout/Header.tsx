@@ -157,7 +157,7 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
         <button
           type="button"
           onClick={onMenuClick}
-          className="p-1.5 hover:bg-si-over-2 rounded-md transition-colors shrink-0"
+          className="p-1.5 hover:bg-si-over-2 rounded-md transition-colors shrink-0 min-touch-target active-press"
           data-tour="menu"
           aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
           aria-pressed={sidebarCollapsed}
@@ -174,7 +174,7 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
           type="button"
           onClick={toggleTheme}
           title={theme === 'light' ? 'Mudar para tema escuro' : 'Mudar para tema claro'}
-          className="p-2 hover:bg-si-over-2 rounded-md transition-colors"
+          className="p-2 hover:bg-si-over-2 rounded-md transition-colors min-touch-target active-press"
           aria-label={theme === 'light' ? 'Mudar para tema escuro' : 'Mudar para tema claro'}
         >
           {theme === 'light'
@@ -274,7 +274,7 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
           <button
             type="button"
             onClick={() => setDropdownOpen((o) => !o)}
-            className="w-8 h-8 rounded-full border border-si-border bg-si-over-2 flex items-center justify-center overflow-hidden hover:bg-si-over-3 transition-colors"
+            className="w-8 h-8 rounded-full border border-si-border bg-si-over-2 flex items-center justify-center overflow-hidden hover:bg-si-over-3 transition-colors min-touch-target active-press"
             aria-label="Menu da conta"
             aria-haspopup="true"
             aria-expanded={dropdownOpen}

@@ -19,8 +19,8 @@
   --si-text-1: #f0f0f0;
   --si-text-2: #d4d4d4;
   --si-text-3: #b0b0b0;
-  --si-text-4: #787878;
-  --si-text-5: #505050;
+  --si-text-4: #7c7c7c;
+  --si-text-5: #606060;
 
   /* Overlay / glass fills */
   --si-over-1: rgba(255, 255, 255, 0.025);
@@ -245,6 +245,21 @@ body {
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
+}
+
+
+/* ── Foco de teclado global (WCAG 2.4.7 Focus Visible) ──────────
+   Anel duplo: primeiro halo na cor do fundo, depois a borda de alto
+   contraste — garante indicador visível sobre qualquer superfície
+   (si-bg ou si-card), técnica Stripe/GitHub. Só aparece em navegação
+   por teclado (:focus-visible), nunca no clique de mouse. Vale para o
+   app inteiro sem tocar componente a componente. */
+@layer base {
+  :where(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--si-bg), 0 0 0 4px var(--si-border-xl);
+    border-radius: 8px;
+  }
 }
 
 /* Custom Premium Scrollbar */
