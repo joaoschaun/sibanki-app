@@ -311,7 +311,7 @@ export function ImportEntries({ open, onClose }: Props) {
                 <div className="space-y-3">
                   <textarea value={pasteText} onChange={(e) => setPasteText(e.target.value)}
                     placeholder="Cole o texto do extrato aqui (data, descrição e valor em cada linha)"
-                    className="w-full h-40 px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm resize-none focus:outline-none focus:border-blue-500" />
+                    className="w-full h-40 px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm resize-none focus:outline-none focus:border-si-border-lg" />
                   <button type="button" onClick={handlePaste} disabled={!pasteText.trim()}
                     className="px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-bold disabled:opacity-50">
                     Analisar texto

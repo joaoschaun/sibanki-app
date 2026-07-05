@@ -69,7 +69,7 @@ export function TransferForm({
             id="transfer-from"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
           >
             <option value="">—</option>
             {filteredAccounts.map((a) => (
@@ -86,7 +86,7 @@ export function TransferForm({
             id="transfer-to"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
           >
             <option value="">—</option>
             {filteredAccounts.map((a) => (
@@ -108,7 +108,7 @@ export function TransferForm({
             value={valueStr}
             onChange={(e) => setValueStr(e.target.value.replace(/[^0-9,.-]/g, ''))}
             placeholder="0,00"
-            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg"
           />
         </div>
 
@@ -119,7 +119,7 @@ export function TransferForm({
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500"
+            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg"
           />
         </div>
       </div>

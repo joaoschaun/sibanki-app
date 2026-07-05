@@ -41,7 +41,7 @@ function RecurrenceModal({
   return (
     /* Overlay escuro sobre o modal pai */
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-[#0d1421] border border-blue-500/30 rounded-2xl w-full max-w-sm shadow-2xl shadow-blue-500/10">
+      <div className="bg-[#0d1421] border border-blue-500/30 rounded-2xl w-full max-w-sm shadow-2xl shadow-black/10">
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-si-border">
           <div className="flex items-center gap-2">
@@ -128,7 +128,7 @@ function RecurrenceModal({
                 max={360}
                 value={repeatCount}
                 onChange={(e) => setRepeatCount(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-si-border-lg"
               />
               <p className="text-xs text-si-5 mt-1">
                 Será lançado por {repeatCount} {repeatCount === 1 ? 'vez' : 'vezes'}.
@@ -145,7 +145,7 @@ function RecurrenceModal({
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 text-sm focus:outline-none focus:border-si-border-lg"
               />
             </div>
           )}
@@ -358,14 +358,14 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
           <label className="block text-xs font-medium text-si-5 mb-1">Descrição</label>
           <input type="text" value={desc} onChange={(e) => setDesc(e.target.value)}
             placeholder="Ex: Supermercado"
-            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
+            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg" />
         </div>
 
         {/* Categoria */}
         <div>
           <label htmlFor="entry-form-category" className="block text-xs font-medium text-si-5 mb-1">Categoria</label>
           <select id="entry-form-category" value={category} onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500">
+            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg">
             {DEFAULT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
@@ -416,7 +416,7 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
           <input id="entry-form-value" type="text" inputMode="decimal" value={value}
             onChange={(e) => setValue(e.target.value.replace(/[^0-9,.-]/, ''))}
             placeholder="0,00"
-            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg"
             required />
         </div>
 
@@ -424,7 +424,7 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
         <div>
           <label className="block text-xs font-medium text-si-5 mb-1">Data</label>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500" />
+            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg" />
         </div>
 
         {/* Conta */}
@@ -443,7 +443,7 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
                 setAccount(val);
               }
             }}
-            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-blue-500 font-medium"
+            className="w-full px-4 py-3 rounded-xl bg-si-bg border border-si-border-md text-si-1 focus:outline-none focus:border-si-border-lg font-medium"
           >
             <option value="">— sem conta —</option>
             {accounts.map((a) => (
@@ -464,7 +464,7 @@ export function EntryForm({ entry, onSubmit, onCancel }: EntryFormProps) {
                 value={newAccountName}
                 onChange={(e) => setNewAccountName(e.target.value)}
                 placeholder="Ex: Nubank, Itaú..."
-                className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-medium text-sm"
+                className="w-full px-4 py-2.5 rounded-xl bg-si-bg border border-si-border-md text-si-1 placeholder-zinc-500 focus:outline-none focus:border-si-border-lg font-medium text-sm"
                 required
               />
             </div>
