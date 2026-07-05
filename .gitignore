@@ -93,6 +93,9 @@ acoes_raw.txt
 public/assets/*.js
 public/assets/*.css
 
+# Artefatos do legado congelado (JS Firebase compat baixado)
+public/index_files/
+
 # OS files
 .DS_Store
 Thumbs.db
