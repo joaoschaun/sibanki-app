@@ -200,22 +200,22 @@ function NewPurchasePanel({
       <div className="grid grid-cols-2 gap-2">
         <input placeholder="Descrição" value={form.desc}
           onChange={e => set('desc', e.target.value)}
-          className="col-span-2 rounded-lg bg-zinc-800/60 border border-zinc-700/50 px-3 py-2 text-sm focus:outline-none focus:border-indigo-500/50" />
+          className="col-span-2 rounded-lg bg-zinc-800/60 border border-zinc-700/50 px-3 py-2 text-sm focus:outline-none focus:border-si-border-lg" />
         <input type="number" min="0.01" step="0.01" placeholder="Valor (R$)" value={form.value}
           onChange={e => set('value', e.target.value)}
-          className="rounded-lg bg-zinc-800/60 border border-zinc-700/50 px-3 py-2 text-sm focus:outline-none focus:border-indigo-500/50" />
+          className="rounded-lg bg-zinc-800/60 border border-zinc-700/50 px-3 py-2 text-sm focus:outline-none focus:border-si-border-lg" />
         <input type="date" value={form.date}
           onChange={e => set('date', e.target.value)}
-          className="rounded-lg bg-zinc-800/60 border border-zinc-700/50 px-3 py-2 text-sm focus:outline-none focus:border-indigo-500/50" />
+          className="rounded-lg bg-zinc-800/60 border border-zinc-700/50 px-3 py-2 text-sm focus:outline-none focus:border-si-border-lg" />
         <select value={form.category} onChange={e => set('category', e.target.value)}
-          className="rounded-lg bg-zinc-800/60 border border-zinc-700/50 px-3 py-2 text-sm focus:outline-none focus:border-indigo-500/50">
+          className="rounded-lg bg-zinc-800/60 border border-zinc-700/50 px-3 py-2 text-sm focus:outline-none focus:border-si-border-lg">
           {CATEGORIES.map(c => <option key={c}>{c}</option>)}
         </select>
         <div className="flex items-center gap-2">
           <label className="text-xs text-zinc-400 shrink-0">Parcelas:</label>
           <input type="number" min="1" max="48" value={form.parcelas}
             onChange={e => set('parcelas', e.target.value)}
-            className="w-full rounded-lg bg-zinc-800/60 border border-zinc-700/50 px-3 py-2 text-sm focus:outline-none focus:border-indigo-500/50" />
+            className="w-full rounded-lg bg-zinc-800/60 border border-zinc-700/50 px-3 py-2 text-sm focus:outline-none focus:border-si-border-lg" />
         </div>
       </div>
       {preview && (
