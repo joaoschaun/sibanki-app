@@ -64,6 +64,10 @@ export interface SpreadGapResult {
   /** Valor mensal sendo "perdido" por ineficiência (0 se alavancagem inteligente) */
   monthlyLeakage: number;
   verdict: SpreadVerdict;
+  /** Confiança: proporção do patrimônio com taxa REAL vs PROXY (CDI, rotativo).
+   *  'alta' ≥70% · 'media' 30–69% · 'baixa' <30% ou sem posições. */
+  dataConfidence: 'alta' | 'media' | 'baixa';
+  usesProxyRates: boolean;
 }
 
 export interface SovereigntyScoreInput {
@@ -334,6 +338,10 @@ export function calculateSpreadGap(params: {
     currentCdiMonthly = 0.01, // ~12% a.a. — atualizar via BRAPI
   } = params;
 
+  // Rastreio de confiança: quanto do patrimônio usa taxa REAL vs PROXY
+  let realRateValue = 0;
+  let proxyRateValue = 0;
+
   // 1. Rendimento médio dos investimentos (ponderado pelo valor)
   const totalInvested = investments.reduce((s, i) => s + (Number(i.atual ?? i.valor) || 0), 0);
 
@@ -345,6 +353,8 @@ export function calculateSpreadGap(params: {
       const monthlyRate = inv.taxaAnual
         ? Math.pow(1 + inv.taxaAnual / 100, 1 / 12) - 1
         : currentCdiMonthly * 0.9; // LCI/LCA isenta, CDB ~90% CDI em média
+      if (inv.taxaAnual) realRateValue += value;
+      else proxyRateValue += value;
       return s + value * monthlyRate;
     }, 0);
     weightedInvestmentYield = yieldSum / totalInvested;
@@ -370,6 +380,8 @@ export function calculateSpreadGap(params: {
     );
     if (!Number.isFinite(rawPct) || rawPct < 0) continue;
     const monthlyRate = rawPct / 100; // 2.5 → 0.025
+    if (rawPct > 0) realRateValue += amount;
+    else proxyRateValue += amount;
     allDebts.push({ amount, monthlyRate });
   }
 
@@ -400,6 +412,7 @@ export function calculateSpreadGap(params: {
           || obKey.endsWith(` ${cardKey}`);
       });
       if (!alreadyCovered) {
+        proxyRateValue += fatura;
         allDebts.push({ amount: fatura, monthlyRate: ROTATIVO_CARTAO_PROXY_MENSAL });
       }
     }
@@ -425,12 +438,23 @@ export function calculateSpreadGap(params: {
   else if (spreadGap >= -0.02) verdict = 'ineficiencia-moderada';
   else verdict = 'dreno-critico';
 
+  const ratedValue = realRateValue + proxyRateValue;
+  const realShare = ratedValue > 0 ? realRateValue / ratedValue : 0;
+  const usesProxyRates = proxyRateValue > 0 || ratedValue === 0;
+  let dataConfidence: 'alta' | 'media' | 'baixa';
+  if (ratedValue === 0) dataConfidence = 'baixa';
+  else if (realShare >= 0.7) dataConfidence = 'alta';
+  else if (realShare >= 0.3) dataConfidence = 'media';
+  else dataConfidence = 'baixa';
+
   return {
     avgInvestmentYieldMonthly: weightedInvestmentYield,
     avgDebtCostMonthly,
     spreadGap,
     monthlyLeakage,
     verdict,
+    dataConfidence,
+    usesProxyRates,
   };
 }
 

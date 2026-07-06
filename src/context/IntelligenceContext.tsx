@@ -95,9 +95,10 @@ export function IntelligenceProvider({ children }: { children: ReactNode }) {
         accountMeta,
         investments,
         entries,
+        investmentYieldMonthly: cdiMonthly ?? CDI_FALLBACK_MONTHLY,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [entries, investments, accountBalances, accountMeta],
+    [entries, investments, accountBalances, accountMeta, cdiMonthly],
   );
 
   // Funil de ativação (Ação #3 — Análise 360): marco "primeiro Ld real".
@@ -128,7 +129,7 @@ export function IntelligenceProvider({ children }: { children: ReactNode }) {
         currentCdiMonthly: cdiMonthly ?? CDI_FALLBACK_MONTHLY,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [investments, creditObligations, cards],
+    [investments, creditObligations, cards, cdiMonthly],
   );
 
   // Estado unificado de inteligência

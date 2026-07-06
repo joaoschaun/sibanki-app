@@ -17,6 +17,22 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Changed — Correção de Spread Gap, Reatividade do CDI e Blueprint Adaptável (05/07/2026)
+
+- **Correção da Dependência do CDI no Spread Gap (Sg)**:
+  - Adicionado `cdiMonthly` nas dependências do `useMemo` do `spread` e do `freedom` em [IntelligenceContext.tsx](file:///c:/Users/jscha/virtus-financeiro/src/context/IntelligenceContext.tsx), corrigindo o bug onde o Sg e o Ld não recalculavam quando a cotação real do CDI era carregada em tempo real.
+  - Parametrizado o `investmentYieldMonthly` com a taxa dinâmica de CDI obtida do mercado.
+- **Indicador de Confiança do Spread Gap**:
+  - Atualizada a interface `SpreadGapResult` em [sovereigntyEngine.ts](file:///c:/Users/jscha/virtus-financeiro/src/utils/sovereigntyEngine.ts) para retornar os campos `dataConfidence` (`'alta' | 'media' | 'baixa'`) e `usesProxyRates` (se utiliza proxies como rotativo de 14% ou cdi fallback).
+  - Implementado o rastreamento de taxas reais cadastradas pelo usuário vs proxies nos investimentos, cartões de crédito e obrigações de crédito.
+  - Adicionado um badge sutil no [SpreadGapCard.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/ui/SpreadGapCard.tsx) que sinaliza "Estimativa" ou "Estimativa parcial" quando o cálculo se apoia em taxas estimadas.
+- **Blueprint do Dashboard Adaptável**:
+  - Criado o documento de especificação técnica [BLUEPRINT-DASHBOARD-ADAPTAVEL.md](file:///c:/Users/jscha/virtus-financeiro/docs/BLUEPRINT-DASHBOARD-ADAPTAVEL.md) definindo a matriz de visualização adaptável (`journeyStage` × `healthLevel` → widgets) e a regra de ouro de nunca ocultar riscos críticos do usuário.
+  - Criada a função utilitária pura [dashboardBlueprint.ts](file:///c:/Users/jscha/virtus-financeiro/src/utils/dashboardBlueprint.ts) para computar dinamicamente a ordenação dos widgets.
+  - Desenvolvidos testes unitários abrangentes no arquivo [dashboardBlueprint.test.ts](file:///c:/Users/jscha/virtus-financeiro/src/utils/dashboardBlueprint.test.ts) validando a reordenação e a omissão de widgets de investimento no caso crítico.
+  - Criado o componente [WidgetAlertaCritico.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/ui/WidgetAlertaCritico.tsx) que renderiza um alerta de risco em destaque (borda/fundo vermelho, descrição do dreno/saldo e redirecionamento para o Consultor IA).
+  - Integrado o layout adaptável no painel [Dashboard.tsx](file:///c:/Users/jscha/virtus-financeiro/src/pages/Dashboard.tsx) usando um `WIDGET_MAP` para ordenar dinamicamente todos os cartões principais do lado esquerdo do cockpit com base no blueprint de prioridades e remover o card de Spread Gap duplicado na direita.
+
 ### Changed — Foco Neutro Pierre, Modularização de Cartões & Sidebar Categorizada (04/07/2026)
 
 - **Foco Neutro Pierre (Design System)**:

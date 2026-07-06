@@ -12,6 +12,12 @@ import { Link } from 'react-router-dom';
 import { ArrowUpRight, TrendingDown, TrendingUp, Minus } from 'lucide-react';
 import type { SpreadGapResult } from '../../utils/sovereigntyEngine';
 
+const CONFIDENCE_LABEL: Record<SpreadGapResult['dataConfidence'], string> = {
+  alta: '',
+  media: 'Estimativa parcial',
+  baixa: 'Estimativa',
+};
+
 // ─── Configurações por veredicto ────────────────────────────────────────────
 const VERDICT_CONFIG = {
   'dreno-critico': {
@@ -67,6 +73,7 @@ interface SpreadGapCardProps {
 export function SpreadGapCard({ spread }: SpreadGapCardProps) {
   const cfg = VERDICT_CONFIG[spread.verdict];
   const Icon = cfg.icon;
+  const showConfidence = spread.dataConfidence !== 'alta';
 
   // Barra: mostra proporção de yield vs debt (escala visual 0-5% ao mês)
   const maxRate = Math.max(spread.avgInvestmentYieldMonthly, spread.avgDebtCostMonthly, 0.01);
@@ -82,7 +89,17 @@ export function SpreadGapCard({ spread }: SpreadGapCardProps) {
       {/* ── Cabeçalho ── */}
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-0.5">
-          <p className="text-[11px] font-bold text-si-4 uppercase tracking-[0.18em]">Spread Gap — Sg</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[11px] font-bold text-si-4 uppercase tracking-[0.18em]">Spread Gap — Sg</p>
+            {showConfidence && (
+              <span
+                className="text-[9px] font-bold uppercase tracking-[0.1em] text-si-5 border border-si-border rounded px-1 py-px"
+                title="Cálculo com taxas de mercado (CDI, rotativo). Cadastre as taxas reais para maior precisão."
+              >
+                {CONFIDENCE_LABEL[spread.dataConfidence]}
+              </span>
+            )}
+          </div>
           <p className={`text-xs font-bold uppercase tracking-wide ${cfg.color}`}>{cfg.label}</p>
         </div>
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cfg.bg}`}>
