@@ -103,3 +103,7 @@ Thumbs.db
 # artefatos locais
 .playwright-mcp/
 _legacy/*.zip
+
+# graphify
+graphify-out/
+
