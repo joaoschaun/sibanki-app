@@ -1,12 +1,12 @@
-# AGENTS.md — regras de engenharia do Sibanki (Claude-only)
+# AGENTS.md — regras de engenharia do Sibanki
 
-> **Fonte única de verdade** sobre como o Claude deve trabalhar neste repositório.
-> O desenvolvimento é feito **inteiramente pelo Claude** (Claude Code) sob direção
-> do João. Não há mais pipeline multi-agente (Cursor/Antigravity foram aposentados
-> em jun/2026).
+> **Fonte única de verdade** sobre como o desenvolvimento é realizado neste repositório.
+> O desenvolvimento é realizado através de um pipeline estruturado: o Claude atua como
+> especificador e revisor de diffs, enquanto o Antigravity opera como executor mecânico
+> guiado por especificações de handoff em `docs/handoffs/`, sob um lock de execução
+> e gates bloqueantes.
 >
-> Se você é o Claude e está vendo este arquivo, **leia-o por inteiro antes de
-> editar qualquer linha de código**. São ~150 linhas e te economizam retrabalho.
+> Leia este arquivo por inteiro antes de editar qualquer linha de código.
 > Em caso de conflito com qualquer outra instrução do repo, **AGENTS.md vence**.
 
 ---
@@ -258,7 +258,7 @@ Achados SEG-* em `docs/AUDITORIA_FASE_1_2.md` — leia o ID antes de mexer no po
 João + nota em `docs/CHANGELOG.md` na seção `### Changed — Governança IA`).
 
 Versão atual: `2.2` — jul/2026: adicionada a §12 "Governança do Pipeline"
-(Comitê de Agentes + Execução Antigravity sob spec+gates+lock); seções 12 renomeada para 13.
+(Comitê de Agentes + Execução Antigravity sob spec+gates+lock) e atualizada a introdução para refletir o novo modelo de pipeline.
 
 Histórico:
 - `2.1` — jun/2026: adicionada a §1 "O papel: sócio desenvolvedor"
