@@ -16,8 +16,10 @@
 > 2. Histórico de sessão: usar `docs/CHANGELOG.md`, não acumular mais neste arquivo.
 > 3. Decisões arquiteturais permanentes podem ser documentadas aqui (seção
 >    "Status atual"); detalhe operacional vai para CHANGELOG.
-> 4. Pipeline Cursor/Antigravity foi aposentado (jun/2026). Todo o desenvolvimento
->    é feito pelo Claude. Deploys/escritas em prod só com autorização explícita do João.
+> 4. Desenvolvimento via pipeline estruturado — Claude especifica (handoff) e revisa o
+>    diff; Antigravity executa o mecânico sob lock ([.pipeline/EXECUTION.lock.md](file:///c:/Users/jscha/virtus-financeiro/.pipeline/EXECUTION.lock.md)) e
+>    gate bloqueante (`npm run gate`). Detalhes em [PIPELINE-DESIGN.md](file:///c:/Users/jscha/virtus-financeiro/docs/PIPELINE-DESIGN.md) e [AGENTS.md:§12](file:///c:/Users/jscha/virtus-financeiro/AGENTS.md).
+>    A Regra de Ouro permanece: dinheiro/rules/deploy = aval humano, qualquer que seja o executor.
 >
 > ---
 >

@@ -17,6 +17,21 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Changed — Bootstrap do Pipeline e Registro da Governança (08/07/2026)
+
+- **Pipeline de Agentes (Bootstrap)**:
+  - Criado o comitê de 6 personas em [.claude/agents/](file:///c:/Users/jscha/virtus-financeiro/.claude/agents/) (`data.md`, `dev.md`, `qa.md`, `security.md`, `uiux.md`).
+  - Desenvolvido o gate único [pipeline-gate.mjs](file:///c:/Users/jscha/virtus-financeiro/scripts/pipeline-gate.mjs) executando sequencialmente `typecheck` -> `test:unit` -> `test:react-smoke` (com `react-smoke` sendo não-bloqueante/watch-item devido a cold-starts de URL remota).
+  - Implementado o Git Hook [.githooks/pre-push](file:///c:/Users/jscha/virtus-financeiro/.githooks/pre-push) para bloquear pushes no caso de falhas no gate local.
+  - Implementado o controle de lock de execução em [.pipeline/EXECUTION.lock.md](file:///c:/Users/jscha/virtus-financeiro/.pipeline/EXECUTION.lock.md) com status de controle de concorrência.
+  - Criados templates e documentações em [docs/handoffs/](file:///c:/Users/jscha/virtus-financeiro/docs/handoffs/).
+- **Governança IA**:
+  - Atualizado o contrato de engenharia [AGENTS.md](file:///c:/Users/jscha/virtus-financeiro/AGENTS.md) para a versão `2.2` com a nova seção §12 detalhando a governança do pipeline (Antigravity executor + Claude especificador/revisor) e removida a contradição no cabeçalho.
+  - Reconciliado o [CLAUDE.md](file:///c:/Users/jscha/virtus-financeiro/CLAUDE.md) para documentar a nova governança mantendo a integridade da Regra de Ouro.
+- **Graphify**:
+  - Inserida a seção §11 em [docs/PIPELINE-DESIGN.md](file:///c:/Users/jscha/virtus-financeiro/docs/PIPELINE-DESIGN.md) detalhando o uso do mapa estático de dependências e arestas inferidas.
+  - Adicionado `graphify-out/` ao [.gitignore](file:///c:/Users/jscha/virtus-financeiro/.gitignore).
+
 ### Changed — Correção de Spread Gap, Reatividade do CDI e Blueprint Adaptável (05/07/2026)
 
 - **Correção da Dependência do CDI no Spread Gap (Sg)**:

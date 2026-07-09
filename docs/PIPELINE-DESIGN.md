@@ -124,6 +124,12 @@ Meta de bootstrap (§ HANDOFF-0001): amarrar esses quatro num **único gate
 bloqueante** (script + hook/CI) que o merge respeita. Enquanto não existir, o gate
 é humano (João roda e confere) — é o estado atual.
 
+> [!IMPORTANT]
+> **Limitação Conhecida e Dívida Técnica (react-smoke):**
+> Hoje o passo `react-smoke` roda como non-blocking (watch-item) por causa de flake de cold-start/URL remota do lighthouse-audit. Portanto, os gates **duros** atuais (bloqueantes) são `tsc` + `test:unit` (que já inclui o ratchet).
+>
+> **Dívida:** Dividir o `react-smoke` em um projeto estrutural bloqueante (rota/bundle, rodável localmente contra o build de forma rápida) e um projeto remoto/perf non-blocking (lighthouse), permitindo que o smoke estrutural volte a ser um gate 100% bloqueante.
+
 ---
 
 ## 5. Lock de execução (um executor por vez)
