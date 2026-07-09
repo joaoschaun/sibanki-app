@@ -243,14 +243,26 @@ Achados SEG-* em `docs/AUDITORIA_FASE_1_2.md` — leia o ID antes de mexer no po
 
 ---
 
-## 12. Atualização deste arquivo
+## 12. Governança do Pipeline (Comitê de Agentes + Execução)
+
+- **Executor Mecânico:** O Antigravity opera como executor mecânico guiado por especificações de handoff em `docs/handoffs/`.
+- **Papel do Claude:** O Claude atua como especificador do handoff e revisor do diff contra o critério de aceitação da spec.
+- **Locks e Branches:** Toda execução de pipeline exige a aquisição do lock em `.pipeline/EXECUTION.lock.md` e branch dedicada no formato `pipe/<NNNN>-<slug>`.
+- **Regra de Ouro Inalterada:** Nenhuma mudança que envolva dinheiro, regras do Firestore ou configurações de deploy entra na branch principal sem aprovação explícita e manual do João, independente do executor.
+
+---
+
+## 13. Atualização deste arquivo
 
 `AGENTS.md` é editado raramente — cada mudança é mudança de contrato (aprovação do
 João + nota em `docs/CHANGELOG.md` na seção `### Changed — Governança IA`).
 
-Versão atual: `2.1` — jun/2026: adicionada a §1 "O papel: sócio desenvolvedor"
-(operacionalizada pela skill `sibanki`); seções 1–11 renumeradas para 2–12.
+Versão atual: `2.2` — jul/2026: adicionada a §12 "Governança do Pipeline"
+(Comitê de Agentes + Execução Antigravity sob spec+gates+lock); seções 12 renomeada para 13.
 
-Histórico: `2.0` — jun/2026: consolidação Claude-only (aposentados Cursor e
-Antigravity; removidos pipeline, TASK_QUEUE e `.cursor/rules`; conteúdo útil
-migrado para cá).
+Histórico:
+- `2.1` — jun/2026: adicionada a §1 "O papel: sócio desenvolvedor"
+  (operacionalizada pela skill `sibanki`); seções 1–11 renumeradas para 2–12.
+- `2.0` — jun/2026: consolidação Claude-only (aposentados Cursor e
+  Antigravity; removidos pipeline, TASK_QUEUE e `.cursor/rules`; conteúdo útil
+  migrado para cá).

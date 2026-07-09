@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# Sibanki pre-push git hook
+# Roda o gate de qualidade completo antes de empurrar alterações para a nuvem.
+
+printf "\033[35m[Git Hook] Iniciando verificação do pipeline gate...\033[0m\n"
+
+npm run gate
+RESULT=$?
+
+if [ $RESULT -ne 0 ]; then
+  printf "\n\033[31m[Git Hook] ❌ O push foi abortado porque o gate de qualidade falhou.\033[0m\n"
+  printf "\033[31m[Git Hook] Resolva os erros acima antes de tentar novamente.\033[0m\n\n"
+  exit 1
+fi
+
+printf "\n\033[32m[Git Hook] ✔ Gate passou! Continuando com o push...\033[0m\n\n"
+exit 0
