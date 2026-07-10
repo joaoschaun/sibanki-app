@@ -224,3 +224,14 @@ tudo depois disso roda por ele.
   com falso-positivos — nunca decidir risco só nelas.
 - **Higiene:** `graphify-out/` é build output → não versionar (ver `.gitignore`).
 
+---
+
+## 12. Comunicação via repo (caixa-postal)
+
+Para simplificar a troca de informações e evitar a colagem manual de relatórios e especificações de escopo extensos no chat, o fluxo de comunicação entre os agentes passa a ser versionado diretamente no repositório:
+- **Specs de Handoff:** O Claude escreve a especificação em `docs/handoffs/HANDOFF-<NNNN>-<slug>.md`.
+- **Sinal de Turno (Quadro de Status):** O arquivo [.pipeline/STATE.md](file:///c:/Users/jscha/virtus-financeiro/.pipeline/STATE.md) centraliza de quem é a vez de agir e qual o status da execução atual (`Turno`, `Estado`).
+- **Relatórios de Fechamento:** O Antigravity escreve seu relatório detalhado de execução em `.pipeline/reports/HANDOFF-<NNNN>.report.md` a partir do template padrão antes de liberar o lock de execução.
+- **Intervenção Humana:** O João opera apenas como gatilho simplificado de início/fim e gate de segurança manual (merge) sem necessidade de mediar a transferência de contexto textual.
+
+
