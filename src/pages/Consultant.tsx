@@ -46,6 +46,7 @@ export default function Consultant() {
     accountMeta,
     cards,
     recurrents,
+    creditObligations,
   } = useAppContext();
 
   const { requireFeature } = useFeatureFlags();
@@ -68,7 +69,7 @@ export default function Consultant() {
     queuePendingMessage,
   } = useConsultantSession();
 
-  const { freedom, creditObligations } = useIntelligence();
+  const { freedom } = useIntelligence();
 
   // ── Motor de antecipacao (rubric §8.5/§9): a "unica coisa que importa agora" ──
   const [snoozedIds, setSnoozedIds] = useState<Set<string>>(() => new Set());

@@ -14,7 +14,7 @@ import {
   topHorizonItem,
   type AnticipationInput,
 } from './anticipationEngine';
-import type { Recurrent, CreditObligation, Card } from '../types/userData';
+import type { Recurrent, CreditObligation } from '../types/userData';
 
 const TODAY = new Date(2026, 6, 8); // 2026-07-08 (meia-noite local)
 const BURN = 150; // R$/dia → R$ 900 = 6 dias de liberdade

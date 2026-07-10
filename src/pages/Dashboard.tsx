@@ -111,12 +111,10 @@ export default function Dashboard() {
   const {
     user, entries, investments, accounts, score, loading,
     accountBalances, accountMeta, cards, goals, recurrents,
-    creditObligations,
     hasOpenFinance, verifiedEntries, openFinanceIdentityByItem, dataFreshness,
-    data,
   } = useAppContext();
   const { mode: dashboardMode } = useDashboardMode();
-  const { isCoachActive, dismiss: dismissCoach } = useCoachActive();
+  const { isCoachActive, dismiss: dismissCoach, stepStatus } = useCoachActive();
 
   const [showEditor, setShowEditor] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<SubTabId>('visao_geral');
@@ -460,13 +458,7 @@ export default function Dashboard() {
               <div className="lg:col-span-8 space-y-6">
                 {isCoachActive && (
                   <CoachSetup
-                    entries={entries}
-                    accountBalances={accountBalances}
-                    goals={goals}
-                    creditObligations={creditObligations}
-                    phone={data?.phone}
-                    whatsappPhone={data?.whatsappPhone}
-                    cards={cards}
+                    stepStatus={stepStatus}
                     onDismiss={dismissCoach}
                   />
                 )}
