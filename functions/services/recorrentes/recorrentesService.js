@@ -1,1 +1,125 @@
-﻿/** * recorrentesService.js * Aplica lan├ºamentos recorrentes ativos de um ├║nico usu├írio no m├¬s corrente. * Equivalente server-side de persistUserData.generateEntriesFromRecurrents. */const admin = require("firebase-admin");const FREQ_LABEL = {  mensal: "mensal",  semanal: "semanal",  quinzenal: "quinzenal",  bimestral: "bimestral",  trimestral: "trimestral",  semestral: "semestral",  anual: "anual",};/** * Aplica recorrentes de um usu├írio para o m├¬s atual. * @param {string} uid * @param {object[]} recurrents * @returns {Promise<number>} */async function applyRecurrentesForUser(uid, recurrents) {  const db = admin.firestore();  const now = new Date();  const y = now.getFullYear();  const m = now.getMonth();  const ym = `${y}-${String(m + 1).padStart(2, "0")}`;  const maxDay = new Date(y, m + 1, 0).getDate();  const userRef = db.collection("users").doc(uid);  const userSnap = await userRef.get();  if (!userSnap.exists) return 0;  const data = userSnap.data() || {};  const inlineEntries = Array.isArray(data.entries) ? data.entries : [];  const existingTags = new Set(inlineEntries.map((e) => e && e.rcTag).filter(Boolean));  try {    const overflowSnap = await userRef.collection("entriesOverflow").get();    overflowSnap.forEach((doc) => {      const overflowData = doc.data();      if (Array.isArray(overflowData.entries)) {        overflowData.entries.forEach((e) => {          if (e && e.rcTag) existingTags.add(e.rcTag);        });      }    });  } catch (_) {}  const toAdd = [];  const baseId = Date.now();  for (let i = 0; i < recurrents.length; i++) {    const r = recurrents[i];    if (!r || r.active === false) continue;    if (r.durationType === "data" && r.endDate && r.endDate < ym) continue;    if (r.durationType === "qtd" && r.repeatCount != null) {      const generated = [...existingTags].filter((tag) => String(tag).startsWith(`rc_${r.id}_`)).length;      if (generated >= r.repeatCount) continue;    }    const freq = r.freq || "mensal";    let shouldRun = true;    if (freq === "bimestral") shouldRun = m % 2 === 0;    else if (freq === "trimestral") shouldRun = m % 3 === 0;    else if (freq === "semestral") shouldRun = m % 6 === 0;    else if (freq === "anual") shouldRun = m === 0;    if (!shouldRun) continue;    const tag = `rc_${r.id}_${ym}`;    if (existingTags.has(tag)) continue;    const day = Math.min(Math.max(1, r.day || 1), maxDay);    const date = `${ym}-${String(day).padStart(2, "0")}`;    const label = FREQ_LABEL[freq] || "fixo";    toAdd.push({      id: baseId + i,      type: r.type,      date,      desc: `${r.desc || "Recorrente"} (${label})`,      category: r.category || undefined,      value: r.value || 0,      account: r.account || undefined,      rcTag: tag,      isFixed: true,      source: "recorrente-auto",    });    existingTags.add(tag);  }  if (toAdd.length === 0) return 0;  await userRef.update({    entries: admin.firestore.FieldValue.arrayUnion(...toAdd),  });  return toAdd.length;}module.exports = { applyRecurrentesForUser };
+/**
+ * recorrentesService.js
+ * Aplica lançamentos recorrentes ativos de um único usuário no mês corrente.
+ * Equivalente server-side de persistUserData.generateEntriesFromRecurrents.
+ */
+const admin = require("firebase-admin");
+
+const FREQ_LABEL = {
+  mensal: "mensal",
+  semanal: "semanal",
+  quinzenal: "quinzenal",
+  bimestral: "bimestral",
+  trimestral: "trimestral",
+  semestral: "semestral",
+  anual: "anual",
+};
+
+/**
+ * Aplica recorrentes de um usuário para o mês atual.
+ * @param {string} uid
+ * @param {object[]} recurrents
+ * @returns {Promise<number>}
+ */
+async function applyRecurrentesForUser(uid, recurrents) {
+  const db = admin.firestore();
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const ym = `${y}-${String(m + 1).padStart(2, "0")}`;
+  const maxDay = new Date(y, m + 1, 0).getDate();
+  const userRef = db.collection("users").doc(uid);
+  const userSnap = await userRef.get();
+
+  if (!userSnap.exists) return 0;
+
+  const data = userSnap.data() || {};
+  const inlineEntries = Array.isArray(data.entries) ? data.entries : [];
+  const migrated = Boolean(data.entriesMigratedAt);
+
+  const existingTags = new Set(inlineEntries.map((e) => e && e.rcTag).filter(Boolean));
+
+  // Se migrado, ler subcoleção e adicionar rcTag de lá
+  if (migrated) {
+    try {
+      const subSnap = await userRef.collection("entries").get();
+      subSnap.forEach((doc) => {
+        const entryData = doc.data();
+        if (entryData && entryData.rcTag) {
+          existingTags.add(entryData.rcTag);
+        }
+      });
+    } catch (_) {}
+  }
+
+  try {
+    const overflowSnap = await userRef.collection("entriesOverflow").get();
+    overflowSnap.forEach((doc) => {
+      const overflowData = doc.data();
+      if (Array.isArray(overflowData.entries)) {
+        overflowData.entries.forEach((e) => {
+          if (e && e.rcTag) existingTags.add(e.rcTag);
+        });
+      }
+    });
+  } catch (_) {}
+
+  const toAdd = [];
+  const baseId = Date.now();
+
+  for (let i = 0; i < recurrents.length; i++) {
+    const r = recurrents[i];
+    if (!r || r.active === false) continue;
+    if (r.durationType === "data" && r.endDate && r.endDate < ym) continue;
+    if (r.durationType === "qtd" && r.repeatCount != null) {
+      const generated = [...existingTags].filter((tag) => String(tag).startsWith(`rc_${r.id}_`)).length;
+      if (generated >= r.repeatCount) continue;
+    }
+    const freq = r.freq || "mensal";
+    let shouldRun = true;
+    if (freq === "bimestral") shouldRun = m % 2 === 0;
+    else if (freq === "trimestral") shouldRun = m % 3 === 0;
+    else if (freq === "semestral") shouldRun = m % 6 === 0;
+    else if (freq === "anual") shouldRun = m === 0;
+    if (!shouldRun) continue;
+
+    const tag = `rc_${r.id}_${ym}`;
+    if (existingTags.has(tag)) continue;
+    const day = Math.min(Math.max(1, r.day || 1), maxDay);
+    const date = `${ym}-${String(day).padStart(2, "0")}`;
+    const label = FREQ_LABEL[freq] || "fixo";
+
+    toAdd.push({
+      id: baseId + i,
+      type: r.type,
+      date,
+      desc: `${r.desc || "Recorrente"} (${label})`,
+      category: r.category || undefined,
+      value: r.value || 0,
+      account: r.account || undefined,
+      rcTag: tag,
+      isFixed: true,
+      source: "recorrente-auto",
+    });
+    existingTags.add(tag);
+  }
+
+  if (toAdd.length === 0) return 0;
+
+  if (migrated) {
+    const batch = db.batch();
+    toAdd.forEach((entry) => {
+      const docRef = userRef.collection("entries").doc(String(entry.id));
+      batch.set(docRef, entry);
+    });
+    await batch.commit();
+  } else {
+    await userRef.update({
+      entries: admin.firestore.FieldValue.arrayUnion(...toAdd),
+    });
+  }
+
+  return toAdd.length;
+}
+
+module.exports = { applyRecurrentesForUser };

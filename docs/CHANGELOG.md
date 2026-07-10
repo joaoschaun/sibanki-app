@@ -15,6 +15,10 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Changed — Sync Fase 1.5 (HANDOFF-0007) (10/07/2026)
+
+- addTransfer/addCardPurchase/importCardPurchases/generateEntriesFromRecurrents na subcoleção para migrados; espelho em recorrentesService (código; deploy pendente de aval).
+
 ### Docs — Resgate de specs/rubric e nota sobre HANDOFF-0002 (10/07/2026)
 
 - Recuperados de blobs git pendentes (via zlib, sem tocar o índice) e restaurados em

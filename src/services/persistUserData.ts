@@ -3,7 +3,7 @@ import {
   doc, getDoc, setDoc, collection, getDocs, deleteDoc,
   writeBatch, runTransaction,
 } from 'firebase/firestore';
-import { mergeInlineAndOverflowEntries } from '../utils/entryUtils';
+import { mergeAllEntries } from '../utils/entryUtils';
 import type { CardPurchaseNew } from '../utils/cardCycleUtils';
 import { calculateFinScore } from '../utils/calculateScore';
 import { collectPersistIssues } from './persistValidators';
@@ -69,6 +69,16 @@ async function loadOverflowEntries(uid: string): Promise<Entry[]> {
   const list: Entry[] = [];
   snap.forEach((d) => {
     list.push({ ...(d.data() as Entry), entryLocation: 'overflow' });
+  });
+  return list;
+}
+
+async function loadSubcollectionEntries(uid: string): Promise<Entry[]> {
+  const col = collection(db, 'users', uid, 'entries');
+  const snap = await getDocs(col);
+  const list: Entry[] = [];
+  snap.forEach((d) => {
+    list.push({ ...(d.data() as Entry), entryLocation: 'subcollection' });
   });
   return list;
 }
@@ -548,7 +558,7 @@ export async function addEntry(uid: string, currentEntries: Entry[], newEntry: O
  */
 export async function addTransfer(
   uid: string,
-  _currentEntries: Entry[],
+  currentEntries: Entry[],
   opts: { from: string; to: string; date: string; value: number }
 ): Promise<void> {
   const from = opts.from?.trim();
@@ -562,7 +572,7 @@ export async function addTransfer(
 
   const now = Date.now();
 
-  const despesa: Omit<Entry, 'id'> = {
+  const despesa: Entry = {
     date,
     type: 'despesa',
     desc: `Transf. para ${to}`,
@@ -571,9 +581,10 @@ export async function addTransfer(
     account: from,
     status: 'pago',
     isTransfer: true,
-  };
+    id: now,
+  } as Entry;
 
-  const receita: Omit<Entry, 'id'> = {
+  const receita: Entry = {
     date,
     type: 'receita',
     desc: `Transf. de ${from}`,
@@ -582,17 +593,22 @@ export async function addTransfer(
     account: to,
     status: 'pago',
     isTransfer: true,
-  };
+    id: now + 1,
+  } as Entry;
 
-  // PUD-1: usa modifyUserDoc — append atômico na transação.
-  await modifyUserDoc(uid, {
-    entries: {
-      append: [
-        { ...despesa, id: now } as Entry,
-        { ...receita, id: now + 1 } as Entry,
-      ],
-    },
-  });
+  const migrated = await isEntriesMigrated(uid);
+  if (migrated) {
+    await writeEntryToSubcollection(uid, despesa);
+    await writeEntryToSubcollection(uid, receita);
+    await persistFinScoreSlim(uid, [...currentEntries, despesa, receita]);
+  } else {
+    // PUD-1: usa modifyUserDoc — append atômico na transação.
+    await modifyUserDoc(uid, {
+      entries: {
+        append: [despesa, receita],
+      },
+    });
+  }
 }
 
 /**
@@ -725,7 +741,7 @@ export async function addCard(
 export async function addCardPurchase(
   uid: string,
   currentCards: Card[],
-  _currentEntries: Entry[],
+  currentEntries: Entry[],
   cardId: number,
   opts: { desc: string; category: string; value: number; date: string; parcelas?: number }
 ): Promise<void> {
@@ -776,11 +792,20 @@ export async function addCardPurchase(
   const updatedCards = currentCards.map((c) =>
     c.id === cardId ? { ...c, purchases: [...purchases, ...newPurchases] } : c
   ) as Card[];
-  // PUD-1: cards é patch direto, entries.append no mesmo modifyUserDoc atômico.
-  await modifyUserDoc(uid, {
-    patch: { cards: updatedCards },
-    entries: { append: newEntries },
-  });
+
+  const migrated = await isEntriesMigrated(uid);
+  if (migrated) {
+    for (const entry of newEntries) {
+      await writeEntryToSubcollection(uid, entry);
+    }
+    await persistFinScoreSlim(uid, [...currentEntries, ...newEntries], { cards: updatedCards });
+  } else {
+    // PUD-1: cards é patch direto, entries.append no mesmo modifyUserDoc atômico.
+    await modifyUserDoc(uid, {
+      patch: { cards: updatedCards },
+      entries: { append: newEntries },
+    });
+  }
 }
 
 /**
@@ -790,7 +815,7 @@ export async function addCardPurchase(
 export async function importCardPurchases(
   uid: string,
   currentCards: Card[],
-  _currentEntries: Entry[],
+  currentEntries: Entry[],
   cardId: number,
   items: { desc: string; category: string; value: number; date: string; parcelas?: number }[]
 ): Promise<void> {
@@ -845,11 +870,20 @@ export async function importCardPurchases(
   const updatedCards = currentCards.map((c) =>
     c.id === cardId ? { ...c, purchases: [...purchases, ...allPurchases] } : c
   ) as Card[];
-  // PUD-1: cards é patch, entries.append na mesma transação.
-  await modifyUserDoc(uid, {
-    patch: { cards: updatedCards },
-    entries: { append: allEntries },
-  });
+
+  const migrated = await isEntriesMigrated(uid);
+  if (migrated) {
+    for (const entry of allEntries) {
+      await writeEntryToSubcollection(uid, entry);
+    }
+    await persistFinScoreSlim(uid, [...currentEntries, ...allEntries], { cards: updatedCards });
+  } else {
+    // PUD-1: cards é patch, entries.append na mesma transação.
+    await modifyUserDoc(uid, {
+      patch: { cards: updatedCards },
+      entries: { append: allEntries },
+    });
+  }
 }
 
 /**
@@ -1217,18 +1251,20 @@ const FREQ_LABEL: Record<string, string> = {
   anual: 'anual',
 };
 
-/**
- * Gera lançamentos do mês atual a partir dos recorrentes ativos que ainda não foram gerados.
- * Retorna o número de lançamentos criados. Compatível com o legado (procRc).
- */
 export async function generateEntriesFromRecurrents(
   uid: string,
   _currentEntries: Entry[],
   currentRecurrents: Recurrent[]
 ): Promise<number> {
-  const inline = await loadInlineEntries(uid);
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const inline = ((snap.exists() ? snap.data()?.entries : []) ?? []) as Entry[];
+  const migrated = snap.exists() && Boolean(snap.data()?.entriesMigratedAt);
+
   const overflow = await loadOverflowEntries(uid);
-  const mergedForTags = mergeInlineAndOverflowEntries(inline, overflow);
+  const subcollection = migrated ? await loadSubcollectionEntries(uid) : [];
+  const mergedForTags = mergeAllEntries(inline, overflow, subcollection);
+
   const now = new Date();
   const y = now.getFullYear();
   const m = now.getMonth();
@@ -1280,8 +1316,18 @@ export async function generateEntriesFromRecurrents(
   }
 
   if (toAdd.length === 0) return 0;
-  const newEntries = [...inline, ...toAdd];
-  await updateUserDoc(uid, { entries: newEntries });
+
+  if (migrated) {
+    for (const entry of toAdd) {
+      await writeEntryToSubcollection(uid, entry);
+    }
+    await persistFinScoreSlim(uid, [...mergedForTags, ...toAdd]);
+  } else {
+    await modifyUserDoc(uid, {
+      entries: { append: toAdd },
+    });
+  }
+
   return toAdd.length;
 }
 
