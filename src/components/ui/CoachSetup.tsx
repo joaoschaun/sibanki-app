@@ -1,96 +1,86 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle, Circle, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+import type { CoachStepId, CoachStepStatus } from '../../hooks/useCoachActive';
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
-interface CoachStep {
-  id: string;
+/** Metadados de APRESENTAÇÃO por etapa. A lógica de "concluído" NÃO mora aqui —
+ *  vem de `stepStatus` (useCoachActive), a fonte única de verdade. */
+interface CoachStepMeta {
+  id: CoachStepId;
   title: string;
   desc: string;
   link: string;
   linkLabel: string;
-  check: boolean; // true = concluído
   priority: number; // 1 = mais urgente
 }
 
 interface CoachSetupProps {
-  entries: { id: number; type: string }[];
-  accountBalances: Record<string, unknown>;
-  goals: unknown[];
-  creditObligations: unknown[];
-  phone?: string | null;
-  whatsappPhone?: string | null;
-  cards?: unknown[];
+  /** Status de conclusão por etapa, vindo do hook useCoachActive. */
+  stepStatus: CoachStepStatus;
   onDismiss?: () => void;
 }
+
+// ─── Apresentação (ordem = prioridade) ───────────────────────────────────────
+
+const STEP_META: CoachStepMeta[] = [
+  {
+    id: 'accounts',
+    priority: 1,
+    title: 'Cadastre suas contas',
+    desc: 'Registre pelo menos uma conta bancária para calcular seu saldo real.',
+    link: '/contas',
+    linkLabel: 'Ir para Contas',
+  },
+  {
+    id: 'entries',
+    priority: 2,
+    title: 'Registre seus primeiros lançamentos',
+    desc: 'Com ao menos 3 receitas/despesas o Arquiteto começa a gerar insights reais.',
+    link: '/lancamentos',
+    linkLabel: 'Lançar agora',
+  },
+  {
+    id: 'goals',
+    priority: 3,
+    title: 'Defina uma meta financeira',
+    desc: 'Metas dão direção. O Sentinela usa elas para avaliar cada gasto.',
+    link: '/planejamento',
+    linkLabel: 'Criar meta',
+  },
+  {
+    id: 'debts',
+    priority: 4,
+    title: 'Registre suas dívidas',
+    desc: 'O Spread Gap e o Arquiteto precisam saber o custo das suas dívidas.',
+    link: '/credito',
+    linkLabel: 'Ver Crédito',
+  },
+  {
+    id: 'whatsapp',
+    priority: 5,
+    title: 'Ative alertas WhatsApp',
+    desc: 'O Sentinela e relatórios semanais chegam direto no seu celular.',
+    link: '/configuracoes',
+    linkLabel: 'Ir para Configurações',
+  },
+];
 
 // ─── Componente ──────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = 'sibanki_coach_dismissed';
 
-export function CoachSetup({
-  entries,
-  accountBalances,
-  goals,
-  creditObligations,
-  phone,
-  whatsappPhone,
-  cards = [],
-  onDismiss,
-}: CoachSetupProps) {
+export function CoachSetup({ stepStatus, onDismiss }: CoachSetupProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [dismissed, setDismissed] = useState(
     () => localStorage.getItem(STORAGE_KEY) === 'true'
   );
 
-  const steps: CoachStep[] = useMemo(() => [
-    {
-      id: 'accounts',
-      priority: 1,
-      title: 'Cadastre suas contas',
-      desc: 'Registre pelo menos uma conta bancária para calcular seu saldo real.',
-      link: '/contas',
-      linkLabel: 'Ir para Contas',
-      check: Object.keys(accountBalances || {}).length > 0,
-    },
-    {
-      id: 'entries',
-      priority: 2,
-      title: 'Registre seus primeiros lançamentos',
-      desc: 'Com ao menos 3 receitas/despesas o Arquiteto começa a gerar insights reais.',
-      link: '/lancamentos',
-      linkLabel: 'Lançar agora',
-      check: entries.filter(e => e.type === 'despesa' || e.type === 'receita').length >= 3,
-    },
-    {
-      id: 'goals',
-      priority: 3,
-      title: 'Defina uma meta financeira',
-      desc: 'Metas dão direção. O Sentinela usa elas para avaliar cada gasto.',
-      link: '/planejamento',
-      linkLabel: 'Criar meta',
-      check: (goals || []).length > 0,
-    },
-    {
-      id: 'debts',
-      priority: 4,
-      title: 'Registre suas dívidas',
-      desc: 'O Spread Gap e o Arquiteto precisam saber o custo das suas dívidas.',
-      link: '/credito',
-      linkLabel: 'Ver Crédito',
-      check: (creditObligations || []).length > 0 || (cards || []).length > 0,
-    },
-    {
-      id: 'whatsapp',
-      priority: 5,
-      title: 'Ative alertas WhatsApp',
-      desc: 'O Sentinela e relatórios semanais chegam direto no seu celular.',
-      link: '/configuracoes',
-      linkLabel: 'Ir para Configurações',
-      check: !!(whatsappPhone) || !!(phone),
-    },
-  ], [accountBalances, entries, goals, creditObligations, phone, whatsappPhone, cards]);
+  const steps = useMemo(
+    () => STEP_META.map(step => ({ ...step, check: stepStatus[step.id] })),
+    [stepStatus],
+  );
 
   const done  = steps.filter(s => s.check).length;
   const total = steps.length;
