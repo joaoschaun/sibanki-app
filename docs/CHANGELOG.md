@@ -8,8 +8,6 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 > Não use o `CLAUDE.md` para acumular histórico de sessão (a regra está em
 > `AGENTS.md` §11, "Onde escrever histórico").
 >
-> O histórico antigo, anterior à introdução deste arquivo (26/04/2026), pode
-> estar em `CLAUDE.md` (seções "ATUALIZAÇÃO DE SESSÃO …") até que seja migrado
 > manualmente para cá. O CHANGELOG raiz (`/CHANGELOG.md`) é o changelog
 > orientado a usuário/produto; este aqui é orientado a engenharia.
 
@@ -32,6 +30,67 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
   - Inserida a seção §11 em [docs/PIPELINE-DESIGN.md](file:///c:/Users/jscha/virtus-financeiro/docs/PIPELINE-DESIGN.md) detalhando o uso do mapa estático de dependências e arestas inferidas.
   - Adicionado `graphify-out/` ao [.gitignore](file:///c:/Users/jscha/virtus-financeiro/.gitignore).
 
+### Fixed — Indice Firestore de `indicados.status` (COLLECTION_GROUP) — bug silencioso em `processarFiliadosDiario` (07/07/2026)
+
+- **Bug detectado pelo tool `sibanki_recent_errors`** (MCP sibanki-ops): a scheduled
+  `processarFiliadosDiario` (valida indicados + credita SibCoins de indicacao) falhava
+  a cada execucao com `FAILED_PRECONDITION: query requires a COLLECTION_GROUP_ASC index
+  for collection indicados and field status`. Impacto: programa de indicacao nao creditava.
+- **Correcao**: adicionada exceção de campo unico em `firestore.indexes.json`
+  (`fieldOverrides` para `indicados.status` com escopo COLLECTION_GROUP — formato exigido
+  pelo Firebase CLI para indice de campo unico em collection group). Deploy via
+  `firebase deploy --only firestore:indexes` (aplicado em producao). Correcao versionada.
+- **Pendente de verificacao**: confirmar no proximo cron (ou disparo manual) que a funcao
+  roda sem erro (re-rodar `sibanki_recent_errors` filtrando por `processarFiliadosDiario`),
+  e checar se os indicados pendentes do periodo de falha sao reprocessados retroativamente.
+
+### Added — Sibanki Ops: tool `sibanki_recent_errors` + CF admin `aplicarRecorrentesAdmin` (07/07/2026)
+
+- **Novo tool read-only `sibanki_recent_errors`** no MCP `mcp/sibanki-ops/`: lista erros
+  recentes (`severity>=ERROR`) das Cloud Functions via `gcloud logging read` local
+  (requer gcloud autenticado). Registrado em `src/index.ts` (agora 6 read-only + 1 escrita).
+- **Cloud Function admin dedicada** `functions/services/admin/aplicarRecorrentesAdmin.js`:
+  callable que valida a claim `admin` e aceita `uid` alvo (alternativa a impersonacao).
+  **Escrita para revisao — NAO exportada em index.js, NAO deployada.** Ativacao documentada
+  no README do modulo (exige autorizacao + `firebase deploy`).
+- Build do MCP validado (`tsc` sem erros). Removida a dep `google-auth-library` (a versao
+  final do recent_errors usa gcloud CLI, nao a REST API).
+
+### Added — Sibanki Ops (MCP interno de operacao) — teste E2E de escrita OK (07/07/2026)
+
+- **Novo servidor MCP interno** em `mcp/sibanki-ops/` (Node/TS, stdio) para operar
+  o Sibanki pelo chat sem expor Firestore nem PII. 5 tools read-only + 1 de escrita:
+  - `sibanki_health`, `sibanki_services_status` (derivam do `/health`);
+  - `sibanki_aggregate_metrics`, `sibanki_feedback_summary`,
+    `sibanki_open_finance_health` (agregacao `.count()`, sem PII);
+  - `sibanki_run_recurrents` (**escrita guardada**): reusa a callable
+    `aplicarRecorrentesManual` via impersonacao (custom token -> ID token).
+- **Guard-rails da escrita**: fluxo em 2 fases (dry-run emite `confirmationToken`
+  HMAC; execucao exige token + `SIBANKI_ALLOW_WRITES=true`), auditoria em
+  `users/{uid}/auditLogs` com ator `sibanki-ops-mcp`.
+- **Auth**: `admin.credential.cert()` a partir da chave JSON local — `createCustomToken`
+  assina localmente, dispensando `iam.serviceAccountTokenCreator` (contorna o erro
+  `signBlob`). Web API key vem de `src/firebase.ts` (chave publica).
+- **Teste E2E (uid de teste `TUMz…1Ff2`)**: dry-run identificou 2 recorrentes ativos;
+  execucao gerou 2 lancamentos (Internet, Academia) e criou o doc em `auditLogs`.
+  Autorizado pelo App Check. Portao `SIBANKI_ALLOW_WRITES` reposto para `false` apos o teste.
+- **Docs**: `mcp/sibanki-ops/README.md`, `SETUP-PASSO-A-PASSO.md`; planejamento em
+  `docs/PLANO-SIBANKI-OPS-E-ROADMAP.md` e analise em `docs/ANALISE-COWORK-ECOSSISTEMA.md`.
+- **Seguranca**: `.env` e `service-account.json` no `.gitignore` do modulo; nenhuma
+  chave versionada. Pendente (operacional): decisao sobre migrar a escrita para uma
+  Cloud Function admin dedicada (deploy autorizado).
+
+### Changed — Veredicto "Sem-Posições" no Sg, Dedupe Open Finance e Gate Arquiteto Soberano (06/07/2026)
+
+- **Tratamento de Ausência de Posições no Spread Gap (Sg)**:
+  - Adicionado o veredicto `'sem-posicoes'` ao tipo `SpreadVerdict` em [sovereigntyEngine.ts](file:///c:/Users/jscha/virtus-financeiro/src/utils/sovereigntyEngine.ts), ajustando a lógica de `calculateSpreadGap` para atribuir este veredicto caso o valor precificado de ativos e passivos do usuário seja nulo (`ratedValue === 0`).
+  - Atualizado o [SpreadGapCard.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/ui/SpreadGapCard.tsx) para tratar o veredicto `'sem-posicoes'` e exibir o cabeçalho neutro "SEM POSIÇÕES ATIVAS — Nada está drenando seu capital".
+  - Corrigida a tipagem local do `SpreadVerdict` em [SovereigntyHero.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/ui/SovereigntyHero.tsx) e adicionada a tradução de `'sem-posicoes'` em `SPREAD_VERDICT_PT` no arquivo [briefingDay.ts](file:///c:/Users/jscha/virtus-financeiro/src/utils/briefingDay.ts).
+  - Escrito teste unitário SOV-X em [sovereigntyEngine.test.ts](file:///c:/Users/jscha/virtus-financeiro/src/utils/sovereigntyEngine.test.ts) validando que o motor de spread gap emite corretamente `'sem-posicoes'` em carteiras vazias.
+- **Deduplicação do Open Finance no Cockpit**:
+  - Filtrada a ação `'conectar-open-finance'` em `nextBestActions` dentro de [Dashboard.tsx](file:///c:/Users/jscha/virtus-financeiro/src/pages/Dashboard.tsx) para evitar repetir o CTA se a faixa unificada `AccountSummaryStrip` já o apresentar.
+- **Gate de Exibição no Arquiteto Soberano (Insight do Dia)**:
+  - Modificado o componente [InsightDoDia.tsx](file:///c:/Users/jscha/virtus-financeiro/src/components/ui/InsightDoDia.tsx) para não renderizar o bloco (retornar `null`) quando não houver insights reais do usuário e o sistema cair na mensagem de filler padrão ("Seus números estão sendo organizados").
 ### Changed — Correção de Spread Gap, Reatividade do CDI e Blueprint Adaptável (05/07/2026)
 
 - **Correção da Dependência do CDI no Spread Gap (Sg)**:
