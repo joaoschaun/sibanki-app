@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { GenericPageSkeleton } from '../components/ui/PageSkeleton';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { useIntelligence } from '../context/IntelligenceContext';
 import { useConsultantSession } from '../context/ConsultantSessionContext';
 import { GenerativeUiContainer } from '../components/consultant/GenerativeUiContainer';
+import { HorizonBriefing } from '../components/consultant/HorizonBriefing';
+import { topHorizonItem } from '../utils/anticipationEngine';
 import { Send, AlertTriangle, Scale, Lock, Wallet, CreditCard, TrendingUp, type LucideIcon } from 'lucide-react';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
@@ -39,6 +41,11 @@ export default function Consultant() {
   const {
     user,
     loading: dataLoading,
+    accounts,
+    accountBalances,
+    accountMeta,
+    cards,
+    recurrents,
   } = useAppContext();
 
   const { requireFeature } = useFeatureFlags();
@@ -61,7 +68,33 @@ export default function Consultant() {
     queuePendingMessage,
   } = useConsultantSession();
 
-  const { freedom } = useIntelligence();
+  const { freedom, creditObligations } = useIntelligence();
+
+  // ── Motor de antecipacao (rubric §8.5/§9): a "unica coisa que importa agora" ──
+  const [snoozedIds, setSnoozedIds] = useState<Set<string>>(() => new Set());
+
+  const liquidCash = useMemo(
+    () => (accounts || [])
+      .filter((name) => {
+        const meta = accountMeta[name];
+        if (meta?.incluirNaSoma === false) return false;
+        const tipo = meta?.tipo ?? 'Conta corrente';
+        return tipo !== 'Investimento' && tipo !== 'Poupança';
+      })
+      .reduce((sum, name) => sum + (accountBalances[name] ?? 0), 0),
+    [accounts, accountBalances, accountMeta],
+  );
+
+  const horizonTop = useMemo(() => {
+    const top = topHorizonItem({
+      liquidCash,
+      dailyBurnRate: freedom.dailyBurnRate,
+      recurrents,
+      creditObligations,
+      cards,
+    });
+    return top && snoozedIds.has(top.id) ? null : top;
+  }, [liquidCash, freedom.dailyBurnRate, recurrents, creditObligations, cards, snoozedIds]);
 
   useEffect(() => {
     const raw = (location.state as { initialMessage?: string } | null)?.initialMessage;
@@ -110,13 +143,11 @@ export default function Consultant() {
             <h2 className="text-si-1 text-[26px] sm:text-3xl font-extrabold tracking-[-0.02em] mb-2">
               {saud}{firstName ? `, ${firstName}` : ''}.
             </h2>
-            <p className="text-si-4 text-[15px] mb-9 max-w-md leading-relaxed">
-              {freedom.days > 0 && freedom.days < 9999 ? (
-                <>Seu Ld está em <strong className="text-si-1 font-bold">{freedom.days} dias</strong> de liberdade. Como posso ajudar hoje?</>
-              ) : (
-                'Sou o seu consultor com o contexto completo das suas finanças. Como posso ajudar hoje?'
-              )}
-            </p>
+            <HorizonBriefing
+              item={horizonTop}
+              onAsk={(it) => void handleSend(`Me ajuda a resolver: ${it.label}. Como faço sem apertar o mês?`)}
+              onSnooze={(it) => setSnoozedIds((prev) => new Set(prev).add(it.id))}
+            />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl">
               {SUGGESTIONS.map((s) => (
                 <button
