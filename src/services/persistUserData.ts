@@ -422,16 +422,80 @@ export async function setCreditSnapshot(uid: string, creditSnapshot: CreditSnaps
  * `entries` agora é lido do Firestore DENTRO da transaction e o novo entry
  * é apendado lá — sem mais race condition de "load → modify → write".
  */
-export async function addEntry(uid: string, _currentEntries: Entry[], newEntry: Omit<Entry, 'id'>): Promise<void> {
+/**
+ * PUD-5 (Fase 1 — correção de sync, jul/2026): recalcula e grava SOMENTE o
+ * `finScore` (payload minúsculo), a partir da lista de lançamentos já mesclada
+ * em memória — SEM reescrever o array `entries` inline.
+ *
+ * Motivo: para usuários migrados os lançamentos vivem na subcoleção
+ * `users/{uid}/entries`. Reescrever o array inline a cada mutação empurrava o
+ * documento `users/{uid}` contra o limite de 1MB do Firestore; ao estourar, a
+ * escrita falhava no servidor mas ficava pendente no cache local
+ * (persistentLocalCache) — o device que escreveu mostrava o dado e os demais
+ * nunca recebiam (divergência permanente). Aqui o payload é só `{ finScore }`.
+ */
+async function persistFinScoreSlim(
+  uid: string,
+  mergedEntries: Entry[],
+  extraPatch?: Partial<UserData>,
+): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const d = (snap.exists() ? snap.data() : {}) as Partial<UserData>;
+  const finScore = calculateFinScore(
+    mergedEntries,
+    d.goals ?? [],
+    (d.budgets ?? {}) as Record<string, unknown>,
+    d.accountBalances ?? {},
+    d.accountMeta ?? {},
+    d.creditSnapshot ?? null,
+  );
+  // finScore é derivado (gravado pelo servidor e por aqui), não faz parte do tipo
+  // UserData. Cast pontual — ver PUD-5.
+  const payload = { finScore, ...(extraPatch ?? {}) } as Partial<UserData>;
+  await updateUserDoc(uid, payload);
+}
+
+/**
+ * PUD-5: remove um lançamento migrado da cópia inline legada (dual-write antigo,
+ * se ainda existir) E grava o `finScore` correto — tudo numa transação atômica.
+ * Não recomputa o score a partir do inline (parcial para usuários migrados);
+ * usa a lista mesclada pós-remoção.
+ */
+async function removeInlineEntryAndPersistScore(
+  uid: string,
+  id: number | string,
+  mergedEntriesAfter: Entry[],
+): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const cur = (snap.exists() ? snap.data() : {}) as Partial<UserData>;
+    const inline = Array.isArray(cur.entries)
+      ? (cur.entries as Entry[]).filter((e) => e.id !== id)
+      : [];
+    const finScore = calculateFinScore(
+      mergedEntriesAfter,
+      cur.goals ?? [],
+      (cur.budgets ?? {}) as Record<string, unknown>,
+      cur.accountBalances ?? {},
+      cur.accountMeta ?? {},
+      cur.creditSnapshot ?? null,
+    );
+    tx.set(
+      ref,
+      { entries: inline, finScore, updated: new Date().toISOString() } as Partial<UserData>,
+      { merge: true },
+    );
+  });
+}
+
+export async function addEntry(uid: string, currentEntries: Entry[], newEntry: Omit<Entry, 'id'>): Promise<void> {
   assertValid(validateEntry(newEntry), 'addEntry');
   const id = Date.now();
   const entry: Entry = { ...newEntry, id } as Entry;
 
-  // Dual-write: grava na subcoleção (pós-migração) E mantém inline (retrocompat)
   const migrated = await isEntriesMigrated(uid);
-  if (migrated) {
-    await writeEntryToSubcollection(uid, entry);
-  }
 
   // Pré-carrega config de round-up (não-crítico se sair stale; só ajusta cofre)
   let roundUpPatch: Partial<UserData> | null = null;
@@ -460,10 +524,19 @@ export async function addEntry(uid: string, _currentEntries: Entry[], newEntry: 
     }
   }
 
-  await modifyUserDoc(uid, {
-    entries: { append: entry },
-    ...(roundUpPatch ? { patch: roundUpPatch } : {}),
-  });
+  if (migrated) {
+    // PUD-5 (Fase 1): fonte única = subcoleção. NÃO reescreve o array inline
+    // (evita estourar 1MB do doc e a divergência permanente entre devices).
+    // O id é gerado uma única vez → setDoc idempotente em retries do SDK.
+    await writeEntryToSubcollection(uid, entry);
+    await persistFinScoreSlim(uid, [...currentEntries, entry], roundUpPatch ?? undefined);
+  } else {
+    // Usuário ainda não migrado (sem subcoleção): caminho legado inline.
+    await modifyUserDoc(uid, {
+      entries: { append: entry },
+      ...(roundUpPatch ? { patch: roundUpPatch } : {}),
+    });
+  }
 }
 
 /**
@@ -546,12 +619,17 @@ export async function updateEntry(
     return;
   }
 
-  // Subcoleção: atualiza lá + inline (dual-write)
-  // PUD-4: cast `as any` removido — entryLocation tem 'subcollection' no type agora.
+  // PUD-5 (Fase 1): entrada migrada → escreve SÓ na subcoleção. O merge de leitura
+  // prefere a subcoleção sobre o inline (dedup por id), então o valor atualizado
+  // prevalece sem reescrever o array inline (que estourava o 1MB e divergia).
   if (target.entryLocation === 'subcollection') {
     await writeEntryToSubcollection(uid, { ...target, ...updates, id } as Entry);
+    const mergedNext = mergedEntries.map((e) => (e.id === id ? ({ ...e, ...updates, id } as Entry) : e));
+    await persistFinScoreSlim(uid, mergedNext);
+    return;
   }
 
+  // Entrada apenas inline (legado / não backfilled): caminho antigo.
   await modifyUserDoc(uid, { entries: { update: [{ id, updates }] } });
 }
 
@@ -569,10 +647,15 @@ export async function deleteEntry(uid: string, mergedEntries: Entry[], id: numbe
     return;
   }
 
-  // Subcoleção: remove de lá também (dual-delete)
-  // PUD-4: cast `as any` removido.
+  // PUD-5 (Fase 1): entrada migrada → remove da subcoleção E limpa a cópia inline
+  // legada (dual-write antigo) numa transação atômica que grava o finScore correto
+  // a partir da lista mesclada — mata o "lançamento fantasma" que ressurgia do
+  // inline e não recomputa o score a partir do inline (parcial p/ migrados).
   if (target?.entryLocation === 'subcollection') {
     await deleteEntryFromSubcollection(uid, id);
+    const mergedNext = mergedEntries.filter((e) => e.id !== id);
+    await removeInlineEntryAndPersistScore(uid, id, mergedNext);
+    return;
   }
 
   await modifyUserDoc(uid, { entries: { remove: [id] } });
