@@ -15,6 +15,16 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Docs — Resgate de specs/rubric e nota sobre HANDOFF-0002 (10/07/2026)
+
+- Recuperados de blobs git pendentes (via zlib, sem tocar o índice) e restaurados em
+  `docs/`: `DESIGN-SYSTEM-RUBRIC.md` e `docs/handoffs/HANDOFF-0001-bootstrap-pipeline.md`.
+- Restaurados como arquivo histórico (a partir de cópias externas):
+  `docs/handoffs/HANDOFF-0003-escriba-governanca.md`, `HANDOFF-0004-recuperar-stash.md`,
+  `HANDOFF-0005-higiene-git.md`.
+- **HANDOFF-0002 nunca existiu como arquivo** — foi dobrado no `pipe/0001`. A numeração
+  de specs do repo é `0001, —, 0003, 0004, 0005, 0006, 0007` (sem 0002). Não procure o fantasma.
+
 ### Changed — Bootstrap do Pipeline e Registro da Governança (08/07/2026)
 
 - **Pipeline de Agentes (Bootstrap)**:
