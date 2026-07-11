@@ -1,11 +1,20 @@
 # Pipeline State
 
-- **Handoff atual:** 0007 — **CONCLUÍDO** (merged + deploy exercido pelo João).
-- **Turno:** joao
-- **Estado:** idle — rubric v2 pronta, 0008 destravado
-- **Próxima ação:** João commita a rubric v2 (`docs/DESIGN-SYSTEM-RUBRIC.md` + `docs/design/mocks/{painel,credito,consultor}.html`). Depois, Claude escreve HANDOFF-0008 (Fase 0 fundação shadcn + tokens de profundidade §10 + Dashboard piloto), executado pelo Antigravity. Backend intocado, sem deploy. Bloqueio anterior (código do Lovable) RESOLVIDO — o norte visual foi desenhado no próprio repo (mocks v4-v6 → rubric §10), sem dependência do Lovable.
-- **Nota (loosening de ratchet):** a rubric v2 revisa o Gate 3 (glow) de "colorido=0" para "fora-de-estado-ou-dado=0". É um afrouxamento DELIBERADO de ratchet (normalmente só cai) — ciência do fundador registrada. A mudança do teste em si vive no HANDOFF-0008 (código).
-- **Atualizado em:** 2026-07-10T10:30:00-03:00
+- **Handoff atual:** 0008
+- **Turno:** antigravity
+- **Estado:** spec_ready
+- **Próxima ação:** João commita num só lote a rubric v2 + mocks + spec 0008 + este STATE
+  (`docs/DESIGN-SYSTEM-RUBRIC.md`, `docs/design/mocks/{painel,credito,consultor}.html`,
+  `docs/handoffs/HANDOFF-0008-fundacao-dark-glass.md`, `.pipeline/STATE.md`) e dá o "roda".
+  Antigravity adquire o lock, executa `docs/handoffs/HANDOFF-0008-fundacao-dark-glass.md` em
+  `pipe/0008-fundacao-dark-glass`, roda `npm run gate` e escreve `.pipeline/reports/HANDOFF-0008.report.md`.
+- **Escopo 0008:** fundação Dark-Glass ADITIVA — tokens de profundidade (`--si-surface-grad`/
+  `--si-glass`/`--si-elev`/`--si-glow-*`) nos dois temas + utilities + variantes opcionais
+  `surface`/`glow` no `Card`, retrocompatível. SEM rebuild de tela (isso é 0009+), SEM dependência
+  nova (nada de shadcn — estende os primitivos existentes), SEM deploy. Gate 3 MANTIDO em 0
+  (glow via canal sancionado `--si-glow-*`, não `shadow-{hue}` inline).
+- **0007:** CONCLUÍDO (merged + deploy exercido pelo João).
+- **Atualizado em:** 2026-07-10T11:00:00-03:00
 
 > Review 0007 (Claude) = **APROVADO** — diff real extraído do commit 06a6925 (pai a65fb2cd):
 > só os 4 arquivos do §3; gate verde 205 testes (199+6); 4 testes antigos intactos; 6 novos

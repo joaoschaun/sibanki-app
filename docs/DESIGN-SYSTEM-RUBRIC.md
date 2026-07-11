@@ -11,8 +11,10 @@
 > camada de execução premium — SEM abandonar o princípio (restrição, significado sobre
 > decoração). A alma é preservada: **cor ainda = estado** (§1), WCAG AA (§2), e §8/§9
 > (assinatura + anti-ansiedade) intactos — a nova linguagem *serve* essas seções, não as revoga.
-> Isto **revisa** três regras da v1 (marcadas com ⚠︎v2 abaixo): §1 (glow), §4 (movimento/gradiente)
-> e §6/Gate 3. Referência canônica visual: [`docs/design/mocks/`](design/mocks/) — `painel.html`
+> Isto **revisa** duas regras da v1 (marcadas com ⚠︎v2 abaixo): §1 (glow/gradiente) e §4
+> (movimento). O **Gate 3 do ratchet permanece em 0** — não afrouxamos: o glow ganha um **canal
+> sancionado** via token `--si-glow-*` (que o gate de `shadow-{hue}-{n}/{n}` cru não enxerga),
+> então disciplina intacta E profundidade liberada. Referência canônica visual: [`docs/design/mocks/`](design/mocks/) — `painel.html`
 > (Painel), `credito.html` (Crédito), `consultor.html` (Consultor). A especificação completa da
 > linguagem está na **§10**.
 
@@ -105,12 +107,12 @@ devem viver em constantes de marca, não espalhadas. Não contam como violação
 
 1. Fundo sólido colorido ≤ 29 (só cai).
 2. Foco colorido = 0.
-3. **⚠︎v2 — Glow/gradiente FORA de estado-ou-dado = 0.** (Antes: "glow colorido = 0".) O gate
-   deixa de contar "tem glow colorido?" e passa a contar "tem glow/gradiente com hue que **não**
-   é da paleta de estado nem de categoria `--si-cat-*`?". Glow neutro (branco-alpha) e glow de
-   estado/dado são permitidos; decorativo/neon/multicor continua = 0. **Loosening deliberado de
-   ratchet** (normalmente "só cai") — é a exceção que justifica o bump para v2 e exige ciência do
-   fundador. A mudança do teste vive no HANDOFF-0008 (código), não aqui.
+3. **Glow colorido cru (`shadow-{hue}-{n}/{n}`) = 0 — MANTIDO.** O ratchet **não** afrouxa. A
+   profundidade da v2 NÃO usa `shadow-emerald-500/20` inline (isso continua proibido e = 0); usa
+   o **canal sancionado** — a utility/token `--si-glow-*` definida em `index.css` (§10.1), que o
+   regex do Gate 3 não casa. Assim há **um** jeito certo de dar glow (de estado/neutro), e ad-hoc
+   colorido segue barrado. Recomendado no HANDOFF-0008: **Gate 6** garantindo que glow só apareça
+   via `--si-glow-*` (ratchet novo, aditivo).
 4. Label `text-si-5 uppercase` = 0.
 5. Token `--si-text-*` em hex = 0 (só OKLCH).
 
