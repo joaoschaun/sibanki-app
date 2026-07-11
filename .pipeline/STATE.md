@@ -1,10 +1,12 @@
 # Pipeline State
 
-- **Handoff atual:** 0009
-- **Turno:** joao
-- **Estado:** reviewed
-- **Review 0009 (Claude) = APROVADO** — diff real main..pipe/0009 (commit 83e1a66): só os 5 arquivos do §3 + protocolo; Dashboard.tsx fora (props do Hero inalteradas); sovereigntyScale só-adição (FREEDOM_ORDER/FREEDOM_SEGMENT); FreedomSpectrum com role=img+aria-label, ativo/apagado, marcador (idx+0.5)*20%, motion-reduce; espectro dentro do !noLdData (não premia conta vazia); Card surface="raised" (0008 já na main); Gate 3=0; gate verde 212 (209+3). Sem nits. Próxima ação: João faz merge de pipe/0009 na main + commita esta transição. Sem deploy.
-- **Próxima ação:** Claude reviews the report in .pipeline/reports/HANDOFF-0009.report.md and diff, then sets Turno=joao and Estado=reviewed.
+- **Handoff atual:** 0010
+- **Turno:** antigravity
+- **Estado:** spec_ready
+- **Próxima ação:** João commita a spec 0010 + este STATE e dá o "roda". Antigravity executa `docs/handoffs/HANDOFF-0010-card-no-radar.md` em `pipe/0010-card-no-radar` (a partir da main), roda `npm run gate`, escreve o report.
+- **Escopo 0010:** card "No Radar" (§8.2) no Painel via `useHorizonTop` (hook novo) + `RadarCard` (apresentacional dark-glass) + mount no Dashboard, REUSANDO `anticipationEngine`/§9. Motor + Consultor + HorizonBriefing INTOCADOS. Rótulo segue régua §9.3 (sem "AJA ESTA SEMANA"); dia calmo = conquista. Cor de estado por borda/acento, profundidade por Card glow=neutral (Gate 3=0). **Review reforçada Dev+UIUX+Security (CISO valida o §9 "quando falar").** Sem deploy.
+- **0009:** CONCLUÍDO — merged na main (commit 2c46c68), gate verde 212, lock free. (Review Claude = APROVADO; ver histórico.)
+- **0008:** CONCLUÍDO (merged). **0007:** CONCLUÍDO (merged + deploy pelo João).
 - **Escopo 0009:** SovereigntyHero em Dark-Glass (superfície elevada da fundação 0008) + novo `FreedomSpectrum` (§10.3 espectro de tiers) + ordem/segmento aditivos em `sovereigntyScale.ts`. **Props/caller INALTERADOS** (Dashboard.tsx fora do diff). SEM card "No Radar" nem Horizonte (0010/0011), SEM deploy, Gate 3 mantido.
 - **Descoberta (grounding):** o Painel realizado do screenshot (No-Radar/Horizonte/espectro) é PROTÓTIPO — não está no código. Lógica-base já existe (`sovereigntyScale.ts`, `anticipationEngine.ts`, `HorizonBriefing.tsx`); o que falta é a apresentação no Painel. 0009 faz o espectro; 0010=card No-Radar (anticipationEngine+§9.3), 0011=Horizonte no Painel.
 - **0008:** CONCLUÍDO (merged pelo João).
