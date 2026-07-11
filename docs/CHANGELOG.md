@@ -15,6 +15,10 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Added — Fundação Dark-Glass (HANDOFF-0008) (10/07/2026)
+
+- Fundação Dark-Glass (HANDOFF-0008): tokens de profundidade (`--si-surface-grad`/`--si-glass`/`--si-elev`/`--si-glow-*`) nos dois temas + utilities + variantes opcionais `surface`/`glow` no `Card` (retrocompatível). Rubric v2 §10. Sem rebuild de tela, sem deploy.
+
 ### Changed — Sync Fase 1.5 (HANDOFF-0007) (10/07/2026)
 
 - addTransfer/addCardPurchase/importCardPurchases/generateEntriesFromRecurrents na subcoleção para migrados; espelho em recorrentesService (código; deploy pendente de aval).

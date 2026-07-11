@@ -19,18 +19,31 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   padding?: CardPadding;
   /** realça a borda (hover/destaque) */
   interactive?: boolean;
+  surface?: 'flat' | 'raised';
+  glow?: 'none' | 'positive' | 'neutral';
 }
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
-  { padding = 'md', interactive = false, className, children, ...rest },
+  {
+    padding = 'md',
+    interactive = false,
+    surface = 'flat',
+    glow = 'none',
+    className,
+    children,
+    ...rest
+  },
   ref,
 ) {
   return (
     <div
       ref={ref}
       className={cn(
-        'bg-si-card rounded-2xl border border-si-border',
+        surface === 'raised' ? 'si-surface si-elev' : 'bg-si-card',
+        'rounded-2xl border border-si-border',
         interactive && 'transition-colors hover:border-si-border-md',
+        glow === 'positive' && 'si-glow-positive',
+        glow === 'neutral' && 'si-glow',
         PADDING[padding],
         className,
       )}

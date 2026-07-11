@@ -75,6 +75,14 @@
   --si-projection-text: #a78bfa;
   --si-info-bg: rgba(59, 130, 246, 0.10);
   --si-info-text: #60a5fa;
+
+  /* ── PROFUNDIDADE (rubric §10) — dark ─────────────────────────────── */
+  --si-surface-grad: linear-gradient(180deg, var(--si-card), var(--si-zinc-9));
+  --si-glass: rgba(20, 27, 35, 0.55);
+  --si-glass-blur: 15px;
+  --si-elev: 0 16px 46px -22px rgba(0, 0, 0, 0.8);
+  --si-glow-neutral: 0 0 40px -14px rgba(255, 255, 255, 0.10);
+  --si-glow-positive: 0 0 44px -14px rgba(16, 185, 129, 0.28); /* estado: soberania */
 }
 
 [data-theme="light"] img[src*="sibanki-logo"] {
@@ -157,6 +165,14 @@
   --si-projection-text: #6d28d9;
   --si-info-bg: rgba(37, 99, 235, 0.08);
   --si-info-text: #1d4ed8;
+
+  /* ── PROFUNDIDADE (rubric §10) — light ────────────────────────────── */
+  --si-surface-grad: linear-gradient(180deg, var(--si-card), #f7f9fb);
+  --si-glass: rgba(255, 255, 255, 0.6);
+  --si-glass-blur: 15px;
+  --si-elev: 0 16px 40px -24px rgba(0, 0, 0, 0.18);
+  --si-glow-neutral: 0 8px 24px -14px rgba(0, 0, 0, 0.12);
+  --si-glow-positive: 0 8px 28px -14px rgba(16, 185, 129, 0.20);
 }
 
 /* ─────────────────────────────────────────────
@@ -246,6 +262,13 @@ body {
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
+
+/* ── UTILITIES DE PROFUNDIDADE (rubric §10) ────────────────────────── */
+.si-surface { background: var(--si-surface-grad); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+.si-glass   { background: var(--si-glass); backdrop-filter: blur(var(--si-glass-blur)); -webkit-backdrop-filter: blur(var(--si-glass-blur)); }
+.si-elev    { box-shadow: var(--si-elev); }
+.si-glow          { box-shadow: var(--si-glow-neutral); }
+.si-glow-positive { box-shadow: var(--si-glow-positive); }
 
 
 /* ── Foco de teclado global (WCAG 2.4.7 Focus Visible) ──────────
