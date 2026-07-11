@@ -15,6 +15,10 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Added — Card No-Radar no Painel (HANDOFF-0010) (11/07/2026)
+
+- Card No-Radar no Painel (HANDOFF-0010): a decisão única da §8.2 no Painel via `useHorizonTop` + `RadarCard` (dark-glass), reusando `anticipationEngine`/§9. Rótulo segue a régua §9.3; dia calmo = conquista. Consultor/motor intocados. Sem deploy.
+
 ### Added — Hero Dark-Glass + espectro de tiers (HANDOFF-0009) (11/07/2026)
 
 - Hero Dark-Glass + espectro de tiers (HANDOFF-0009): SovereigntyHero em superfície elevada (fundação 0008) + novo FreedomSpectrum (§10.3), props/caller inalterados. Sem No-Radar/Horizonte (0010/0011), sem deploy.

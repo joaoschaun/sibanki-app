@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { DashboardSkeleton } from '../components/ui/PageSkeleton';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import {
   TrendingUp,
@@ -21,6 +21,8 @@ import { useCoachActive } from '../hooks/useCoachActive';
 import { useDashboardData, getMonthLabel } from '../hooks/useDashboardData';
 import { CoachSetup } from '../components/ui/CoachSetup';
 import { SovereigntyHero } from '../components/ui/SovereigntyHero';
+import { RadarCard } from '../components/ui/RadarCard';
+import { useHorizonTop } from '../hooks/useHorizonTop';
 import { SpreadGapCard } from '../components/ui/SpreadGapCard';
 import { InsightDoDia } from '../components/ui/InsightDoDia';
 import { SibcoinWidget } from '../components/sibcoin/SibcoinWidget';
@@ -115,6 +117,8 @@ export default function Dashboard() {
   } = useAppContext();
   const { mode: dashboardMode } = useDashboardMode();
   const { isCoachActive, dismiss: dismissCoach, stepStatus } = useCoachActive();
+  const navigate = useNavigate();
+  const horizon = useHorizonTop();
 
   const [showEditor, setShowEditor] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<SubTabId>('visao_geral');
@@ -168,17 +172,24 @@ export default function Dashboard() {
       <AccountSummaryStrip />
     ),
     'sovereignty-hero': (
-      <SovereigntyHero
-        userName={user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
-        score={score}
-        freedom={freedom}
-        spread={spread}
-        receitaMes={receitaMes}
-        despesaMes={despesaMes}
-        saldoMes={saldoMes}
-        varReceita={varReceita}
-        varDespesa={varDespesa}
-      />
+      <>
+        <SovereigntyHero
+          userName={user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
+          score={score}
+          freedom={freedom}
+          spread={spread}
+          receitaMes={receitaMes}
+          despesaMes={despesaMes}
+          saldoMes={saldoMes}
+          varReceita={varReceita}
+          varDespesa={varDespesa}
+        />
+        <RadarCard
+          item={horizon.item}
+          onMontarPlano={(it) => navigate('/consultor-ia', { state: { initialMessage: `Me ajuda a montar um plano para: ${it.label}` } })}
+          onSnooze={(it) => horizon.snooze(it.id)}
+        />
+      </>
     ),
     'spread-gap': (
       <SpreadGapCard spread={spread} />
