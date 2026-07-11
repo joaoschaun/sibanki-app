@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { useIntelligence } from '../context/IntelligenceContext';
-import { topHorizonItem } from '../utils/anticipationEngine';
+import { topHorizonItem, nextIncomeDate } from '../utils/anticipationEngine';
 
 export function useHorizonTop() {
   const {
@@ -29,6 +29,8 @@ export function useHorizonTop() {
     [accounts, accountBalances, accountMeta]
   );
 
+  const incomeDate = useMemo(() => nextIncomeDate(recurrents, new Date()), [recurrents]);
+
   const item = useMemo(() => {
     const top = topHorizonItem({
       liquidCash,
@@ -48,5 +50,5 @@ export function useHorizonTop() {
     });
   };
 
-  return { item, snooze };
+  return { item, incomeDate, snooze };
 }

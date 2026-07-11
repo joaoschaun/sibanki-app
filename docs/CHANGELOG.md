@@ -15,6 +15,10 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Added — Horizonte no Painel (HANDOFF-0011) (11/07/2026)
+
+- Horizonte no Painel (HANDOFF-0011): novo `HorizonStrip` (§8.5/§10.3) — régua dos 15 dias com renda/despesa e janela de ação, atrelado à decisão do Radar; `useHorizonTop` passa a devolver `incomeDate`. Reuso puro do `anticipationEngine`; motor/Consultor/Radar intocados. Sem deploy.
+
 ### Added — Card No-Radar no Painel (HANDOFF-0010) (11/07/2026)
 
 - Card No-Radar no Painel (HANDOFF-0010): a decisão única da §8.2 no Painel via `useHorizonTop` + `RadarCard` (dark-glass), reusando `anticipationEngine`/§9. Rótulo segue a régua §9.3; dia calmo = conquista. Consultor/motor intocados. Sem deploy.

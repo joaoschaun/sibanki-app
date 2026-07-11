@@ -22,6 +22,7 @@ import { useDashboardData, getMonthLabel } from '../hooks/useDashboardData';
 import { CoachSetup } from '../components/ui/CoachSetup';
 import { SovereigntyHero } from '../components/ui/SovereigntyHero';
 import { RadarCard } from '../components/ui/RadarCard';
+import { HorizonStrip } from '../components/ui/HorizonStrip';
 import { useHorizonTop } from '../hooks/useHorizonTop';
 import { SpreadGapCard } from '../components/ui/SpreadGapCard';
 import { InsightDoDia } from '../components/ui/InsightDoDia';
@@ -189,6 +190,7 @@ export default function Dashboard() {
           onMontarPlano={(it) => navigate('/consultor-ia', { state: { initialMessage: `Me ajuda a montar um plano para: ${it.label}` } })}
           onSnooze={(it) => horizon.snooze(it.id)}
         />
+        <HorizonStrip item={horizon.item} incomeDate={horizon.incomeDate} />
       </>
     ),
     'spread-gap': (
