@@ -15,6 +15,10 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Added — Hero Dark-Glass + espectro de tiers (HANDOFF-0009) (11/07/2026)
+
+- Hero Dark-Glass + espectro de tiers (HANDOFF-0009): SovereigntyHero em superfície elevada (fundação 0008) + novo FreedomSpectrum (§10.3), props/caller inalterados. Sem No-Radar/Horizonte (0010/0011), sem deploy.
+
 ### Docs — Rubric §8.6: o teto do Painel, "os 4 movimentos" (11/07/2026)
 
 - Sessão de brainstorm de produto (Cowork): direção **assimétrica** aprovada pelo founder

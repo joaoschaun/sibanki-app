@@ -79,3 +79,17 @@ export const SV_TIERS: readonly SvTier[] = [
 export function getSvTier(score: number): SvTier {
   return SV_TIERS.find((t) => score >= t.min) ?? SV_TIERS[SV_TIERS.length - 1];
 }
+
+/** Ordem canônica do pior ao melhor — usada pelo espectro (FreedomSpectrum). */
+export const FREEDOM_ORDER: readonly FreedomStatus[] = [
+  'fragil', 'em-construcao', 'resiliente', 'soberano', 'inabalavel',
+] as const;
+
+/** Cor sólida do segmento no espectro (dado = posição na escala; §10.3 / §1 ⚠︎v2). */
+export const FREEDOM_SEGMENT: Record<FreedomStatus, string> = {
+  fragil:        'bg-rose-500/70',
+  'em-construcao':'bg-amber-500/70',
+  resiliente:    'bg-blue-500/70',
+  soberano:      'bg-emerald-500/70',
+  inabalavel:    'bg-violet-500/70',
+};

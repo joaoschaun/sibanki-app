@@ -12,6 +12,8 @@ import { useState } from 'react';
 import { ArrowUpRight, Shield, TrendingUp, TrendingDown, Zap, CheckCircle2, AlertCircle, HelpCircle, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { FREEDOM_TIERS, type FreedomStatus } from '../../constants/sovereigntyScale';
+import { Card } from './Card';
+import { FreedomSpectrum } from './FreedomSpectrum';
 
 // ─── Types (must stay in sync with sovereigntyEngine) ──────────────────────────
 export type { FreedomStatus };
@@ -82,7 +84,7 @@ export function SovereigntyHero({
     v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   return (
-    <div className="relative overflow-hidden bg-si-card rounded-2xl border border-si-border">
+    <Card surface="raised" padding="none" className="relative overflow-hidden">
       {/* Tier-coloured radial glow */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -156,6 +158,7 @@ export function SovereigntyHero({
           >
             {FREEDOM_TIERS[freedom.status].label}
           </span>
+          <FreedomSpectrum status={freedom.status} />
             </>
           )}
 
@@ -292,6 +295,6 @@ export function SovereigntyHero({
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
