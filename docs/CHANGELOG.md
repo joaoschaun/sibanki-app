@@ -15,6 +15,19 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Docs — Rubric §8.6: o teto do Painel, "os 4 movimentos" (11/07/2026)
+
+- Sessão de brainstorm de produto (Cowork): direção **assimétrica** aprovada pelo founder
+  (desktop = cockpit, mobile = ritual score-first; desktop primeiro). Referência estudada:
+  case Credit Pros (RonDesignLab).
+- Gravado na rubric (§8, item 6) o novo formato do Painel desktop: (a) número-herói Ld solto
+  na tela com **régua de tiers** (espectro flat de 5 segmentos + marcador), (b) navegação no
+  topo no lugar da sidebar (SibCoin vira ícone com badge), (c) decisão única **flutuante**
+  subordinada ao cash-aware §9.1, (d) Horizonte como fileira de 15 pílulas-dia. Inclui
+  anatomia da página inteira (hero → Horizonte → contas → fluxo → crédito).
+- Conceito visual "Painel Soberano v4" validado em mockup na sessão. Pendente: atualizar
+  mock canônico `docs/design/mocks/painel.html` e escrever handoff de implementação.
+
 ### Added — Fundação Dark-Glass (HANDOFF-0008) (10/07/2026)
 
 - Fundação Dark-Glass (HANDOFF-0008): tokens de profundidade (`--si-surface-grad`/`--si-glass`/`--si-elev`/`--si-glow-*`) nos dois temas + utilities + variantes opcionais `surface`/`glow` no `Card` (retrocompatível). Rubric v2 §10. Sem rebuild de tela, sem deploy.
