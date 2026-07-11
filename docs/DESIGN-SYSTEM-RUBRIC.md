@@ -4,7 +4,17 @@
 > As que dá para checar por máquina viram gate em `src/constants/designSystem.guard.test.ts`
 > (o "ratchet" — números só podem cair). As demais são checklist de PR.
 >
-> Versão 1 · 04/07/2026 · Lead UX/UI.
+> Versão 2 · 10/07/2026 · Lead UX/UI.
+> **Versão 1** (04/07/2026) foi austera por reação a um fracasso concreto (gradiente-arco-íris
+> e neon decorativos). A **v2 evolui conscientemente** para a linguagem **Pierre Dark-Glass**:
+> passa a permitir **profundidade** (glass, elevação, glow, gradiente de superfície) como
+> camada de execução premium — SEM abandonar o princípio (restrição, significado sobre
+> decoração). A alma é preservada: **cor ainda = estado** (§1), WCAG AA (§2), e §8/§9
+> (assinatura + anti-ansiedade) intactos — a nova linguagem *serve* essas seções, não as revoga.
+> Isto **revisa** três regras da v1 (marcadas com ⚠︎v2 abaixo): §1 (glow), §4 (movimento/gradiente)
+> e §6/Gate 3. Referência canônica visual: [`docs/design/mocks/`](design/mocks/) — `painel.html`
+> (Painel), `credito.html` (Crédito), `consultor.html` (Consultor). A especificação completa da
+> linguagem está na **§10**.
 
 ---
 
@@ -13,8 +23,18 @@
 **Base monocromática.** Fundo `--si-bg`, cards `--si-card`, texto/UI em cinza (`si-1…si-5`).
 Cor com hue só é permitida para **estado financeiro** (Ld/Sg/Sv) via a paleta semântica
 (`si-positive` / `si-warning` / `si-risk` / `si-projection` / `si-info`, sempre par bg+text
-com opacidade) — nunca para decoração. **Gate 1** (sem `bg-*-500` sólido) e a regra "sem glow"
-(**Gate 3**, sem `shadow-cor/opacidade`) protegem isso.
+com opacidade) — nunca para decoração. **Gate 1** (sem `bg-*-500` sólido) protege isso.
+
+**⚠︎v2 — profundidade permitida, cor ainda presa a estado.** A regra "monocromático" nunca foi
+"sem profundidade"; era "sem cor decorativa". A v2 mantém isso e destrava a profundidade:
+- **Glow/gradiente NEUTRO** (branco-alpha, cinza) é livre — é elevação, não cor.
+- **Glow/gradiente COLORIDO** só vale se a cor **carregar significado**: (a) hue da paleta de
+  estado num elemento que É aquele estado (ex.: glow esmeralda no card-herói de soberania), ou
+  (b) **dado** — categoria (`--si-cat-*`) ou posição numa régua (o espectro do score, §10).
+- **Continua proibido:** glow/gradiente multicor decorativo, neon, hue fora de estado/dado.
+
+Ou seja: a pergunta não é "tem cor?", é **"a cor está dizendo algo?"**. Detalhe operacional e
+tokens na **§10**; o gate correspondente foi revisto (§6, Gate 3 ⚠︎v2).
 
 **Escala de cinzas em OKLCH.** Os tokens `--si-text-1…5` são `oklch(L 0 0)`, com lightness
 *resolvida* para um alvo de contraste (não escolhida a olho). Para cinza OKLCH, `Y = L³`, então
@@ -56,7 +76,12 @@ devem viver em constantes de marca, não espalhadas. Não contam como violação
 
 - Spacing na escala **4/8px**. Cards `rounded-xl/2xl`, borda `0.5px si-border`.
 - Mobile-first: colunas empilham (`grid-cols-1 md:grid-cols-2`); nada quebra < md.
-- Movimento discreto: animações de entrada existentes; sem glow, sem gradiente colorido.
+- **⚠︎v2 — Movimento com propósito, profundidade cirúrgica.** O movimento deixa de ser só
+  "entrada discreta": ganha vocabulário definido (count-up no número-herói, draw em linha/
+  sparkline, fill em barras, reveal em stagger, sheen no cartão, pulse no "ao vivo") — sempre
+  **subordinado a `prefers-reduced-motion`** (§10). Glass, elevação e glow **neutros ou de
+  significado** passam a ser permitidos (a regra de cor da §1 continua valendo). Especificação:
+  **§10**.
 
 ---
 
@@ -65,7 +90,10 @@ devem viver em constantes de marca, não espalhadas. Não contam como violação
 - [ ] Usou primitivos (`Button`/`Input`/`Select`/`Field`) em vez de markup cru?
 - [ ] Todos os estados do componente cobertos (incl. `loading` e `disabled`)?
 - [ ] Empilha e é tocável (44px) no mobile?
-- [ ] Cor só para estado financeiro? (nada decorativo colorido)
+- [ ] Cor só para estado **ou dado** (categoria/espectro)? (nada decorativo colorido — §1 ⚠︎v2)
+- [ ] Todo glow/gradiente é neutro **ou** carrega significado? Nenhum neon/multicor decorativo? (§10)
+- [ ] Movimento respeita `prefers-reduced-motion`? (§10)
+- [ ] Cada padrão dark-glass tem seu equivalente em **modo claro** (glow→sombra suave, glass→frost claro)? (§10)
 - [ ] Rodou `npm run test:unit` (os 5 gates passam)?
 - [ ] Validou visualmente nos **dois temas** (dark + light)?
 
@@ -77,7 +105,12 @@ devem viver em constantes de marca, não espalhadas. Não contam como violação
 
 1. Fundo sólido colorido ≤ 29 (só cai).
 2. Foco colorido = 0.
-3. Glow colorido = 0.
+3. **⚠︎v2 — Glow/gradiente FORA de estado-ou-dado = 0.** (Antes: "glow colorido = 0".) O gate
+   deixa de contar "tem glow colorido?" e passa a contar "tem glow/gradiente com hue que **não**
+   é da paleta de estado nem de categoria `--si-cat-*`?". Glow neutro (branco-alpha) e glow de
+   estado/dado são permitidos; decorativo/neon/multicor continua = 0. **Loosening deliberado de
+   ratchet** (normalmente "só cai") — é a exceção que justifica o bump para v2 e exige ciência do
+   fundador. A mudança do teste vive no HANDOFF-0008 (código), não aqui.
 4. Label `text-si-5 uppercase` = 0.
 5. Token `--si-text-*` em hex = 0 (só OKLCH).
 
@@ -192,3 +225,73 @@ A regua e SUBORDINADA ao cash-aware (9.1): o countdown fixo e o fallback, nao a 
 - **Config (9.4a):** dial "quao a frente quer ser avisado?" — *so o urgente* / *a semana* /
   *tudo*. Default meio-termo (7 dias). Percepcao de ansiedade varia por pessoa; o dial devolve
   o controle ao usuario.
+
+---
+
+## 10. Linguagem visual — Pierre Dark-Glass (v2)
+
+A evolução da execução: mesma alma (§1, §8, §9), acabamento premium. **Filosofia:** profundidade
+comunica hierarquia e "sistema avançado que merece confiança"; a disciplina é que a profundidade
+seja *cirúrgica* e a cor *signifique*. Referência canônica: [`docs/design/mocks/`](design/mocks/).
+Os mocks são **glamour shots** (dark, estáticos, dados fictícios) — copie a *linguagem*, não os
+números, e nunca ignore os estados reais (§10.6).
+
+### 10.1 Tokens de profundidade (intent — os CSS vars nascem no HANDOFF-0008)
+
+- **Superfícies em gradiente sutil:** card = `linear-gradient(180deg, --si-card, --si-card-2)`
+  (~2 passos de luminância) + `inset 0 1px 0 rgba(255,255,255,.06)` (borda-luz superior) — dá
+  volume sem cor. Fundo da página: radial-glows **neutros/estado** de baixa opacidade nos cantos.
+- **Glass** (`--si-glass`): `rgba(20,27,35,.55)` + `backdrop-filter: blur(14–16px)` + borda
+  `--si-border-2`. Uso: painéis-detalhe, tooltips, pílula de ação, input do Consultor.
+- **Glow:** halo suave (`box-shadow` difuso, raio grande, baixa opacidade) **na cor do estado**
+  do elemento. Ex.: card-herói de soberania → glow esmeralda. Neutro também vale.
+- **Elevação:** sombra funcional `0 16px 46px -22px rgba(0,0,0,.8)` nos cards. Sem sombra dura.
+- **Sheen:** brilho diagonal que varre (cartão-arte). Decorativo-permitido porque é **luz**, não hue.
+
+### 10.2 Regras de profundidade (subordinadas à §1)
+
+1. **Glow/gradiente segue a cor-de-significado.** Neutro (branco-alpha/cinza) livre; colorido só
+   se for **estado** (elemento que É aquele estado) ou **dado** (categoria/espectro). Nunca decorativo.
+2. **Glass é neutro por padrão.** O tom de vidro não introduz hue; se o painel-detalhe usa gradiente
+   colorido (ex.: esmeralda→teal→violeta), é porque representa transição de estado/tempo — não enfeite.
+3. **Profundidade não pode ferir contraste (§2).** Texto sobre glass/gradiente mantém ≥4.5:1 — teste
+   no ponto mais claro do fundo.
+4. **Modo claro não é opcional (§10.5).** Todo padrão dark tem equivalente claro definido.
+
+### 10.3 Padrões nomeados (o léxico reutilizável)
+
+- **Card-herói com glow-border.** Número-herói (§8.1: Ld, patrimônio) em degradê de estado + moldura
+  luminosa 1px (mask-gradient) + glow difuso. Um por tela, no máximo. Ref: `painel.html`.
+- **Espectro do score.** Régua gradiente **risco→atenção→soberano** (rose→âmbar→esmeralda) com
+  marcador na posição do Sv. A cor = posição na escala (dado), não decoração. Ref: `credito.html`.
+- **Cor-por-categoria.** Ícones/realces usam `--si-cat-*` (uma cor por categoria financeira). É a
+  fonte legítima de "vida colorida" que o v1 subusava. Ref: `credito.html`, listas.
+- **Painel-detalhe em glass.** Drill-down de um objeto (fatura, conta) em glass gradiente: valor,
+  progresso, abas, **calendário de status** (✓/✕ por mês) e **pílula de ação flutuante**. Ref: `credito.html`.
+- **Rail de "Contexto ao vivo" (Consultor).** Faixa que mostra o que a IA está lendo (Ld/Sg/Sv/Open
+  Finance) — prova visual de §8.4 ("olhei agora há pouco"), gera confiança. Ref: `consultor.html`.
+- **Card de decisão embutido (Consultor).** Resposta da IA não é parágrafo: é decisão quantificada
+  (Ld antes→depois, Sv da ação, à vista vs parcelado). Materializa §8.2 e o `decisionEngine`. Ref: `consultor.html`.
+- **Cartão-arte** (opcional, só para a conta/cartão **próprio** Sibanki). Gradientes em camadas +
+  chip + sheen. **Não** substitui os cartões com marca das instituições, que já existem e permanecem.
+
+### 10.4 Vocabulário de movimento (com trava)
+
+Count-up no número-herói · draw (stroke-dashoffset) em linha/sparkline · fill em barras/progresso ·
+reveal em stagger (~85ms) na entrada dos cards · sheen no cartão · pulse no indicador "ao vivo".
+**Trava dura:** tudo envolto em `@media (prefers-reduced-motion: reduce)` → sem animação, estado final
+imediato. Movimento confirma ação/dá vida; nunca bloqueia leitura nem atrasa dado.
+
+### 10.5 Modo claro (equivalências obrigatórias)
+
+Glow colorido → sombra suave neutra + borda de estado. · Glass escuro → frost claro
+(`rgba(255,255,255,.6)` + blur). · Gradientes de superfície → passos claros equivalentes. ·
+Espectro e categorias mantêm hue (são dado). Validar §5 nos dois temas — o dark-glass **não pode**
+existir só no escuro.
+
+### 10.6 O que os mocks NÃO mostram (e o produto exige)
+
+Os glamour shots escondem o trabalho real que o HANDOFF-0008 e seguintes precisam entregar:
+**estados** (vazio/loading/erro/`hideValues`), **dados reais** via contexts (não fictícios),
+**responsividade** de verdade (não só o breakpoint do mock), **modo claro**, **a11y** (foco, touch,
+leitor de tela). Um mock bonito é hipótese visual validada — não é a tela pronta.

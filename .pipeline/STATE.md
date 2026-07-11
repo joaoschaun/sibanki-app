@@ -1,10 +1,11 @@
 # Pipeline State
 
-- **Handoff atual:** 0007
+- **Handoff atual:** 0007 — **CONCLUÍDO** (merged + deploy exercido pelo João).
 - **Turno:** joao
-- **Estado:** reviewed
-- **Próxima ação:** João faz merge de pipe/0007-sync-fase-1-5 na main e commita esta transição de STATE. DEPLOY de recorrentesService (aplicarRecorrentesDoMes/aplicarRecorrentesManual) permanece PENDENTE de aval explícito do João, por ação, FORA deste handoff (Regra de Ouro).
-- **Atualizado em:** 2026-07-10T09:30:00-03:00
+- **Estado:** idle — rubric v2 pronta, 0008 destravado
+- **Próxima ação:** João commita a rubric v2 (`docs/DESIGN-SYSTEM-RUBRIC.md` + `docs/design/mocks/{painel,credito,consultor}.html`). Depois, Claude escreve HANDOFF-0008 (Fase 0 fundação shadcn + tokens de profundidade §10 + Dashboard piloto), executado pelo Antigravity. Backend intocado, sem deploy. Bloqueio anterior (código do Lovable) RESOLVIDO — o norte visual foi desenhado no próprio repo (mocks v4-v6 → rubric §10), sem dependência do Lovable.
+- **Nota (loosening de ratchet):** a rubric v2 revisa o Gate 3 (glow) de "colorido=0" para "fora-de-estado-ou-dado=0". É um afrouxamento DELIBERADO de ratchet (normalmente só cai) — ciência do fundador registrada. A mudança do teste em si vive no HANDOFF-0008 (código).
+- **Atualizado em:** 2026-07-10T10:30:00-03:00
 
 > Review 0007 (Claude) = **APROVADO** — diff real extraído do commit 06a6925 (pai a65fb2cd):
 > só os 4 arquivos do §3; gate verde 205 testes (199+6); 4 testes antigos intactos; 6 novos
