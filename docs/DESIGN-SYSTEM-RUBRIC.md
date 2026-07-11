@@ -163,6 +163,34 @@ nao so correto. Referencia canonica: entrada do Consultor IA.
    acao. Enquadre a decaida de alavanca ("barato agora, o rotativo depois"). Elemento-assinatura:
    o **Horizonte** (linha dos proximos 15 dias com a janela de acao destacada).
 
+6. **O teto do Painel — os 4 movimentos (aprovado 11/07/2026, ref. Credit Pros/RonDesignLab).**
+   O Painel desktop deixa de ser grid de cards e adota o formato "numero-dono-da-tela":
+   - **(a) Numero-heroi com espectro de tiers.** O Ld vive solto na tela (nao dentro de card),
+     peso ultraleve (~200), tamanho ~84px, `tabular-nums`. Embaixo dele corre a **regua de
+     tiers**: 5 segmentos flat proporcionais (Fragil rose / Em construcao ambar / Resiliente
+     azul / Soberano esmeralda / Inabalavel violeta) com marcador branco na posicao do usuario.
+     E o canal "espectro do score" ja sancionado na §10 — cor = posicao na escala, nunca arco-iris
+     decorativo. Metricas de apoio (patrimonio, burn diario, spread) em microlabels sob o hero.
+   - **(b) Navegacao no topo, nao sidebar gorda.** Desktop usa nav horizontal (Painel ·
+     Lancamentos · Credito · Investimentos · Mais) + botao Assistente + avatar. A largura
+     inteira volta pro conteudo. SibCoin sai do corpo do Painel e vira icone com badge no topo
+     (gamificacao e recompensa, nao estado).
+   - **(c) A decisao flutua — nao disputa a grade.** A unica-decisao (§8.2) aparece como painel
+     flutuante sobreposto ao hero, com borda/temperatura do estado (ambar = radar). Zero
+     decisoes = painel limpo (calmo-por-padrao, §9.2). Sempre subordinada ao gate cash-aware
+     da §9.1 (a sugestao chega DEPOIS da renda que a cobre).
+   - **(d) Tempo tatil.** O Horizonte (§8.5) se materializa como fileira de 15 pilulas-dia:
+     dias neutros apagados, entrada de renda em esmeralda, evento de credito em ambar, janela
+     de acao com borda acesa. Legenda de 1 linha. (Credit Pros mostra o passado em pilulas;
+     nos mostramos o futuro.)
+
+   **Anatomia da pagina inteira (ordem fixa, do significado pro operacional):**
+   (1) Hero + decisao flutuante → (2) Horizonte → (3) faixa de contas conectadas (tiles densos,
+   estado Open Finance) → (4) fluxo do mes (coadjuvante, altura reduzida) → (5) credito em
+   formacao (card compacto → Hub). Quanto mais perto do topo, mais "o que significa"; quanto
+   mais embaixo, mais "numeros crus". Descartado conscientemente da referencia: glow colorido
+   decorativo em icones e multiplos paineis simultaneos.
+
 ## 9. Contrato de "quando falar" (antecipacao sem ansiedade)
 
 A antecipacao corta dos dois lados: bem feita reduz ansiedade ("esta tudo no meu radar,
@@ -211,6 +239,13 @@ mudar e angustia pura. E o gatilho nao e um countdown de "dias antes" — e a PO
 - **Passivo / planejamento** (janela ~7-15 dias): tom neutro, sem urgencia, foco em preparar
   ("quer ja separar?"). So aparece quando ha acao possivel.
 - **Ativo / decisao** (3-5 dias do ponto sem volta): tom destacado, resolucao imediata.
+- **⚠︎v2 — O ROTULO segue a regua, nao so o corpo.** O verbo de urgencia ("AJA", "agora") e
+  reservado ao ativo (3-5 dias). Um item no radar do Painel que ainda esta na janela passiva
+  (>5 dias E com cobertura de caixa) usa rotulo de PLANEJAMENTO, mesmo em destaque: "no radar ·
+  da pra resolver esta semana" > "AJA ESTA SEMANA". Surface cedo (§8.5) sem *soar* urgente cedo —
+  senao a antecipacao vira a maquina de ansiedade (§9.2). Guardar "aja" para quando aperta mantem
+  a palavra com peso. (Aprendizado da realizacao do Painel, 11/07: fatura a 9 dias com salario
+  cobrindo no dia 14 = passivo, nao ativo.)
 
 A regua e SUBORDINADA ao cash-aware (9.1): o countdown fixo e o fallback, nao a regra.
 
@@ -276,6 +311,20 @@ números, e nunca ignore os estados reais (§10.6).
   (Ld antes→depois, Sv da ação, à vista vs parcelado). Materializa §8.2 e o `decisionEngine`. Ref: `consultor.html`.
 - **Cartão-arte** (opcional, só para a conta/cartão **próprio** Sibanki). Gradientes em camadas +
   chip + sheen. **Não** substitui os cartões com marca das instituições, que já existem e permanecem.
+- **Horizonte — a régua dos próximos 15 dias.** Elemento-assinatura da §8.5. Faixa de dias com
+  marcadores de **RENDA** (esmeralda) e **DESPESA-com-alavanca** (âmbar), e a **janela de ação
+  destacada como vão contínuo** entre a renda e a despesa (não só na legenda). É a §9.1 (cash-aware)
+  tornada visível: renda ANTES da despesa = há cobertura, logo a fala é legítima. Ref: realização do
+  Painel (11/07).
+- **Card "No Radar" — a decisão da semana.** O card único da §8.2 no Painel: rótulo de estado
+  (âmbar = atenção) com **glow-border sancionado** (`--si-glow`, não `shadow-{hue}`), corpo em
+  **preservação** (§9.2: "preserva N dias da sua liberdade"), CTA primário + saída **"Depois"**
+  (respeita autonomia). O tom do rótulo obedece a régua §9.3 (passivo vs ativo). Máx. um por tela.
+  Ref: realização do Painel (11/07).
+- **Espectro de tiers (Ld).** Variante do espectro-do-score para **escalas nomeadas**:
+  Frágil → Em construção → Resiliente → Soberano → Inabalável (tiers do `calculateFreedom`), cada
+  tier um segmento, marcador na posição atual. Segmentos inativos **apagados** para só o ativo pulsar
+  (evita ruído de arco-íris). Cor = posição na escala (dado, não decoração — §1 ⚠︎v2). Ref: realização do Painel (11/07).
 
 ### 10.4 Vocabulário de movimento (com trava)
 
