@@ -1,9 +1,9 @@
 # Pipeline State
 
 - **Handoff atual:** 0010
-- **Turno:** antigravity
-- **Estado:** spec_ready
-- **Próxima ação:** João commita a spec 0010 + este STATE e dá o "roda". Antigravity executa `docs/handoffs/HANDOFF-0010-card-no-radar.md` em `pipe/0010-card-no-radar` (a partir da main), roda `npm run gate`, escreve o report.
+- **Turno:** claude
+- **Estado:** report_ready
+- **Próxima ação:** Claude reviews the report in .pipeline/reports/HANDOFF-0010.report.md and diff, then sets Turno=joao and Estado=reviewed.
 - **Escopo 0010:** card "No Radar" (§8.2) no Painel via `useHorizonTop` (hook novo) + `RadarCard` (apresentacional dark-glass) + mount no Dashboard, REUSANDO `anticipationEngine`/§9. Motor + Consultor + HorizonBriefing INTOCADOS. Rótulo segue régua §9.3 (sem "AJA ESTA SEMANA"); dia calmo = conquista. Cor de estado por borda/acento, profundidade por Card glow=neutral (Gate 3=0). **Review reforçada Dev+UIUX+Security (CISO valida o §9 "quando falar").** Sem deploy.
 - **0009:** CONCLUÍDO — merged na main (commit 2c46c68), gate verde 212, lock free. (Review Claude = APROVADO; ver histórico.)
 - **0008:** CONCLUÍDO (merged). **0007:** CONCLUÍDO (merged + deploy pelo João).
@@ -11,7 +11,7 @@
 - **Descoberta (grounding):** o Painel realizado do screenshot (No-Radar/Horizonte/espectro) é PROTÓTIPO — não está no código. Lógica-base já existe (`sovereigntyScale.ts`, `anticipationEngine.ts`, `HorizonBriefing.tsx`); o que falta é a apresentação no Painel. 0009 faz o espectro; 0010=card No-Radar (anticipationEngine+§9.3), 0011=Horizonte no Painel.
 - **0008:** CONCLUÍDO (merged pelo João).
 - **0007:** CONCLUÍDO (merged + deploy exercido pelo João).
-- **Atualizado em:** 2026-07-11T17:41:00-03:00
+- **Atualizado em:** 2026-07-11T18:20:00-03:00
 
 > Review 0008 (Claude) = **APROVADO** — diff real do commit 9b5504e (pai ee0ba7c4): só os 4
 > arquivos do §3; package.json e guard.test.ts intocados (Gate 3 = 0 mantido, glow via canal
