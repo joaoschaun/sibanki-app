@@ -1,9 +1,17 @@
 # Pipeline State
 
-- **Handoff atual:** 0014
+- **Handoff atual:** 0017
 - **Turno:** antigravity
 - **Estado:** spec_ready
-- **Próxima ação:** João commita a spec 0014 + este STATE e dá o "roda". Antigravity executa `docs/handoffs/HANDOFF-0014-painel-polimento-insight-sino.md` em `pipe/0014-painel-polimento` (da main), roda `npm run gate`, escreve o report.
+- **Próxima ação:** João **descarta pipe/0015 e pipe/0016** (miraram a camada errada) e usa o 0017. Commita a spec 0017 + este STATE e dá o "roda". Antigravity executa `docs/handoffs/HANDOFF-0017-painel-largura-raiz.md` em `pipe/0017-painel-largura-raiz` (da main).
+- **RAIZ do vão lateral (achada lendo a cadeia inteira):** App.tsx L269 tem um wrapper GLOBAL `max-w-[1180px] mx-auto` que envolve TODAS as rotas → capava o Painel em 1180 centrado, acima de qualquer w-full/padding abaixo. Por isso 0015 (w-full) e 0016 (padding do main) NÃO reduziram o vão — miravam camada errada.
+- **Escopo 0017:** condicionar a className do wrapper (L269) por rota — `/dashboard` solta o teto (`w-full`), demais rotas mantêm o cap de 1180 (legibilidade). `useLocation` já existe no App (L143). Só a className do wrapper + 1 const. + garantir Dashboard container w-full.
+- **0015/0016 SUPERSEDED** (não mergear). **0014:** insight no sino — merged. **0013:** Painel v9 — merged.
+- **Escopo 0016 (conserto definitivo do espaçamento lateral):** (A) container do Painel `w-full` (absorve o 0015); (B) padding horizontal do `<main>` no App.tsx `lg:p-8`→`lg:px-4` (32→16px) — conteúdo perto das bordas. Só a className do `<main>` no App.tsx (nada de sidebar/nav). Outras páginas são centralizadas → não quebram.
+- **0015 (SUPERSEDED):** executou o `w-full`, mas isso fez o conteúdo respeitar o padding do `<main>` e o vão lateral AUMENTAR (hipótese do Claude confirmada pelo João). O 0016 corrige juntando fluido + padding menor. Não mergear o 0015.
+- **0014:** insight no sino + largura parcial — merged. **0013:** Painel v9 bento — merged. **0012…0007:** CONCLUÍDOS.
+- **Escopo 0015 (correção do 0014):** o teto `max-w-[1360px]` do container do Painel (Dashboard.tsx L352) → `w-full` (fluido). Preenche a largura útil em qualquer estado da sidebar (fim dos gutters laterais que sobraram no 0014). Padding vem do `<main>` do App (intocado). Diff = essencialmente 1 linha. Sem deploy.
+- **0014:** CONCLUÍDO (largura parcial + insight no sino) — merged. **0013:** Painel v9 bento — merged. **0012…0007:** CONCLUÍDOS.
 - **Escopo 0014 (polimento do Painel, feedback do João olhando o app):** (A) alargar o container do conteúdo (fim dos gutters laterais); (B) tirar o insight (InsightDoDia/"Arquiteto Soberano") do CORPO do Painel → surfacar como notificação no SINO (Header já tem dropdown), reusando a geração existente. §8.1 (insight=CUIDADO, não no Painel) + §9.2. RadarCard (decisão) permanece. Motor/blueprint/Sidebar/App.tsx INTOCADOS. Sem deploy. (Obs: 0014 mudou de "nav-no-topo" para "polimento" a pedido do João; nav-no-topo fica pra depois.)
 - **0013:** CONCLUÍDO — Painel v9 (conteúdo bento completo, sidebar mantida) merged.
 - **0012/0011/…/0007:** CONCLUÍDOS.
