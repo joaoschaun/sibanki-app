@@ -4,10 +4,12 @@ import { auth } from '../../firebase';
 import { signOut } from 'firebase/auth';
 // ✅ FIX: Removido useAuth + useFinancialData duplicados → usa AppContext (único listener Firestore)
 import { useAppContext } from '../../context/AppContext';
-import { Menu, Sun, Moon, Bell, User, LogOut, FileBarChart, Calendar, MessageSquarePlus, AlertTriangle, ShieldAlert, Check } from 'lucide-react';
+import { Menu, Sun, Moon, Bell, User, LogOut, FileBarChart, Calendar, MessageSquarePlus, AlertTriangle, ShieldAlert, Check, Sparkles } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import { FeedbackModal } from '../ui/FeedbackModal';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
+import { useInsightDoDia } from '../../hooks/useInsightDoDia';
+import { trackPlatformEvent } from '../../services/platformEvents';
 
 /** Título da página atual no header — substitui o "SIBANKI" estático (S1, 12/06/2026). */
 const ROUTE_TITLES: Array<[prefix: string, title: string]> = [
@@ -63,6 +65,7 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
   const bellRef = useRef<HTMLDivElement>(null);
   const [bellOpen, setBellOpen] = useState(false);
   const push = usePushNotifications(user?.uid);
+  const { insight, legacyText, mode } = useInsightDoDia();
 
   // Calcula alertas ativos baseados nos dados financeiros reais do usuário
   const alertsList = useMemo(() => {
@@ -191,8 +194,13 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
             data-tour="notificacoes"
           >
             <Bell className="w-4 h-4 text-si-4" />
-            {alertsList.length > 0 && (
-              <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-si-3 rounded-full animate-pulse" />
+            {(alertsList.length > 0 || !!insight || !!legacyText) && (
+              <div 
+                className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-si-3 rounded-full animate-pulse"
+                role="status"
+                aria-live="polite"
+                aria-label="Notificações ou insights ativos"
+              />
             )}
           </button>
 
@@ -205,27 +213,62 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
 
               {/* List */}
               <div className="max-h-64 overflow-y-auto divide-y divide-si-border">
-                {alertsList.length > 0 ? (
-                  alertsList.map((alert) => (
-                    <Link
-                      key={alert.id}
-                      to={alert.link}
-                      onClick={() => setBellOpen(false)}
-                      className="flex items-start gap-3 p-4 hover:bg-si-over-2 transition-colors group"
-                    >
-                      <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${alert.type === 'error' ? 'bg-red-500/10 text-red-400' : 'bg-amber-500/10 text-amber-400'}`}>
-                        {alert.type === 'error' ? (
-                          <ShieldAlert className="w-4 h-4" />
-                        ) : (
-                          <AlertTriangle className="w-4 h-4" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-si-1 group-hover:text-white transition-colors">{alert.title}</p>
-                        <p className="text-[10px] text-si-4 mt-1 leading-relaxed">{alert.desc}</p>
-                      </div>
-                    </Link>
-                  ))
+                {alertsList.length > 0 || !!insight || !!legacyText ? (
+                  <>
+                    {/* Render insight if exists */}
+                    {((mode === 'gemini' && !!insight) || (mode === 'legado' && !!legacyText)) && (
+                      <Link
+                        to="/consultor-ia"
+                        onClick={() => {
+                          setBellOpen(false);
+                          void trackPlatformEvent('insight_cta_clicked', {
+                            source: 'bell_dropdown',
+                            mode,
+                            target: '/consultor-ia',
+                          });
+                        }}
+                        className="flex items-start gap-3 p-4 hover:bg-si-over-2 transition-colors group"
+                      >
+                        <div className="p-2 rounded-lg shrink-0 mt-0.5 bg-si-over-2 text-si-3 flex items-center justify-center">
+                          <Sparkles className="w-4 h-4 text-emerald-400" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-xs font-bold text-si-1 group-hover:text-white transition-colors">Arquiteto Soberano</p>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">Novo</span>
+                          </div>
+                          <p className="text-[10px] text-si-4 mt-1 leading-relaxed">
+                            {mode === 'gemini' ? insight?.insight_curto : legacyText}
+                          </p>
+                          <span className="text-[9px] font-semibold text-si-3 hover:underline mt-1.5 inline-block">
+                            Ver no Consultor IA →
+                          </span>
+                        </div>
+                      </Link>
+                    )}
+
+                    {/* Render alerts */}
+                    {alertsList.map((alert) => (
+                      <Link
+                        key={alert.id}
+                        to={alert.link}
+                        onClick={() => setBellOpen(false)}
+                        className="flex items-start gap-3 p-4 hover:bg-si-over-2 transition-colors group"
+                      >
+                        <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${alert.type === 'error' ? 'bg-red-500/10 text-red-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                          {alert.type === 'error' ? (
+                            <ShieldAlert className="w-4 h-4" />
+                          ) : (
+                            <AlertTriangle className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-si-1 group-hover:text-white transition-colors">{alert.title}</p>
+                          <p className="text-[10px] text-si-4 mt-1 leading-relaxed">{alert.desc}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
                     <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-2">

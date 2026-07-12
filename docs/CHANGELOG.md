@@ -15,6 +15,18 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Added — Painel polimento (HANDOFF-0014) (12/07/2026)
+
+- Container do Painel alargado no `Dashboard.tsx` para ocupar a largura útil real sem gutter lateral morto (padding preservado).
+- Insight do dia (`InsightDoDia`) extraído para o hook customizado `useInsightDoDia` e removido do corpo do Painel.
+- O insight agora surge de forma calma e elegante no sino de notificações (`Header.tsx`) com badge de alerta e item no dropdown com CTA para o Consultor IA, mantendo a harmonia visual dark-glass neutra.
+
+### Added — Painel v9 bento completo (HANDOFF-0013) (12/07/2026)
+
+- Reorganização da aba Visão Geral no `Dashboard.tsx` em grade Bento completa para estado saudável.
+- Adicionados quatro novos componentes bento: `ContasConectadas`, `CreditoEmFormacao` (utilizando `reaisToFreedomDays` para calcular e exibir dias de liberdade), `ParaOndeFoi` (utilizando `--si-cat-*` de index.css) e `FluxoResumo` (com Sparkline).
+- Preservada a visualização sequencial do blueprint em estado crítico/pressionado (Regra de Ouro) e a sidebar original intocada.
+
 ### Added — Painel bento do topo (HANDOFF-0012) (11/07/2026)
 
 - Painel bento do topo (HANDOFF-0012, fatia 1/5 do v8): hero compacto + decisão lado a lado + Horizonte full-width no slot sovereignty-hero; número §8.6a (fino/neutro). Blueprint adaptativo, sidebar, tabs e coluna direita intactos. Sem deploy.
