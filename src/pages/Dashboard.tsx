@@ -173,25 +173,27 @@ export default function Dashboard() {
       <AccountSummaryStrip />
     ),
     'sovereignty-hero': (
-      <>
-        <SovereigntyHero
-          userName={user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
-          score={score}
-          freedom={freedom}
-          spread={spread}
-          receitaMes={receitaMes}
-          despesaMes={despesaMes}
-          saldoMes={saldoMes}
-          varReceita={varReceita}
-          varDespesa={varDespesa}
-        />
-        <RadarCard
-          item={horizon.item}
-          onMontarPlano={(it) => navigate('/consultor-ia', { state: { initialMessage: `Me ajuda a montar um plano para: ${it.label}` } })}
-          onSnooze={(it) => horizon.snooze(it.id)}
-        />
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+          <SovereigntyHero
+            userName={user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
+            score={score}
+            freedom={freedom}
+            spread={spread}
+            receitaMes={receitaMes}
+            despesaMes={despesaMes}
+            saldoMes={saldoMes}
+            varReceita={varReceita}
+            varDespesa={varDespesa}
+          />
+          <RadarCard
+            item={horizon.item}
+            onMontarPlano={(it) => navigate('/consultor-ia', { state: { initialMessage: `Me ajuda a montar um plano para: ${it.label}` } })}
+            onSnooze={(it) => horizon.snooze(it.id)}
+          />
+        </div>
         <HorizonStrip item={horizon.item} incomeDate={horizon.incomeDate} />
-      </>
+      </div>
     ),
     'spread-gap': (
       <SpreadGapCard spread={spread} />

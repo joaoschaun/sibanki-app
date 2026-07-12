@@ -15,6 +15,10 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Added — Painel bento do topo (HANDOFF-0012) (11/07/2026)
+
+- Painel bento do topo (HANDOFF-0012, fatia 1/5 do v8): hero compacto + decisão lado a lado + Horizonte full-width no slot sovereignty-hero; número §8.6a (fino/neutro). Blueprint adaptativo, sidebar, tabs e coluna direita intactos. Sem deploy.
+
 ### Added — Horizonte no Painel (HANDOFF-0011) (11/07/2026)
 
 - Horizonte no Painel (HANDOFF-0011): novo `HorizonStrip` (§8.5/§10.3) — régua dos 15 dias com renda/despesa e janela de ação, atrelado à decisão do Radar; `useHorizonTop` passa a devolver `incomeDate`. Reuso puro do `anticipationEngine`; motor/Consultor/Radar intocados. Sem deploy.

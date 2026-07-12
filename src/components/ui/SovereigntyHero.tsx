@@ -9,7 +9,7 @@
  */
 
 import { useState } from 'react';
-import { ArrowUpRight, Shield, TrendingUp, TrendingDown, Zap, CheckCircle2, AlertCircle, HelpCircle, X } from 'lucide-react';
+import { ArrowUpRight, Shield, Zap, CheckCircle2, AlertCircle, HelpCircle, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { FREEDOM_TIERS, type FreedomStatus } from '../../constants/sovereigntyScale';
 import { Card } from './Card';
@@ -120,17 +120,17 @@ export function SovereigntyHero({
         </div>
 
         {/* ── Hero: Dias de Liberdade ── */}
-        <div className="flex flex-col items-center py-3">
-          <p className="si-label text-si-2 mb-2">
+        <div className="flex flex-col items-start py-1 w-full">
+          <p className="text-si-3 text-xs uppercase tracking-wider mb-2">
             Dias de Liberdade
           </p>
           {noLdData ? (
             /* Sem dados suficientes — não exibir o sentinela 99999 nem premiar conta vazia */
             <>
               <div className="flex items-end gap-2 leading-none animate-pulse">
-                <span className="text-[52px] sm:text-[72px] font-black tracking-tight leading-none text-si-4">—</span>
+                <span className="text-[52px] sm:text-[72px] font-extralight tracking-tight leading-none text-si-4">—</span>
               </div>
-              <p className="text-si-5 text-xs mt-2 text-center max-w-xs">
+              <p className="text-si-4 text-xs mt-2 text-left max-w-xs">
                 Seu índice de liberdade aparecerá aqui. Registre despesas ou conecte seu banco
                 para descobrir por quantos dias o seu patrimônio te banca.
               </p>
@@ -143,22 +143,22 @@ export function SovereigntyHero({
             </>
           ) : (
             <>
-          <div className="flex items-end gap-2 leading-none">
-            <span className={`text-[52px] sm:text-[72px] font-black tracking-tight leading-none ${FREEDOM_TIERS[freedom.status].numClass}`}>
-              {freedom.days}
-            </span>
-            <span className="text-si-2 text-xl sm:text-2xl mb-1.5">dias</span>
-          </div>
-          <p className="text-si-3 text-xs mt-2">
-            {freedom.coverageMonths.toFixed(1)} meses&nbsp;·&nbsp;queima R$&nbsp;
-            {fmtBRL0(freedom.dailyBurnRate)}/dia
-          </p>
-          <span
-            className={`mt-3 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest border ${FREEDOM_TIERS[freedom.status].badgeClass}`}
-          >
-            {FREEDOM_TIERS[freedom.status].label}
-          </span>
-          <FreedomSpectrum status={freedom.status} />
+              <div className="flex items-end gap-2 leading-none">
+                <span className="text-[52px] sm:text-[72px] font-extralight tracking-tight leading-none text-si-1 tabular-nums">
+                  {freedom.days}
+                </span>
+                <span className="text-si-3 text-xl sm:text-2xl mb-1.5 font-normal">dias</span>
+              </div>
+              <p className="text-si-3 text-xs mt-1.5 text-left">
+                {freedom.coverageMonths.toFixed(1)} meses&nbsp;·&nbsp;queima R$&nbsp;
+                {fmtBRL0(freedom.dailyBurnRate)}/dia
+              </p>
+              <span
+                className={`mt-3 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest border ${FREEDOM_TIERS[freedom.status].badgeClass}`}
+              >
+                {FREEDOM_TIERS[freedom.status].label}
+              </span>
+              <FreedomSpectrum status={freedom.status} />
             </>
           )}
 
@@ -184,19 +184,19 @@ export function SovereigntyHero({
         </div>
 
         {/* ── O que significa? ── */}
-          {!showExplanation ? (
-            <div className="flex justify-center">
-              <button
-                type="button"
-                onClick={() => setShowExplanation(true)}
-                className="flex items-center gap-1.5 text-[11px] text-si-3 hover:text-si-1 transition-colors"
-              >
+        {!showExplanation ? (
+          <div className="flex justify-start w-full">
+            <button
+              type="button"
+              onClick={() => setShowExplanation(true)}
+              className="flex items-center gap-1.5 text-[11px] text-si-3 hover:text-si-1 transition-colors"
+            >
               <HelpCircle className="w-3.5 h-3.5" />
               O que significam esses números?
             </button>
           </div>
         ) : (
-          <div className="bg-si-over-1 rounded-xl border border-si-border p-4 space-y-3">
+          <div className="bg-si-over-1 rounded-xl border border-si-border p-4 space-y-3 w-full">
             <div className="flex items-center justify-between">
               <p className="text-[11px] font-bold uppercase tracking-widest text-si-3">Glossário rápido</p>
               <button type="button" onClick={() => setShowExplanation(false)} className="text-si-3 hover:text-si-1">
@@ -224,74 +224,64 @@ export function SovereigntyHero({
         <div className="border-t border-si-border" />
 
         {/* ── Bottom strip: receita / despesa / saldo / spread ── */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 w-full text-xs">
           <div>
-            <p className="text-si-3 text-xs">Receitas (mês)</p>
-            <p className="text-sm font-bold text-emerald-400 mt-0.5">R$ {fmtBRL2(receitaMes)}</p>
+            <span className="text-[9px] uppercase tracking-wider text-si-4 block mb-0.5">Receitas</span>
+            <span className="text-sm sm:text-base font-bold text-emerald-400">R$ {fmtBRL2(receitaMes)}</span>
             {varReceita !== 0 && (
-              <p
-                className={`text-xs flex items-center gap-0.5 mt-0.5 ${
+              <span
+                className={`text-[10px] ml-1.5 inline-flex items-center gap-0.5 ${
                   varReceita >= 0 ? 'text-emerald-500' : 'text-rose-400'
                 }`}
               >
-                {varReceita >= 0 ? (
-                  <TrendingUp className="w-3 h-3" />
-                ) : (
-                  <TrendingDown className="w-3 h-3" />
-                )}
                 {varReceita >= 0 ? '+' : ''}
                 {varReceita.toFixed(1)}%
-              </p>
+              </span>
             )}
           </div>
 
           <div>
-            <p className="text-si-3 text-xs">Despesas (mês)</p>
-            <p className="text-sm font-bold text-rose-400 mt-0.5">R$ {fmtBRL2(despesaMes)}</p>
+            <span className="text-[9px] uppercase tracking-wider text-si-4 block mb-0.5">Despesas</span>
+            <span className="text-sm sm:text-base font-bold text-rose-400">R$ {fmtBRL2(despesaMes)}</span>
             {varDespesa !== 0 && (
-              <p
-                className={`text-xs flex items-center gap-0.5 mt-0.5 ${
+              <span
+                className={`text-[10px] ml-1.5 inline-flex items-center gap-0.5 ${
                   varDespesa <= 0 ? 'text-emerald-500' : 'text-rose-400'
                 }`}
               >
-                {varDespesa <= 0 ? (
-                  <TrendingDown className="w-3 h-3" />
-                ) : (
-                  <TrendingUp className="w-3 h-3" />
-                )}
                 {varDespesa >= 0 ? '+' : ''}
                 {varDespesa.toFixed(1)}%
-              </p>
+              </span>
             )}
           </div>
 
           <div>
-            <p className="text-si-3 text-xs">Saldo (mês)</p>
-            <p
-              className={`text-sm font-bold mt-0.5 ${
+            <span className="text-[9px] uppercase tracking-wider text-si-4 block mb-0.5">Saldo</span>
+            <span
+              className={`text-sm sm:text-base font-bold ${
                 saldoMes >= 0 ? 'text-emerald-400' : 'text-rose-400'
               }`}
             >
               R$ {fmtBRL2(saldoMes)}
-            </p>
+            </span>
           </div>
 
           <div>
-            <p className="text-si-3 text-xs">Spread Gap</p>
-            <p
-              className={`text-sm font-bold mt-0.5 flex items-center gap-1 ${
+            <span className="text-[9px] uppercase tracking-wider text-si-4 block mb-0.5">Spread Gap</span>
+            <span
+              className={`text-sm sm:text-base font-bold inline-flex items-center gap-1 ${
                 spread.spreadGap >= 0 ? 'text-emerald-400' : 'text-rose-400'
               }`}
             >
               <Zap className="w-3 h-3" />
               {spread.spreadGap >= 0 ? '+' : ''}
               {(spread.spreadGap * 100).toFixed(2)}%
-            </p>
-            <p className="text-xs text-si-3 mt-0.5">
-              {spread.spreadGap < 0
-                ? `−R$ ${fmtBRL0(Math.abs(spread.monthlyLeakage))}/mês`
-                : 'positivo'}
-            </p>
+            </span>
+            {spread.spreadGap < 0 && (
+              <span className="text-[10px] text-si-3 ml-1.5">
+                −R$ {fmtBRL0(Math.abs(spread.monthlyLeakage))}/mês
+              </span>
+            )}
           </div>
         </div>
       </div>
