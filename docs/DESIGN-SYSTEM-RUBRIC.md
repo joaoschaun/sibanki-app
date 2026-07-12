@@ -346,3 +346,93 @@ Os glamour shots escondem o trabalho real que o HANDOFF-0008 e seguintes precisa
 **estados** (vazio/loading/erro/`hideValues`), **dados reais** via contexts (não fictícios),
 **responsividade** de verdade (não só o breakpoint do mock), **modo claro**, **a11y** (foco, touch,
 leitor de tela). Um mock bonito é hipótese visual validada — não é a tela pronta.
+
+---
+
+## 11. Craft premium (UX/UI) — o que separa "correto" de "desejável"
+
+§2 (a11y) e §10 (dark-glass/movimento) são o **piso**. §11 é o **acabamento** que faz parecer produto
+premium — e a regra-mãe é que cada detalhe sirva à **confiança e à calma** (§9), nunca ao show. Craft
+sem propósito vira ruído. Aplica-se a toda tela nova (0012 em diante).
+
+### 11.1 Microinterações — todo toque responde
+
+- **Quatro estados sempre visíveis** em tudo que é interativo: `rest / hover / press / focus-visible`.
+  Press = `scale(.98)` ~120ms; hover = mudança de superfície/borda **neutra** (nunca cor decorativa,
+  §1); focus = o anel global do §2. Sem estado "morto".
+- **Feedback < 100ms**: toda ação confirma visualmente na hora, mesmo que o dado demore. **Optimistic
+  UI** onde é seguro (o lançamento aparece já e reconcilia depois; se falhar, desfaz com aviso calmo).
+- **Confirmação sóbria**: "Salvo", não "Salvo com sucesso!". Erro = o que aconteceu + o que fazer,
+  sem stack trace, sem "Erro:".
+
+### 11.2 Movimento premium (estende §10.4)
+
+- Além do vocabulário do §10.4: **transição de página/tab** com fade+rise curto (150–250ms, ease-out);
+  stagger de entrada **só na primeira pintura**, nunca a cada re-render (senão pisca).
+- **Timing:** micro 120–250ms, layout 300–450ms, **nunca >500ms** (trava percepção). Curva padrão
+  `cubic-bezier(.2,.7,.2,1)`. Stack: `framer-motion` (já no repo) para orquestração; CSS para o simples.
+- **Trava dura §10.4:** `prefers-reduced-motion` → estado final imediato. Movimento **nunca** atrasa a
+  leitura do dado nem bloqueia input.
+
+### 11.3 Fricção zero e antecipação
+
+- **Defaults inteligentes:** a tela já chega com o provável preenchido (data=hoje, conta=principal,
+  categoria sugerida pela IA). O usuário **confirma**, não digita do zero.
+- **Undo > confirmação:** ação reversível **executa e oferece "desfazer"** (~5s); só o **irreversível**
+  pede confirmação. Menos modais, mais fluxo.
+- **Sem becos sem saída:** todo estado vazio tem **uma** ação clara (enquadrada como conquista, §9.2,
+  não erro); todo erro tem saída.
+- **Antecipação (§8.5/§9):** a próxima ação provável é oferecida **antes de pedida** — mas só quando há
+  alavanca (o gate cash-aware §9.1). Antecipar sem alavanca = ansiedade (§9), não fricção-zero.
+
+### 11.4 Microcopy empático e claro (estende §9 para toda a copy)
+
+- **Assistência, nunca cobrança** (§9.2): "vamos revisar juntos" > "você gastou demais".
+- **Preservação, não perda** (§9.2): "preserva 6 dias" > "custa 6 dias" — enquadramento canônico de
+  toda copy financeira.
+- **Concreto e curto:** número **+ significado** ("R$ 900 em juros = 6 dias da sua liberdade", §8.3),
+  nunca jargão nu. Sentence case; sem "!", sem "com sucesso", sem "por favor", sem "simplesmente".
+- **Estado vazio = convite** ("Seu índice de liberdade aparece aqui. Registre uma despesa pra começar")
+  — nunca "nada aqui". (O `SovereigntyHero` já é o padrão canônico.)
+- **Voz:** pt-BR, próximo mas respeitoso. **1ª pessoa só no Consultor**; o Painel fala como produto
+  (2ª pessoa — "você/seu"), reforçando a separação §8.1.
+
+### 11.5 Acessibilidade integrada (estende §2 — não repete)
+
+- §2 é o piso (contraste OKLCH, foco, touch 44px, forms). §11 soma o premium:
+  **ordem de foco lógica**; **landmarks** (`nav`/`main`/`aside`); **`aria-live`** no número que atualiza
+  (o count-up do Ld anuncia **o valor final**, não cada tick); decorativo `aria-hidden`, funcional com
+  `aria-label`; espectro/horizonte com `role="img"` + resumo textual (já feito no `FreedomSpectrum`).
+- **Cor nunca é o único canal:** estado financeiro = cor **+ ícone + texto** (o daltônico lê "Soberano",
+  não só o verde). Vale para tiers, decisão e horizonte.
+- **Testável:** 100% navegável por teclado; leitor de tela conta a história na ordem **estado → decisão
+  → horizonte** (a mesma da §8).
+
+### 11.6 Consistência sistêmica
+
+- **Um jeito de fazer cada coisa:** um botão (`<Button>`), um card (`<Card>`), um número (`.num`
+  tabular), um label (`.si-label`), um glow (`--si-glow`). Precisou reinventar? O sistema tem um buraco
+  — **preenche o primitivo, não a tela** (§3).
+- **Tokens > valores mágicos:** espaçamento 4/8, raio e cor via token; zero hex solto (Gate 5).
+- **Mesmo conceito, mesma cara:** Ld sempre com o mesmo tratamento; tier sempre a mesma cor
+  (`sovereigntyScale` é fonte única — já é lei). O usuário nunca reaprende um padrão entre telas.
+
+### 11.7 Desempenho e velocidade percebida
+
+- **Skeleton, não spinner:** telas carregam com a **forma** do conteúdo (`PageSkeleton` já existe) →
+  layout shift ~0 (CLS baixo). O número pinta primeiro; o detalhe reconcilia.
+- **Lazy no peso:** rotas lazy (já é), PDF/charts `dynamic import` (já é), imagens dimensionadas.
+- **Metas:** <100ms para responder ao toque; <1s para a primeira pintura útil; dado lento aparece
+  **progressivamente**, nunca uma tela branca esperando tudo.
+- **Sem re-render em cascata:** memoizar cálculos caros (o `IntelligenceContext` já memoiza);
+  virtualizar listas >100 itens.
+
+### 11.8 A régua do craft (checklist de PR — soma ao §5)
+
+- [ ] Todo interativo tem hover/press/focus e responde <100ms?
+- [ ] Movimento respeita `prefers-reduced-motion` e nenhum passa de 500ms?
+- [ ] A ação provável já vem como default; reversível usa "desfazer" em vez de modal?
+- [ ] Copy em preservação, assistência, sentence case, sem "!"/"com sucesso"? Estado vazio é convite?
+- [ ] Estado financeiro comunicado por cor **+ ícone + texto**? Navega por teclado? `aria-live` no número vivo?
+- [ ] Usou os primitivos (nenhum botão/card/label reinventado)? Zero hex solto?
+- [ ] Carrega com skeleton (sem layout shift)? Primeira pintura <1s?
