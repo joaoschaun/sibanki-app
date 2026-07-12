@@ -1,9 +1,13 @@
 # Pipeline State
 
-- **Handoff atual:** 0011
-- **Turno:** joao
-- **Estado:** reviewed
-- **Review 0011 (Claude + CISO) = APROVADO** — diff real main..pipe/0011 (commit 60cce3f): só os 4 arquivos §3 + protocolo; motor/Consultor/Radar/HorizonBriefing/guard INTOCADOS; HorizonStrip apresentacional (importa só HORIZON_DAYS/daysBetween); item==null→não renderiza (dia calmo sem timeline); marcadores renda-esmeralda/despesa-âmbar via ring/bg (sem shadow-hue; bg com /NN não fere Gate 1); janela só quando incomeIdx<dueIdx; incomeDate==null→sem renda/janela; useHorizonTop aditivo (item/snooze intactos); Dashboard só o mount; gate verde 222 (217+5). CISO: sem lista de perdições, atrela à decisão ativa. Próxima ação: João faz merge de pipe/0011 na main + commita esta transição. Sem deploy. **Com 0011 mergeado, o conjunto do protótipo (Hero+espectro / Radar / Horizonte) fica 100% produto.**
+- **Handoff atual:** 0012
+- **Turno:** antigravity
+- **Estado:** spec_ready
+- **Próxima ação:** João commita a spec 0012 + este STATE e dá o "roda". Antigravity executa `docs/handoffs/HANDOFF-0012-painel-bento-topo.md` em `pipe/0012-painel-bento-topo` (da main), roda `npm run gate`, escreve o report.
+- **Escopo 0012 (FATIA 1/5 do v8):** bento do topo do Painel — reorganiza SÓ o slot `sovereignty-hero` (hero compacto + RadarCard lado a lado, HorizonStrip full-width abaixo) + número §8.6a (fino/neutro, tier só no espectro/badge). Props do Hero inalteradas. **buildDashboardBlueprint (adaptativo + Regra de Ouro), sidebar, tabs, coach, editor, coluna direita — INTOCADOS.** Sem nav-no-topo, sem módulos novos, sem remover Arquiteto/SibCoin (isso é 0013-0015). Sem deploy.
+- **Roadmap v8 (fatiado):** 0012 bento-topo · 0013 módulos novos (contas/fluxo/crédito) · 0014 nav-no-topo (App-shell, todas as telas) · 0015 SibCoin-na-nav + Arquiteto-sai-do-Painel · 0016 estado-vazio-premium + polimento §11.
+- **Rubric:** §8 item 6 (layout Painel v8) + §11 (craft premium) já codificados; mock canônico `docs/design/mocks/painel.html` = v8.
+- **0011/0010/0009/0008/0007:** CONCLUÍDOS (merged; trio do protótipo 100% produto).
 - **Escopo 0011:** Horizonte no Painel (§8.5) — novo `HorizonStrip` (apresentacional: régua dos 15 dias, renda esmeralda + despesa âmbar + janela de ação como vão) + `useHorizonTop` passa a devolver `incomeDate` (aditivo) + mount no Dashboard. REUSO PURO do `anticipationEngine` (nextIncomeDate/daysBetween/HORIZON_DAYS). Motor/Consultor/Radar/HorizonBriefing INTOCADOS. §9: strip só atrela à decisão ativa (item!=null); dia calmo sem timeline. Gate 3=0, sem deploy. Fecha o conjunto do protótipo (Hero+Radar+Horizonte).
 - **0010:** CONCLUÍDO — merged na main (commit 7887fb1), gate verde 217, lock free. (Review Claude+CISO = APROVADO.)
 - **0009:** CONCLUÍDO (merged 2c46c68). **0008/0007:** CONCLUÍDOS (merged; 0007 c/ deploy).
