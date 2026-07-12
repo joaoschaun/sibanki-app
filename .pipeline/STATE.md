@@ -1,9 +1,9 @@
 # Pipeline State
 
 - **Handoff atual:** 0013
-- **Turno:** antigravity
-- **Estado:** spec_ready
-- **Próxima ação:** João commita a spec 0013 + este STATE e dá o "roda". Antigravity executa `docs/handoffs/HANDOFF-0013-painel-v9-bento.md` em `pipe/0013-painel-v9-bento` (da main), roda `npm run gate`, escreve o report.
+- **Turno:** claude
+- **Estado:** executed
+- **Próxima ação:** Claude revisa o diff contra a spec e o report em `.pipeline/reports/HANDOFF-0013.report.md`, confere o gate e dá o "revisa" com instrução de merge ou correções.
 - **Escopo 0013 (Painel v9 — a evolução, não fatia):** a aba Visão geral do Painel vira o bento completo do v8/v9 NA LARGURA DO CONTEÚDO, **mantendo a sidebar** (App.tsx/Sidebar INTOCADOS). 4 cards de módulo novos (ContasConectadas, CreditoEmFormacao c/ "= N dias" §8.3, ParaOndeFoi, FluxoResumo) reusando dados dos contexts; reusa Hero(0012)/Radar/Horizonte. **dashboardBlueprint (Regra de Ouro) INTOCADO** — anatomia v9 = estado saudável, override crítico do blueprint vence. Sem tela cheia, sem trocar nav (isso é outro handoff). Handoff GRANDE, review reforçada Dev+UIUX. Sem deploy.
 - **Direção travada com o João:** "v9 = na direção do v8, mas mantendo a sidebar, com layout novo". Mock de referência: outputs/sibanki-v9-sidebar-bento.html + docs/design/mocks/painel.html (v8).
 - **0012/0011/…/0007:** CONCLUÍDOS (merged).

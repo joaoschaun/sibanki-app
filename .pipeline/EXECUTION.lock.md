@@ -1,10 +1,10 @@
 # Execution Lock
 
 - **Status:** free
-- **Executor:** none
-- **Branch:** none
-- **Handoff:** none
-- **Desde:** none
+- **Executor:** None
+- **Branch:** None
+- **Handoff:** None
+- **Desde:** None
 
 ---
 

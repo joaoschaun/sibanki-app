@@ -42,6 +42,11 @@ import { buildDashboardBlueprint, type DashboardWidgetId } from '../utils/dashbo
 import { WidgetAlertaCritico } from '../components/ui/WidgetAlertaCritico';
 import { AccountSummaryStrip } from '../components/ui/AccountSummaryStrip';
 import { InvestmentInsights } from '../components/ui/InvestmentInsights';
+import { ContasConectadas } from '../components/dashboard/ContasConectadas';
+import { CreditoEmFormacao } from '../components/dashboard/CreditoEmFormacao';
+import { ParaOndeFoi } from '../components/dashboard/ParaOndeFoi';
+import { FluxoResumo } from '../components/dashboard/FluxoResumo';
+import { cn } from '../utils/cn';
 
 // ─── Widget config (persisted in localStorage) ─────────────────────────────────
 
@@ -152,6 +157,8 @@ export default function Dashboard() {
     spreadLeakage: spread.monthlyLeakage > 0,
     overBudget: topSignals.includes('orcamento-sob-pressao'),
   });
+
+  const isCritical = healthLevel === 'critico' || journeyStage === 'pressionado';
 
   const cardClass = dashboardMode === 'caixa'
     ? 'bg-si-bg border border-blue-500/25 rounded-xl p-5 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.12)]'
@@ -468,154 +475,213 @@ export default function Dashboard() {
           )}
 
           {activeSubTab === 'visao_geral' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* ── Coluna Principal (Esquerda) ── */}
-              <div className="lg:col-span-8 space-y-6">
-                {isCoachActive && (
-                  <CoachSetup
-                    stepStatus={stepStatus}
-                    onDismiss={dismissCoach}
-                  />
-                )}
+            <div className="w-full space-y-6">
+              {isCoachActive && (
+                <CoachSetup
+                  stepStatus={stepStatus}
+                  onDismiss={dismissCoach}
+                />
+              )}
 
-                {!isCoachActive ? (
-                  <div className="space-y-6 animate-in fade-in duration-500">
-                    {widgets.insight && (
-                      <InsightDoDia
-                        entries={entries}
-                        cards={cards}
-                        goals={goals}
-                        recurrents={recurrents}
-                        accountBalances={accountBalances}
-                        accountMeta={accountMeta}
-                        loading={loading}
-                        hasOpenFinance={hasOpenFinance}
-                        verifiedEntries={verifiedEntries}
-                        openFinanceIdentityByItem={openFinanceIdentityByItem}
-                        dataFreshness={dataFreshness}
-                      />
-                    )}
-
-                    {blueprint.map((w) => {
-                      const element = WIDGET_MAP[w.id];
-                      if (!element) return null;
-                      return <div key={w.id}>{element}</div>;
-                    })}
-                  </div>
-                ) : (
-                  /* ── Teaser Glassmorphism — Coach pendente ── */
-                  <div className="relative rounded-2xl overflow-hidden border border-si-border bg-si-card p-1 min-h-[320px] flex items-center justify-center animate-in fade-in duration-500">
-                    {/* Silhueta / Mockup falso dos gráficos ao fundo */}
-                    <div className="absolute inset-0 p-6 grid grid-cols-1 md:grid-cols-2 gap-6 opacity-[0.07] pointer-events-none select-none blur-[3px]">
-                      <div className="md:col-span-2 h-36 rounded-xl bg-si-over-2 border border-si-border-md p-4 space-y-3">
-                        <div className="h-4 w-32 rounded bg-si-5" />
-                        <div className="h-8 w-24 rounded bg-si-4" />
-                        <div className="h-3 w-48 rounded bg-si-5" />
-                      </div>
-                      <div className="h-44 rounded-xl bg-si-over-2 border border-si-border-md p-4 space-y-4">
-                        <div className="h-3 w-24 rounded bg-si-5" />
-                        <div className="flex items-end justify-between h-24 pt-4 px-2">
-                          <div className="h-12 w-6 rounded bg-si-5" />
-                          <div className="h-20 w-6 rounded bg-si-4" />
-                          <div className="h-16 w-6 rounded bg-si-5" />
-                          <div className="h-24 w-6 rounded bg-si-4" />
-                        </div>
-                      </div>
-                      <div className="h-44 rounded-xl bg-si-over-2 border border-si-border-md p-4 flex items-center justify-center">
-                        <div className="relative w-24 h-24 rounded-full border-8 border-si-over-3 flex items-center justify-center">
-                          <div className="absolute inset-2 rounded-full border-8 border-si-5" />
-                        </div>
+              {isCoachActive ? (
+                /* ── Teaser Glassmorphism — Coach pendente ── */
+                <div className="relative rounded-2xl overflow-hidden border border-si-border bg-si-card p-1 min-h-[320px] flex items-center justify-center animate-in fade-in duration-500 w-full">
+                  {/* Silhueta / Mockup falso dos gráficos ao fundo */}
+                  <div className="absolute inset-0 p-6 grid grid-cols-1 md:grid-cols-2 gap-6 opacity-[0.07] pointer-events-none select-none blur-[3px]">
+                    <div className="md:col-span-2 h-36 rounded-xl bg-si-over-2 border border-si-border-md p-4 space-y-3">
+                      <div className="h-4 w-32 rounded bg-si-5" />
+                      <div className="h-8 w-24 rounded bg-si-4" />
+                      <div className="h-3 w-48 rounded bg-si-5" />
+                    </div>
+                    <div className="h-44 rounded-xl bg-si-over-2 border border-si-border-md p-4 space-y-4">
+                      <div className="h-3 w-24 rounded bg-si-5" />
+                      <div className="flex items-end justify-between h-24 pt-4 px-2">
+                        <div className="h-12 w-6 rounded bg-si-5" />
+                        <div className="h-20 w-6 rounded bg-si-4" />
+                        <div className="h-16 w-6 rounded bg-si-5" />
+                        <div className="h-24 w-6 rounded bg-si-4" />
                       </div>
                     </div>
-
-                    {/* Glassmorphism Overlay */}
-                    <div className="absolute inset-0 bg-si-bg/50 backdrop-blur-[7px] flex flex-col items-center justify-center p-8 text-center z-10">
-                      <div className="w-12 h-12 rounded-full bg-si-over-2 border border-si-border-md flex items-center justify-center mb-4 text-amber-500/80 animate-pulse">
-                        <Lock className="w-5 h-5 text-amber-400" />
+                    <div className="h-44 rounded-xl bg-si-over-2 border border-si-border-md p-4 flex items-center justify-center">
+                      <div className="relative w-24 h-24 rounded-full border-8 border-si-over-3 flex items-center justify-center">
+                        <div className="absolute inset-2 rounded-full border-8 border-si-5" />
                       </div>
-                      <h4 className="text-sm font-bold text-si-1 mb-2">Painel de Inteligência Financeira</h4>
-                      <p className="text-xs text-si-4 max-w-sm leading-relaxed">
-                        Complete as etapas do seu <strong className="text-si-2">Modo Coach</strong> acima para destravar as visões de Dias de Liberdade, análises gráficas e limites de crédito.
-                      </p>
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* ── Coluna Lateral (Direita) — sticky para eliminar vazio ── */}
-              <div className="lg:col-span-4 lg:sticky lg:top-8 space-y-6">
-
-                {/* Próximas Ações */}
-                {!isCoachActive && hasOnboardingData && nextBestActions.length > 0 && (
-                  <section className="bg-si-card rounded-2xl p-6 space-y-4 animate-in fade-in duration-500">
-                    <div className="flex items-center justify-between gap-4 flex-wrap">
-                      <div className="flex items-center gap-3">
-                        <Zap className="w-3.5 h-3.5 text-si-5" />
-                        <h3 className="text-[11px] font-bold text-si-4 uppercase tracking-[0.18em]">Próximas Ações</h3>
-                      </div>
-                      <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${HEALTH_COLORS[healthLevel] ?? 'text-si-4 bg-si-over-1 border-si-border'}`}>
-                        <span>{healthLevel}</span>
-                        <span className="opacity-60">·</span>
-                        <span className="font-normal normal-case opacity-80">{JOURNEY_LABELS[journeyStage] ?? journeyStage}</span>
-                      </div>
+                  {/* Glassmorphism Overlay */}
+                  <div className="absolute inset-0 bg-si-bg/50 backdrop-blur-[7px] flex flex-col items-center justify-center p-8 text-center z-10">
+                    <div className="w-12 h-12 rounded-full bg-si-over-2 border border-si-border-md flex items-center justify-center mb-4 text-amber-500/80 animate-pulse">
+                      <Lock className="w-5 h-5 text-amber-400" />
                     </div>
-                    <div className="flex flex-col gap-3">
-                      {nextBestActions.map((action) => {
-                        const info = ACTION_MAP[action];
-                        if (!info) return null;
-                        return (
-                          <Link
-                            key={action}
-                            to={info.to}
-                            className="flex items-start gap-3 p-4 rounded-xl bg-si-over-1 hover:bg-si-over-2 hover:scale-[1.01] transition-all group"
-                          >
-                            <div className="w-7 h-7 rounded-md bg-si-over-2 flex items-center justify-center shrink-0 group-hover:bg-si-over-3 transition-colors mt-0.5">
-                              <ArrowUpRight className="w-3.5 h-3.5 text-si-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold text-si-1 leading-tight">{info.label}</p>
-                              <p className="text-xs text-si-5 mt-0.5 leading-snug">{info.description}</p>
-                            </div>
-                          </Link>
-                        );
+                    <h4 className="text-sm font-bold text-si-1 mb-2">Painel de Inteligência Financeira</h4>
+                    <p className="text-xs text-si-4 max-w-sm leading-relaxed">
+                      Complete as etapas do seu <strong className="text-si-2">Modo Coach</strong> acima para destravar as visões de Dias de Liberdade, análises gráficas e limites de crédito.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6 animate-in fade-in duration-500 w-full">
+                  {widgets.insight && (
+                    <InsightDoDia
+                      entries={entries}
+                      cards={cards}
+                      goals={goals}
+                      recurrents={recurrents}
+                      accountBalances={accountBalances}
+                      accountMeta={accountMeta}
+                      loading={loading}
+                      hasOpenFinance={hasOpenFinance}
+                      verifiedEntries={verifiedEntries}
+                      openFinanceIdentityByItem={openFinanceIdentityByItem}
+                      dataFreshness={dataFreshness}
+                    />
+                  )}
+
+                  {isCritical ? (
+                    /* ── MODO CRÍTICO: Regra de Ouro dita a ordem (vertical flex) ── */
+                    <div className="space-y-6">
+                      {blueprint.map((w) => {
+                        const element = WIDGET_MAP[w.id];
+                        if (!element) return null;
+                        return <div key={w.id}>{element}</div>;
                       })}
                     </div>
-                  </section>
-                )}
-
-                {/* ── Alertas — estilo inline sutil (P1: sem border-l-4) ── */}
-                {!isCoachActive && widgets.alertas && hasOnboardingData && alertas.length > 0 && (
-                  <div className="space-y-3 animate-in fade-in duration-500">
-                    {alertas.map((a, i) => (
-                      <div
-                        key={i}
-                        className="flex items-start gap-3 px-4 py-3 rounded-xl"
-                      >
-                        {a.type === 'positive' ? (
-                          <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
-                        ) : (
-                          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className={`font-semibold text-sm ${
-                            a.type === 'positive' ? 'text-emerald-400' : a.type === 'warning' ? 'text-amber-400' : 'text-blue-400'
-                          }`}>{a.title}</p>
-                          <p className="text-xs text-si-4 mt-0.5">{a.text}</p>
-                          {a.link && (
-                            <Link to={a.link} className="text-xs font-medium text-si-3 hover:text-si-1 underline mt-1 inline-block transition-colors">
-                              Revisar →
-                            </Link>
-                          )}
+                  ) : (
+                    /* ── MODO SAUDÁVEL: Bento Layout completo v9 ── */
+                    <div className="space-y-6">
+                      {/* Linha 1: [Hero | (Decisão + ParaOndeFoi)] */}
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                        <div className="lg:col-span-8 flex flex-col">
+                          <SovereigntyHero
+                            userName={user?.displayName || user?.email?.split('@')[0] || 'Usuário'}
+                            score={score}
+                            freedom={freedom}
+                            spread={spread}
+                            receitaMes={receitaMes}
+                            despesaMes={despesaMes}
+                            saldoMes={saldoMes}
+                            varReceita={varReceita}
+                            varDespesa={varDespesa}
+                          />
+                        </div>
+                        <div className="lg:col-span-4 flex flex-col gap-6">
+                          <RadarCard
+                            item={horizon.item}
+                            onMontarPlano={(it) => navigate('/consultor-ia', { state: { initialMessage: `Me ajuda a montar um plano para: ${it.label}` } })}
+                            onSnooze={(it) => horizon.snooze(it.id)}
+                          />
+                          <ParaOndeFoi catTotals={catTotals} />
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
 
-                <RoundUpWidget />
+                      {/* Linha 2: Horizonte */}
+                      <HorizonStrip item={horizon.item} incomeDate={horizon.incomeDate} />
 
-                <SibcoinWidget isCoachActive={isCoachActive} />
-              </div>
+                      {/* Linha 3: Contas Conectadas */}
+                      <ContasConectadas />
+
+                      {/* Linha 4: [FluxoResumo | CreditoEmFormacao] */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                        <FluxoResumo
+                          receitaMes={receitaMes}
+                          despesaMes={despesaMes}
+                          saldoMes={saldoMes}
+                          last6Months={last6Months}
+                        />
+                        <CreditoEmFormacao />
+                      </div>
+
+                      {/* Linha 5: Módulos secundários (Próximas ações, Alertas, RoundUp, SibCoin) */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+                        {/* Próximas Ações */}
+                        {hasOnboardingData && nextBestActions.length > 0 && (
+                          <section className="bg-si-card rounded-2xl p-5 border border-si-border space-y-4 flex flex-col justify-between">
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <div className="flex items-center gap-3">
+                                  <Zap className="w-3.5 h-3.5 text-si-5" />
+                                  <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-si-4">
+                                    Próximas Ações
+                                  </span>
+                                </div>
+                                <span className={cn(
+                                  "text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border flex items-center gap-1",
+                                  HEALTH_COLORS[healthLevel] ?? "bg-si-over-2 text-si-4 border-si-border"
+                                )}>
+                                  <span>{healthLevel}</span>
+                                  <span className="opacity-60">·</span>
+                                  <span className="font-normal normal-case opacity-80">{JOURNEY_LABELS[journeyStage] ?? journeyStage}</span>
+                                </span>
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                {nextBestActions.map((action) => {
+                                  const info = ACTION_MAP[action];
+                                  if (!info) return null;
+                                  return (
+                                    <Link
+                                      key={action}
+                                      to={info.to}
+                                      className="flex items-start gap-2.5 p-3 rounded-xl bg-si-over-1 hover:bg-si-over-2 transition-all group"
+                                    >
+                                      <div className="w-6 h-6 rounded-md bg-si-over-2 flex items-center justify-center shrink-0 group-hover:bg-si-over-3 mt-0.5">
+                                        <ArrowUpRight className="w-3.5 h-3.5 text-si-4" />
+                                      </div>
+                                      <div className="min-w-0">
+                                        <p className="text-xs font-bold text-si-1 leading-tight">{info.label}</p>
+                                        <p className="text-[10px] text-si-5 mt-0.5 leading-snug truncate">{info.description}</p>
+                                      </div>
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </section>
+                        )}
+
+                        {/* Alertas */}
+                        {widgets.alertas && hasOnboardingData && alertas.length > 0 && (
+                          <div className="bg-si-card rounded-2xl p-5 border border-si-border space-y-3 flex flex-col justify-between">
+                            <div className="space-y-3">
+                              <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-si-4 block">
+                                Alertas
+                              </span>
+                              <div className="space-y-2">
+                                {alertas.map((a, i) => (
+                                  <div key={i} className="flex items-start gap-2.5">
+                                    {a.type === 'positive' ? (
+                                      <Lightbulb className="w-3.5 h-3.5 shrink-0 mt-0.5 text-emerald-400" />
+                                    ) : (
+                                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-400" />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className={cn(
+                                        "font-semibold text-xs",
+                                        a.type === 'positive' ? 'text-emerald-400' : a.type === 'warning' ? 'text-amber-400' : 'text-blue-400'
+                                      )}>{a.title}</p>
+                                      <p className="text-[10px] text-si-4 mt-0.5 leading-normal">{a.text}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* RoundUp */}
+                        <div className="flex flex-col">
+                          <RoundUpWidget />
+                        </div>
+
+                        {/* Sibcoin */}
+                        <div className="flex flex-col">
+                          <SibcoinWidget isCoachActive={isCoachActive} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
