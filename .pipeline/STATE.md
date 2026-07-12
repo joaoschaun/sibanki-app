@@ -1,9 +1,9 @@
 # Pipeline State
 
 - **Handoff atual:** 0013
-- **Turno:** claude
-- **Estado:** executed
-- **Próxima ação:** Claude revisa o diff contra a spec e o report em `.pipeline/reports/HANDOFF-0013.report.md`, confere o gate e dá o "revisa" com instrução de merge ou correções.
+- **Turno:** joao
+- **Estado:** reviewed
+- **Review 0013 (Claude) = APROVADO** — diff real main..pipe/0013 (commit c17da83): 4 cards novos (Contas/Credito/ParaOndeFoi/Fluxo) + Dashboard; App.tsx/Sidebar/blueprint/motor/Radar/Horizonte/Hero/guard TODOS fora do diff (sidebar mantida, Regra de Ouro viva); visao_geral = isCritical?blueprint:bento-v9 (anatomia §8 item 6); Crédito com §8.3 (reaisToFreedomDays "≈ N dias de liberdade"); estados vazios = convite calmo §9.2; dados reais dos contexts; cor só estado/categoria, Gate 3=0 (barras via style p/ não ferir Gate 1); gate verde 234 (226+8). Radar agora empilhado c/ ParaOndeFoi (some o quadrão vazio). Sem nits. Próxima ação: João faz merge de pipe/0013 na main + commita. Sem deploy.
 - **Escopo 0013 (Painel v9 — a evolução, não fatia):** a aba Visão geral do Painel vira o bento completo do v8/v9 NA LARGURA DO CONTEÚDO, **mantendo a sidebar** (App.tsx/Sidebar INTOCADOS). 4 cards de módulo novos (ContasConectadas, CreditoEmFormacao c/ "= N dias" §8.3, ParaOndeFoi, FluxoResumo) reusando dados dos contexts; reusa Hero(0012)/Radar/Horizonte. **dashboardBlueprint (Regra de Ouro) INTOCADO** — anatomia v9 = estado saudável, override crítico do blueprint vence. Sem tela cheia, sem trocar nav (isso é outro handoff). Handoff GRANDE, review reforçada Dev+UIUX. Sem deploy.
 - **Direção travada com o João:** "v9 = na direção do v8, mas mantendo a sidebar, com layout novo". Mock de referência: outputs/sibanki-v9-sidebar-bento.html + docs/design/mocks/painel.html (v8).
 - **0012/0011/…/0007:** CONCLUÍDOS (merged).
