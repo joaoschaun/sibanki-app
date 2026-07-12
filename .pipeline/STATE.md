@@ -1,9 +1,9 @@
 # Pipeline State
 
 - **Handoff atual:** 0012
-- **Turno:** antigravity
-- **Estado:** spec_ready
-- **Próxima ação:** João commita a spec 0012 + este STATE e dá o "roda". Antigravity executa `docs/handoffs/HANDOFF-0012-painel-bento-topo.md` em `pipe/0012-painel-bento-topo` (da main), roda `npm run gate`, escreve o report.
+- **Turno:** claude
+- **Estado:** report_ready
+- **Próxima ação:** Claude reviews the report in .pipeline/reports/HANDOFF-0012.report.md and diff, then sets Turno=joao and Estado=reviewed.
 - **Escopo 0012 (FATIA 1/5 do v8):** bento do topo do Painel — reorganiza SÓ o slot `sovereignty-hero` (hero compacto + RadarCard lado a lado, HorizonStrip full-width abaixo) + número §8.6a (fino/neutro, tier só no espectro/badge). Props do Hero inalteradas. **buildDashboardBlueprint (adaptativo + Regra de Ouro), sidebar, tabs, coach, editor, coluna direita — INTOCADOS.** Sem nav-no-topo, sem módulos novos, sem remover Arquiteto/SibCoin (isso é 0013-0015). Sem deploy.
 - **Roadmap v8 (fatiado):** 0012 bento-topo · 0013 módulos novos (contas/fluxo/crédito) · 0014 nav-no-topo (App-shell, todas as telas) · 0015 SibCoin-na-nav + Arquiteto-sai-do-Painel · 0016 estado-vazio-premium + polimento §11.
 - **Rubric:** §8 item 6 (layout Painel v8) + §11 (craft premium) já codificados; mock canônico `docs/design/mocks/painel.html` = v8.
@@ -14,7 +14,7 @@
 - **Descoberta (grounding):** o Painel realizado do screenshot (No-Radar/Horizonte/espectro) é PROTÓTIPO — não está no código. Lógica-base já existe (`sovereigntyScale.ts`, `anticipationEngine.ts`, `HorizonBriefing.tsx`); o que falta é a apresentação no Painel. 0009 faz o espectro; 0010=card No-Radar (anticipationEngine+§9.3), 0011=Horizonte no Painel.
 - **0008:** CONCLUÍDO (merged pelo João).
 - **0007:** CONCLUÍDO (merged + deploy exercido pelo João).
-- **Atualizado em:** 2026-07-11T18:38:00-03:00
+- **Atualizado em:** 2026-07-12T01:42:00-03:00
 
 > Review 0008 (Claude) = **APROVADO** — diff real do commit 9b5504e (pai ee0ba7c4): só os 4
 > arquivos do §3; package.json e guard.test.ts intocados (Gate 3 = 0 mantido, glow via canal
