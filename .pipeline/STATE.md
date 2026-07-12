@@ -2,11 +2,11 @@
 
 - **Handoff atual:** 0013
 - **Turno:** joao
-- **Estado:** reviewed
-- **Review 0013 (Claude) = APROVADO** — diff real main..pipe/0013 (commit c17da83): 4 cards novos (Contas/Credito/ParaOndeFoi/Fluxo) + Dashboard; App.tsx/Sidebar/blueprint/motor/Radar/Horizonte/Hero/guard TODOS fora do diff (sidebar mantida, Regra de Ouro viva); visao_geral = isCritical?blueprint:bento-v9 (anatomia §8 item 6); Crédito com §8.3 (reaisToFreedomDays "≈ N dias de liberdade"); estados vazios = convite calmo §9.2; dados reais dos contexts; cor só estado/categoria, Gate 3=0 (barras via style p/ não ferir Gate 1); gate verde 234 (226+8). Radar agora empilhado c/ ParaOndeFoi (some o quadrão vazio). Sem nits. Próxima ação: João faz merge de pipe/0013 na main + commita. Sem deploy.
+- **Estado:** merged
+- **Próxima ação:** João elabora a especificação do próximo handoff (0014 — nav-no-topo / App-shell) e atualiza este STATE para spec_ready.
 - **Escopo 0013 (Painel v9 — a evolução, não fatia):** a aba Visão geral do Painel vira o bento completo do v8/v9 NA LARGURA DO CONTEÚDO, **mantendo a sidebar** (App.tsx/Sidebar INTOCADOS). 4 cards de módulo novos (ContasConectadas, CreditoEmFormacao c/ "= N dias" §8.3, ParaOndeFoi, FluxoResumo) reusando dados dos contexts; reusa Hero(0012)/Radar/Horizonte. **dashboardBlueprint (Regra de Ouro) INTOCADO** — anatomia v9 = estado saudável, override crítico do blueprint vence. Sem tela cheia, sem trocar nav (isso é outro handoff). Handoff GRANDE, review reforçada Dev+UIUX. Sem deploy.
 - **Direção travada com o João:** "v9 = na direção do v8, mas mantendo a sidebar, com layout novo". Mock de referência: outputs/sibanki-v9-sidebar-bento.html + docs/design/mocks/painel.html (v8).
-- **0012/0011/…/0007:** CONCLUÍDOS (merged).
+- **0013/0012/0011/…/0007:** CONCLUÍDOS (merged).
 - **Escopo 0012 (FATIA 1/5 do v8):** bento do topo do Painel — reorganiza SÓ o slot `sovereignty-hero` (hero compacto + RadarCard lado a lado, HorizonStrip full-width abaixo) + número §8.6a (fino/neutro, tier só no espectro/badge). Props do Hero inalteradas. **buildDashboardBlueprint (adaptativo + Regra de Ouro), sidebar, tabs, coach, editor, coluna direita — INTOCADOS.** Sem nav-no-topo, sem módulos novos, sem remover Arquiteto/SibCoin (isso é 0013-0015). Sem deploy.
 - **Roadmap v8 (fatiado):** 0012 bento-topo · 0013 módulos novos (contas/fluxo/crédito) · 0014 nav-no-topo (App-shell, todas as telas) · 0015 SibCoin-na-nav + Arquiteto-sai-do-Painel · 0016 estado-vazio-premium + polimento §11.
 - **Rubric:** §8 item 6 (layout Painel v8) + §11 (craft premium) já codificados; mock canônico `docs/design/mocks/painel.html` = v8.
