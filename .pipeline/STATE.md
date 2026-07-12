@@ -1,9 +1,9 @@
 # Pipeline State
 
 - **Handoff atual:** 0017
-- **Turno:** antigravity
-- **Estado:** spec_ready
-- **Próxima ação:** João **descarta pipe/0015 e pipe/0016** (miraram a camada errada) e usa o 0017. Commita a spec 0017 + este STATE e dá o "roda". Antigravity executa `docs/handoffs/HANDOFF-0017-painel-largura-raiz.md` em `pipe/0017-painel-largura-raiz` (da main).
+- **Turno:** claude
+- **Estado:** executed
+- **Próxima ação:** Claude revisa o diff contra a spec e o report em `.pipeline/reports/HANDOFF-0017.report.md`, confere o gate e dá o "revisa" com instrução de merge ou correções.
 - **RAIZ do vão lateral (achada lendo a cadeia inteira):** App.tsx L269 tem um wrapper GLOBAL `max-w-[1180px] mx-auto` que envolve TODAS as rotas → capava o Painel em 1180 centrado, acima de qualquer w-full/padding abaixo. Por isso 0015 (w-full) e 0016 (padding do main) NÃO reduziram o vão — miravam camada errada.
 - **Escopo 0017:** condicionar a className do wrapper (L269) por rota — `/dashboard` solta o teto (`w-full`), demais rotas mantêm o cap de 1180 (legibilidade). `useLocation` já existe no App (L143). Só a className do wrapper + 1 const. + garantir Dashboard container w-full.
 - **0015/0016 SUPERSEDED** (não mergear). **0014:** insight no sino — merged. **0013:** Painel v9 — merged.

@@ -349,7 +349,7 @@ export default function Dashboard() {
   if (loading) return <DashboardSkeleton />;
 
   return (
-    <PageTransition className="space-y-8 max-w-[1360px] mx-auto lg:-mx-8 xl:-mx-16">
+    <PageTransition className="space-y-8 w-full">
       {!hasOnboardingData ? (
         /* ── Empty state premium com animação: usuário sem nenhum dado ainda ── */
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 py-12">

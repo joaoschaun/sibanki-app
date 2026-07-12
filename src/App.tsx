@@ -141,6 +141,7 @@ function ModuleGuard({ children }: { children: ReactNode }) {
 // ── Shell autenticado (usa AppContext — sem chamadas extras de hook) ──────────
 function AuthenticatedShell() {
   const location = useLocation();
+  const isPainelFull = location.pathname === '/dashboard';
   const { user, authLoading, score, data, avatarURL } = useAppContext();
   const { theme } = useTheme();
   const { sidebarCollapsed, toggleSidebar, syncRoute } = useUiStore();
@@ -265,8 +266,8 @@ function AuthenticatedShell() {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Header onMenuClick={handleToggle} sidebarCollapsed={sidebarCollapsed} />
         <main className="flex-1 overflow-y-auto p-4 pb-20 lg:p-8 lg:pb-8">
-          {/* max-width global de conteúdo (S3 — linhas longas demais em telas largas) */}
-          <div className="max-w-[1180px] mx-auto w-full space-y-6 lg:space-y-8">
+          {/* max-width global de conteúdo (S3 — linhas longas demais em telas largas; solto no painel) */}
+          <div className={isPainelFull ? "w-full space-y-6 lg:space-y-8" : "max-w-[1180px] mx-auto w-full space-y-6 lg:space-y-8"}>
           <ModuleGuard>
           <Suspense fallback={<PageLoader />}>
             <Routes>
