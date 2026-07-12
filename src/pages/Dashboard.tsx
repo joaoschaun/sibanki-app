@@ -25,7 +25,6 @@ import { RadarCard } from '../components/ui/RadarCard';
 import { HorizonStrip } from '../components/ui/HorizonStrip';
 import { useHorizonTop } from '../hooks/useHorizonTop';
 import { SpreadGapCard } from '../components/ui/SpreadGapCard';
-import { InsightDoDia } from '../components/ui/InsightDoDia';
 import { SibcoinWidget } from '../components/sibcoin/SibcoinWidget';
 import { SibcoinMissionBanner } from '../components/sibcoin/SibcoinMissionBanner';
 import { useDashboardMode } from '../hooks/useDashboardMode';
@@ -117,9 +116,13 @@ const SUB_TABS: { id: SubTabId; label: string; icon: typeof LayoutDashboard }[] 
 
 export default function Dashboard() {
   const {
-    user, entries, investments, accounts, score, loading,
-    accountBalances, accountMeta, cards, goals, recurrents,
-    hasOpenFinance, verifiedEntries, openFinanceIdentityByItem, dataFreshness,
+    user,
+    entries = [],
+    investments = [],
+    accounts = [],
+    score = 0,
+    loading,
+    hasOpenFinance,
   } = useAppContext();
   const { mode: dashboardMode } = useDashboardMode();
   const { isCoachActive, dismiss: dismissCoach, stepStatus } = useCoachActive();
@@ -346,7 +349,7 @@ export default function Dashboard() {
   if (loading) return <DashboardSkeleton />;
 
   return (
-    <PageTransition className="space-y-8">
+    <PageTransition className="space-y-8 max-w-[1360px] mx-auto lg:-mx-8 xl:-mx-16">
       {!hasOnboardingData ? (
         /* ── Empty state premium com animação: usuário sem nenhum dado ainda ── */
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 py-12">
@@ -522,22 +525,6 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="space-y-6 animate-in fade-in duration-500 w-full">
-                  {widgets.insight && (
-                    <InsightDoDia
-                      entries={entries}
-                      cards={cards}
-                      goals={goals}
-                      recurrents={recurrents}
-                      accountBalances={accountBalances}
-                      accountMeta={accountMeta}
-                      loading={loading}
-                      hasOpenFinance={hasOpenFinance}
-                      verifiedEntries={verifiedEntries}
-                      openFinanceIdentityByItem={openFinanceIdentityByItem}
-                      dataFreshness={dataFreshness}
-                    />
-                  )}
-
                   {isCritical ? (
                     /* ── MODO CRÍTICO: Regra de Ouro dita a ordem (vertical flex) ── */
                     <div className="space-y-6">

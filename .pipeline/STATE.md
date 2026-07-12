@@ -1,9 +1,9 @@
 # Pipeline State
 
 - **Handoff atual:** 0014
-- **Turno:** antigravity
-- **Estado:** spec_ready
-- **Próxima ação:** João commita a spec 0014 + este STATE e dá o "roda". Antigravity executa `docs/handoffs/HANDOFF-0014-painel-polimento-insight-sino.md` em `pipe/0014-painel-polimento` (da main), roda `npm run gate`, escreve o report.
+- **Turno:** claude
+- **Estado:** executed
+- **Próxima ação:** Claude revisa o diff contra a spec e o report em `.pipeline/reports/HANDOFF-0014.report.md`, confere o gate e dá o "revisa" com instrução de merge ou correções.
 - **Escopo 0014 (polimento do Painel, feedback do João olhando o app):** (A) alargar o container do conteúdo (fim dos gutters laterais); (B) tirar o insight (InsightDoDia/"Arquiteto Soberano") do CORPO do Painel → surfacar como notificação no SINO (Header já tem dropdown), reusando a geração existente. §8.1 (insight=CUIDADO, não no Painel) + §9.2. RadarCard (decisão) permanece. Motor/blueprint/Sidebar/App.tsx INTOCADOS. Sem deploy. (Obs: 0014 mudou de "nav-no-topo" para "polimento" a pedido do João; nav-no-topo fica pra depois.)
 - **0013:** CONCLUÍDO — Painel v9 (conteúdo bento completo, sidebar mantida) merged.
 - **0012/0011/…/0007:** CONCLUÍDOS.
