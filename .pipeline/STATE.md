@@ -1,9 +1,12 @@
 # Pipeline State
 
-- **Handoff atual:** 0017
-- **Turno:** claude
-- **Estado:** executed
-- **Próxima ação:** Claude revisa o diff contra a spec e o report em `.pipeline/reports/HANDOFF-0017.report.md`, confere o gate e dá o "revisa" com instrução de merge ou correções.
+- **Handoff atual:** 0017 (REDEFINIDO — sistêmico)
+- **Turno:** antigravity
+- **Estado:** spec_ready
+- **ATENÇÃO — o run anterior do 0017 está OBSOLETO.** O Antigravity executou a versão antiga (Painel-só, soltava o cap apenas em /dashboard). O João pediu que a largura seja **regra de sistema** (todas as telas coerentes), então o 0017 foi **reescrito**: `docs/handoffs/HANDOFF-0017-largura-por-tipo.md` (o `HANDOFF-0017-painel-largura-raiz.md` virou ponteiro SUPERSEDED). **Descarte o pipe/0017 antigo e rode a spec nova.**
+- **Escopo 0017 (largura por TIPO — §11.6):** helper no App.tsx — telas de LEITURA (Consultor, Configurações, Educação, Perfil) mantêm cap 1180; TODO o resto (dados/funcional) usa `w-full`. Uma decisão, um lugar (o wrapper global L269). + Dashboard container w-full. Conferência visual obrigatória (blast radius: muda a largura de todas as telas de dados); tela que quebrar no full-width volta pro READING set (tunável) e registra no report.
+- **Rubric §11.6 codificada:** "Largura do container por tipo de tela — decidida num só lugar" (dados=largura útil; leitura=cap ~1180). Vai junto no commit do João.
+- **0015/0016 SUPERSEDED** (não mergear). **0014/0013/0012…0007:** CONCLUÍDOS.
 - **RAIZ do vão lateral (achada lendo a cadeia inteira):** App.tsx L269 tem um wrapper GLOBAL `max-w-[1180px] mx-auto` que envolve TODAS as rotas → capava o Painel em 1180 centrado, acima de qualquer w-full/padding abaixo. Por isso 0015 (w-full) e 0016 (padding do main) NÃO reduziram o vão — miravam camada errada.
 - **Escopo 0017:** condicionar a className do wrapper (L269) por rota — `/dashboard` solta o teto (`w-full`), demais rotas mantêm o cap de 1180 (legibilidade). `useLocation` já existe no App (L143). Só a className do wrapper + 1 const. + garantir Dashboard container w-full.
 - **0015/0016 SUPERSEDED** (não mergear). **0014:** insight no sino — merged. **0013:** Painel v9 — merged.

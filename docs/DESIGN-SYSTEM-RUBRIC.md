@@ -416,6 +416,17 @@ sem propósito vira ruído. Aplica-se a toda tela nova (0012 em diante).
 - **Tokens > valores mágicos:** espaçamento 4/8, raio e cor via token; zero hex solto (Gate 5).
 - **Mesmo conceito, mesma cara:** Ld sempre com o mesmo tratamento; tier sempre a mesma cor
   (`sovereigntyScale` é fonte única — já é lei). O usuário nunca reaprende um padrão entre telas.
+- **Largura do container por TIPO de tela — decidida num só lugar.** Nunca "uma tela larga, as irmãs
+  estreitas" (desarmonia ao navegar). A largura é uma **regra de sistema**, não escolha por página:
+  - **Telas de dados/funcional** (Painel, Contas, Crédito, Crescimento, Lançamentos, Recorrentes,
+    Orçamento, Planejamento, etc.) → **largura útil** (densidade quer largura; o bento/§8.6 respira).
+  - **Telas de leitura/conversa** (Consultor, Configurações, Educação, Perfil) → **cap de legibilidade
+    (~1180px)** (linha longa demais cansa; comprimento de linha importa).
+  - Implementação: **um helper por rota no `App.tsx`** (o wrapper global decide `w-full` vs `max-w-*`),
+    não `max-w` espalhado por página. Tunável (mover uma rota de grupo é 1 linha). Para não esticar em
+    monitor ultra-largo, um teto alto (ex.: `max-w-[1600px]`) pode ser aplicado ao grupo "dados" quando
+    incomodar — mas o default é preencher. (Origem: raiz do vão lateral do Painel, 12/07 — era o cap
+    global de 1180 sobre todas as rotas.)
 
 ### 11.7 Desempenho e velocidade percebida
 
