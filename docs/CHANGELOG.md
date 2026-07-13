@@ -15,10 +15,10 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
-### Changed — Painel largura raiz (HANDOFF-0017) (12/07/2026)
+### Changed — Largura por tipo de tela (HANDOFF-0017, §11.6) (13/07/2026)
 
 - Container do Painel (`Dashboard.tsx` wrapper) alterado para `w-full` (fluido), preenchendo a largura útil disponível de forma dinâmica.
-- Modificado o wrapper global de conteúdo em `App.tsx` (L269) de forma condicional: na rota `/dashboard` o wrapper solta o teto de largura de 1180px (`w-full`), permitindo que a aba Visão Geral preencha toda a largura da tela sem vãos mortos/gutters, enquanto as demais rotas preservam o cap original de 1180px para legibilidade textual.
+- Modificado o wrapper global de conteúdo em `App.tsx` (L269) de forma condicional: telas de dados/funcionais (Painel, Contas, Crédito, Crescimento, Lançamentos, etc.) usam a largura útil (`w-full`), permitindo que preencham toda a largura da tela sem vãos mortos/gutters, enquanto as telas de leitura/conversa (Consultor, Configurações, Educação, Perfil) mantêm o cap original de 1180px para proteger a legibilidade textual.
 
 ### Added — Painel polimento (HANDOFF-0014) (12/07/2026)
 

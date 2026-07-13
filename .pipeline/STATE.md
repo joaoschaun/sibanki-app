@@ -1,9 +1,9 @@
 # Pipeline State
 
 - **Handoff atual:** 0017 (REDEFINIDO — sistêmico)
-- **Turno:** antigravity
-- **Estado:** spec_ready
-- **ATENÇÃO — o run anterior do 0017 está OBSOLETO.** O Antigravity executou a versão antiga (Painel-só, soltava o cap apenas em /dashboard). O João pediu que a largura seja **regra de sistema** (todas as telas coerentes), então o 0017 foi **reescrito**: `docs/handoffs/HANDOFF-0017-largura-por-tipo.md` (o `HANDOFF-0017-painel-largura-raiz.md` virou ponteiro SUPERSEDED). **Descarte o pipe/0017 antigo e rode a spec nova.**
+- **Turno:** claude
+- **Estado:** executed
+- **Próxima ação:** Claude revisa o diff contra a spec e o report em `.pipeline/reports/HANDOFF-0017.report.md`, confere o gate e dá o "revisa" com instrução de merge ou correções.
 - **Escopo 0017 (largura por TIPO — §11.6):** helper no App.tsx — telas de LEITURA (Consultor, Configurações, Educação, Perfil) mantêm cap 1180; TODO o resto (dados/funcional) usa `w-full`. Uma decisão, um lugar (o wrapper global L269). + Dashboard container w-full. Conferência visual obrigatória (blast radius: muda a largura de todas as telas de dados); tela que quebrar no full-width volta pro READING set (tunável) e registra no report.
 - **Rubric §11.6 codificada:** "Largura do container por tipo de tela — decidida num só lugar" (dados=largura útil; leitura=cap ~1180). Vai junto no commit do João.
 - **0015/0016 SUPERSEDED** (não mergear). **0014/0013/0012…0007:** CONCLUÍDOS.
