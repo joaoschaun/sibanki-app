@@ -1,9 +1,10 @@
 # Pipeline State
 
-- **Handoff atual:** 0017 (REDEFINIDO — sistêmico)
-- **Turno:** claude
-- **Estado:** executed
-- **Próxima ação:** Claude revisa o diff contra a spec e o report em `.pipeline/reports/HANDOFF-0017.report.md`, confere o gate e dá o "revisa" com instrução de merge ou correções.
+- **Handoff atual:** 0017 (sistêmico — largura por tipo)
+- **Turno:** joao
+- **Estado:** reviewed
+- **Review 0017 (Claude) = APROVADO** — diff real main..pipe/0017 (commit d8a539a): App.tsx com `isReading` (['/consultor-ia','/configuracoes','/educacao','/perfil']) + wrapper condicional L271 (leitura=max-w-[1180px], resto=w-full); Dashboard container w-full; §11.6 codificada; Sidebar/nav/motor/blueprint/guard fora do diff; gate verde 236, sem quebra visual reportada. **NOTA: o pipe/0017 empacota o HANDOFF-0014 (insight-no-sino: Header/InsightDoDia/useInsightDoDia) porque o 0014 nunca foi mergeado na main — logo, mergear pipe/0017 = 0014 + 0017 juntos (ambos aprovados).** Próxima ação: João faz merge de pipe/0017 na main (traz 0014+0017) + commita. Descartar pipe/0015 e pipe/0016. Sem deploy.
+- **0016/0015 SUPERSEDED** (não mergear). **0014:** aprovado, entra junto no merge do 0017. **0013/0012…0007:** CONCLUÍDOS.
 - **Escopo 0017 (largura por TIPO — §11.6):** helper no App.tsx — telas de LEITURA (Consultor, Configurações, Educação, Perfil) mantêm cap 1180; TODO o resto (dados/funcional) usa `w-full`. Uma decisão, um lugar (o wrapper global L269). + Dashboard container w-full. Conferência visual obrigatória (blast radius: muda a largura de todas as telas de dados); tela que quebrar no full-width volta pro READING set (tunável) e registra no report.
 - **Rubric §11.6 codificada:** "Largura do container por tipo de tela — decidida num só lugar" (dados=largura útil; leitura=cap ~1180). Vai junto no commit do João.
 - **0015/0016 SUPERSEDED** (não mergear). **0014/0013/0012…0007:** CONCLUÍDOS.
