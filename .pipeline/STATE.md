@@ -2,8 +2,8 @@
 
 - **Handoff atual:** 0018
 - **Turno:** antigravity
-- **Estado:** spec_ready
-- **Próxima ação:** João commita a spec 0018 + a rubric (§8.5 refinada) + este STATE e dá o "roda". Antigravity executa `docs/handoffs/HANDOFF-0018-horizonte-provisionamento.md` em `pipe/0018-horizonte-provisionamento` (da main), roda `npm run gate`, escreve o report.
+- **Estado:** executing
+- **Próxima ação:** Antigravity executa `docs/handoffs/HANDOFF-0018-horizonte-provisionamento.md` em `pipe/0018-horizonte-provisionamento` (da main), roda `npm run gate`, escreve o report.
 - **Escopo 0018 (Horizonte = régua de provisionamento):** o `HorizonStrip` desacopla da decisão (não `if(!item)return null`) → renderiza dos EVENTOS provisionados (renda + despesas/faturas 15d), estado vazio = convite calmo. Motor ganha `listHorizonEvents` (ADITIVO + extração byte-preservante do raw; **decideWhenToSpeak/topHorizonItem INTOCADOS**). RadarCard segue com a decisão. **Review reforçada Dev+UIUX+CISO** (toca o motor, mas só data-only; o §9 "quando falar" fica byte-idêntico). Sem deploy.
 - **Rubric §8.5 refinada:** "Horizonte = planejamento sempre-presente/calmo; decisão que escala = RadarCard" (corrige a conflação do 0011). Vai junto no commit.
 - **0017:** CONCLUÍDO — largura por tipo (traz 0014 junto) merged. **0013…0007:** CONCLUÍDOS.

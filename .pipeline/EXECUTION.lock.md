@@ -1,10 +1,10 @@
 # Execution Lock
 
-- **Status:** free
-- **Executor:** None
-- **Branch:** None
-- **Handoff:** None
-- **Desde:** None
+- **Status:** busy
+- **Executor:** Antigravity
+- **Branch:** pipe/0018-horizonte-provisionamento
+- **Handoff:** HANDOFF-0018
+- **Desde:** 2026-07-13T21:18:00-03:00
 
 ---
 
