@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { useIntelligence } from '../context/IntelligenceContext';
-import { topHorizonItem, nextIncomeDate } from '../utils/anticipationEngine';
+import { topHorizonItem, nextIncomeDate, listHorizonEvents } from '../utils/anticipationEngine';
 
 export function useHorizonTop() {
   const {
@@ -42,6 +42,16 @@ export function useHorizonTop() {
     return top && snoozedIds.has(top.id) ? null : top;
   }, [liquidCash, freedom.dailyBurnRate, recurrents, creditObligations, cards, snoozedIds]);
 
+  const events = useMemo(() => {
+    return listHorizonEvents({
+      liquidCash,
+      dailyBurnRate: freedom.dailyBurnRate,
+      recurrents,
+      creditObligations,
+      cards,
+    });
+  }, [liquidCash, freedom.dailyBurnRate, recurrents, creditObligations, cards]);
+
   const snooze = (id: string) => {
     setSnoozedIds((prev) => {
       const next = new Set(prev);
@@ -50,5 +60,5 @@ export function useHorizonTop() {
     });
   };
 
-  return { item, incomeDate, snooze };
+  return { item, incomeDate, events, snooze };
 }

@@ -15,6 +15,13 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Added — Horizonte como régua de provisionamento (HANDOFF-0018, §8.5) (13/07/2026)
+
+- Desacoplado o `HorizonStrip` da lógica de decisão do `RadarCard` para torná-lo um painel de planejamento sempre visível, representando os próximos 15 dias de entradas e saídas provisionadas.
+- Adicionada a função `listHorizonEvents` em `anticipationEngine.ts` que retorna todas as saídas e entradas provisionadas na janela sem aplicar filtros de decisão.
+- Reescrevida a lógica de renderização do `HorizonStrip.tsx` para consumir do array de eventos e exibir dots de marcadores para múltiplos compromissos no mesmo dia, com suporte ao estado vazio de "convite calmo" se não houver eventos nem renda.
+- Refatorado e estendido o arquivo de testes unitários `HorizonStrip.test.tsx` para assegurar a cobertura da nova API de eventos e estados.
+
 ### Changed — Largura por tipo de tela (HANDOFF-0017, §11.6) (13/07/2026)
 
 - Container do Painel (`Dashboard.tsx` wrapper) alterado para `w-full` (fluido), preenchendo a largura útil disponível de forma dinâmica.

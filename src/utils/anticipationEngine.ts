@@ -177,27 +177,28 @@ function framing(decision: SpeakDecision, freedomDays: number): string {
   return '';
 }
 
-/**
- * Constrói os itens do Horizonte a partir da mesma fonte da projeção de 15 dias
- * (obrigações de crédito + recorrentes de despesa + faturas de cartão), aplica a
- * decisão de "quando falar" e ordena por ALAVANCA RESTANTE (não por urgência).
- *
- * Só retorna o que o Consultor pode legitimamente falar: itens com decisão `silence`
- * são filtrados fora (viram, no máximo, nota no Painel — nunca voz do Consultor).
- */
-export function buildHorizonItems(input: AnticipationInput): HorizonItem[] {
-  const today = input.today ?? new Date();
-  const horizonEnd = new Date(today);
-  horizonEnd.setDate(today.getDate() + HORIZON_DAYS);
+export interface HorizonEvent {
+  id: string;
+  kind: CreditObligation['kind'] | 'recorrente' | 'cartao';
+  label: string;
+  amount: number;
+  dueDate: string;        // ISO
+  daysUntilDue: number;
+  flow: 'entrada' | 'saida';
+}
 
-  const ctx: CashContext = {
-    today,
-    liquidCash: input.liquidCash,
-    incomeDate: nextIncomeDate(input.recurrents, today),
-    leadPref: input.leadPref ?? 'week',
-  };
+interface RawExpense {
+  id: string;
+  kind: CreditObligation['kind'] | 'recorrente' | 'cartao';
+  label: string;
+  amount: number;
+  dueDate: string;
+  daysUntilDue: number;
+  hasLever: boolean;
+}
 
-  const raw: Array<Omit<HorizonItem, 'leverageScore' | 'freedomDays' | 'decision' | 'reason'>> = [];
+function buildRawExpenses(input: AnticipationInput, today: Date): RawExpense[] {
+  const raw: RawExpense[] = [];
 
   // 1) Obrigações de crédito (faturas, parcelas, empréstimos) com vencimento no horizonte.
   for (const o of input.creditObligations || []) {
@@ -254,6 +255,29 @@ export function buildHorizonItems(input: AnticipationInput): HorizonItem[] {
     });
   }
 
+  return raw;
+}
+
+/**
+ * Constrói os itens do Horizonte a partir da mesma fonte da projeção de 15 dias
+ * (obrigações de crédito + recorrentes de despesa + faturas de cartão), aplica a
+ * decisão de "quando falar" e ordena por ALAVANCA RESTANTE (não por urgência).
+ *
+ * Só retorna o que o Consultor pode legitimamente falar: itens com decisão `silence`
+ * são filtrados fora (viram, no máximo, nota no Painel — nunca voz do Consultor).
+ */
+export function buildHorizonItems(input: AnticipationInput): HorizonItem[] {
+  const today = input.today ?? new Date();
+
+  const ctx: CashContext = {
+    today,
+    liquidCash: input.liquidCash,
+    incomeDate: nextIncomeDate(input.recurrents, today),
+    leadPref: input.leadPref ?? 'week',
+  };
+
+  const raw = buildRawExpenses(input, today);
+
   const items: HorizonItem[] = raw.map((it) => {
     const decision = decideWhenToSpeak(it, ctx);
     const freedomDays = reaisToFreedomDays(it.amount, input.dailyBurnRate);
@@ -270,6 +294,43 @@ export function buildHorizonItems(input: AnticipationInput): HorizonItem[] {
   return items
     .filter((it) => it.decision !== 'silence')
     .sort((a, b) => b.leverageScore - a.leverageScore);
+}
+
+/**
+ * Retorna todos os eventos provisionados na janela [0, HORIZON_DAYS], sem filtros de decisão,
+ * incluindo saídas (despesas/dívidas) e entradas (recorrentes de receita).
+ */
+export function listHorizonEvents(input: AnticipationInput): HorizonEvent[] {
+  const today = input.today ?? new Date();
+
+  const expenses = buildRawExpenses(input, today).map((e) => ({
+    id: e.id,
+    kind: e.kind,
+    label: e.label,
+    amount: e.amount,
+    dueDate: e.dueDate,
+    daysUntilDue: e.daysUntilDue,
+    flow: 'saida' as const,
+  }));
+
+  const incomes: HorizonEvent[] = [];
+  for (const r of input.recurrents || []) {
+    if (r.type !== 'receita' || r.active === false || typeof r.day !== 'number') continue;
+    const due = nextDayOfMonth(r.day, today);
+    const d = daysBetween(today, due);
+    if (d < 0 || d > HORIZON_DAYS) continue;
+    incomes.push({
+      id: `rec:${r.id}`,
+      kind: 'recorrente',
+      label: r.desc || 'Receita recorrente',
+      amount: r.value ?? 0,
+      dueDate: due.toISOString(),
+      daysUntilDue: d,
+      flow: 'entrada' as const,
+    });
+  }
+
+  return [...expenses, ...incomes].sort((a, b) => a.daysUntilDue - b.daysUntilDue);
 }
 
 /**

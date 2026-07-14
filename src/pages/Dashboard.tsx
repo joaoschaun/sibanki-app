@@ -202,7 +202,7 @@ export default function Dashboard() {
             onSnooze={(it) => horizon.snooze(it.id)}
           />
         </div>
-        <HorizonStrip item={horizon.item} incomeDate={horizon.incomeDate} />
+        <HorizonStrip events={horizon.events} incomeDate={horizon.incomeDate} />
       </div>
     ),
     'spread-gap': (
@@ -563,7 +563,7 @@ export default function Dashboard() {
                       </div>
 
                       {/* Linha 2: Horizonte */}
-                      <HorizonStrip item={horizon.item} incomeDate={horizon.incomeDate} />
+                      <HorizonStrip events={horizon.events} incomeDate={horizon.incomeDate} />
 
                       {/* Linha 3: Contas Conectadas */}
                       <ContasConectadas />
