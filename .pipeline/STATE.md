@@ -1,9 +1,10 @@
 # Pipeline State
 
 - **Handoff atual:** 0019
-- **Turno:** claude
-- **Estado:** executed
-- **Próxima ação:** Claude revisa o diff contra a spec e o report em `.pipeline/reports/HANDOFF-0019.report.md`, confere o gate e dá o "revisa" com instrução de merge ou correções.
+- **Turno:** joao
+- **Estado:** reviewed
+- **Review 0019 (Claude) = APROVADO** — diff real main..pipe/0019 (commit e992fbd): só HorizonStrip.tsx + teste (motor/hook/Dashboard fora); early-return do vazio removido → grade `daysArray.map` (16 dias, hoje+0..15 dinâmico) renderiza sempre; vazio = grade sem marcadores + linha de convite (isEmpty ? convite : legendas); com eventos inalterado; sr-only ajustado; Gate 3=0; gate verde 236. Sem nits. Próxima ação: João faz merge de pipe/0019 na main + commita. Sem deploy.
+- **0018/0017…0007:** CONCLUÍDOS.
 - **Escopo 0019 (correção do vazio do 0018):** o estado vazio do `HorizonStrip` substituía a régua inteira por texto centralizado. Correção: a grade dos 15 dias renderiza SEMPRE (sem marcadores quando vazio) + linha de convite no lugar da legenda. Só `HorizonStrip.tsx` + teste. Motor/hook/Dashboard intocados. Sem deploy.
 - **0018:** Horizonte provisionamento — merged. **0017…0007:** CONCLUÍDOS.
 - **Review 0018 (Claude + CISO) = APROVADO** — diff real main..pipe/0018 (commit 4217611): 8 arquivos; RadarCard/Consultor/HorizonBriefing/blueprint/App/guard fora. CISO: `decideWhenToSpeak`/`topHorizonItem` BYTE-IDÊNTICOS; `buildHorizonItems` só extraiu o raw p/ `buildRawExpenses` (comportamento preservado, 236 testes ok); `listHorizonEvents` aditivo/data-only (saídas+entradas 15d, sem tocar decisão). `HorizonStrip` renderiza de `events` (não `item`), marcadores múltiplos entrada/saída, janela renda→próxima saída, **estado vazio = convite calmo** (não null). `useHorizonTop` aditivo (events; item/snooze intactos → RadarCard segue com a decisão). Gate 3=0, a11y (role/aria/resumo), motion-reduce; gate verde 236. Sem nits. Próxima ação: João faz merge de pipe/0018 na main + commita. Sem deploy.
