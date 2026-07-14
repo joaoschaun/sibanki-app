@@ -1,9 +1,11 @@
 # Pipeline State
 
-- **Handoff atual:** 0018
-- **Turno:** free
-- **Estado:** merged
-- **Próxima ação:** Aguardando a próxima spec de Handoff ser definida pelo João.
+- **Handoff atual:** 0019
+- **Turno:** antigravity
+- **Estado:** spec_ready
+- **Próxima ação:** João commita a spec 0019 + este STATE e dá o "roda". Antigravity executa `docs/handoffs/HANDOFF-0019-horizonte-regua-sempre.md` em `pipe/0019-horizonte-regua-sempre` (da main), roda `npm run gate`, escreve o report.
+- **Escopo 0019 (correção do vazio do 0018):** o estado vazio do `HorizonStrip` substituía a régua inteira por texto centralizado. Correção: a grade dos 15 dias renderiza SEMPRE (sem marcadores quando vazio) + linha de convite no lugar da legenda. Só `HorizonStrip.tsx` + teste. Motor/hook/Dashboard intocados. Sem deploy.
+- **0018:** Horizonte provisionamento — merged. **0017…0007:** CONCLUÍDOS.
 - **Review 0018 (Claude + CISO) = APROVADO** — diff real main..pipe/0018 (commit 4217611): 8 arquivos; RadarCard/Consultor/HorizonBriefing/blueprint/App/guard fora. CISO: `decideWhenToSpeak`/`topHorizonItem` BYTE-IDÊNTICOS; `buildHorizonItems` só extraiu o raw p/ `buildRawExpenses` (comportamento preservado, 236 testes ok); `listHorizonEvents` aditivo/data-only (saídas+entradas 15d, sem tocar decisão). `HorizonStrip` renderiza de `events` (não `item`), marcadores múltiplos entrada/saída, janela renda→próxima saída, **estado vazio = convite calmo** (não null). `useHorizonTop` aditivo (events; item/snooze intactos → RadarCard segue com a decisão). Gate 3=0, a11y (role/aria/resumo), motion-reduce; gate verde 236. Sem nits. Próxima ação: João faz merge de pipe/0018 na main + commita. Sem deploy.
 - **Rubric §8.5 refinada** (Horizonte=planejamento; decisão=RadarCard) vai junto. **0017/0013…0007:** CONCLUÍDOS.
 - **Escopo 0018 (Horizonte = régua de provisionamento):** o `HorizonStrip` desacopla da decisão (não `if(!item)return null`) → renderiza dos EVENTOS provisionados (renda + despesas/faturas 15d), estado vazio = convite calmo. Motor ganha `listHorizonEvents` (ADITIVO + extração byte-preservante do raw; **decideWhenToSpeak/topHorizonItem INTOCADOS**). RadarCard segue com a decisão. **Review reforçada Dev+UIUX+CISO** (toca o motor, mas só data-only; o §9 "quando falar" fica byte-idêntico). Sem deploy.
