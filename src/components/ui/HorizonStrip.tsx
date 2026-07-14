@@ -16,22 +16,7 @@ export function HorizonStrip({ events, incomeDate, today }: HorizonStripProps) {
   const incomeIdx = incomeDate ? daysBetween(todayObj, incomeDate) : -1;
   const isIncomeInHorizon = incomeIdx >= 0 && incomeIdx <= HORIZON_DAYS;
 
-  const hasNoEventsAndNoIncome = events.length === 0 && !isIncomeInHorizon;
-
-  if (hasNoEventsAndNoIncome) {
-    return (
-      <Card surface="raised" className="w-full p-5 border border-si-border relative overflow-hidden mt-4" role="region" aria-label="Horizonte de planejamento">
-        <div className="flex flex-col items-center justify-center text-center py-4">
-          <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-si-4 mb-2">
-            Horizonte · próximos 15 dias
-          </span>
-          <p className="text-sm font-medium text-si-2 max-w-[450px]">
-            Provisione seus próximos 15 dias · adicione recorrentes ou conecte seu banco.
-          </p>
-        </div>
-      </Card>
-    );
-  }
+  const isEmpty = events.length === 0 && !isIncomeInHorizon;
 
   // Mapear eventos por índice de dia relativo
   const eventsByDayIdx: { [idx: number]: HorizonEvent[] } = {};
@@ -68,7 +53,9 @@ export function HorizonStrip({ events, incomeDate, today }: HorizonStripProps) {
   return (
     <Card surface="raised" className="w-full p-5 border border-si-border relative overflow-hidden mt-4" role="region" aria-label="Linha do tempo do Horizonte de 15 dias">
       <span className="sr-only">
-        {`Horizonte de planejamento financeiro. ${events.length} compromissos agendados nos próximos 15 dias.`}
+        {isEmpty
+          ? 'Horizonte de planejamento financeiro. Nenhum compromisso agendado nos próximos 15 dias.'
+          : `Horizonte de planejamento financeiro. ${events.length} compromissos agendados nos próximos 15 dias.`}
       </span>
 
       {/* Title */}
@@ -136,19 +123,27 @@ export function HorizonStrip({ events, incomeDate, today }: HorizonStripProps) {
 
       {/* Legends */}
       <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-si-4 mt-3 border-t border-si-border/40 pt-3">
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
-          recebimentos planejados
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-amber-500 ring-2 ring-amber-500/20" />
-          pagamentos planejados
-        </span>
-        {hasWindow && (
-          <span className="flex items-center gap-1.5">
-            <span className="w-4 h-2 rounded bg-amber-500/10 border border-amber-500/20" />
-            janela de ação (cobertura necessária)
-          </span>
+        {isEmpty ? (
+          <p className="text-si-4 font-medium">
+            Provisione seus próximos 15 dias · adicione recorrentes ou conecte seu banco.
+          </p>
+        ) : (
+          <>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
+              recebimentos planejados
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500 ring-2 ring-amber-500/20" />
+              pagamentos planejados
+            </span>
+            {hasWindow && (
+              <span className="flex items-center gap-1.5">
+                <span className="w-4 h-2 rounded bg-amber-500/10 border border-amber-500/20" />
+                janela de ação (cobertura necessária)
+              </span>
+            )}
+          </>
         )}
       </div>
     </Card>

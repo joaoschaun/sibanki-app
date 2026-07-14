@@ -1,10 +1,10 @@
 # Execution Lock
 
-- **Status:** busy
-- **Executor:** Antigravity
-- **Branch:** pipe/0019-horizonte-regua-sempre
-- **Handoff:** HANDOFF-0019
-- **Desde:** 2026-07-14T08:18:00-03:00
+- **Status:** free
+- **Executor:** None
+- **Branch:** None
+- **Handoff:** None
+- **Desde:** None
 
 ---
 

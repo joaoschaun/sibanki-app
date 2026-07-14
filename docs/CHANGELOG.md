@@ -15,6 +15,12 @@ Datas no formato `YYYY-MM-DD` (ISO 8601). Linguagem: PT-BR.
 
 ## [Unreleased]
 
+### Changed — Horizonte régua sempre (HANDOFF-0019) (14/07/2026)
+
+- Alterada a renderização do estado vazio do `HorizonStrip.tsx` para manter a régua de 15 dias (16 células) visível a todo momento, exibindo-a sem marcadores.
+- Adicionada a mensagem de convite calmo na seção de legendas do rodapé quando o Horizonte está vazio: *"Provisione seus próximos 15 dias · adicione recorrentes ou conecte seu banco."*.
+- Ajustados os testes unitários do `HorizonStrip.test.tsx` correspondentes para validar a presença da grade e da mensagem de convite no estado vazio.
+
 ### Added — Horizonte como régua de provisionamento (HANDOFF-0018, §8.5) (13/07/2026)
 
 - Desacoplado o `HorizonStrip` da lógica de decisão do `RadarCard` para torná-lo um painel de planejamento sempre visível, representando os próximos 15 dias de entradas e saídas provisionadas.

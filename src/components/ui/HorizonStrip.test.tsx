@@ -25,13 +25,19 @@ describe('HorizonStrip Component - 15 Days Timeline', () => {
 
   const today = new Date('2026-07-11');
 
-  it('1. Sem eventos e sem renda no horizonte -> renderiza estado vazio convite', () => {
+  it('1. Sem eventos e sem renda no horizonte -> renderiza a grade vazia + convite', () => {
     const element = HorizonStrip({
       events: [],
       incomeDate: null,
       today
     });
     expect(element).not.toBeNull();
+    
+    // O grid de 16 dias (segundo elemento filho do Card) deve estar presente
+    const grid = element!.props.children[2];
+    const cells = grid.props.children;
+    expect(cells.length).toBe(16);
+
     const str = JSON.stringify(element);
     expect(str).toContain('Provisione seus pr\u00f3ximos 15 dias');
   });
