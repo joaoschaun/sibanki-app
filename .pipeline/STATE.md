@@ -1,9 +1,9 @@
 # Pipeline State
 
-- **Handoff atual:** 0019
-- **Turno:** joao
-- **Estado:** reviewed
-- **Review 0019 (Claude) = APROVADO** — diff real main..pipe/0019 (commit e992fbd): só HorizonStrip.tsx + teste (motor/hook/Dashboard fora); early-return do vazio removido → grade `daysArray.map` (16 dias, hoje+0..15 dinâmico) renderiza sempre; vazio = grade sem marcadores + linha de convite (isEmpty ? convite : legendas); com eventos inalterado; sr-only ajustado; Gate 3=0; gate verde 236. Sem nits. Próxima ação: João faz merge de pipe/0019 na main + commita. Sem deploy.
+- **Handoff atual:** 0019 (Horizonte régua sempre)
+- **Turno:** free
+- **Estado:** merged
+- **Próxima ação:** Aguardando a próxima spec de Handoff ser definida pelo João.
 - **0018/0017…0007:** CONCLUÍDOS.
 - **Escopo 0019 (correção do vazio do 0018):** o estado vazio do `HorizonStrip` substituía a régua inteira por texto centralizado. Correção: a grade dos 15 dias renderiza SEMPRE (sem marcadores quando vazio) + linha de convite no lugar da legenda. Só `HorizonStrip.tsx` + teste. Motor/hook/Dashboard intocados. Sem deploy.
 - **0018:** Horizonte provisionamento — merged. **0017…0007:** CONCLUÍDOS.
