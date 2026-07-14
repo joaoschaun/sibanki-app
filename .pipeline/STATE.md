@@ -1,9 +1,11 @@
 # Pipeline State
 
-- **Handoff atual:** 0019 (Horizonte régua sempre)
-- **Turno:** free
-- **Estado:** merged
-- **Próxima ação:** Aguardando a próxima spec de Handoff ser definida pelo João.
+- **Handoff atual:** 0020
+- **Turno:** antigravity
+- **Estado:** spec_ready
+- **Próxima ação:** João commita a spec 0020 + este STATE e dá o "roda". Antigravity executa `docs/handoffs/HANDOFF-0020-craft-passe1-painel.md` em `pipe/0020-craft-passe1` (da main), roda `npm run gate`, escreve o report.
+- **Escopo 0020 (§11 craft, passe 1 — Painel):** (1) count-up no Ld (SovereigntyHero, 0→dias, ease-out, só !noLdData); (2) entrada em stagger dos cards do bento (Dashboard saudável, ~85ms, só 1ª pintura); (3) press `active:scale-[.98]` nos botões (Button primitivo). TUDO com `prefers-reduced-motion` (§11.2/§11.5). SEM hover-lift em card (falsa affordance). Motor/blueprint/Sidebar/App/guard fora. Craft é subjetivo → gate garante não-quebra; João afina timing no app. Sem deploy.
+- **0019/0018…0007:** CONCLUÍDOS.
 - **0018/0017…0007:** CONCLUÍDOS.
 - **Escopo 0019 (correção do vazio do 0018):** o estado vazio do `HorizonStrip` substituía a régua inteira por texto centralizado. Correção: a grade dos 15 dias renderiza SEMPRE (sem marcadores quando vazio) + linha de convite no lugar da legenda. Só `HorizonStrip.tsx` + teste. Motor/hook/Dashboard intocados. Sem deploy.
 - **0018:** Horizonte provisionamento — merged. **0017…0007:** CONCLUÍDOS.
