@@ -163,6 +163,15 @@ nao so correto. Referencia canonica: entrada do Consultor IA.
    acao. Enquadre a decaida de alavanca ("barato agora, o rotativo depois"). Elemento-assinatura:
    o **Horizonte** (linha dos proximos 15 dias com a janela de acao destacada).
 
+   **⚠︎ Refinamento (13/07): Horizonte = PLANEJAMENTO sempre-presente; decisao = RadarCard.** O
+   Horizonte é a camada de **visão/provisionamento** — mostra os proximos 15 dias (entradas e saidas
+   provisionadas nos recorrentes/faturas), **sempre visivel e calmo**, e **nao some em dia calmo** (§9.2:
+   uma regua de provisionamento tranquiliza — "voce esta coberto"; ≠ lista de perdicoes, que angustia).
+   O que **ESCALA** (o "aja") é o **card de decisao (RadarCard)**, nao a regua. Separar os dois: a regua
+   dá a VISAO (sempre), a decisao dá a ACAO (quando aperta). (Corrige a conflacao do HANDOFF-0011, que
+   amarrou a regua à existencia de uma decisao e a escondia em dia calmo.) Estado vazio da regua = convite
+   calmo ("provisione seus proximos 15 dias / conecte seu banco"), nunca vao oco.
+
 6. **O teto do Painel — os 4 movimentos (aprovado 11/07/2026, ref. Credit Pros/RonDesignLab).**
    O Painel desktop deixa de ser grid de cards e adota o formato "numero-dono-da-tela":
    - **(a) Numero-heroi com espectro de tiers.** O Ld vive solto na tela (nao dentro de card),

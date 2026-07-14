@@ -1,9 +1,12 @@
 # Pipeline State
 
-- **Handoff atual:** 0017 (sistêmico — largura por tipo)
-- **Turno:** free
-- **Estado:** merged
-- **Próxima ação:** Aguardando a próxima spec de Handoff ser definida pelo João.
+- **Handoff atual:** 0018
+- **Turno:** antigravity
+- **Estado:** spec_ready
+- **Próxima ação:** João commita a spec 0018 + a rubric (§8.5 refinada) + este STATE e dá o "roda". Antigravity executa `docs/handoffs/HANDOFF-0018-horizonte-provisionamento.md` em `pipe/0018-horizonte-provisionamento` (da main), roda `npm run gate`, escreve o report.
+- **Escopo 0018 (Horizonte = régua de provisionamento):** o `HorizonStrip` desacopla da decisão (não `if(!item)return null`) → renderiza dos EVENTOS provisionados (renda + despesas/faturas 15d), estado vazio = convite calmo. Motor ganha `listHorizonEvents` (ADITIVO + extração byte-preservante do raw; **decideWhenToSpeak/topHorizonItem INTOCADOS**). RadarCard segue com a decisão. **Review reforçada Dev+UIUX+CISO** (toca o motor, mas só data-only; o §9 "quando falar" fica byte-idêntico). Sem deploy.
+- **Rubric §8.5 refinada:** "Horizonte = planejamento sempre-presente/calmo; decisão que escala = RadarCard" (corrige a conflação do 0011). Vai junto no commit.
+- **0017:** CONCLUÍDO — largura por tipo (traz 0014 junto) merged. **0013…0007:** CONCLUÍDOS.
 - **0016/0015 SUPERSEDED** (não mergear). **0014:** aprovado, entra junto no merge do 0017. **0013/0012…0007:** CONCLUÍDOS.
 - **Escopo 0017 (largura por TIPO — §11.6):** helper no App.tsx — telas de LEITURA (Consultor, Configurações, Educação, Perfil) mantêm cap 1180; TODO o resto (dados/funcional) usa `w-full`. Uma decisão, um lugar (o wrapper global L269). + Dashboard container w-full. Conferência visual obrigatória (blast radius: muda a largura de todas as telas de dados); tela que quebrar no full-width volta pro READING set (tunável) e registra no report.
 - **Rubric §11.6 codificada:** "Largura do container por tipo de tela — decidida num só lugar" (dados=largura útil; leitura=cap ~1180). Vai junto no commit do João.
