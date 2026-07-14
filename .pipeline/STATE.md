@@ -1,9 +1,10 @@
 # Pipeline State
 
 - **Handoff atual:** 0018
-- **Turno:** claude
-- **Estado:** executed
-- **Próxima ação:** Claude revisa o diff contra a spec e o report em `.pipeline/reports/HANDOFF-0018.report.md`, confere o gate e dá o "revisa" com instrução de merge ou correções.
+- **Turno:** joao
+- **Estado:** reviewed
+- **Review 0018 (Claude + CISO) = APROVADO** — diff real main..pipe/0018 (commit 4217611): 8 arquivos; RadarCard/Consultor/HorizonBriefing/blueprint/App/guard fora. CISO: `decideWhenToSpeak`/`topHorizonItem` BYTE-IDÊNTICOS; `buildHorizonItems` só extraiu o raw p/ `buildRawExpenses` (comportamento preservado, 236 testes ok); `listHorizonEvents` aditivo/data-only (saídas+entradas 15d, sem tocar decisão). `HorizonStrip` renderiza de `events` (não `item`), marcadores múltiplos entrada/saída, janela renda→próxima saída, **estado vazio = convite calmo** (não null). `useHorizonTop` aditivo (events; item/snooze intactos → RadarCard segue com a decisão). Gate 3=0, a11y (role/aria/resumo), motion-reduce; gate verde 236. Sem nits. Próxima ação: João faz merge de pipe/0018 na main + commita. Sem deploy.
+- **Rubric §8.5 refinada** (Horizonte=planejamento; decisão=RadarCard) vai junto. **0017/0013…0007:** CONCLUÍDOS.
 - **Escopo 0018 (Horizonte = régua de provisionamento):** o `HorizonStrip` desacopla da decisão (não `if(!item)return null`) → renderiza dos EVENTOS provisionados (renda + despesas/faturas 15d), estado vazio = convite calmo. Motor ganha `listHorizonEvents` (ADITIVO + extração byte-preservante do raw; **decideWhenToSpeak/topHorizonItem INTOCADOS**). RadarCard segue com a decisão. **Review reforçada Dev+UIUX+CISO** (toca o motor, mas só data-only; o §9 "quando falar" fica byte-idêntico). Sem deploy.
 - **Rubric §8.5 refinada:** "Horizonte = planejamento sempre-presente/calmo; decisão que escala = RadarCard" (corrige a conflação do 0011). Vai junto no commit.
 - **0017:** CONCLUÍDO — largura por tipo (traz 0014 junto) merged. **0013…0007:** CONCLUÍDOS.
